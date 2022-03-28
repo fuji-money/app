@@ -59,7 +59,7 @@
     <div class="white-slip row">
       <div class="columns level">
         <div class="column is-flex is-2">
-          <img src={synthetic.icon} alt="asset logo" />
+          <img src={synthetic.icon} alt="token logo" />
           <div class="synthetic is-gradient">
             <p>{synthetic.name}</p>
             <p>{prettyNumber(quantity)} {synthetic.ticker}</p>
@@ -89,5 +89,11 @@
 <style lang="scss">
   h2 {
     margin-bottom: 0;
+  }
+  img {
+    display: block;
+    height: 60px;
+    padding: 10px;
+    padding-left: 0;
   }
 </style>

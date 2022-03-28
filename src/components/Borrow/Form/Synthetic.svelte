@@ -15,6 +15,7 @@
 <div class="level is-pink">
   <div class="level-left">
     <div class="level-item">
+      <p class="ml-3"><img src={synthetic.icon} alt="collateral icon" /></p>
       <p class="ml-3">{synthetic.ticker}</p>
     </div>
   </div>
@@ -32,6 +33,10 @@
 </div>
 
 <style lang="scss">
+  img {
+    height: 1.5rem;
+    margin-top: 2px;
+  }
   input {
     border: 0;
     max-width: 100px;

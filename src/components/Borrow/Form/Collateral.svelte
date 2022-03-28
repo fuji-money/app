@@ -15,6 +15,7 @@
 <div class="level is-pink">
   <div class="level-left">
     <div class="level-item">
+      <p class="ml-3"><img src={collateral.icon} alt="collateral icon" /></p>
       {#if collaterals.length === 1}
         <p class="ml-3">{collaterals[0].ticker}</p>
       {:else}
@@ -36,6 +37,10 @@
 </div>
 
 <style lang="scss">
+  img {
+    height: 1.5rem;
+    margin-top: 2px;
+  }
   select {
     border: 0;
   }
