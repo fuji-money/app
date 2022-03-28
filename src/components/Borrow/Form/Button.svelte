@@ -24,5 +24,5 @@
 </script>
 
 <div class="has-text-centered">
-  <button on:click class="button is-primary" {disabled}>Create contract</button>
+  <button on:click class="button is-primary is-cta" {disabled}>Create contract</button>
 </div>

@@ -207,6 +207,9 @@ input[type="range"] {
     color: #fff;
     padding: 20px 42px;
   }
+  &.is-cta {
+    min-width: 400px;
+  }
 }
 
 .container {

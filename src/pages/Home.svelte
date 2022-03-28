@@ -8,7 +8,7 @@
 <section>
   <div class="container has-text-centered">
     <img class="logo" src="images/fuji-logo-128.png" alt="fuji logo" />
-    <p class="cta">Choose any link below to access the decentralized web app</p>
+    <p class="links-intro">Choose any link below to access the decentralized web app</p>
     <div class="links-wrapper">
       <!-- svelte-ignore a11y-missing-attribute -->
       <p><a on:click={advance}>https://fuji.money</a></p>
@@ -22,10 +22,9 @@
     background: linear-gradient(180deg, #fffbf8 0%, #ffeae5 100%);
     min-height: 100vh;
   }
-  .cta {
+  .links-intro {
     color: #2c024d;
     display: inline-block;
-    font-family: 'Proxima Nova Regular', sans-serif;
     font-size: 24px;
     font-weight: 400;
     margin: auto;

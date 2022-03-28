@@ -26,7 +26,7 @@
   }
 
   // disabled html attribute for "Topup" button
-  $: disabled = !wallet || collateral.quantity === 0;
+  $: disabled = !wallet || exception || collateral.quantity === 0;
   $: future = getFutureContract(collateral);
   $: exception = notEnoughFunds({ asset: collateral, balance });
 </script>
@@ -44,7 +44,7 @@
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
 <div class="has-text-centered">
-  <button on:click={topup} class="button is-primary" {disabled}>Topup</button>
+  <button on:click={topup} class="button is-primary is-cta" {disabled}>Topup</button>
 </div>
 
 <style lang="scss">
