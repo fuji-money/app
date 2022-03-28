@@ -1,9 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { Offer } from "../../../lib/types";
+  import type { ContractState, Offer } from "../../../lib/types";
+  import { getRatioState } from "../../../lib/utils";
 
   export let offer: Offer;
   export let ratio: number;
+
+  let state: ContractState;
 
   // update range bar colors,
   // runs everytime the ratio changes
@@ -38,6 +41,8 @@
     updateLabels();
     updateColors();
   })
+
+  $: state = getRatioState(ratio/100);
 </script>
 
 <p class="range-legend">
@@ -52,6 +57,7 @@
         min="0"
         max="400"
         type="range"
+        class="{state}"
         bind:value={ratio}
         on:change={change}
       />
@@ -92,6 +98,42 @@
   input.has-suffix {
     margin-right: 0;
     padding-right: 0;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    margin-right: 15px;
+    width: 400px;
+    height: 7px;
+    background: #ffddbb;
+    border-radius: 5px;
+    background-image: linear-gradient(#6b1d9c, #6b1d9c);
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #aaa;
+      cursor: ew-resize;
+      box-shadow: 0 0 2px 0 #555;
+      transition: background .3s ease-in-out;
+    }
+    &::-webkit-slider-runnable-track  {
+      -webkit-appearance: none;
+      box-shadow: none;
+      border: none;
+      background: transparent;
+    }
+    &.safe {
+      background-image: linear-gradient(#6b1d9c, #6b1d9c);
+    }
+    &.unsafe {
+      background-image: linear-gradient(#ff712c, #ff712c);
+    }
+    &.critical {
+      background-image: linear-gradient(#e30f00, #e30f00);
+    }
   }
 </style>
 

@@ -5,7 +5,7 @@
   import Spinner from '../Spinner.svelte';
   import RedeemButton from '../Buttons/Redeem.svelte';
   import TopupButton from '../Buttons/Topup.svelte';
-import ContractLink from '../ContractLink.svelte';
+  import ContractLink from '../ContractLink.svelte';
 
   export let contracts: Contract[];
   export let wallet: boolean;
