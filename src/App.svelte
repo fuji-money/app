@@ -70,11 +70,7 @@ import Breadcrumbs from './components/Breadcrumbs.svelte';
   };
 
   // navigate to a different page
-  // const navigate = (event: CustomEvent) => page = event.detail;
-  const navigate = (event: CustomEvent) => {
-    page = event.detail;
-    console.log(event.detail);
-  }
+  const navigate = (event: CustomEvent) => page = event.detail;
 
   // redeem contract, ask for marina confirmation
   const redeem = (event: CustomEvent) => {
