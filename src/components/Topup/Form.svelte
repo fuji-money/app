@@ -2,7 +2,8 @@
   import { createEventDispatcher } from 'svelte';
   import type { Asset, Contract } from '../../lib/types';
   import { notEnoughFunds } from '../../lib/utils';
-  import Collateral from './Collateral.svelte';
+  import Collateral from './Form/Collateral.svelte';
+  import Button from './Form/Button.svelte';
   import Summary from './Summary.svelte';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
 
@@ -25,8 +26,6 @@
     }
   }
 
-  // disabled html attribute for "Topup" button
-  $: disabled = !wallet || exception || collateral.quantity === 0;
   $: future = getFutureContract(collateral);
   $: exception = notEnoughFunds({ asset: collateral, balance });
 </script>
@@ -43,9 +42,7 @@
 <!-- possible warnings -->
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
-<div class="has-text-centered">
-  <button on:click={topup} class="button is-primary is-cta" {disabled}>Topup</button>
-</div>
+<Button on:click={topup} {balance} {collateral} {wallet} />
 
 <style lang="scss">
   h3 {
