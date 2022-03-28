@@ -10,8 +10,9 @@
   import Ratio from './Form/Ratio.svelte';
   import Collateral from './Form/Collateral.svelte';
   import { notEnoughFunds } from '../../lib/utils';
-  import Exception from './Form/Exception.svelte';
-  import Warning from './Form/Warning.svelte';
+  import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
+  import RatioNotSafe from '../Notifications/RatioNotSafe.svelte';
+import BorrowFee from '../Notifications/BorrowFee.svelte';
 
   export let balance: Asset[];
   export let token: Token;
@@ -86,8 +87,9 @@
   <!-- additional info -->
   <Info {contract} />
   <!-- possible warnings -->
-  {#if warning}<Warning />{/if}
-  {#if exception}<Exception />{/if}
+  <BorrowFee />
+  {#if warning}<RatioNotSafe />{/if}
+  {#if exception}<NotEnoughFunds />{/if}
   <!-- create contract button -->
   <Button on:click={create} {contract} {offer} {balance} {wallet} />
 {/if}

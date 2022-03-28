@@ -52,3 +52,12 @@
       {/if}
     {/if}
 </section>
+
+<style lang="scss">
+  img {
+    display: block;
+    height: 60px;
+    padding: 10px;
+    padding-left: 0;
+  }
+</style>

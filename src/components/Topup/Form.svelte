@@ -4,7 +4,7 @@
   import { notEnoughFunds } from '../../lib/utils';
   import Collateral from './Collateral.svelte';
   import Summary from './Summary.svelte';
-  import Exception from '../Borrow/Form/Exception.svelte';
+  import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
 
   export let balance: Asset[];
   export let contract: Contract;
@@ -41,7 +41,7 @@
   <Summary contract={future} />
 </div>
 <!-- possible warnings -->
-{#if exception}<Exception />{/if}
+{#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
 <div class="has-text-centered">
   <button on:click={topup} class="button is-primary" {disabled}>Topup</button>
