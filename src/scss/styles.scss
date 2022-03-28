@@ -303,3 +303,15 @@ input[type="range"] {
     }
   }
 }
+
+.notification {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 20px;
+  img {
+    height: 1rem;
+    margin-right: .5rem;
+    position: relative;
+    top: 4px;
+  }
+}
