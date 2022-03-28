@@ -22,7 +22,7 @@
     getTokens,
   } from './lib/fetch';
   import { detectProvider, MarinaProvider } from 'marina-provider';
-import Breadcrumbs from './components/Breadcrumbs.svelte';
+  import Breadcrumbs from './components/Breadcrumbs.svelte';
 
   let activities: Activity[];
   let asset: Asset;
