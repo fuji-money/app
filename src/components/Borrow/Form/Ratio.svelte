@@ -1,0 +1,97 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import type { Offer } from "../../../lib/types";
+
+  export let offer: Offer;
+  export let ratio: number;
+
+  // update range bar colors,
+  // runs everytime the ratio changes
+  const updateColors = () => {
+    const target = document.getElementById('range');
+    if (!target) return false;
+    const width = target.offsetWidth;
+    target.style.backgroundSize = (ratio * 100) / width + '% 100%';
+  }
+
+  // put range labels on correct coordinates,
+  // runs only once, on component mount
+  const updateLabels = () => {
+    const min = document.getElementById('min');
+    const safe = document.getElementById('safe');
+    if (!min || !safe || !ratio) return false;
+    const left = ratio - 25; // 25 = 50/2 with 50 = safe delta
+    min.style.left = `${left}px`;
+    safe.style.left = `${left}px`;
+  };
+
+  // event handler
+  const change = (e: any) => {
+    // ratio can't go under the minumum offer ratio
+    ratio = e.target.value > offer.ratio ? e.target.value : offer.ratio;
+    // update range bar colors
+    updateColors();
+  };
+
+  // on component mount, update labels positioning and range bar colors
+  onMount(() => {
+    updateLabels();
+    updateColors();
+  })
+</script>
+
+<p class="range-legend">
+  <span id="min">min: {offer.ratio}%</span>
+  <span id="safe">safe: {offer.ratio + 50}%</span>
+</p>
+<div class="level">
+  <div class="level-left">
+    <div class="level-item">
+      <input
+        id="range"
+        min="0"
+        max="400"
+        type="range"
+        bind:value={ratio}
+        on:change={change}
+      />
+    </div>
+  </div>
+  <div class="level-right">
+    <div class="level-item">
+      <div class="level is-pink has-text-right pr-5">
+        <input
+          class="input is-pink has-text-right has-suffix"
+          placeholder="{ratio}%"
+          type="number"
+          bind:value={ratio}
+          on:change={change}
+        />
+        <span>%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style lang="scss">
+  p {
+    &.range-legend {
+      span {
+        display: inline-block;
+        font-size: 0.6rem;
+        position: relative;
+        text-align: center;
+        width: 50px;
+      }
+    }
+  }
+  input[type='number'] {
+    border: 0;
+    max-width: 100px;
+  }
+  input.has-suffix {
+    margin-right: 0;
+    padding-right: 0;
+  }
+</style>
+
