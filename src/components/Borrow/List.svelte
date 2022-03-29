@@ -1,17 +1,19 @@
 <script lang="ts">
-  import type { Offer } from '../../lib/types';
+  import type { Ticker, Offer } from '../../lib/types';
   import { prettyNumber } from '../../lib/utils';
   import EmptyState from '../EmptyState.svelte';
   import Spinner from '../Spinner.svelte';
   import BorrowButton from '../Buttons/Borrow.svelte';
   import ConnectButton from '../Buttons/Connect.svelte';
 
-  export let filter = '';
   export let offers: Offer[];
+  export let ticker: Ticker;
   export let wallet: boolean;
 
+  let filter = ticker;
+
   const filterOffers = (filter: string) => {
-    if (!offers) return [];
+    if (!filter) return offers;
     const regexp = new RegExp(filter, 'gi');
     return offers.filter(
       ({ synthetic, ratio, txid }) =>
@@ -55,28 +57,28 @@
       <div class="column is-4">&nbsp;</div>
     </div>
   </div>
-  {#each filteredOffers as { collateral, quantity, ratio, synthetic }}
+  {#each filteredOffers as offer}
     <div class="white-slip row">
       <div class="columns level">
         <div class="column is-flex is-2">
-          <img src={synthetic.icon} alt="token logo" />
+          <img src={offer.synthetic.icon} alt="token logo" />
           <div class="synthetic is-gradient">
-            <p>{synthetic.name}</p>
-            <p>{prettyNumber(quantity)} {synthetic.ticker}</p>
+            <p>{offer.synthetic.name}</p>
+            <p>{prettyNumber(offer.quantity)} {offer.synthetic.ticker}</p>
           </div>
         </div>
         <div class="column is-2">
-          <p class="amount is-gradient">US ${prettyNumber(quantity * synthetic.value)}</p>
+          <p class="amount is-gradient">US ${prettyNumber(offer.quantity * offer.synthetic.value)}</p>
         </div>
         <div class="column is-2">
-          <p class="is-gradient">{`>${ratio}%`}</p>
+          <p class="is-gradient">{`>${offer.collateral.ratio}%`}</p>
         </div>
         <div class="column is-2">
-          <p class="is-gradient">{collateral.map((c) => c.ticker).join(', ')}</p>
+          <p class="is-gradient">{offer.collateral.ticker}</p>
         </div>
         <div class="column is-4">
           {#if wallet}
-            <BorrowButton asset={synthetic} on:borrow />
+            <BorrowButton {offer} on:borrow />
           {:else}
             <ConnectButton {wallet} on:connect />
           {/if}

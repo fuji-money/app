@@ -1,4 +1,4 @@
-import { Activity, ActivityType, Asset, Contract, Offer, Ticker, Token } from './types';
+import { Activity, ActivityType, Asset, Contract, Offer, Token } from './types';
 import { getRandomActivities } from './random';
 import { getContractState } from './utils';
 
@@ -41,8 +41,7 @@ export async function getAssets({ contracts, offers, tokens }): Promise<Asset[]>
   // find out wich offers allow to borrow more of this
   offers ||= await getOffers({ tokens });
   assets.forEach((asset) => {
-    const offer = offers.find((o) => o.synthetic.ticker === asset.ticker);
-    asset.borrowTxId = offer.txid;
+    asset.offer = offers.find((o) => o.synthetic.ticker === asset.ticker);
   });
   return assets;
 }
@@ -76,7 +75,7 @@ export async function getOffers({ tokens }): Promise<Offer[]> {
   tokens ||= await getTokens();
   const offers = await fetchData('offers');
   return offers.map((offer) => {
-    const collateral = offer.collateral.map((ticker: Ticker) => findToken({ ticker, tokens }));
+    const collateral = findToken({ ticker: offer.collateral, tokens });
     const synthetic = findToken({ ticker: offer.synthetic, tokens });
     return { ...offer, collateral, synthetic };
   });

@@ -12,7 +12,7 @@
   import Navbar from './components/Navbar.svelte';
   import { onMount } from 'svelte';
   import { openModal } from './lib/utils';
-  import type { Activity, Asset, Contract, Offer, Token } from './lib/types';
+  import type { Activity, Asset, Contract, Offer, Ticker, Token } from './lib/types';
   import {
     getActivities,
     getAssets,
@@ -30,9 +30,10 @@
   let balance: Asset[];
   let contract: Contract;
   let contracts: Contract[];
+  let offer: Offer;
   let offers: Offer[];
   let page = 'home';
-  let token: Token;
+  let ticker: Ticker;
   let tokens: Token[];
   let marina: MarinaProvider;
   let wallet = false;
@@ -42,7 +43,7 @@
 
   // new contract form
   const borrow = (event: CustomEvent) => {
-    token = event.detail;
+    offer = event.detail;
     page = 'create';
   };
 
@@ -63,6 +64,12 @@
     }
   };
 
+  // filter offers by asset ticker
+  const filter = (event: CustomEvent) => {
+    ticker = event.detail;
+    page = 'borrow';
+  };
+
   // new topup created, ask for marina confirmation
   const increase = (event: CustomEvent) => {
     asset = event.detail;
@@ -70,7 +77,7 @@
   };
 
   // navigate to a different page
-  const navigate = (event: CustomEvent) => page = event.detail;
+  const navigate = (event: CustomEvent) => (page = event.detail);
 
   // redeem contract, ask for marina confirmation
   const redeem = (event: CustomEvent) => {
@@ -114,14 +121,15 @@
           {contracts}
           {wallet}
           on:borrow={borrow}
+          on:filter={filter}
           on:redeem={redeem}
           on:topup={topup}
           on:trade={trade}
         />
       {:else if page === 'borrow'}
-        <Offers {offers} {wallet} on:borrow={borrow} on:connect={connect} />
+        <Offers {offers} {ticker} {wallet} on:borrow={borrow} on:connect={connect} />
       {:else if page === 'create'}
-        <Create {token} {balance} {wallet} on:create={create} on:connect={connect} />
+        <Create {offer} {balance} {wallet} on:create={create} on:connect={connect} />
       {:else if page === 'topup'}
         <Topup {contract} {balance} {wallet} on:increase={increase} on:connect={connect} />
       {/if}

@@ -1,15 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Asset } from '../../lib/types';
+  import type { Offer } from '../../lib/types';
 
-  export let asset: Asset;
+  export let offer: Offer;
 
   const dispatch = createEventDispatcher();
-  const borrow = () => {
-    const token = { ...asset };
-    delete token.quantity;
-    dispatch('borrow', token);
-  }
+  const borrow = () => dispatch('borrow', offer);
 </script>
 
 <button on:click={borrow} class="button">

@@ -3,8 +3,8 @@
   import { prettyNumber } from "../../lib/utils";
   import EmptyState from "../EmptyState.svelte";
   import Spinner from "../Spinner.svelte";
-  import BorrowButton from "../Buttons/Borrow.svelte";
   import TradeButton from "../Buttons/Trade.svelte";
+  import FilterButton from "../Buttons/Filter.svelte";
 
   export let assets: Asset[];
   export let wallet: boolean;
@@ -44,7 +44,7 @@
               </div>
               <div class="column">
                 <TradeButton on:trade />
-                <BorrowButton {asset} on:borrow />
+                <FilterButton {asset} on:filter />
               </div>
             </div>
           </div>
