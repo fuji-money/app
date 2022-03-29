@@ -39,7 +39,7 @@
   $: contract = { collateral, synthetic, ratio };
   $: collateral = { ...collateral, quantity: calcQuantity(collateral, synthetic, ratio) };
   $: exception = notEnoughFunds({ asset: collateral, balance });
-  $: warning = ratio < offer.ratio + 50;
+  $: warning = ratio < offer.collateral.ratio + 50;
 </script>
 
 <!-- form -->

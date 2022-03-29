@@ -17,7 +17,7 @@
     !(
       contract.collateral.quantity > 0 &&
       contract.collateral.value > 0 &&
-      contract.ratio >= offer.ratio &&
+      contract.ratio >= offer.collateral.ratio &&
       contract.synthetic.quantity > 0 &&
       contract.synthetic.value > 0
     );

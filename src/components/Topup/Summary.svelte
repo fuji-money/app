@@ -5,7 +5,7 @@
 
   export let contract: Contract;
 
-  $: ratio = getContractRatio(contract) * 100;
+  $: ratio = getContractRatio(contract);
   $: state = getContractState(contract);
 </script>
 

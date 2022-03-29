@@ -38,14 +38,14 @@ export const prettyAgo = (timestamp: number): string => {
 // get contract ration
 export const getContractRatio = (contract: Contract): number => {
   const { collateral, synthetic } = contract;
-  return (collateral.value * collateral.quantity) / (synthetic.value * synthetic.quantity);
+  return (collateral.value * collateral.quantity) / (synthetic.value * synthetic.quantity) * 100;
 };
 
 // get ratio state
-export const getRatioState = (ratio: number): ContractState => {
-  if (ratio >= 2) return ContractState.Safe;
-  if (ratio >= 1.75) return ContractState.Unsafe;
-  if (ratio >= 1.5) return ContractState.Critical;
+export const getRatioState = (ratio: number, collateral: Asset): ContractState => {
+  if (ratio >= collateral.ratio + 50) return ContractState.Safe;
+  if (ratio >= collateral.ratio + 25) return ContractState.Unsafe;
+  if (ratio >= collateral.ratio) return ContractState.Critical;
   return ContractState.Liquidated;
 };
 
@@ -53,7 +53,7 @@ export const getRatioState = (ratio: number): ContractState => {
 export const getContractState = (contract: Contract): ContractState => {
   if (!contract) return null;
   const ratio = getContractRatio(contract);
-  return getRatioState(ratio);
+  return getRatioState(ratio, contract.collateral);
 };
 
 // open modal

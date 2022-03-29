@@ -31,7 +31,7 @@
   // event handler
   const change = (e: any) => {
     // ratio can't go under the minumum offer ratio
-    ratio = e.target.value > offer.ratio ? e.target.value : offer.ratio;
+    ratio = e.target.value > offer.collateral.ratio ? e.target.value : offer.collateral.ratio;
     // update range bar colors
     updateColors();
   };
@@ -42,12 +42,12 @@
     updateColors();
   })
 
-  $: state = getRatioState(ratio/100);
+  $: state = getRatioState(ratio, offer.collateral);
 </script>
 
 <p class="range-legend">
-  <span id="min">min: {offer.ratio}%</span>
-  <span id="safe">safe: {offer.ratio + 50}%</span>
+  <span id="min">min: {offer.collateral.ratio}%</span>
+  <span id="safe">safe: {offer.collateral.ratio + 50}%</span>
 </p>
 <div class="level">
   <div class="level-left">
