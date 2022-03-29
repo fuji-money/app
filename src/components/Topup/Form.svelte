@@ -34,7 +34,7 @@
 <div class="white-slip has-pink-border">
   <h3><span>1</span>Your present contract</h3>
   <Summary {contract} />
-  <h3><span>2</span>Increase your collateral</h3>
+  <h3><span>2</span>How much collateral do you want to add?</h3>
   <Collateral bind:collateral />
   <h3><span>3</span>Confirm new values</h3>
   <Summary contract={future} />
