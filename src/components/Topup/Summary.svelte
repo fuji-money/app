@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Contract } from '../../lib/types';
-  import { getContractState, prettyAmount, prettyNumber, prettyAsset, getContractRatio } from '../../lib/utils';
+  import { getContractState, prettyAmount, prettyAsset, getContractRatio, prettyRatio } from '../../lib/utils';
   import PrettyState from '../PrettyState.svelte';
 
   export let contract: Contract;
@@ -20,7 +20,7 @@
   <div class="level-item has-text-centered">
     <div>
       <p>Ratio</p>
-      <p>{prettyNumber(ratio, 2, 2)}%</p>
+      <p>{prettyRatio(ratio)}%</p>
       <p><PrettyState {state} /></p>
     </div>
   </div>

@@ -18,8 +18,8 @@
   // the new intended contract (the form state)
   let contract: Contract;
 
-  let collateral = offer.collateral;
-  let synthetic = offer.synthetic;
+  let collateral = { ...offer.collateral, quantity: 0 };
+  let synthetic = { ...offer.synthetic, quantity: 0 };
   let ratio = offer.collateral.ratio;
 
   const options = {
@@ -32,12 +32,12 @@
   const create = () => dispatch('create', contract);
 
   // update collateral quantity to reflect new ratio
-  const calcQuantity = (_collateral: Asset, _synthetic: Asset, _ratio: number) => (
-    _synthetic?.quantity * _synthetic?.value * _ratio / 100 / _collateral?.value
+  const calcQuantity = (_synthetic: Asset, _ratio: number) => (
+    _synthetic.quantity * _synthetic.value * _ratio / 100 / collateral.value
   );
 
   $: contract = { collateral, synthetic };
-  $: collateral = { ...collateral, quantity: calcQuantity(collateral, synthetic, ratio) };
+  $: collateral = { ...collateral, quantity: calcQuantity(synthetic, ratio) };
   $: exception = notEnoughFunds({ asset: collateral, assets });
   $: warning = ratio < offer.collateral.ratio + 50;
 </script>
@@ -60,7 +60,7 @@
 <!-- additional info -->
 <Info {contract} />
 <!-- possible warnings -->
-<BorrowFee />
+<BorrowFee payout={offer.payout} />
 {#if warning}<RatioNotSafe />{/if}
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->

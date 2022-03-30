@@ -35,13 +35,14 @@ export const prettyAgo = (timestamp: number): string => {
   return `${seconds}s`;
 };
 
-// get contract ration
+export const prettyRatio = (ratio: number): number => parseFloat(ratio.toFixed(2));
+
+// get contract ratio
 export const getContractRatio = (contract: Contract): number => {
   const { collateral, synthetic } = contract;
   const collateralAmount = collateral.value * collateral.quantity;
   const syntheticAmount = synthetic.value * synthetic.quantity;
-  const ratio = collateralAmount / syntheticAmount * 100;
-  return parseFloat(ratio.toFixed(2));
+  return collateralAmount / syntheticAmount * 100;
 };
 
 // get ratio state

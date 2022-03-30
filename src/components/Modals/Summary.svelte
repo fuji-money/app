@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Contract } from '../../lib/types';
-  import { getContractRatio, prettyNumber } from '../../lib/utils';
+  import { getContractRatio, prettyNumber, prettyRatio } from '../../lib/utils';
 
   export let contract: Contract;
 </script>
@@ -18,7 +18,7 @@
   </tr>
   <tr>
     <td>Ratio</td>
-    <td>{prettyNumber(getContractRatio(contract), 0, 2)}</td>
+    <td>{prettyRatio(getContractRatio(contract))}</td>
     <td>%</td>
   </tr>
 </table>

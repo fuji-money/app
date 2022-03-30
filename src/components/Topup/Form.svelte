@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { Asset, Contract } from '../../lib/types';
-  import { getContractRatio, notEnoughFunds } from '../../lib/utils';
+  import { getContractRatio, notEnoughFunds, prettyRatio } from '../../lib/utils';
   import Button from './Form/Button.svelte';
   import Summary from './Summary.svelte';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
@@ -14,7 +14,7 @@
   let extraCollateral = { ...contract.collateral, quantity: 0 };
   let ratio = getContractRatio(contract);
   let options = {
-    min: ratio,
+    min: prettyRatio(ratio),
     safe: contract.collateral.ratio + 50,
   }
 

@@ -108,8 +108,3 @@ export async function getBalance({ assets, contracts }): Promise<Asset[]> {
     return { ...asset, quantity };
   });
 }
-
-export function getAssetBalance({ balance, ticker }): number {
-  if (!balance) return null;
-  return balance.find((asset: Asset) => asset.ticker === ticker)?.quantity || 0;
-}

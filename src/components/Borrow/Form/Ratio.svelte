@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { ContractState } from "../../../lib/types";
-  import { getRatioState, prettyNumber } from "../../../lib/utils";
+  import { getRatioState, prettyRatio } from "../../../lib/utils";
 
   export let min: number;
   export let safe: number;
@@ -58,8 +58,8 @@
 </script>
 
 <p class="range-legend">
-  <span on:click={easterEgg} id="min">min: {prettyNumber(min, 0, 0)}%</span>
-  <span on:click={easterEgg} id="safe">safe: {prettyNumber(safe, 0, 0)}%</span>
+  <span on:click={easterEgg} id="min">min: {prettyRatio(min)}%</span>
+  <span on:click={easterEgg} id="safe">safe: {prettyRatio(safe)}%</span>
 </p>
 <div class="level">
   <div class="level-left">
