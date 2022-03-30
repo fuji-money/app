@@ -11,6 +11,6 @@
 </script>
 
 <h1 class="is-sr-only">Dashboard</h1>
-<Assets {assets} {wallet} on:borrow on:filter on:trade  />
+<Assets {assets} on:borrow on:filter on:trade />
 <Contracts {contracts} {wallet} on:redeem on:topup />
 <Activities {activities} {wallet} />

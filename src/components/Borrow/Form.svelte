@@ -10,8 +10,9 @@
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
   import RatioNotSafe from '../Notifications/RatioNotSafe.svelte';
   import BorrowFee from '../Notifications/BorrowFee.svelte';
+import Activities from '../Dashboard/Activities.svelte';
 
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let offer: Offer;
   export let wallet: boolean;
 
@@ -21,7 +22,11 @@
   let collateral = offer.collateral;
   let synthetic = offer.synthetic;
   let ratio = offer.collateral.ratio;
-  let minRatio = offer.collateral.ratio;
+
+  const options = {
+    min: offer.collateral.ratio,
+    safe: offer.collateral.ratio + 50,
+  }
 
   // event dispatcher
   const dispatch = createEventDispatcher();
@@ -34,8 +39,8 @@
 
   $: contract = { collateral, synthetic };
   $: collateral = { ...collateral, quantity: calcQuantity(collateral, synthetic, ratio) };
-  $: exception = notEnoughFunds({ asset: collateral, balance });
-  $: warning = ratio < minRatio + 50;
+  $: exception = notEnoughFunds({ asset: collateral, assets });
+  $: warning = ratio < offer.collateral.ratio + 50;
 </script>
 
 <!-- form -->
@@ -47,7 +52,7 @@
   <!-- step 2 / choose ratio -->
   <h3><span>2</span>Set a collateral ratio</h3>
   <p class="intro">Lorem ipsum dolor</p>
-  <Ratio bind:ratio {minRatio} />
+  <Ratio bind:ratio {...options} />
   <!-- step 3 / confirm borrow amount -->
   <h3><span>3</span>Confirm collateral amount</h3>
   <p class="intro">Lorem ipsum dolor</p>
@@ -60,7 +65,7 @@
 {#if warning}<RatioNotSafe />{/if}
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
-<Button on:click={create} {contract} {offer} {balance} {wallet} />
+<Button on:click={create} {assets} {contract} {offer} {wallet} />
 
 <style lang="scss">
   h3 {

@@ -7,9 +7,9 @@
   import FilterButton from "../Buttons/Filter.svelte";
 
   export let assets: Asset[];
-  export let wallet: boolean;
 
   $: loading = assets === undefined;
+  $: synthetics = assets?.filter((asset) => asset.isSynthetic);
 </script>
 
 <section>
@@ -20,26 +20,19 @@
       {#if !assets}
         <EmptyState type="assets" />
       {:else}
-        {#each assets as asset}
+        {#each synthetics as asset}
           <div class="white-slip row">
             <div class="columns level">
               <div class="column is-flex">
                 <img src="{asset.icon}" alt="asset logo">
                 <div class="synthetic is-gradient">
                   <p>{asset.name}</p>
-                  <p>
-                    {#if wallet}
-                      {prettyNumber(asset.quantity)}
-                    {/if}
-                    {asset.ticker}
-                  </p>
+                  <p>{prettyNumber(asset.quantity)} {asset.ticker}</p>
                 </div>
               </div>
               <div class="column">
                 <p class="amount is-gradient">
-                  {#if wallet}
-                    US ${prettyNumber(asset.quantity * asset.value)}
-                  {/if}
+                  US ${prettyNumber(asset.quantity * asset.value)}
                 </p>
               </div>
               <div class="column">

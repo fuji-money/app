@@ -2,17 +2,17 @@
   import type { Asset, Contract, Offer } from '../../../lib/types';
   import { getContractRatio, notEnoughFunds } from '../../../lib/utils';
 
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let contract: Contract;
   export let offer: Offer;
   export let wallet: boolean;
 
   $: disabled =
     !wallet ||
-    !balance ||
+    !assets ||
     !contract ||
     !offer ||
-    notEnoughFunds({ asset: contract.collateral, balance }) ||
+    notEnoughFunds({ asset: contract.collateral, assets }) ||
     !(
       contract.collateral.quantity > 0 &&
       contract.collateral.value > 0 &&

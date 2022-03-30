@@ -4,7 +4,7 @@
   import type { Asset, Offer } from '../lib/types';
 
   export let offer: Offer;
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let wallet: boolean;
 </script>
 
@@ -12,10 +12,10 @@
 <div class="row">
   <div class="columns">
     <div class="column is-8">
-      <Form {offer} {balance} {wallet} on:create />
+      <Form {offer} {assets} {wallet} on:create />
     </div>
     <div class="column is-4">
-      <Balance {balance} {wallet} on:connect />
+      <Balance {assets} {wallet} on:connect />
     </div>
   </div>
 </div>

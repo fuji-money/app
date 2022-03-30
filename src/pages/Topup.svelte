@@ -3,7 +3,7 @@
   import Form from '../components/Topup/Form.svelte';
   import type { Asset, Contract } from '../lib/types';
 
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let contract: Contract;
   export let wallet: boolean;
 </script>
@@ -12,10 +12,10 @@
 <div class="row">
   <div class="columns">
     <div class="column is-8">
-      <Form {contract} {balance} {wallet} on:increase />
+      <Form {assets} {contract} {wallet} on:increase />
     </div>
     <div class="column is-4">
-      <Balance {balance} {wallet} on:connect />
+      <Balance {assets} {wallet} on:connect />
     </div>
   </div>
 </div>

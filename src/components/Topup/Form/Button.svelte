@@ -3,13 +3,13 @@
 
   import { notEnoughFunds } from '../../../lib/utils';
 
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let extraCollateral: Asset;
   export let wallet: boolean;
 
   $: disabled =
     !wallet ||
-    notEnoughFunds({ asset: extraCollateral, balance }) ||
+    notEnoughFunds({ asset: extraCollateral, assets }) ||
     extraCollateral.quantity === 0;
 </script>
 

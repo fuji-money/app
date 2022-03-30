@@ -26,7 +26,6 @@
   let activities: Activity[];
   let asset: Asset;
   let assets: Asset[];
-  let balance: Asset[];
   let contract: Contract;
   let contracts: Contract[];
   let offer: Offer;
@@ -34,7 +33,7 @@
   let page = 'home';
   let ticker: Ticker;
   let marina: MarinaProvider;
-  let wallet = false;
+  let wallet = true;
 
   // after home, go to dashboard
   const advance = () => (page = 'dashboard');
@@ -92,14 +91,23 @@
   // show available exchanges in modal
   const trade = () => openModal('trade');
 
+  // BIG TODO
+  // Using dummy data from now, coming from a API:
+  // - change schema and url for correct API
+  // - get data from heuristic anaylisis to marina transactions
   onMount(async () => {
     try {
       marina = await detectProvider('marina');
     } catch (_) {}
+    // get assets from API
     assets = await getAssets();
+    // get contracts from API - TODO
     contracts = await getContracts({ assets });
+    // get available offers from API
     offers = await getOffers({ assets });
-    balance = await getBalance({ assets, contracts });
+    // add balance to assets - TODO
+    assets = await getBalance({ assets, contracts });
+    // get activities - TODO
     activities = await getActivities({ contracts, assets });
   });
 </script>
@@ -126,9 +134,9 @@
       {:else if page === 'borrow'}
         <Offers {offers} {ticker} {wallet} on:borrow={borrow} on:connect={connect} />
       {:else if page === 'create'}
-        <Create {offer} {balance} {wallet} on:create={create} on:connect={connect} />
+        <Create {assets} {offer} {wallet} on:create={create} on:connect={connect} />
       {:else if page === 'topup'}
-        <Topup {contract} {balance} {wallet} on:increase={increase} on:connect={connect} />
+        <Topup {assets} {contract} {wallet} on:increase={increase} on:connect={connect} />
       {/if}
     </div>
   </main>

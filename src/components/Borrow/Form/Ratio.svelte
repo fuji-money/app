@@ -3,7 +3,8 @@
   import type { ContractState } from "../../../lib/types";
   import { getRatioState, prettyNumber } from "../../../lib/utils";
 
-  export let minRatio: number;
+  export let min: number;
+  export let safe: number;
   export let ratio: number;
 
   let state: ContractState;
@@ -20,21 +21,32 @@
   // put range labels on correct coordinates,
   // runs only once, on component mount
   const updateLabels = () => {
-    const min = document.getElementById('min');
-    const safe = document.getElementById('safe');
-    if (!min || !safe || !ratio) return false;
-    const left = ratio - 25; // 25 = 50/2 with 50 = safe delta
-    min.style.left = `${left}px`;
-    safe.style.left = `${left}px`;
+    const _min = document.getElementById('min');
+    const _safe = document.getElementById('safe');
+    if (!_min || !_safe || !ratio) return;
+    let left = ratio - 25; // 25 = 50/2 with 50 = safe delta
+    _min.style.left = `${left}px`;
+    if (safe >= min + 40) {
+      _safe.style.left = `${left}px`;
+    } else {
+      _safe.style.visibility = 'hidden';
+    }
   };
 
   // event handler
   const change = (e: any) => {
     // ratio can't go under the minumum ratio
-    ratio = e.target.value > minRatio ? e.target.value : minRatio;
+    ratio = e.target.value > min ? e.target.value : min;
     // update range bar colors
     updateColors();
   };
+
+  // :-)
+  const easterEgg = (e: any) => {
+    if (e.target.id === 'min') ratio = min;
+    if (e.target.id === 'safe') ratio = safe;
+    updateColors();
+  }
 
   // on component mount, update labels positioning and range bar colors
   onMount(() => {
@@ -42,12 +54,12 @@
     updateColors();
   })
 
-  $: state = getRatioState(ratio, minRatio);
+  $: state = getRatioState(ratio, min);
 </script>
 
 <p class="range-legend">
-  <span id="min">min: {prettyNumber(minRatio, 0, 0)}%</span>
-  <span id="safe">safe: {prettyNumber(minRatio + 50, 0, 0)}%</span>
+  <span on:click={easterEgg} id="min">min: {prettyNumber(min, 0, 0)}%</span>
+  <span on:click={easterEgg} id="safe">safe: {prettyNumber(safe, 0, 0)}%</span>
 </p>
 <div class="level">
   <div class="level-left">

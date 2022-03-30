@@ -3,12 +3,12 @@
   import { prettyNumber } from '../lib/utils';
   import ConnectButton from './Buttons/Connect.svelte';
 
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let wallet: boolean;
 </script>
 
 <div class="white-slip has-pink-border">
-  {#if balance}
+  {#if assets}
     <h3>Your balance</h3>
     {#if !wallet}
       <ConnectButton {wallet} on:connect />
@@ -23,7 +23,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each balance as asset}
+          {#each assets as asset}
             <tr>
               <td>{asset.ticker}</td>
               <td>{prettyNumber(asset.quantity)}</td>

@@ -46,7 +46,7 @@ export interface Offer {
   quantity: number;
   ratio: number;
   synthetic: Asset;
-  txid: string;
+  id: string;
 }
 
 export type Ticker = string;

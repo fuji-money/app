@@ -1,9 +1,9 @@
-import { Activity, ActivityType, Asset, Contract, Offer } from './types';
+import { Activity, ActivityType, Asset, Contract, Offer, Ticker } from './types';
 import { getRandomActivities } from './random';
 import { getContractState } from './utils';
 
 export function findAsset({ ticker, assets }) {
-  return assets.find((asset: Asset) => asset.ticker === ticker);
+  return assets?.find((asset: Asset) => asset.ticker === ticker);
 }
 
 async function fetchData(entity = '') {
@@ -24,7 +24,25 @@ export async function getActivities({ assets, contracts }): Promise<Activity[]> 
 }
 
 export async function getAssets(): Promise<Asset[]> {
-  return await fetchData('assets');
+  const assets = await fetchData('assets');
+  const getIcon = (ticker: Ticker) => {
+    switch (ticker) {
+      case 'LBTC':
+        return '/images/assets/lbtc.svg';
+      case 'USDt':
+        return '/images/assets/usdt.svg';
+      case 'fUSD':
+        return '/images/assets/fusd.svg';
+      case 'fBMN':
+        return '/images/assets/fbmn.svg';
+      default:
+        return '/images/assets/fusd.svg';
+    }
+  };
+  return assets.map((asset) => {
+    asset.icon = getIcon(asset.ticker);
+    return asset;
+  });
 }
 
 export async function getContracts({ assets }): Promise<Contract[]> {
@@ -89,4 +107,9 @@ export async function getBalance({ assets, contracts }): Promise<Asset[]> {
     const quantity = collateral[ticker] || synthetic[ticker] || 0;
     return { ...asset, quantity };
   });
+}
+
+export function getAssetBalance({ balance, ticker }): number {
+  if (!balance) return null;
+  return balance.find((asset: Asset) => asset.ticker === ticker)?.quantity || 0;
 }

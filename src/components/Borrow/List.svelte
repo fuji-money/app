@@ -15,11 +15,11 @@
     if (!filter) return offers;
     const regexp = new RegExp(filter, 'gi');
     return offers.filter(
-      ({ synthetic, collateral, txid }) =>
+      ({ synthetic, collateral, id }) =>
         synthetic.name.match(regexp) ||
         synthetic.ticker.match(regexp) ||
         collateral.ratio.toString().match(regexp) ||
-        txid.match(regexp)
+        id.match(regexp)
     );
   };
 

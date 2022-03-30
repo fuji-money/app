@@ -38,7 +38,10 @@ export const prettyAgo = (timestamp: number): string => {
 // get contract ration
 export const getContractRatio = (contract: Contract): number => {
   const { collateral, synthetic } = contract;
-  return (collateral.value * collateral.quantity) / (synthetic.value * synthetic.quantity) * 100;
+  const collateralAmount = collateral.value * collateral.quantity;
+  const syntheticAmount = synthetic.value * synthetic.quantity;
+  const ratio = collateralAmount / syntheticAmount * 100;
+  return parseFloat(ratio.toFixed(2));
 };
 
 // get ratio state
@@ -61,9 +64,8 @@ export const openModal = (id: string) => {
   document.getElementById(`${id}-modal`)?.classList.add('is-active');
 };
 
-export const notEnoughFunds = ({ asset, balance }) => {
+export const notEnoughFunds = ({ asset, assets }) => {
   const ticker = asset.ticker;
-  const assets = balance;
   const available = findAsset({ ticker, assets })?.quantity;
   return available < asset.quantity;
 };

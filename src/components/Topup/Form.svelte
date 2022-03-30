@@ -1,19 +1,22 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { Asset, Contract } from '../../lib/types';
-  import { getContractRatio, notEnoughFunds } from '../../lib/utils';
+  import { getContractRatio, notEnoughFunds, prettyNumber } from '../../lib/utils';
   import Button from './Form/Button.svelte';
   import Summary from './Summary.svelte';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
   import Ratio from '../Borrow/Form/Ratio.svelte';
 
-  export let balance: Asset[];
+  export let assets: Asset[];
   export let contract: Contract;
   export let wallet: boolean;
 
   let extraCollateral = { ...contract.collateral, quantity: 0 };
-  let minRatio = getContractRatio(contract);
-  let ratio = minRatio;
+  let ratio = getContractRatio(contract);
+  let options = {
+    min: ratio,
+    safe: contract.collateral.ratio + 50,
+  }
 
   const dispatch = createEventDispatcher();
   const topup = () => dispatch('increase', extraCollateral);
@@ -36,7 +39,7 @@
 
   $: future = getContractWithExtra(extraCollateral);
   $: extraCollateral = { ...contract.collateral, quantity: calcQuantity(ratio) };
-  $: exception = notEnoughFunds({ asset: extraCollateral, balance });
+  $: exception = notEnoughFunds({ asset: extraCollateral, assets });
 </script>
 
 <!-- form -->
@@ -44,14 +47,14 @@
   <h3><span>1</span>Your present contract</h3>
   <Summary {contract} />
   <h3><span>2</span>How much collateral do you want to add?</h3>
-  <Ratio bind:ratio {minRatio} />
+  <Ratio bind:ratio {...options} />
   <h3><span>3</span>Confirm new values</h3>
   <Summary contract={future} />
 </div>
 <!-- possible warnings -->
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
-<Button on:click={topup} {balance} {extraCollateral} {wallet} />
+<Button on:click={topup} {assets} {extraCollateral} {wallet} />
 
 <style lang="scss">
   h3 {

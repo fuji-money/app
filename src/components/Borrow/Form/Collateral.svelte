@@ -3,6 +3,8 @@
   import { prettyNumber } from "../../../lib/utils";
 
   export let collateral: Asset;
+
+  $: quantity = collateral.quantity || 0;
 </script>
 
 
@@ -15,7 +17,7 @@
   </div>
   <div class="level-right">
     <div class="level-item">
-      <p class="mr-3">{prettyNumber(collateral.quantity)}</p>
+      <p class="mr-3">{prettyNumber(quantity)}</p>
     </div>
   </div>
 </div>
