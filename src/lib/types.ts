@@ -1,15 +1,12 @@
-export interface Token {
+export interface Asset {
   icon: string;
+  id: string;
   isSynthetic: boolean;
   name: string;
+  quantity?: number;
   ratio?: number;
   ticker: string;
   value: number;
-}
-
-export interface Asset extends Token {
-  quantity?: number;
-  offer?: Offer;
 }
 
 export enum ContractState {
@@ -45,10 +42,10 @@ export interface Activity {
 }
 
 export interface Offer {
-  collateral: Token;
+  collateral: Asset;
   quantity: number;
   ratio: number;
-  synthetic: Token;
+  synthetic: Asset;
   txid: string;
 }
 

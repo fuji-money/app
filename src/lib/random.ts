@@ -1,9 +1,9 @@
-import { getContracts, getTokens } from './fetch';
+import { getAssets, getContracts } from './fetch';
 import { Activity, ActivityType, Contract } from './types';
 
-async function randomContract({ contracts, tokens }): Promise<Contract> {
-  tokens ||= await getTokens();
-  contracts ||= await getContracts({ tokens });
+async function randomContract({ contracts, assets }): Promise<Contract> {
+  assets ||= await getAssets();
+  contracts ||= await getContracts({ assets });
   const randomIndex = Math.floor(Math.random() * contracts.length);
   return contracts[randomIndex];
 }
@@ -32,15 +32,15 @@ function randomTxid(): string {
   return txid;
 }
 
-export async function getRandomActivities({ contracts, tokens, type }): Promise<Activity[]> {
+export async function getRandomActivities({ contracts, assets, type }): Promise<Activity[]> {
   if (type === ActivityType.Liquidated) return [];
-  tokens ||= await getTokens();
-  contracts ||= await getContracts({ tokens });
+  assets ||= await getAssets();
+  contracts ||= await getContracts({ assets });
   let contract: Contract;
   let message: string;
   const activities: Activity[] = [];
   for (let i = 0; i < 5; i++) {
-    contract = await randomContract({ contracts, tokens });
+    contract = await randomContract({ assets, contracts });
     message = `Contract ${type.toLowerCase()} with success - ${randomMessage()}`;
     activities.push({
       icon: contract.synthetic.icon,

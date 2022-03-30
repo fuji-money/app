@@ -12,14 +12,13 @@
   import Navbar from './components/Navbar.svelte';
   import { onMount } from 'svelte';
   import { openModal } from './lib/utils';
-  import type { Activity, Asset, Contract, Offer, Ticker, Token } from './lib/types';
+  import type { Activity, Asset, Contract, Offer, Ticker } from './lib/types';
   import {
     getActivities,
     getAssets,
     getBalance,
     getContracts,
     getOffers,
-    getTokens,
   } from './lib/fetch';
   import { detectProvider, MarinaProvider } from 'marina-provider';
   import Breadcrumbs from './components/Breadcrumbs.svelte';
@@ -34,7 +33,6 @@
   let offers: Offer[];
   let page = 'home';
   let ticker: Ticker;
-  let tokens: Token[];
   let marina: MarinaProvider;
   let wallet = false;
 
@@ -98,12 +96,11 @@
     try {
       marina = await detectProvider('marina');
     } catch (_) {}
-    tokens = await getTokens();
-    contracts = await getContracts({ tokens });
-    offers = await getOffers({ tokens });
-    assets = await getAssets({ contracts, offers, tokens });
-    balance = await getBalance({ assets, tokens });
-    activities = await getActivities({ contracts, tokens });
+    assets = await getAssets();
+    contracts = await getContracts({ assets });
+    offers = await getOffers({ assets });
+    balance = await getBalance({ assets, contracts });
+    activities = await getActivities({ contracts, assets });
   });
 </script>
 

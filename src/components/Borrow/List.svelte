@@ -57,7 +57,7 @@
     <div class="white-slip row">
       <div class="columns level">
         <div class="column is-flex is-2">
-          <img src={offer.synthetic.icon} alt="token logo" />
+          <img src={offer.synthetic.icon} alt="asset logo" />
           <div class="synthetic is-gradient">
             <p>{offer.synthetic.name}</p>
             <p>{offer.synthetic.ticker}</p>
