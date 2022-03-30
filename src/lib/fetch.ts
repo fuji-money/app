@@ -73,7 +73,7 @@ export async function getContract({ contracts, id, assets }): Promise<Contract> 
 export async function getOffers({ assets }): Promise<Offer[]> {
   assets ||= await getAssets();
   const offers = await fetchData('offers');
-  return offers.map((offer) => {
+  return offers.map((offer: Offer) => {
     const collateral = findAsset({ ticker: offer.collateral, assets });
     const synthetic = findAsset({ ticker: offer.synthetic, assets });
     return { ...offer, collateral, synthetic };
@@ -84,7 +84,7 @@ export async function getOffer({ offers, id, assets }): Promise<Offer | null> {
   if (!id) return null;
   assets ||= await getAssets();
   offers ||= await getOffers({ assets });
-  return offers.find((offer) => offer.id === id);
+  return offers.find((offer: Offer) => offer.id === id);
 }
 
 // for each asset, return asset with quantity

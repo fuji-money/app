@@ -10,7 +10,6 @@
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
   import RatioNotSafe from '../Notifications/RatioNotSafe.svelte';
   import BorrowFee from '../Notifications/BorrowFee.svelte';
-import Activities from '../Dashboard/Activities.svelte';
 
   export let assets: Asset[];
   export let offer: Offer;

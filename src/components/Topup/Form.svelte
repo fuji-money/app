@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { Asset, Contract } from '../../lib/types';
-  import { getContractRatio, notEnoughFunds, prettyNumber } from '../../lib/utils';
+  import { getContractRatio, notEnoughFunds } from '../../lib/utils';
   import Button from './Form/Button.svelte';
   import Summary from './Summary.svelte';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';

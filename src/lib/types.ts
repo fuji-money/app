@@ -42,11 +42,12 @@ export interface Activity {
 }
 
 export interface Offer {
+  id: string;
   collateral: Asset;
+  payout: number;
   quantity: number;
   ratio: number;
   synthetic: Asset;
-  id: string;
 }
 
 export type Ticker = string;
