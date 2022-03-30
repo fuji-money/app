@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getOffer } from '../../lib/fetch';
-  import type { Asset, Contract, Offer, Token } from '../../lib/types';
-  import Spinner from '../Spinner.svelte';
+  import type { Asset, Contract, Offer } from '../../lib/types';
   import { createEventDispatcher } from 'svelte';
   import Button from './Form/Button.svelte';
   import Info from './Form/Info.svelte';
@@ -18,14 +15,13 @@
   export let offer: Offer;
   export let wallet: boolean;
 
-  let loading = true;
-
   // the new intended contract (the form state)
   let contract: Contract;
 
   let collateral = offer.collateral;
   let synthetic = offer.synthetic;
   let ratio = offer.collateral.ratio;
+  let minRatio = offer.collateral.ratio;
 
   // event dispatcher
   const dispatch = createEventDispatcher();
@@ -36,10 +32,10 @@
     _synthetic?.quantity * _synthetic?.value * _ratio / 100 / _collateral?.value
   );
 
-  $: contract = { collateral, synthetic, ratio };
+  $: contract = { collateral, synthetic };
   $: collateral = { ...collateral, quantity: calcQuantity(collateral, synthetic, ratio) };
   $: exception = notEnoughFunds({ asset: collateral, balance });
-  $: warning = ratio < offer.collateral.ratio + 50;
+  $: warning = ratio < minRatio + 50;
 </script>
 
 <!-- form -->
@@ -51,7 +47,7 @@
   <!-- step 2 / choose ratio -->
   <h3><span>2</span>Set a collateral ratio</h3>
   <p class="intro">Lorem ipsum dolor</p>
-  <Ratio bind:ratio {offer} />
+  <Ratio bind:ratio {minRatio} />
   <!-- step 3 / confirm borrow amount -->
   <h3><span>3</span>Confirm collateral amount</h3>
   <p class="intro">Lorem ipsum dolor</p>

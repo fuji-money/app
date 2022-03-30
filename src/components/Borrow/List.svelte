@@ -2,7 +2,6 @@
   import type { Ticker, Offer } from '../../lib/types';
   import { prettyNumber } from '../../lib/utils';
   import EmptyState from '../EmptyState.svelte';
-  import Spinner from '../Spinner.svelte';
   import BorrowButton from '../Buttons/Borrow.svelte';
   import ConnectButton from '../Buttons/Connect.svelte';
 
@@ -16,16 +15,15 @@
     if (!filter) return offers;
     const regexp = new RegExp(filter, 'gi');
     return offers.filter(
-      ({ synthetic, ratio, txid }) =>
+      ({ synthetic, collateral, txid }) =>
         synthetic.name.match(regexp) ||
         synthetic.ticker.match(regexp) ||
-        ratio.toString().match(regexp) ||
+        collateral.ratio.toString().match(regexp) ||
         txid.match(regexp)
     );
   };
 
   $: filteredOffers = filterOffers(filter);
-  $: loading = offers === undefined;
 </script>
 
 <input
@@ -35,9 +33,7 @@
   bind:value={filter}
 />
 
-{#if loading}
-  <Spinner />
-{:else if filteredOffers.length === 0}
+{#if filteredOffers?.length === 0}
   <EmptyState type="offers" />
 {:else}
   <div class="row mt-6 mb-0 pr-4 pl-4">
@@ -64,11 +60,11 @@
           <img src={offer.synthetic.icon} alt="token logo" />
           <div class="synthetic is-gradient">
             <p>{offer.synthetic.name}</p>
-            <p>{prettyNumber(offer.quantity)} {offer.synthetic.ticker}</p>
+            <p>{offer.synthetic.ticker}</p>
           </div>
         </div>
         <div class="column is-2">
-          <p class="amount is-gradient">US ${prettyNumber(offer.quantity * offer.synthetic.value)}</p>
+          <p class="amount is-gradient">US ${prettyNumber(offer.synthetic.value)}</p>
         </div>
         <div class="column is-2">
           <p class="is-gradient">{`>${offer.collateral.ratio}%`}</p>

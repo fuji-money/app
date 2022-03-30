@@ -6,7 +6,7 @@ export function findAsset({ ticker, assets }) {
   return assets.find((asset: Asset) => asset.ticker === ticker);
 }
 
-function findToken({ ticker, tokens }) {
+function findToken({ ticker, tokens }): Token {
   return tokens.find((token: Token) => token.ticker === ticker);
 }
 

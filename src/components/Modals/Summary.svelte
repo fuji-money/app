@@ -18,7 +18,7 @@
   </tr>
   <tr>
     <td>Ratio</td>
-    <td>{prettyNumber(getContractRatio(contract) * 100, 0, 2)}</td>
+    <td>{prettyNumber(getContractRatio(contract), 0, 2)}</td>
     <td>%</td>
   </tr>
 </table>

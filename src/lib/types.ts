@@ -22,7 +22,6 @@ export enum ContractState {
 
 export interface Contract {
   collateral: Asset;
-  ratio: number;
   synthetic: Asset;
   createdAt?: number;
   state?: ContractState;

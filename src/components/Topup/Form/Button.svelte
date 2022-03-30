@@ -4,13 +4,13 @@
   import { notEnoughFunds } from '../../../lib/utils';
 
   export let balance: Asset[];
-  export let collateral: Asset;
+  export let extraCollateral: Asset;
   export let wallet: boolean;
 
   $: disabled =
     !wallet ||
-    notEnoughFunds({ asset: collateral, balance }) ||
-    collateral.quantity === 0;
+    notEnoughFunds({ asset: extraCollateral, balance }) ||
+    extraCollateral.quantity === 0;
 </script>
 
 <div class="has-text-centered">

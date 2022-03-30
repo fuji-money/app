@@ -42,10 +42,10 @@ export const getContractRatio = (contract: Contract): number => {
 };
 
 // get ratio state
-export const getRatioState = (ratio: number, collateral: Asset): ContractState => {
-  if (ratio >= collateral.ratio + 50) return ContractState.Safe;
-  if (ratio >= collateral.ratio + 25) return ContractState.Unsafe;
-  if (ratio >= collateral.ratio) return ContractState.Critical;
+export const getRatioState = (ratio: number, minRatio: number): ContractState => {
+  if (ratio >= minRatio + 50) return ContractState.Safe;
+  if (ratio >= minRatio + 25) return ContractState.Unsafe;
+  if (ratio >= minRatio) return ContractState.Critical;
   return ContractState.Liquidated;
 };
 
@@ -53,7 +53,7 @@ export const getRatioState = (ratio: number, collateral: Asset): ContractState =
 export const getContractState = (contract: Contract): ContractState => {
   if (!contract) return null;
   const ratio = getContractRatio(contract);
-  return getRatioState(ratio, contract.collateral);
+  return getRatioState(ratio, contract.collateral.ratio);
 };
 
 // open modal

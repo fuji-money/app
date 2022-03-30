@@ -41,7 +41,7 @@
     {#if loading}
       <Spinner />
     {:else}
-      {#if filteredActivities.length === 0}
+      {#if filteredActivities?.length === 0}
         <EmptyState type="activities" />
       {:else}
         <div class="activity-list">

@@ -39,7 +39,7 @@
     <EmptyState type="wallet" />
   {:else if loading}
     <Spinner />
-  {:else if filteredContracts.length === 0}
+  {:else if filteredContracts?.length === 0}
     <EmptyState type={'contracts'} />
   {:else}
     {#each filteredContracts as contract}

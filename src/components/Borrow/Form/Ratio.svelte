@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ContractState, Offer } from "../../../lib/types";
-  import { getRatioState } from "../../../lib/utils";
+  import type { ContractState } from "../../../lib/types";
+  import { getRatioState, prettyNumber } from "../../../lib/utils";
 
-  export let offer: Offer;
+  export let minRatio: number;
   export let ratio: number;
 
   let state: ContractState;
@@ -30,8 +30,8 @@
 
   // event handler
   const change = (e: any) => {
-    // ratio can't go under the minumum offer ratio
-    ratio = e.target.value > offer.collateral.ratio ? e.target.value : offer.collateral.ratio;
+    // ratio can't go under the minumum ratio
+    ratio = e.target.value > minRatio ? e.target.value : minRatio;
     // update range bar colors
     updateColors();
   };
@@ -42,12 +42,12 @@
     updateColors();
   })
 
-  $: state = getRatioState(ratio, offer.collateral);
+  $: state = getRatioState(ratio, minRatio);
 </script>
 
 <p class="range-legend">
-  <span id="min">min: {offer.collateral.ratio}%</span>
-  <span id="safe">safe: {offer.collateral.ratio + 50}%</span>
+  <span id="min">min: {prettyNumber(minRatio, 0, 0)}%</span>
+  <span id="safe">safe: {prettyNumber(minRatio + 50, 0, 0)}%</span>
 </p>
 <div class="level">
   <div class="level-left">

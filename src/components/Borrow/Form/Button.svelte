@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Asset, Contract, Offer } from '../../../lib/types';
-
-  import { notEnoughFunds } from '../../../lib/utils';
+  import { getContractRatio, notEnoughFunds } from '../../../lib/utils';
 
   export let balance: Asset[];
   export let contract: Contract;
@@ -17,7 +16,7 @@
     !(
       contract.collateral.quantity > 0 &&
       contract.collateral.value > 0 &&
-      contract.ratio >= offer.collateral.ratio &&
+      getContractRatio(contract) >= offer.collateral.ratio &&
       contract.synthetic.quantity > 0 &&
       contract.synthetic.value > 0
     );
