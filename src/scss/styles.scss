@@ -265,6 +265,12 @@ main {
   h3 {
     color: #6b1d9c;
   }
+  p.confirm {
+    color: #000;
+    font-size: .9rem;
+    font-weight: 700;
+    margin-top: 2rem;
+  }
   .modal-content {
     .box {
       background: linear-gradient(180deg, #FFFBF8 0%, #FFEAE5 100%);

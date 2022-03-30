@@ -5,35 +5,40 @@
   export let contract: Contract;
 </script>
 
-<table class="table">
-  <tr>
-    <td>Borrow</td>
-    <td>{prettyNumber(contract.synthetic.quantity)}</td>
-    <td>{contract.synthetic.ticker}</td>
-  </tr>
-  <tr>
-    <td>Collateral</td>
-    <td>{prettyNumber(contract.collateral.quantity)}</td>
-    <td>{contract.collateral.ticker}</td>
-  </tr>
-  <tr>
-    <td>Ratio</td>
-    <td>{prettyRatio(getContractRatio(contract))}</td>
-    <td>%</td>
-  </tr>
-</table>
+<div class="summary-line has-pink-border">
+  <p>Borrow</p>
+  <p class="is-gradient">
+    {prettyNumber(contract.synthetic.quantity)}
+    {contract.synthetic.ticker}
+  </p>
+</div>
+
+<div class="summary-line has-pink-border">
+  <p>Collateral</p>
+  <p class="is-gradient">
+    {prettyNumber(contract.collateral.quantity)}
+    {contract.collateral.ticker}
+  </p>
+</div>
+
+<div class="summary-line has-pink-border">
+  <p>Ratio</p>
+  <p class="is-gradient">
+    {prettyRatio(getContractRatio(contract))}%
+  </p>
+</div>
 
 <style lang="scss">
-  table {
-    margin: 10px auto 20px auto;
-    tr {
-      text-align: left;
-      td {
-        padding: 0 10px;
-      }
-      td:nth-child(2) {
-        text-align: right;
-      }
+  .summary-line {
+    background-color: #fff;
+    display: flex;
+    font-weight: 700;
+    justify-content: space-between;
+    padding: .7rem 3rem;
+    max-width: 400px;
+    margin: 2px auto;
+    p {
+      margin: 0;
     }
   }
 </style>

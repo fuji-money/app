@@ -9,42 +9,44 @@
   $: state = getContractState(contract);
 </script>
 
-<div class="level">
-  <div class="level-item has-text-centered">
-    <div>
-      <p>Synthetic</p>
-      <p>{prettyAsset(contract.synthetic)}</p>
-      <p>{prettyAmount(contract.synthetic)}</p>
-    </div>
-  </div>
-  <div class="level-item has-text-centered">
-    <div>
-      <p>Ratio</p>
-      <p>{prettyRatio(ratio)}%</p>
-      <p><PrettyState {state} /></p>
-    </div>
-  </div>
-  <div class="level-item has-text-centered">
-    <div>
-      <p>Collateral</p>
-      <p>{prettyAsset(contract.collateral)}</p>
-      <p>{prettyAmount(contract.collateral)}</p>
+<div class="has-pink-border">
+  <div class="row">
+    <div class="columns">
+      <div class="column is-4">
+        <p>Synthetic</p>
+        <p>{prettyAsset(contract.synthetic)}</p>
+        <p>{prettyAmount(contract.synthetic)}</p>
+      </div>
+      <div class="column is-4">
+        <p>Ratio</p>
+        <p>{prettyRatio(ratio)}%</p>
+        <p><PrettyState {state} /></p>
+      </div>
+      <div class="column is-4">
+        <p>Collateral</p>
+        <p>{prettyAsset(contract.collateral)}</p>
+        <p>{prettyAmount(contract.collateral)}</p>
+      </div>
     </div>
   </div>
 </div>
 
 <style lang="scss">
-  .level-item {
+  .row {
+    padding: 2rem 4rem;
+  }
+  .column {
     p {
       font-weight: 700;
-      margin: 10px auto;
+      text-align: left;
     }
     p:nth-child(1) {
       color: #63159b;
-      font-size: 0.7rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
     }
     p:nth-child(3) {
+      color: #9D9D9D;
       font-size: 0.9rem;
       font-weight: 400;
     }

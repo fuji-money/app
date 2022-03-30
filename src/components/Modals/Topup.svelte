@@ -13,8 +13,8 @@
   {#if contract && asset}
     <Spinner />
     <h3>Waiting for confirmation...</h3>
-    <p>Topup contract with +{prettyAsset(asset)}:</p>
+    <p>Topup contract with <strong>+{prettyAsset(asset)}</strong>:</p>
     <Summary {contract} />
-    <p>Confirm this transaction in your Marina wallet</p>
+    <p class="confirm">Confirm this transaction in your Marina wallet</p>
   {/if}
 </Modal>

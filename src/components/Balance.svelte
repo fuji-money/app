@@ -25,7 +25,10 @@
         <tbody>
           {#each assets as asset}
             <tr>
-              <td>{asset.ticker}</td>
+              <td>
+                <img src={asset.icon} alt="{asset.name} logo" />
+                {asset.ticker}
+              </td>
               <td>{prettyNumber(asset.quantity)}</td>
             </tr>
           {/each}
@@ -42,5 +45,13 @@
   td:nth-child(2),
   th:nth-child(2) {
     text-align: right;
+  }
+  td:nth-child(2) {
+    color: #63159b;
+  }
+  img {
+    height: 20px;
+    position: relative;
+    top: 4px;
   }
 </style>

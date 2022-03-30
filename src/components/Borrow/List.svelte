@@ -39,16 +39,16 @@
   <div class="row mt-6 mb-0 pr-4 pl-4">
     <div class="columns">
       <div class="column is-2">
-        <h2>Ticker</h2>
+        <h2>Asset</h2>
       </div>
       <div class="column is-2">
-        <h2>Oracle price</h2>
+        <h2>Collateral asset</h2>
       </div>
       <div class="column is-2">
         <h2>Collateral ratio</h2>
       </div>
       <div class="column is-2">
-        <h2>Collateral asset</h2>
+        <h2>Oracle price</h2>
       </div>
       <div class="column is-4">&nbsp;</div>
     </div>
@@ -57,20 +57,21 @@
     <div class="white-slip row">
       <div class="columns level">
         <div class="column is-flex is-2">
-          <img src={offer.synthetic.icon} alt="asset logo" />
+          <img src={offer.synthetic.icon} alt="{offer.synthetic.ticker} logo" />
+          <img src={offer.collateral.icon} alt="{offer.collateral.ticker} logo" />
           <div class="synthetic is-gradient">
             <p>{offer.synthetic.name}</p>
             <p>{offer.synthetic.ticker}</p>
           </div>
         </div>
         <div class="column is-2">
-          <p class="amount is-gradient">US ${prettyNumber(offer.synthetic.value)}</p>
+          <p class="is-gradient">{offer.collateral.ticker}</p>
         </div>
         <div class="column is-2">
           <p class="is-gradient">{`>${offer.collateral.ratio}%`}</p>
         </div>
         <div class="column is-2">
-          <p class="is-gradient">{offer.collateral.ticker}</p>
+          <p class="amount is-gradient">US ${prettyNumber(offer.synthetic.value)}</p>
         </div>
         <div class="column is-4">
           {#if wallet}
@@ -93,5 +94,14 @@
     height: 60px;
     padding: 10px;
     padding-left: 0;
+  }
+  .columns .column:nth-child(1) {
+    img:nth-child(1) {
+      z-index: 10;
+    }
+    img:nth-child(2) {
+      position: relative;
+      left: -24px;
+    }
   }
 </style>

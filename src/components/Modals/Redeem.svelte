@@ -13,6 +13,6 @@ import Summary from './Summary.svelte';
     <h3>Waiting for confirmation...</h3>
     <p>Redeem contract:</p>
     <Summary {contract} />
-    <p>Confirm this transaction in your Marina wallet</p>
+    <p class="confirm">Confirm this transaction in your Marina wallet</p>
   {/if}
 </Modal>
