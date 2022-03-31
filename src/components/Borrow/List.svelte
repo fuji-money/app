@@ -16,22 +16,35 @@
     const regexp = new RegExp(filter, 'gi');
     return offers.filter(
       ({ synthetic, collateral, id }) =>
+        collateral.name.match(regexp) ||
+        collateral.ticker.match(regexp) ||
+        collateral.ratio.toString().match(regexp) ||
         synthetic.name.match(regexp) ||
         synthetic.ticker.match(regexp) ||
-        collateral.ratio.toString().match(regexp) ||
         id.match(regexp)
     );
   };
 
+  const reset = () => filter = null;
+
   $: filteredOffers = filterOffers(filter);
 </script>
 
-<input
-  class="input is-medium has-pink-border"
-  type="text"
-  placeholder="Search"
-  bind:value={filter}
-/>
+<p class="control has-icons-left has-icons-right">
+  <input
+    class="input is-medium has-pink-border"
+    type="text"
+    placeholder="Search"
+    bind:value={filter}
+  />
+  <span class="icon is-left">
+    {#if filter}
+      <img on:click={reset} src="/images/icons/close.svg" alt="close icon" />
+    {:else}
+      <img src="/images/icons/search.svg" alt="search icon" />
+    {/if}
+  </span>
+</p>
 
 {#if filteredOffers?.length === 0}
   <EmptyState type="offers" />
@@ -89,13 +102,13 @@
   h2 {
     margin-bottom: 0;
   }
-  img {
-    display: block;
-    height: 60px;
-    padding: 10px;
-    padding-left: 0;
-  }
   .columns .column:nth-child(1) {
+    img {
+      display: block;
+      height: 60px;
+      padding: 10px;
+      padding-left: 0;
+    }
     img:nth-child(1) {
       z-index: 10;
     }
@@ -103,5 +116,9 @@
       position: relative;
       left: -24px;
     }
+  }
+  .icon {
+    // bulma removes pointer events from icons
+    pointer-events: initial;
   }
 </style>
