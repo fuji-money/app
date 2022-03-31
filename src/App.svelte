@@ -74,7 +74,10 @@
   };
 
   // navigate to a different page
-  const navigate = (event: CustomEvent) => (page = event.detail);
+  const navigate = (event: CustomEvent) => {
+    page = event.detail;
+    if (page === 'borrow') ticker = undefined;
+  }
 
   // redeem contract, ask for marina confirmation
   const redeem = (event: CustomEvent) => {
