@@ -48,7 +48,6 @@ h1 {
   letter-spacing: -0.5px;
   margin-top: 0px;
   margin-bottom: 24px;
-  max-width: 300px;
 }
 
 h2 {
@@ -63,7 +62,6 @@ h2 {
   line-height: 1.2;
   margin-bottom: 24px;
   margin-top: 0px;
-  max-width: 300px;
 }
 
 h3 {
@@ -287,5 +285,22 @@ main {
     margin-right: .5rem;
     position: relative;
     top: 4px;
+  }
+}
+
+.info-card {
+  p {
+    font-weight: 700;
+    text-align: left;
+  }
+  p:nth-child(1) {
+    color: #63159b;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+  }
+  p:nth-child(3) {
+    color: #9D9D9D;
+    font-size: 0.9rem;
+    font-weight: 400;
   }
 }

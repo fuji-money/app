@@ -29,7 +29,7 @@
 
   // event dispatcher
   const dispatch = createEventDispatcher();
-  const create = () => dispatch('create', contract);
+  const pay = () => dispatch('pay', { contract });
 
   // update collateral quantity to reflect new ratio
   const calcQuantity = (_synthetic: Asset, _ratio: number) => (
@@ -64,7 +64,7 @@
 {#if warning}<RatioNotSafe />{/if}
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
-<Button on:click={create} {assets} {contract} {offer} {wallet} />
+<Button on:click={pay} {assets} {contract} {offer} {wallet} />
 
 <style lang="scss">
   h3 {

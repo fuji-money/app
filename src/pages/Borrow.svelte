@@ -12,7 +12,7 @@
 <div class="row">
   <div class="columns">
     <div class="column is-8">
-      <Form {offer} {assets} {wallet} on:create />
+      <Form {offer} {assets} {wallet} on:pay />
     </div>
     <div class="column is-4">
       <Balance {assets} {wallet} on:connect />

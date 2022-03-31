@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import type { Asset, Contract } from '../../lib/types';
   import { getContractRatio, notEnoughFunds, prettyRatio } from '../../lib/utils';
-  import Button from './Form/Button.svelte';
+  import Button from './Button.svelte';
   import Summary from './Summary.svelte';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
   import Ratio from '../Borrow/Form/Ratio.svelte';
@@ -19,7 +19,7 @@
   }
 
   const dispatch = createEventDispatcher();
-  const topup = () => dispatch('increase', extraCollateral);
+  const pay = () => dispatch('pay', { contract, extraCollateral });
 
   const getContractWithExtra = ({ quantity }) => {
     return {
@@ -54,7 +54,7 @@
 <!-- possible warnings -->
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
-<Button on:click={topup} {assets} {extraCollateral} {wallet} />
+<Button on:click={pay} {extraCollateral} {wallet} />
 
 <style lang="scss">
   h3 {

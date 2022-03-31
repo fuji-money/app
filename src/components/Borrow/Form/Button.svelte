@@ -12,7 +12,6 @@
     !assets ||
     !contract ||
     !offer ||
-    notEnoughFunds({ asset: contract.collateral, assets }) ||
     !(
       contract.collateral.quantity > 0 &&
       contract.collateral.value > 0 &&
@@ -23,5 +22,5 @@
 </script>
 
 <div class="has-text-centered">
-  <button on:click class="button is-primary is-cta" {disabled}>Create contract</button>
+  <button on:click class="button is-primary is-cta" {disabled}>Proceed to payment</button>
 </div>

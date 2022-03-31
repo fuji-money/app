@@ -1,7 +1,7 @@
 <script lang="ts">
   import Home from './pages/Home.svelte';
   import Dashboard from './pages/Dashboard.svelte';
-  import Create from './pages/Create.svelte';
+  import Create from './pages/Borrow.svelte';
   import Offers from './pages/Offers.svelte';
   import Topup from './pages/Topup.svelte';
   import Footer from './components/Footer/Footer.svelte';
@@ -22,6 +22,7 @@
   } from './lib/fetch';
   import { detectProvider, MarinaProvider } from 'marina-provider';
   import Breadcrumbs from './components/Breadcrumbs.svelte';
+  import Pay from './pages/Pay.svelte';
 
   let activities: Activity[];
   let asset: Asset;
@@ -30,7 +31,7 @@
   let contracts: Contract[];
   let offer: Offer;
   let offers: Offer[];
-  let page = 'home';
+  let page = 'pay';
   let ticker: Ticker;
   let marina: MarinaProvider;
   let wallet = true;
@@ -42,12 +43,6 @@
   const borrow = (event: CustomEvent) => {
     offer = event.detail;
     page = 'create';
-  };
-
-  // new contract created, ask for marina confirmation
-  const create = (event: CustomEvent) => {
-    contract = event.detail;
-    openModal('create');
   };
 
   // toggles marina wallet on button click
@@ -64,19 +59,19 @@
   // filter offers by asset ticker
   const filter = (event: CustomEvent) => {
     ticker = event.detail;
-    page = 'borrow';
-  };
-
-  // new topup created, ask for marina confirmation
-  const increase = (event: CustomEvent) => {
-    asset = event.detail;
-    openModal('topup');
+    page = 'offers';
   };
 
   // navigate to a different page
   const navigate = (event: CustomEvent) => {
     page = event.detail;
-    if (page === 'borrow') ticker = undefined;
+    if (page === 'offers') ticker = undefined;
+  }
+
+  // pay a contract
+  const pay = (event: CustomEvent) => {
+    contract = event.detail.contract;
+    page = 'pay';
   }
 
   // redeem contract, ask for marina confirmation
@@ -134,12 +129,14 @@
           on:topup={topup}
           on:trade={trade}
         />
-      {:else if page === 'borrow'}
+      {:else if page === 'offers'}
         <Offers {offers} {ticker} {wallet} on:borrow={borrow} on:connect={connect} />
       {:else if page === 'create'}
-        <Create {assets} {offer} {wallet} on:create={create} on:connect={connect} />
+        <Create {assets} {offer} {wallet} on:pay={pay} on:connect={connect} on:pay={pay} />
       {:else if page === 'topup'}
-        <Topup {assets} {contract} {wallet} on:increase={increase} on:connect={connect} />
+        <Topup {assets} {contract} {wallet} on:pay={pay} on:connect={connect} />
+      {:else if page === 'pay'}
+        <Pay {assets} {contract} {wallet} />
       {/if}
     </div>
   </main>

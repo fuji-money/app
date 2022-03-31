@@ -24,7 +24,7 @@
         <!-- svelte-ignore a11y-missing-attribute -->
         <a on:click={trade}>Trade</a>
         <!-- svelte-ignore a11y-missing-attribute -->
-        <a on:click={() => navigate('borrow')}>Borrow</a>
+        <a on:click={() => navigate('offers')}>Borrow</a>
         <ConnectButton {wallet} on:connect />
       </div>
     </div>
