@@ -1,5 +1,5 @@
 <script lang="ts">
-  import List from '../components/Borrow/List.svelte';
+  import List from '../components/Offers/List.svelte';
   import type { Offer, Ticker } from '../lib/types';
 
   export let ticker: Ticker;
