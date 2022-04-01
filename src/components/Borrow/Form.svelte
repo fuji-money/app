@@ -42,18 +42,27 @@
 </script>
 
 <!-- form -->
-<div class="white-slip has-pink-border">
+<div class="box has-pink-border">
   <!-- step 1 / choose collateral -->
-  <h3><span>1</span>How much {synthetic.ticker} you want to borrow?</h3>
-  <p class="intro">Lorem ipsum dolor</p>
+  <h3 class="mt-4">
+    <span class="stepper">1</span>
+    How much {synthetic.ticker} you want to borrow?
+  </h3>
+  <p class="is-size-6 ml-5">Lorem ipsum dolor</p>
   <Synthetic bind:synthetic />
   <!-- step 2 / choose ratio -->
-  <h3><span>2</span>Set a collateral ratio</h3>
-  <p class="intro">Lorem ipsum dolor</p>
+  <h3 class="mt-6">
+    <span class="stepper">2</span>
+    Set a collateral ratio
+  </h3>
+  <p class="is-size-6 ml-5">Lorem ipsum dolor</p>
   <Ratio bind:ratio {...options} />
   <!-- step 3 / confirm borrow amount -->
-  <h3><span>3</span>Confirm collateral amount</h3>
-  <p class="intro">Lorem ipsum dolor</p>
+  <h3 class="mt-6">
+    <span class="stepper">3</span>
+    Confirm collateral amount
+  </h3>
+  <p class="is-size-6 ml-5">Lorem ipsum dolor</p>
   <Collateral bind:collateral />
 </div>
 <!-- additional info -->
@@ -64,19 +73,3 @@
 {#if exception}<NotEnoughFunds />{/if}
 <!-- create contract button -->
 <Button on:click={pay} {assets} {contract} {offer} {wallet} />
-
-<style lang="scss">
-  h3 {
-    margin-top: 40px;
-    &:first-child {
-      margin-top: 10px;
-    }
-  }
-  p {
-    &.intro {
-      font-size: 0.9rem;
-      margin-left: 30px;
-      padding-bottom: 20px;
-    }
-  }
-</style>

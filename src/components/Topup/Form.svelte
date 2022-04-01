@@ -43,12 +43,21 @@
 </script>
 
 <!-- form -->
-<div class="white-slip has-pink-border">
-  <h3><span>1</span>Your present contract</h3>
+<div class="box has-pink-border">
+  <h3 class="mt-4">
+    <span class="stepper">1</span>
+    Your present contract
+  </h3>
   <Summary {contract} />
-  <h3><span>2</span>How much collateral do you want to add?</h3>
+  <h3 class="mt-6">
+    <span class="stepper">2</span>
+    How much collateral do you want to add?
+  </h3>
   <Ratio bind:ratio {...options} />
-  <h3><span>3</span>Confirm new values</h3>
+  <h3 class="mt-6">
+    <span class="stepper">3</span>
+    Confirm new values
+  </h3>
   <Summary contract={future} />
 </div>
 <!-- possible warnings -->

@@ -71,16 +71,6 @@ h3 {
   line-height: 1.2;
   margin-bottom: 16px;
   margin-top: 0px;
-  span {
-    background-image: linear-gradient(90deg, #63159b, #ff80ab);
-    border-radius: 20px;
-    color: #fff;
-    display: inline-block;
-    height: 20px;
-    margin-right: .5rem;
-    width: 20px;
-    text-align: center;
-  }
 }
 
 h4 {
@@ -153,6 +143,19 @@ main {
   background: linear-gradient(180deg, #FFFBF8 0%, #FFEAE5 100%);
   min-height: 100vh;
   padding-bottom: 40px;
+}
+
+span {
+  &.stepper {
+    background-image: linear-gradient(90deg, #63159b, #ff80ab);
+    border-radius: 20px;
+    color: #fff;
+    display: inline-block;
+    height: 20px;
+    margin-right: .5rem;
+    width: 20px;
+    text-align: center;
+  }
 }
 
 .button {

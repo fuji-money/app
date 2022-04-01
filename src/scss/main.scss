@@ -9,9 +9,11 @@
 $primary: #6b1d9c;
 
 // Update some of Bulma's component variables
+$box-radius: 0;
+$box-shadow: none;
+$button-hover-border-color: $primary;
 $control-border-width: 2px;
 $navbar-item-color: #20003c;
-$button-hover-border-color: $primary;
 
 // Import the rest of Bulma
 @import "node_modules/bulma/bulma";

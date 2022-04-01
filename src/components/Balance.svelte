@@ -7,7 +7,7 @@
   export let wallet: boolean;
 </script>
 
-<div class="white-slip has-pink-border">
+<div class="box has-pink-border">
   {#if assets}
     <h3>Your balance</h3>
     {#if !wallet}
