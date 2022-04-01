@@ -5,7 +5,7 @@
   import Button from './Button.svelte';
   import Summary from './Summary.svelte';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
-  import Ratio from '../Borrow/Form/Ratio.svelte';
+  import Ratio from '../Form/Ratio.svelte';
 
   export let assets: Asset[];
   export let contract: Contract;

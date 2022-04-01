@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Asset, Contract, Offer } from '../../../lib/types';
-  import { getContractRatio, notEnoughFunds } from '../../../lib/utils';
+  import type { Asset, Contract, Offer } from '../../lib/types';
+  import { getContractRatio, notEnoughFunds } from '../../lib/utils';
 
   export let assets: Asset[];
   export let contract: Contract;

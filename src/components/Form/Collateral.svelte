@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Asset } from "../../../lib/types";
-  import { prettyNumber } from "../../../lib/utils";
+  import type { Asset } from "../../lib/types";
+  import { prettyNumber } from "../../lib/utils";
 
   export let collateral: Asset;
 

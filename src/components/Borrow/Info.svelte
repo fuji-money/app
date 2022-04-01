@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Contract } from "../../../lib/types";
-  import { prettyNumber } from "../../../lib/utils";
+  import type { Contract } from "../../lib/types";
+  import { prettyNumber } from "../../lib/utils";
 
   export let contract: Contract;
 </script>

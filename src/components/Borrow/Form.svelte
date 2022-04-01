@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { Asset, Contract, Offer } from '../../lib/types';
   import { createEventDispatcher } from 'svelte';
-  import Button from './Form/Button.svelte';
-  import Info from './Form/Info.svelte';
-  import Synthetic from './Form/Synthetic.svelte';
-  import Ratio from './Form/Ratio.svelte';
-  import Collateral from './Form/Collateral.svelte';
+  import Button from './Button.svelte';
+  import Info from './Info.svelte';
+  import Synthetic from '../Form/Synthetic.svelte';
+  import Ratio from '../Form/Ratio.svelte';
+  import Collateral from '../Form/Collateral.svelte';
   import { notEnoughFunds } from '../../lib/utils';
   import NotEnoughFunds from '../Notifications/NotEnoughFunds.svelte';
   import RatioNotSafe from '../Notifications/RatioNotSafe.svelte';

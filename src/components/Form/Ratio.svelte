@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ContractState } from "../../../lib/types";
-  import { getRatioState, prettyRatio } from "../../../lib/utils";
+  import type { ContractState } from "../../lib/types";
+  import { getRatioState, prettyRatio } from "../../lib/utils";
 
   export let min: number;
   export let safe: number;
