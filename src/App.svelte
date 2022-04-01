@@ -7,9 +7,7 @@
   import Footer from './components/Footer/Footer.svelte';
   import TradeModal from './components/Modals/Trade.svelte';
   import RedeemModal from './components/Modals/Redeem.svelte';
-  import TopupModal from './components/Modals/Topup.svelte';
-  import CreateModal from './components/Modals/Create.svelte';
-  import Navbar from './components/Navbar.svelte';
+  import Navbar from './components/Navigation/Navbar.svelte';
   import { onMount } from 'svelte';
   import { openModal } from './lib/utils';
   import type { Activity, Asset, Contract, Offer, Ticker } from './lib/types';
@@ -21,17 +19,17 @@
     getOffers,
   } from './lib/fetch';
   import { detectProvider, MarinaProvider } from 'marina-provider';
-  import Breadcrumbs from './components/Breadcrumbs.svelte';
+  import Breadcrumbs from './components/Navigation/Breadcrumbs.svelte';
   import Pay from './pages/Pay.svelte';
 
   let activities: Activity[];
-  let asset: Asset;
   let assets: Asset[];
   let contract: Contract;
   let contracts: Contract[];
+  let extraCollateral: Asset;
   let offer: Offer;
   let offers: Offer[];
-  let page = 'pay';
+  let page = 'home';
   let ticker: Ticker;
   let marina: MarinaProvider;
   let wallet = true;
@@ -70,7 +68,7 @@
 
   // pay a contract
   const pay = (event: CustomEvent) => {
-    contract = event.detail.contract;
+    ({ contract, extraCollateral } = event.detail);
     page = 'pay';
   }
 
@@ -136,7 +134,7 @@
       {:else if page === 'topup'}
         <Topup {assets} {contract} {wallet} on:pay={pay} on:connect={connect} />
       {:else if page === 'pay'}
-        <Pay {assets} {contract} {wallet} />
+        <Pay {assets} {contract} {extraCollateral} {wallet} />
       {/if}
     </div>
   </main>
@@ -144,7 +142,5 @@
 
 <Footer />
 
-<CreateModal {contract} />
 <RedeemModal {contract} />
-<TopupModal {contract} {asset} />
 <TradeModal />

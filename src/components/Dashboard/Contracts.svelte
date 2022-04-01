@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { Contract } from '../../lib/types';
-  import EmptyState from '../EmptyState.svelte';
-  import PrettyState from '../PrettyState.svelte';
-  import Spinner from '../Spinner.svelte';
+  import EmptyState from '../Utils/EmptyState.svelte';
+  import PrettyState from '../Contract/PrettyState.svelte';
+  import Spinner from '../Utils/Spinner.svelte';
   import RedeemButton from '../Buttons/Redeem.svelte';
   import TopupButton from '../Buttons/Topup.svelte';
-  import ContractLink from '../ContractLink.svelte';
+  import ContractLink from '../Contract/Link.svelte';
 
   export let contracts: Contract[];
   export let wallet: boolean;

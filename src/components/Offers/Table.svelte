@@ -2,10 +2,10 @@
   import BorrowButton from '../Buttons/Borrow.svelte';
   import ConnectButton from '../Buttons/Connect.svelte';
   import { prettyNumber } from '../../lib/utils';
+  import type { Offer } from '../../lib/types';
 
-  export let filteredOffers;
-  export let wallet;
-
+  export let filteredOffers: Offer[];
+  export let wallet: boolean;
 </script>
 
 <div class="row mt-6 mb-0 pr-4 pl-4">

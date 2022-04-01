@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Spinner from '../Spinner.svelte';
+  import Spinner from '../Utils/Spinner.svelte';
   import Modal from './Modal.svelte';
   import type { Contract } from '../../lib/types';
-import Summary from './Summary.svelte';
+  import Summary from '../Contract/Summary.svelte';
 
   export let contract: Contract;
 </script>

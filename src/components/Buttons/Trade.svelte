@@ -5,6 +5,4 @@
   const trade = () => dispatch('trade', null);
 </script>
 
-<button on:click={trade} class="button is-primary">
-  Trade
-</button>
+<button on:click={trade} class="button is-primary">Trade</button>

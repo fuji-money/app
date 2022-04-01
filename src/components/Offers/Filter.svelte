@@ -21,12 +21,15 @@
     );
   };
 
-  const reset = () => filter = null;
+  const reset = () => {
+    console.log('reset');
+    filter = null;
+  };
 
   $: filteredOffers = filterOffers(filter);
 </script>
 
-<p class="control has-icons-left has-icons-right">
+<p class="control has-icons-left">
   <input
     class="input is-medium has-pink-border"
     type="text"
@@ -43,7 +46,8 @@
 </p>
 
 <style lang="scss">
-  .icon {
+  // .icon needs extra specificity due to bulma
+  .control.has-icons-left .icon {
     // bulma removes pointer events from icons
     pointer-events: initial;
   }

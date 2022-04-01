@@ -1,11 +1,11 @@
 <script>
-  import FooterCopyright from "./FooterCopyright.svelte";
+  import FooterCopyright from './FooterCopyright.svelte';
 </script>
 
 <section class="footer">
   <div class="container is-max-desktop">
     <div class="footer-logo-wrapper">
-      <img src="images/fuji-logo-footer.png" loading="lazy" alt="" class="footer-logo">
+      <img src="images/fuji-logo-footer.png" loading="lazy" alt="" class="footer-logo" />
     </div>
     <div class="footer-wrapper">
       <div class="footer-links-wrapper">
@@ -15,16 +15,16 @@
       </div>
       <div class="social-icons-wrapper">
         <a href="/" class="footer-social-icon-link">
-          <img src="images/medium.svg" loading="lazy" alt="">
+          <img src="images/medium.svg" loading="lazy" alt="" />
         </a>
         <a href="/" class="footer-social-icon-link">
-          <img src="images/github.svg" loading="lazy" alt="">
+          <img src="images/github.svg" loading="lazy" alt="" />
         </a>
         <a href="/" class="footer-social-icon-link">
-          <img src="images/twitter.svg" loading="lazy" alt="">
+          <img src="images/twitter.svg" loading="lazy" alt="" />
         </a>
         <a href="/" class="footer-social-icon-link">
-          <img src="images/telegram.svg" loading="lazy" alt="">
+          <img src="images/telegram.svg" loading="lazy" alt="" />
         </a>
       </div>
     </div>

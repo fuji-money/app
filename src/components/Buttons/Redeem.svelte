@@ -8,6 +8,4 @@
   const redeem = () => dispatch('redeem', contract);
 </script>
 
-<button on:click={redeem} class="button is-primary">
-  Redeem
-</button>
+<button on:click={redeem} class="button is-primary"> Redeem </button>

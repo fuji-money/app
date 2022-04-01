@@ -1,7 +1,13 @@
 <script lang="ts">
   import type { Contract } from '../../lib/types';
-  import { getContractState, prettyAmount, prettyAsset, getContractRatio, prettyRatio } from '../../lib/utils';
-  import PrettyState from '../PrettyState.svelte';
+  import {
+    getContractState,
+    prettyAmount,
+    prettyAsset,
+    getContractRatio,
+    prettyRatio,
+  } from '../../lib/utils';
+  import PrettyState from '../Contract/PrettyState.svelte';
 
   export let contract: Contract;
 

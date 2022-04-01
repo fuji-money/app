@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ContractState } from '../lib/types';
+  import type { ContractState } from '../../lib/types';
 
   export let state: ContractState;
 </script>

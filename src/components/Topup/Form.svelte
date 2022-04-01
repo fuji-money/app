@@ -16,7 +16,7 @@
   let options = {
     min: prettyRatio(ratio),
     safe: contract.collateral.ratio + 50,
-  }
+  };
 
   const dispatch = createEventDispatcher();
   const pay = () => dispatch('pay', { contract, extraCollateral });
@@ -27,15 +27,15 @@
       collateral: {
         ...contract.collateral,
         quantity: contract.collateral.quantity + quantity,
-      }
-    }
-  }
+      },
+    };
+  };
 
   const calcQuantity = (r: number) => {
     const { collateral, synthetic } = contract;
-    const quantity = synthetic.value * synthetic.quantity * r / 100 / collateral.value;
+    const quantity = (synthetic.value * synthetic.quantity * r) / 100 / collateral.value;
     return quantity - collateral.quantity;
-  }
+  };
 
   $: future = getContractWithExtra(extraCollateral);
   $: extraCollateral = { ...contract.collateral, quantity: calcQuantity(ratio) };

@@ -8,6 +8,4 @@
   const filter = () => dispatch('filter', asset.ticker);
 </script>
 
-<button on:click={filter} class="button">
-  Borrow
-</button>
+<button on:click={filter} class="button"> Borrow </button>

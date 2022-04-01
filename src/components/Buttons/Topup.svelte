@@ -8,6 +8,4 @@
   const topup = () => dispatch('topup', contract);
 </script>
 
-<button on:click={topup} class="button">
-  Topup
-</button>
+<button on:click={topup} class="button"> Topup </button>

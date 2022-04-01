@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import ConnectButton from './Buttons/Connect.svelte';
+  import ConnectButton from '../Buttons/Connect.svelte';
 
   export let wallet: boolean;
 

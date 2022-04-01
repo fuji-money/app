@@ -25,16 +25,15 @@
   const options = {
     min: offer.collateral.ratio,
     safe: offer.collateral.ratio + 50,
-  }
+  };
 
   // event dispatcher
   const dispatch = createEventDispatcher();
   const pay = () => dispatch('pay', { contract });
 
   // update collateral quantity to reflect new ratio
-  const calcQuantity = (_synthetic: Asset, _ratio: number) => (
-    _synthetic.quantity * _synthetic.value * _ratio / 100 / collateral.value
-  );
+  const calcQuantity = (_synthetic: Asset, _ratio: number) =>
+    (_synthetic.quantity * _synthetic.value * _ratio) / 100 / collateral.value;
 
   $: contract = { collateral, synthetic };
   $: collateral = { ...collateral, quantity: calcQuantity(synthetic, ratio) };
@@ -81,4 +80,3 @@
     }
   }
 </style>
-

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import type { ContractState } from "../../lib/types";
-  import { getRatioState, prettyRatio } from "../../lib/utils";
+  import { onMount } from 'svelte';
+  import type { ContractState } from '../../lib/types';
+  import { getRatioState, prettyRatio } from '../../lib/utils';
 
   export let min: number;
   export let safe: number;
@@ -16,7 +16,7 @@
     if (!target) return false;
     const width = target.offsetWidth;
     target.style.backgroundSize = (ratio * 100) / width + '% 100%';
-  }
+  };
 
   // put range labels on correct coordinates,
   // runs only once, on component mount
@@ -46,13 +46,13 @@
     if (e.target.id === 'min') ratio = min;
     if (e.target.id === 'safe') ratio = safe;
     updateColors();
-  }
+  };
 
   // on component mount, update labels positioning and range bar colors
   onMount(() => {
     updateLabels();
     updateColors();
-  })
+  });
 
   $: state = getRatioState(ratio, min);
 </script>
@@ -69,7 +69,7 @@
         min="0"
         max="400"
         type="range"
-        class="{state}"
+        class={state}
         bind:value={ratio}
         on:change={change}
       />
@@ -111,7 +111,7 @@
     margin-right: 0;
     padding-right: 0;
   }
-  input[type="range"] {
+  input[type='range'] {
     -webkit-appearance: none;
     margin-right: 15px;
     width: 400px;
@@ -129,9 +129,9 @@
       background: #aaa;
       cursor: ew-resize;
       box-shadow: 0 0 2px 0 #555;
-      transition: background .3s ease-in-out;
+      transition: background 0.3s ease-in-out;
     }
-    &::-webkit-slider-runnable-track  {
+    &::-webkit-slider-runnable-track {
       -webkit-appearance: none;
       box-shadow: none;
       border: none;
@@ -148,4 +148,3 @@
     }
   }
 </style>
-

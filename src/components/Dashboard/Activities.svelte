@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Activity, ActivityType } from '../../lib/types';
   import { prettyAgo } from '../../lib/utils';
-  import EmptyState from '../EmptyState.svelte';
-  import Spinner from '../Spinner.svelte';
+  import EmptyState from '../Utils/EmptyState.svelte';
+  import Spinner from '../Utils/Spinner.svelte';
 
   export let activities: Activity[];
   export let wallet: boolean;
@@ -10,7 +10,7 @@
   let filteredActivities: Activity[];
   let selected = ActivityType.Creation;
 
-  $: filteredActivities = activities?.filter(a => a.type === selected);
+  $: filteredActivities = activities?.filter((a) => a.type === selected);
   $: loading = activities === undefined;
 </script>
 
@@ -37,37 +37,35 @@
   </div>
   {#if !wallet}
     <EmptyState type="wallet" />
+  {:else if loading}
+    <Spinner />
+  {:else if filteredActivities?.length === 0}
+    <EmptyState type="activities" />
   {:else}
-    {#if loading}
-      <Spinner />
-    {:else}
-      {#if filteredActivities?.length === 0}
-        <EmptyState type="activities" />
-      {:else}
-        <div class="activity-list">
-          {#each filteredActivities as { icon, message, createdAt, txid }}
-            <div class="level">
-              <div class="level-left">
-                <div class="level-item">
-                  <img src={icon} alt="asset logo" />
-                </div>
-                <div class="level-item">
-                  <p>{message}</p>
-                </div>
-              </div>
-              <div class="level-right">
-                <div class="level-item">
-                  <a href="https://blockstream.info/liquid/tx/{txid}" class="button external">{txid.substring(0,8)}...</a>
-                </div>
-                <div class="level-item">
-                  <p class="time">{prettyAgo(createdAt)}</p>
-                </div>
-              </div>
+    <div class="activity-list">
+      {#each filteredActivities as { icon, message, createdAt, txid }}
+        <div class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <img src={icon} alt="asset logo" />
             </div>
-          {/each}
+            <div class="level-item">
+              <p>{message}</p>
+            </div>
+          </div>
+          <div class="level-right">
+            <div class="level-item">
+              <a href="https://blockstream.info/liquid/tx/{txid}" class="button external"
+                >{txid.substring(0, 8)}...</a
+              >
+            </div>
+            <div class="level-item">
+              <p class="time">{prettyAgo(createdAt)}</p>
+            </div>
+          </div>
         </div>
-      {/if}
-    {/if}
+      {/each}
+    </div>
   {/if}
 </section>
 

@@ -1,12 +1,11 @@
 <script lang="ts">
-  import type { Asset } from "../../lib/types";
-  import { prettyNumber } from "../../lib/utils";
+  import type { Asset } from '../../lib/types';
+  import { prettyNumber } from '../../lib/utils';
 
   export let collateral: Asset;
 
   $: quantity = collateral.quantity || 0;
 </script>
-
 
 <div class="level is-pink">
   <div class="level-left">

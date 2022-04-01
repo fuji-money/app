@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Contract } from '../lib/types';
+  import type { Contract } from '../../lib/types';
   export let contract: Contract;
   const baseURL = 'https://blockstream.info/liquid/tx/';
 </script>

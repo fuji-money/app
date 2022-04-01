@@ -8,13 +8,14 @@
 
   export let assets: Asset[];
   export let contract: Contract;
+  export let extraCollateral: Asset;
   export let wallet: boolean;
 
   let network: string;
   let result: string;
 </script>
 
-<h1>Borrow</h1>
+<h1>Pay</h1>
 <div class="row">
   <div class="columns">
     <div class="column is-8">
@@ -22,13 +23,11 @@
         {#if result}
           <Result {result} />
         {:else if !network}
-          <Network bind:network />
+          <Network bind:network {contract} />
         {:else if network === 'lightning'}
-          <Qrcode bind:result {contract} />
+          <Qrcode bind:result {contract} {extraCollateral} />
         {:else if network === 'liquid'}
-          <Confirm bind:result {contract} />
-        {:else}
-          <Result bind:result />
+          <Confirm bind:result {contract} {extraCollateral} />
         {/if}
       </div>
     </div>

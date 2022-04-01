@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Asset } from "../../lib/types";
+  import type { Asset } from '../../lib/types';
 
   export let synthetic: Asset;
 
@@ -8,8 +8,8 @@
     synthetic = {
       ...synthetic,
       quantity: parseFloat(e.target.value),
-    }
-  }
+    };
+  };
 </script>
 
 <div class="level is-pink">

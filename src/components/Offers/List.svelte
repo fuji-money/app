@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Ticker, Offer } from '../../lib/types';
-  import EmptyState from '../EmptyState.svelte';
+  import EmptyState from '../Utils/EmptyState.svelte';
   import Filter from './Filter.svelte';
   import Table from './Table.svelte';
 
@@ -11,8 +11,8 @@
   let filteredOffers = offers;
 </script>
 
-
 <Filter bind:filteredOffers {offers} {ticker} />
+
 {#if filteredOffers?.length === 0}
   <EmptyState type="offers" />
 {:else}

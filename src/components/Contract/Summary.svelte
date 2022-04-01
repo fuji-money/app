@@ -34,7 +34,7 @@
     display: flex;
     font-weight: 700;
     justify-content: space-between;
-    padding: .7rem 3rem;
+    padding: 0.7rem 3rem;
     max-width: 400px;
     margin: 2px auto;
     p {

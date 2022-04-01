@@ -8,6 +8,4 @@
   const borrow = () => dispatch('borrow', offer);
 </script>
 
-<button on:click={borrow} class="button">
-  Borrow
-</button>
+<button on:click={borrow} class="button"> Borrow </button>
