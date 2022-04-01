@@ -6,7 +6,7 @@
 
   export let contract: Contract;
   export let extraCollateral: Asset;
-  export let result: string;
+  export let result = '';
 </script>
 
 <div class="has-text-centered">

@@ -1,23 +1,26 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
-  export let page: string;
+  export let bread: string[];
+  export let crumbs = [];
 
   const dispatch = createEventDispatcher();
   const navigate = (route: string) => dispatch('navigate', route);
+  const goto = (link: string) => {
+    if (link === 'Borrow') link = 'Offers';
+    navigate(link.toLowerCase());
+  }
 </script>
 
-{#if page === 'topup'}
-  <p>
-    <!-- svelte-ignore a11y-missing-attribute -->
-    <a on:click={() => navigate('dashboard')}>Dashboard</a>
-    &gt;
-    <span>Topup</span>
-  </p>
-{/if}
-
-<style>
-  p {
-    font-size: 0.8rem;
-  }
-</style>
+<div class="is-flex">
+  {#each bread as link}
+    <p on:click={() => goto(link)} class="is-size-7">
+      / {link}&nbsp;
+    </p>
+  {/each}
+  {#each crumbs as link}
+    <p class="is-size-7">
+      / {link}&nbsp;
+    </p>
+  {/each}
+</div>

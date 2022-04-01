@@ -1,32 +1,7 @@
 <script lang="ts">
-  import type { Ticker, Offer } from '../../lib/types';
+  export let filter = '';
 
-  export let offers: Offer[];
-  export let filteredOffers: Offer[];
-  export let ticker: Ticker;
-
-  let filter = ticker;
-
-  const filterOffers = (filter: string) => {
-    if (!filter) return offers;
-    const regexp = new RegExp(filter, 'gi');
-    return offers.filter(
-      ({ synthetic, collateral, id }) =>
-        collateral.name.match(regexp) ||
-        collateral.ticker.match(regexp) ||
-        collateral.ratio.toString().match(regexp) ||
-        synthetic.name.match(regexp) ||
-        synthetic.ticker.match(regexp) ||
-        id.match(regexp)
-    );
-  };
-
-  const reset = () => {
-    console.log('reset');
-    filter = null;
-  };
-
-  $: filteredOffers = filterOffers(filter);
+  const reset = () => filter = null;
 </script>
 
 <p class="control has-icons-left">

@@ -4,17 +4,17 @@
 
   export let contract: Contract;
   export let extraCollateral: Asset;
-  export let result: string;
+  export let result = '';
 
   const payment = extraCollateral || contract.collateral;
   const { quantity, ticker, value } = payment;
 </script>
 
-<div class="is-flex">
+<div class="is-flex" on:click={() => (result = 'failure')}>
   <img class="qrcode" src="/images/qrcode.svg" alt="qrcode" />
   <div class="is-flex is-flex-direction-column is-justify-content-center">
     <h1>Pay by Scaning this QR</h1>
-    <div class="is-flex" on:click={() => (result = 'success')}>
+    <div class="is-flex">
       <div class="has-pink-border info-card px-5 py-4">
         <p>Pay amount</p>
         <p>{prettyNumber(quantity)} {ticker}</p>

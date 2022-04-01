@@ -2,12 +2,17 @@
   import Form from '../components/Borrow/Form.svelte';
   import Balance from '../components/Balance.svelte';
   import type { Asset, Offer } from '../lib/types';
+  import Breadcrumbs from '../components/Navigation/Breadcrumbs.svelte';
 
   export let offer: Offer;
   export let assets: Asset[];
   export let wallet: boolean;
+
+  const bread = ['Borrow'];
+  const crumbs = [offer.synthetic.ticker, offer.collateral.ticker];
 </script>
 
+<Breadcrumbs {bread} {crumbs} on:navigate />
 <h1>Borrow</h1>
 <div class="row">
   <div class="columns">

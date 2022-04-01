@@ -1,7 +1,7 @@
 <script lang="ts">
   import Home from './pages/Home.svelte';
   import Dashboard from './pages/Dashboard.svelte';
-  import Create from './pages/Borrow.svelte';
+  import Borrow from './pages/Borrow.svelte';
   import Offers from './pages/Offers.svelte';
   import Topup from './pages/Topup.svelte';
   import Footer from './components/Footer/Footer.svelte';
@@ -19,7 +19,6 @@
     getOffers,
   } from './lib/fetch';
   import { detectProvider, MarinaProvider } from 'marina-provider';
-  import Breadcrumbs from './components/Navigation/Breadcrumbs.svelte';
   import Pay from './pages/Pay.svelte';
 
   let activities: Activity[];
@@ -40,7 +39,7 @@
   // new contract form
   const borrow = (event: CustomEvent) => {
     offer = event.detail;
-    page = 'create';
+    page = 'borrow';
   };
 
   // toggles marina wallet on button click
@@ -114,7 +113,6 @@
   <Navbar {wallet} on:navigate={navigate} on:trade={trade} on:connect={connect} />
   <main>
     <div class="container">
-      <Breadcrumbs {page} on:navigate={navigate} />
       {#if page === 'dashboard'}
         <Dashboard
           {activities}
@@ -128,13 +126,13 @@
           on:trade={trade}
         />
       {:else if page === 'offers'}
-        <Offers {offers} {ticker} {wallet} on:borrow={borrow} on:connect={connect} />
-      {:else if page === 'create'}
-        <Create {assets} {offer} {wallet} on:pay={pay} on:connect={connect} on:pay={pay} />
+        <Offers {offers} {ticker} {wallet} on:borrow={borrow} on:connect={connect} on:navigate={navigate} />
+      {:else if page === 'borrow'}
+        <Borrow {assets} {offer} {wallet} on:pay={pay} on:connect={connect} on:navigate={navigate} on:pay={pay} />
       {:else if page === 'topup'}
-        <Topup {assets} {contract} {wallet} on:pay={pay} on:connect={connect} />
+        <Topup {assets} {contract} {wallet} on:pay={pay} on:connect={connect} on:navigate={navigate} />
       {:else if page === 'pay'}
-        <Pay {assets} {contract} {extraCollateral} {wallet} />
+        <Pay {assets} {contract} {extraCollateral} {wallet} on:navigate={navigate} />
       {/if}
     </div>
   </main>

@@ -2,7 +2,7 @@
   import type { Contract } from '../../lib/types';
 
   export let contract: Contract;
-  export let network: string;
+  export let network = '';
 
   const { ticker } = contract.collateral;
 
