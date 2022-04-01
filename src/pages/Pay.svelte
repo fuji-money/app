@@ -33,7 +33,7 @@
 <div class="row">
   <div class="columns">
     <div class="column is-8">
-      <div class="white-slip has-pink-border">
+      <div class="box has-pink-border">
         {#if component() === 'Result'}
           <Result {result} on:navigate />
         {:else if component() === 'Network'}

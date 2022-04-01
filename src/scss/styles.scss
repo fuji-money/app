@@ -29,7 +29,6 @@ html {
 }
 
 body {
-  font-family: 'Proxima Nova Regular', sans-serif;
   color: #282a27;
   font-size: 18px;
   line-height: 1.5;
@@ -41,7 +40,6 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-family: 'Proxima Nova Bold', sans-serif;
   font-size: 30px;
   font-weight: 700;
   line-height: 1.2;
@@ -55,17 +53,9 @@ h2 {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-family: 'Proxima Nova Bold', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-  margin-bottom: 24px;
-  margin-top: 0px;
 }
 
 h3 {
-  font-family: 'Proxima Nova Bold', sans-serif;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
@@ -73,70 +63,11 @@ h3 {
   margin-top: 0px;
 }
 
-h4 {
-  margin-top: 0px;
-  margin-bottom: 24px;
-  font-family: 'Proxima Nova Bold', sans-serif;
-  font-size: 34px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-h5 {
-  margin-top: 0px;
-  margin-bottom: 24px;
-  font-family: 'Proxima Nova Bold', sans-serif;
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-h6 {
-  margin-top: 0px;
-  margin-bottom: 24px;
-  font-family: 'Proxima Nova Bold', sans-serif;
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-p {
-  margin-bottom: 12px;
-  &.paragraph-small {
-    font-size: 16px;
-  }
-}
-
 a {
-  color: #dc3768;
   text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-ul {
-  margin-bottom: 12px;
-  padding-left: 40px;
-}
-
-ol {
-  margin-bottom: 12px;
-  padding-left: 40px;
-}
-
-li {
-  margin-bottom: 6px;
-}
-
-form {
-  margin-bottom: 48px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 main {
@@ -196,15 +127,6 @@ span {
   background-color: #FFF1E3 !important;
 }
 
-.is-pink {
-  border: 1px solid #F18C95;
-  background-color: #FFF1E3 !important;
-}
-
-.has-no-border {
-  border: 0;
-}
-
 .header {
   align-items: center;
   margin-top: 60px;
@@ -226,28 +148,6 @@ span {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-.white-slip {
-  background-color: #fff;
-  padding: 1rem;
-  margin: 20px auto;
-  width: 100%;
-  p, a {
-    margin: auto;
-  }
-  .column:last-child {
-    text-align: right;
-  }
-  .synthetic {
-    margin: auto 0;
-    p {
-      font-size: .8rem;
-      &:nth-child(2) {
-        font-weight: 700;
-      }
-    }
-  }
 }
 
 .links-wrapper {

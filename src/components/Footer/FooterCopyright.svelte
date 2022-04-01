@@ -1,7 +1,7 @@
 <section class="footer-copyright-info">
   <div class="container">
     <div class="footer-copyright-wrapper">
-      <p class="paragraph-small has-text-centered">© Copyright 2022. All Rights Reserved.</p>
+      <p class="is-size-7 has-text-centered">© Copyright 2022. All Rights Reserved.</p>
     </div>
   </div>
 </section>

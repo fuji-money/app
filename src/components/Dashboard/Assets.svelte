@@ -13,20 +13,22 @@
 </script>
 
 <section>
-  <h2>Assets</h2>
+  <div class="header level mb-4">
+    <h2>Assets</h2>
+  </div>
   {#if loading}
     <Spinner />
   {:else if !assets}
     <EmptyState type="assets" />
   {:else}
     {#each synthetics as asset}
-      <div class="white-slip row">
+      <div class="box row">
         <div class="columns level">
           <div class="column is-flex">
             <img src={asset.icon} alt="asset logo" />
-            <div class="synthetic is-gradient">
-              <p>{asset.name}</p>
-              <p>{prettyNumber(asset.quantity)} {asset.ticker}</p>
+            <div class="is-gradient my-auto has-text-weight-bold">
+              <p class="is-size-6 mb-0">{asset.name}</p>
+              <p class="is-size-6 mb-0">{prettyNumber(asset.quantity)} {asset.ticker}</p>
             </div>
           </div>
           <div class="column">
@@ -34,7 +36,7 @@
               US ${prettyNumber(asset.quantity * asset.value)}
             </p>
           </div>
-          <div class="column">
+          <div class="column has-text-right">
             <TradeButton on:trade />
             <FilterButton {asset} on:filter />
           </div>

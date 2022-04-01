@@ -26,14 +26,14 @@
   </div>
 </div>
 {#each filteredOffers as offer}
-  <div class="white-slip row">
+  <div class="box row">
     <div class="columns level">
       <div class="column is-flex is-2">
         <img src={offer.synthetic.icon} alt="{offer.synthetic.ticker} logo" />
         <img src={offer.collateral.icon} alt="{offer.collateral.ticker} logo" />
-        <div class="synthetic is-gradient">
-          <p>{offer.synthetic.name}</p>
-          <p>{offer.synthetic.ticker}</p>
+        <div class="is-gradient my-auto has-text-weight-bold">
+          <p class="is-size-7 mb-0">{offer.synthetic.name}</p>
+          <p class="is-size-7 mb-0">{offer.synthetic.ticker}</p>
         </div>
       </div>
       <div class="column is-2">
@@ -45,7 +45,7 @@
       <div class="column is-2">
         <p class="amount is-gradient">US ${prettyNumber(offer.synthetic.value)}</p>
       </div>
-      <div class="column is-4">
+      <div class="column is-4 has-text-right">
         {#if wallet}
           <BorrowButton {offer} on:borrow />
         {:else}
@@ -57,9 +57,6 @@
 {/each}
 
 <style lang="scss">
-  h2 {
-    margin-bottom: 0;
-  }
   .columns .column:nth-child(1) {
     img {
       display: block;

@@ -12,11 +12,11 @@
   };
 </script>
 
-<div class="level is-pink">
+<div class="level has-pink-border has-pink-background">
   <div class="level-left">
     <div class="level-item">
-      <p class="ml-3"><img src={synthetic.icon} alt="collateral icon" /></p>
-      <p class="ml-3">{synthetic.ticker}</p>
+      <p class="ml-3 my-auto"><img src={synthetic.icon} alt="collateral icon" /></p>
+      <p class="ml-3 my-auto">{synthetic.ticker}</p>
     </div>
   </div>
   <div class="level-right">

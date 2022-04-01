@@ -15,7 +15,7 @@
 </script>
 
 <section>
-  <div class="header level">
+  <div class="header level mb-4">
     <div class="level-left">
       <div class="level-item">
         <h2>Activity</h2>

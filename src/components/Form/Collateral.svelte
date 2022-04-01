@@ -7,16 +7,16 @@
   $: quantity = collateral.quantity || 0;
 </script>
 
-<div class="level is-pink">
+<div class="level has-pink-border has-pink-background">
   <div class="level-left">
     <div class="level-item">
-      <p class="ml-3"><img src={collateral.icon} alt="collateral icon" /></p>
-      <p class="ml-3">{collateral.ticker}</p>
+      <p class="ml-3 my-auto"><img src={collateral.icon} alt="collateral icon" /></p>
+      <p class="ml-3 my-auto">{collateral.ticker}</p>
     </div>
   </div>
   <div class="level-right">
     <div class="level-item">
-      <p class="mr-3">{prettyNumber(quantity)}</p>
+      <p class="mr-3 my-auto">{prettyNumber(quantity)}</p>
     </div>
   </div>
 </div>

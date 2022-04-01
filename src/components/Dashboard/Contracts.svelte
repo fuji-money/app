@@ -18,7 +18,7 @@
 </script>
 
 <section>
-  <div class="header level">
+  <div class="header level mb-4">
     <div class="level-left">
       <div class="level-item">
         <h2>Contracts</h2>
@@ -43,7 +43,7 @@
     <EmptyState type={'contracts'} />
   {:else}
     {#each filteredContracts as contract}
-      <div class="white-slip row">
+      <div class="box row">
         <div class="columns level">
           <div class="column is-2">
             <p><strong>{contract.synthetic.quantity} {contract.synthetic.ticker}</strong></p>
@@ -51,7 +51,7 @@
           <div class="column is-2">
             <PrettyState state={contract.state} />
           </div>
-          <div class="column is-8">
+          <div class="column is-8 has-text-right">
             <ContractLink {contract} />
             <RedeemButton {contract} on:redeem />
             <TopupButton {contract} on:topup />

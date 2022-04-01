@@ -12,7 +12,7 @@
   }
 </script>
 
-<div class="is-flex">
+<div class="is-flex mb-4">
   {#each bread as link}
     <p on:click={() => goto(link)} class="is-size-7">
       / {link}&nbsp;

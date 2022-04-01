@@ -77,9 +77,9 @@
   </div>
   <div class="level-right">
     <div class="level-item">
-      <div class="level is-pink has-text-right pr-5">
+      <div class="level has-pink-border has-pink-background has-text-right pr-5">
         <input
-          class="input is-pink has-text-right has-suffix"
+          class="input has-pink-border has-pink-background has-text-right has-suffix"
           placeholder="{ratio}%"
           type="number"
           bind:value={ratio}
