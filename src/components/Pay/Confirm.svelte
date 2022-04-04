@@ -9,7 +9,7 @@
   export let result = '';
 </script>
 
-<div class="has-text-centered">
+<div class="has-text-centered" on:click={() => (result = 'success')}>
   <Spinner />
   <h3>Waiting for confirmation...</h3>
   <p>
@@ -24,7 +24,7 @@
     {/if}
   </p>
   <Summary {contract} />
-  <p on:click={() => (result = 'success')} class="confirm">
+  <p class="confirm">
     Confirm this transaction in your Marina wallet
   </p>
 </div>
