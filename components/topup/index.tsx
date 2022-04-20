@@ -40,6 +40,7 @@ const Topup = ({ contract }: TopupProps) => {
                   minRatio={minRatio}
                   ratio={ratio}
                   setPay={setPay}
+                  topup={topup}
                 />
               </>
             )}
