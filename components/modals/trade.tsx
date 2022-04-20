@@ -4,8 +4,8 @@ import Modal from './modal'
 const TradeModal = () => {
   return (
     <Modal id="trade-modal">
-      <h3 className='mb-5'>Trade</h3>
-      <p className='is-size-7 mb-5'>Trade your assets in this exchanges:</p>
+      <h3 className="mb-5">Trade</h3>
+      <p className="is-size-7 mb-5">Trade your assets in this exchanges:</p>
       <div className="is-flex is-justify-content-center box-container">
         <div>
           <a href="https://tdex.network/">

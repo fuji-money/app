@@ -8,13 +8,28 @@ function MyApp({ Component, pageProps }: AppProps) {
     <Layout>
       <Head>
         <title>App - Fuji Money</title>
-        <meta content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries." name="description" />
+        <meta
+          content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries."
+          name="description"
+        />
         <meta content="App - Fuji Money" property="og:title" />
-        <meta content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries." property="og:description" />
-        <meta content="https://raw.githubusercontent.com/fuji-money/website/main/src/images/og_image.png" property="og:image" />
+        <meta
+          content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries."
+          property="og:description"
+        />
+        <meta
+          content="https://raw.githubusercontent.com/fuji-money/website/main/src/images/og_image.png"
+          property="og:image"
+        />
         <meta content="App - Fuji Money" property="twitter:title" />
-        <meta content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries." property="twitter:description" />
-        <meta content="https://raw.githubusercontent.com/fuji-money/website/main/src/images/og_image.png" property="twitter:image" />
+        <meta
+          content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries."
+          property="twitter:description"
+        />
+        <meta
+          content="https://raw.githubusercontent.com/fuji-money/website/main/src/images/og_image.png"
+          property="twitter:image"
+        />
         <meta property="og:type" content="website" />
         <meta content="summary_large_image" name="twitter:card" />
       </Head>

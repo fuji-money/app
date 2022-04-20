@@ -18,7 +18,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="container">{children}</div>
         <style jsx>{`
           main {
-            background-image: url("/images/homebg.svg");
+            background-image: url('/images/homebg.svg');
             background-size: 120% auto;
             background-position: bottom -40px;
             background-repeat: no-repeat;

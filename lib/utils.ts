@@ -5,7 +5,10 @@ import { Decimal } from 'decimal.js'
 // get contract ratio
 export const getContractRatio = (contract: Contract): number => {
   const { collateral, synthetic } = contract
-  const collateralAmount = Decimal.mul(collateral.value, collateral.quantity || 0)
+  const collateralAmount = Decimal.mul(
+    collateral.value,
+    collateral.quantity || 0,
+  )
   const syntheticAmount = Decimal.mul(synthetic.value, synthetic.quantity || 0)
   return collateralAmount.div(syntheticAmount).mul(100).toNumber()
 }
