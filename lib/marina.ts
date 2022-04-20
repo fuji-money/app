@@ -95,6 +95,11 @@ export async function getContracts() {
   return Promise.all(promises)
 }
 
+export async function getContract(txid: string) {
+  const contracts = await getContracts()
+  return contracts.find((c) => c.txid === txid)
+}
+
 export async function getActivities(): Promise<Activity[]> {
   let activities: Activity[] = []
   const contracts = await getContracts()

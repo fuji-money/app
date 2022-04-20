@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Loading from 'components/layout/loading'
 import Topup from 'components/topup'
-import { getContracts } from 'lib/marina'
+import { getContract } from 'lib/marina'
 import { Contract } from 'lib/types'
 
 const TopupContract: NextPage = () => {
@@ -15,12 +15,13 @@ const TopupContract: NextPage = () => {
   const { txid } = router.query
 
   useEffect(() => {
-    setLoading(true)
-    getContracts().then((contracts) => {
-      const contract = contracts.find((c) => c.txid === txid)
-      setContract(contract)
-      setLoading(false)
-    })
+    if (txid && typeof txid === 'string') {
+      setLoading(true)
+      getContract(txid).then((contract) => {
+        setContract(contract)
+        setLoading(false)
+      })
+    }
   }, [txid])
 
   if (isLoading) return <Loading />
