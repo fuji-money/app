@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import NotEnoughFundsNotification from 'components/notifications/notEnoughFunds'
 import RatioTooLowNotification from 'components/notifications/ratioTooLow'
 import RatioUnsafeNotification from 'components/notifications/ratioUnsafe'
+import BorrowFeeNotification from './borrowFee'
 
 interface NotificationsProps {
   contract: Contract
@@ -23,6 +24,7 @@ const Notifications = ({
   const [ratioUnsafe, setRatioUnsafe] = useState(false)
 
   const spendQuantity = topup ? topup : contract.collateral.quantity || 0
+  const { payout } = contract
 
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
@@ -41,6 +43,7 @@ const Notifications = ({
 
   return (
     <>
+      <BorrowFeeNotification payout={payout} />
       {notEnoughFunds && <NotEnoughFundsNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
       {ratioUnsafe && <RatioUnsafeNotification />}
