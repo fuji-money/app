@@ -1,0 +1,176 @@
+// colors
+$primary: #20003c;
+$my-purple: #6b1d9c;
+$my-red: #dc3768;
+$my-pink: #f18c95;
+
+// bulma variables
+$box-radius: 0;
+$box-shadow: none;
+$button-hover-border-color: $primary;
+$control-border-width: 2px;
+$family-sans-serif: 'Proxima Nova Regular', sans-serif;
+$link: $my-red;
+$navbar-item-color: $my-purple;
+
+@import "~bulma/bulma.sass";
+
+main {
+  background: linear-gradient(180deg, #FFFBF8 0%, #FFEAE5 100%);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.links-wrapper {
+  p {
+    border: 2px solid #63159B;
+    border-radius: 44px;
+    background: #FFF;
+    font-weight: 700;
+    margin: 30px auto;
+    max-width: 500px;
+    padding: 10px;
+    a {
+      color: #2C024D;
+      font-size: 1.5rem;
+    }
+  }
+}
+
+.is-gradient {
+  background-image: linear-gradient(90deg, #63159b, #ff80ab);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.button {
+  border: 2px solid #88389D;
+  border-radius: 96px;
+  color: #88389D;
+  font-weight: 700;
+  line-height: inherit;
+  padding: 18px 42px;
+  text-decoration: none;
+  transition: box-shadow 300ms ease;
+  transition: transform 300ms ease, box-shadow 300ms ease;
+  &.is-primary {
+    background-color: #372b6b;
+    background-image: linear-gradient(140deg, #63159b 16%, #f49da4);
+    border: 0;
+    color: #fff;
+    padding: 20px 42px;
+  }
+  &.is-cta {
+    min-width: 400px;
+  }
+}
+
+.has-pink-border {
+  border: 1px solid $my-pink;
+}
+
+.has-pink-background {
+  background-color: #FFF1E3 !important;
+}
+
+.stepper {
+  background-image: linear-gradient(90deg, #63159b, #ff80ab);
+  border-radius: 20px;
+  color: #fff;
+  display: inline-block;
+  height: 20px;
+  margin-right: .5rem;
+  width: 20px;
+  text-align: center;
+}
+
+h1 {
+  background-image: linear-gradient(90deg, #63159b, #ff80ab);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin-top: 0px;
+  margin-bottom: 24px;
+}
+
+h2 {
+  color: #63159b;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  margin-top: 0px;
+}
+
+.image-container {
+  display: inline;
+  height: 20px;
+  padding: auto 0;
+  position: absolute;
+  width: 20px;
+}
+
+.info-card {
+  p {
+    font-weight: 700;
+  }
+  p:first-child {
+    color: #63159b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  p:nth-child(3) {
+    color: #9D9D9D;
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+}
+
+p.confirm {
+  color: #000;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-top: 1rem;
+}
+
+.modal {
+  h3 {
+    color: #6b1d9c;
+  }
+  p.confirm {
+    color: #000;
+    font-size: .9rem;
+    font-weight: 700;
+    margin-top: 1rem;
+  }
+  .modal-content {
+    .box {
+      background: linear-gradient(180deg, #FFFBF8 0%, #FFEAE5 100%);
+    }
+  }
+}
+
+.is-box {
+  background: #FEFEFE;
+  border: 0.5px solid $my-pink;
+  border-radius: 3px;
+  box-shadow: 0px 4px 12px 2px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem;
+  &:not(:last-child) {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.is-purple {
+  color: $my-purple;
+}
