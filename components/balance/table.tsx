@@ -18,7 +18,7 @@ const BalanceTable = () => {
     })
   }, [wallet])
 
-  if (!wallet) return <p>Wallet not found</p>
+  if (!wallet) return <p>🔌 Connect your wallet to view your balance</p>
   if (isLoading) return <Loading />
 
   return (

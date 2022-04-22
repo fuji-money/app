@@ -25,7 +25,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
     })
   }, [wallet])
 
-  if (!wallet) return <EmptyState>Wallet not found</EmptyState>
+  if (!wallet) return <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
   if (isLoading) return <Loading />
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
