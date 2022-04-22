@@ -3,10 +3,10 @@ import { getContracts } from 'lib/marina'
 import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
 import EmptyState from 'components/layout/empty'
-import Loading from 'components/layout/loading'
 import RedeemModal from 'components/modals/redeem'
 import { WalletContext } from 'components/providers'
 import ContractRow from './row'
+import Spinner from 'components/spinner'
 
 interface ContractsListProps {
   showActive: boolean
@@ -30,7 +30,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   }, [wallet])
 
   if (!wallet) return <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
   if (!contracts) return <EmptyState>Error getting contracts</EmptyState>
 
   const filteredContracts = showActive ? contracts : []

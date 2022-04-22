@@ -3,9 +3,9 @@ import { getActivities } from 'lib/marina'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
-import Loading from 'components/layout/loading'
 import { WalletContext } from 'components/providers'
 import ActivityRow from './row'
+import Spinner from 'components/spinner'
 
 interface ActivitiesListProps {
   activityType: ActivityType
@@ -26,7 +26,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   }, [wallet])
 
   if (!wallet) return <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)

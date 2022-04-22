@@ -3,10 +3,10 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError from 'components/layout/error'
-import Loading from 'components/layout/loading'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
 import { Offer } from 'lib/types'
+import Spinner from 'components/spinner'
 
 const BorrowTicker: NextPage = () => {
   const router = useRouter()
@@ -22,7 +22,7 @@ const BorrowTicker: NextPage = () => {
     })
   }, [])
 
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
   if (!offers) return <SomeError>Error getting offers</SomeError>
   if (!params?.length || params.length > 2)
     return <SomeError>Invalid URL</SomeError>

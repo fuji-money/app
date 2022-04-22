@@ -1,9 +1,9 @@
 import { useContext, useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
 import { Asset } from 'lib/types'
-import Loading from 'components/layout/loading'
 import { WalletContext } from 'components/providers'
 import BalanceRow from './row'
+import Spinner from 'components/spinner'
 
 const BalanceTable = () => {
   const [assets, setAssets] = useState<Asset[]>()
@@ -19,7 +19,7 @@ const BalanceTable = () => {
   }, [wallet])
 
   if (!wallet) return <p>🔌 Connect your wallet to view your balance</p>
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
 
   return (
     <table className="table is-fullwidth">

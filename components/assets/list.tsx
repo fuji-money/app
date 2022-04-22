@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
 import { Asset } from 'lib/types'
 import SomeError from 'components/layout/error'
-import Loading from 'components/layout/loading'
 import AssetRow from './row'
+import Spinner from 'components/spinner'
 
 const AssetsList = () => {
   const [assets, setAssets] = useState<Asset[]>()
@@ -18,7 +18,7 @@ const AssetsList = () => {
     })
   }, [])
 
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
   if (!assets) return <SomeError>Error getting assets</SomeError>
 
   return (

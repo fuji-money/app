@@ -1,6 +1,6 @@
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
-import Spinner from 'components/pay/spinner'
+import Spinner from 'components/spinner'
 import Modal from './modal'
 
 interface RedeemModalProps {
@@ -13,7 +13,7 @@ const RedeemModal = ({ contract }: RedeemModalProps) => {
       {contract && (
         <>
           <Spinner />
-          <h3>Waiting for confirmation...</h3>
+          <h3 className="mt-4">Waiting for confirmation...</h3>
           <p>Redeem contract:</p>
           <Summary contract={contract} />
           <p className="confirm">

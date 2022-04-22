@@ -1,10 +1,10 @@
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
-import Loading from 'components/layout/loading'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
 import { Offer } from 'lib/types'
+import Spinner from 'components/spinner'
 
 const Borrow: NextPage = () => {
   const [offers, setOffers] = useState<Offer[]>()
@@ -18,7 +18,7 @@ const Borrow: NextPage = () => {
     })
   }, [])
 
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
   if (!offers) return <SomeError>Error fetching offers</SomeError>
 
   return <Offers offers={offers} ticker="" />

@@ -2,10 +2,10 @@ import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
-import Loading from 'components/layout/loading'
 import Topup from 'components/topup'
 import { getContract } from 'lib/marina'
 import { Contract } from 'lib/types'
+import Spinner from 'components/spinner'
 
 const ContractPage: NextPage = () => {
   const [contract, setContract] = useState<Contract>()
@@ -24,7 +24,7 @@ const ContractPage: NextPage = () => {
     }
   }, [txid])
 
-  if (isLoading) return <Loading />
+  if (isLoading) return <Spinner />
   if (!contract) return <SomeError>Contract not found</SomeError>
 
   return <Topup contract={contract} />

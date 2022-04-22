@@ -1,6 +1,6 @@
 import { Contract, Ticker } from 'lib/types'
 import Summary from 'components/contract/summary'
-import Spinner from 'components/pay/spinner'
+import Spinner from 'components/spinner'
 import Modal from './modal'
 import { prettyNumber } from 'lib/pretty'
 
@@ -35,7 +35,7 @@ const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {
       {contract && (
         <>
           <Spinner />
-          <h3>Waiting for confirmation...</h3>
+          <h3 className="mt-4">Waiting for confirmation...</h3>
           <Intro ticker={ticker} topup={topup} />
           <Summary contract={contract} />
           <p className="confirm" onClick={() => setResult('success')}>
