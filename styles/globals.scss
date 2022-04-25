@@ -3,6 +3,7 @@ $primary: #20003c;
 $my-purple: #6b1d9c;
 $my-red: #dc3768;
 $my-pink: #f18c95;
+$my-grey: #b4a0ab;
 
 // bulma variables
 $box-radius: 0;
@@ -173,4 +174,16 @@ p.confirm {
 
 .is-purple {
   color: $my-purple;
+}
+
+.is-grey {
+  color: $my-grey;
+}
+
+.is-after {
+  background: rgba(255, 128, 171, 0.15);
+  border-radius: 50px;
+  color: $my-purple;
+  font-size: .6rem;
+  padding: .4rem 1rem;
 }
