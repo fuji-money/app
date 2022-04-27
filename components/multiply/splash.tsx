@@ -17,7 +17,20 @@ const Splash = ({ click }: SplashProps) => {
       </p>
       <div>
         <div className="is-box mx-auto mt-6">
-          <div className="icon-container is-flex is-justify-content-center">
+          <div className="icon-container is-justify-content-center level">
+            <Image
+              src="/images/assets/btc.svg"
+              alt="Bitcoin logo"
+              height={60}
+              width={60}
+            />
+            &nbsp;
+            <Image
+              src="/images/assets/arrow.svg"
+              alt="Bitcoin logo"
+              height={30}
+              width={30}
+            />
             <Image
               src="/images/assets/lbtc.svg"
               alt="Liquid Bitcoin logo"
@@ -32,18 +45,23 @@ const Splash = ({ click }: SplashProps) => {
           </p>
           <div className="is-flex is-justify-content-space-between">
             <div>
-              <p className="is-purple is-size-7">Max Multiple</p>
+              <p className="is-secondary-purple has-text-weight-bold is-size-7">
+                Max Multiple
+              </p>
               <h3 className="is-purple">4.33x</h3>
             </div>
             <div>
-              <p className="is-purple is-size-7 has-text-right">Variable annual fee</p>
-              <h3 className="is-purple has-text-right">4.50%</h3>
+              <p className="is-secondary-purple has-text-weight-bold is-size-7 has-text-right">
+                Redeem & Swap fee
+              </p>
+              <h3 className="is-purple has-text-right">0.25%</h3>
             </div>
           </div>
           <p className="has-text-centered mt-2">
-            <button onClick={click} className="button is-primary">Multiply</button>
+            <button onClick={click} className="button is-primary">
+              Multiply
+            </button>
           </p>
-
         </div>
       </div>
       <style jsx>{`
@@ -53,7 +71,7 @@ const Splash = ({ click }: SplashProps) => {
         .icon-container {
           margin-bottom: -10px;
           position: relative;
-          top: -45px;
+          top: -42px;
         }
         .button {
           min-width: 100%;

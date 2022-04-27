@@ -1,6 +1,7 @@
 // colors
 $primary: #20003c;
 $my-purple: #6b1d9c;
+$my-secondary-purple: #5e558c;
 $my-red: #dc3768;
 $my-pink: #f18c95;
 $my-grey: #b4a0ab;
@@ -174,6 +175,10 @@ p.confirm {
 
 .is-purple {
   color: $my-purple;
+}
+
+.is-secondary-purple {
+  color: $my-secondary-purple;
 }
 
 .is-grey {
