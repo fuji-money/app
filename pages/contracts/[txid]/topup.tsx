@@ -7,7 +7,7 @@ import { getContract } from 'lib/marina'
 import { Contract } from 'lib/types'
 import Spinner from 'components/spinner'
 
-const ContractPage: NextPage = () => {
+const ContractTopup: NextPage = () => {
   const [contract, setContract] = useState<Contract>()
   const [isLoading, setLoading] = useState(false)
 
@@ -30,4 +30,4 @@ const ContractPage: NextPage = () => {
   return <Topup contract={contract} />
 }
 
-export default ContractPage
+export default ContractTopup
