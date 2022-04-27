@@ -26,8 +26,8 @@ const Splash = ({ click }: SplashProps) => {
             />
             &nbsp;
             <Image
-              src="/images/assets/arrow.svg"
-              alt="Bitcoin logo"
+              src="/images/icons/arrow.svg"
+              alt="Arrow right"
               height={30}
               width={30}
             />
