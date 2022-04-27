@@ -48,7 +48,23 @@ const Form = () => {
           <div className="column is-1"></div>
           <div className="column is-7">
             <div className="is-box">
-              <p>Big box</p>
+              <p className="has-text-weight-bold">Configure your vault</p>
+              <p className="is-size-7 mt-5">
+                In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing eget vel
+                ut non duis vitae. Augue mi, bibendum ac imperdiet ipsum sed ornare.
+                Facilisis id sem quam elementum euismod ante ut.
+              </p>
+              <p className="has-text-weight-bold mt-5 mb-4">Deposit your LBTC</p>
+              <div className="has-pink-border info-card px-5 py-4">
+                <p className="amount">Amount to deposit</p>
+                <p className="quantity">20.00 LBTC</p>
+                <p className="value">US$ 8.000.000.246</p>
+              </div>
+              <p className="has-text-weight-bold mt-5 mb-4">Adjust your multiply</p>
+              <p className="has-text-weight-bold mt-5 mb-4">&nbsp;</p>
+              <p className="has-text-centered mt-5 mb-4">
+                <button className="button is-primary is-cta">Deposit</button>
+              </p>
             </div>
           </div>
         </div>
