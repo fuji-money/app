@@ -1,8 +1,8 @@
 import { prettyNumber } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
-import TradeButton from 'components/buttons/trade'
 import FilterButton from 'components/buttons/filter'
+import MultiplyButton from 'components/buttons/multiply'
 
 interface AssetRowProps {
   asset: Asset
@@ -12,7 +12,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
   return (
     <div className="is-box row">
       <div className="columns level">
-        <div className="column is-flex">
+        <div className="column is-flex is-3">
           <div className="pr-4">
             <Image alt="asset logo" height={60} src={asset.icon} width={40} />
           </div>
@@ -23,13 +23,13 @@ const AssetRow = ({ asset }: AssetRowProps) => {
             </p>
           </div>
         </div>
-        <div className="column">
+        <div className="column is-3">
           <p className="has-text-weight-bold is-gradient">
             US ${prettyNumber((asset.quantity || 0) * asset.value)}
           </p>
         </div>
-        <div className="column has-text-right">
-          <TradeButton />
+        <div className="column is-6 has-text-right">
+          <MultiplyButton ticker={asset.ticker} />
           <FilterButton ticker={asset.ticker} />
         </div>
       </div>
