@@ -1,8 +1,8 @@
 import type { NextPage } from 'next'
 import Assets from 'components/assets'
 
-const Multiply: NextPage = () => {
+const MultiplyPage: NextPage = () => {
   return <Assets />
 }
 
-export default Multiply
+export default MultiplyPage
