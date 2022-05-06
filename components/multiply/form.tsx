@@ -1,8 +1,13 @@
+import MultiplyButton from './button'
 import { useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 
-const Form = () => {
+interface FormProps {
+  setDeposit: any
+}
+
+const Form = ({ setDeposit }: FormProps) => {
   const [multiple, setMultiple] = useState(200)
 
   return (
@@ -83,7 +88,7 @@ const Form = () => {
                 <Range multiple={multiple} setMultiple={setMultiple} />
               </p>
               <p className="has-text-centered mt-5 mb-4">
-                <button className="button is-primary is-cta">Deposit</button>
+                <MultiplyButton setDeposit={setDeposit} />
               </p>
             </div>
           </div>
