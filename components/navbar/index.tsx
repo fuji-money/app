@@ -31,7 +31,10 @@ export default function Navbar() {
               Trade
             </a>
             <Link href="/borrow">
-              <a className="is-block my-auto ml-5 mr-long">Borrow</a>
+              <a className="is-block my-auto ml-5">Borrow</a>
+            </Link>
+            <Link href="/multiply">
+              <a className="is-block my-auto ml-5 mr-long">Multiply</a>
             </Link>
             <ConnectButton />
           </div>
