@@ -4,8 +4,8 @@ import { getCollateralQuantity, getContractRatio } from 'lib/utils'
 import Form from './form'
 import Balance from 'components/balance'
 import TopupButton from './button'
-import Pay from 'components/pay'
-import Title from 'components/pay/title'
+import Deposit from 'components/deposit'
+import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
 
 interface TopupProps {
@@ -13,7 +13,7 @@ interface TopupProps {
 }
 
 const Topup = ({ contract }: TopupProps) => {
-  const [pay, setPay] = useState(false)
+  const [deposit, setDeposit] = useState(false)
   const [network, setNetwork] = useState('')
   const [ratio, setRatio] = useState(getContractRatio(contract))
 
@@ -23,11 +23,11 @@ const Topup = ({ contract }: TopupProps) => {
 
   return (
     <section>
-      <Title name="Topup" network={network} pay={pay} />
+      <Title name="Topup" network={network} deposit={deposit} />
       <div className="row">
         <div className="columns">
           <div className="column is-8">
-            {!pay && (
+            {!deposit && (
               <>
                 <Form contract={contract} ratio={ratio} setRatio={setRatio} />
                 <Notifications
@@ -39,13 +39,13 @@ const Topup = ({ contract }: TopupProps) => {
                 <TopupButton
                   minRatio={minRatio}
                   ratio={ratio}
-                  setPay={setPay}
+                  setDeposit={setDeposit}
                   topup={topup}
                 />
               </>
             )}
-            {pay && (
-              <Pay
+            {deposit && (
+              <Deposit
                 contract={contract}
                 network={network}
                 setNetwork={setNetwork}

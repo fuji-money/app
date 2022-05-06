@@ -25,22 +25,22 @@ const Icon = ({ network }: IconProps) => {
 interface TitleProps {
   name: string
   network: string
-  pay: boolean
+  deposit: boolean
 }
 
-const Title = ({ name, network, pay }: TitleProps) => {
+const Title = ({ name, network, deposit }: TitleProps) => {
   const [title, setTitle] = useState(name)
 
   useEffect(() => {
-    const _title = !pay
+    const _title = !deposit
       ? name
       : !network
-      ? 'Select payment method'
+      ? 'Select deposit method'
       : network === 'lightning'
       ? 'Deposit via Lightning'
       : 'Deposit via Liquid Network'
     setTitle(_title)
-  }, [name, network, pay])
+  }, [name, network, deposit])
 
   return (
     <h1>

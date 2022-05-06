@@ -1,11 +1,11 @@
 interface TopupButtonProps {
   minRatio: number
   ratio: number
-  setPay: any
+  setDeposit: any
   topup: number
 }
 
-const TopupButton = ({ minRatio, ratio, setPay, topup }: TopupButtonProps) => {
+const TopupButton = ({ minRatio, ratio, setDeposit, topup }: TopupButtonProps) => {
   const enabled = topup > 0 && ratio >= minRatio
 
   return (
@@ -13,7 +13,7 @@ const TopupButton = ({ minRatio, ratio, setPay, topup }: TopupButtonProps) => {
       <button
         className="button is-primary is-cta"
         disabled={!enabled}
-        onClick={() => setPay(true)}
+        onClick={() => setDeposit(true)}
       >
         Proceed to topup
       </button>

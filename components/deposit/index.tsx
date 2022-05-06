@@ -5,14 +5,14 @@ import Qrcode from './qrcode'
 import Result from './result'
 import Marina from './marina'
 
-interface PayProps {
+interface DepositProps {
   contract: Contract
   network: string
   setNetwork: any
   topup: number
 }
 
-const Pay = ({ contract, network, setNetwork, topup }: PayProps) => {
+const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
   const ticker = contract.collateral.ticker
   const [result, setResult] = useState('')
   const qrcode = !result && network === 'lightning'
@@ -31,4 +31,4 @@ const Pay = ({ contract, network, setNetwork, topup }: PayProps) => {
   )
 }
 
-export default Pay
+export default Deposit

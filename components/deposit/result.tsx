@@ -50,7 +50,7 @@ const Failure = () => {
         accumsan potenti mattis consectetur pellentesque.
       </p>
       <p className="has-text-centered mt-4">
-        <a className="button is-primary is-cta">Retry payment</a>
+        <a className="button is-primary is-cta">Retry deposit</a>
       </p>
       <p className="has-text-centered mt-4">
         <Link href="/dashboard">

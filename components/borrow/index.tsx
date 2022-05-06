@@ -4,8 +4,8 @@ import Balance from 'components/balance'
 import { useState } from 'react'
 import Info from './info'
 import BorrowButton from './button'
-import Pay from 'components/pay'
-import Title from 'components/pay/title'
+import Deposit from 'components/deposit'
+import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
 
 interface BorrowProps {
@@ -13,7 +13,7 @@ interface BorrowProps {
 }
 
 const Borrow = ({ offer }: BorrowProps) => {
-  const [pay, setPay] = useState(false)
+  const [deposit, setDeposit] = useState(false)
   const [network, setNetwork] = useState('')
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
   const [contract, setContract] = useState<Contract>(offer)
@@ -23,11 +23,11 @@ const Borrow = ({ offer }: BorrowProps) => {
 
   return (
     <section>
-      <Title name="Borrow" network={network} pay={pay} />
+      <Title name="Borrow" network={network} deposit={deposit} />
       <div className="row">
         <div className="columns">
           <div className="column is-8">
-            {!pay && (
+            {!deposit && (
               <>
                 <Form
                   contract={contract}
@@ -46,12 +46,12 @@ const Borrow = ({ offer }: BorrowProps) => {
                   contract={contract}
                   minRatio={minRatio}
                   ratio={ratio}
-                  setPay={setPay}
+                  setDeposit={setDeposit}
                 />
               </>
             )}
-            {pay && (
-              <Pay
+            {deposit && (
+              <Deposit
                 contract={contract}
                 network={network}
                 setNetwork={setNetwork}

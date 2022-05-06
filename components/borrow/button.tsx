@@ -4,14 +4,14 @@ interface BorrowButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  setPay: any
+  setDeposit: any
 }
 
 const BorrowButton = ({
   contract,
   minRatio,
   ratio,
-  setPay,
+  setDeposit,
 }: BorrowButtonProps) => {
   const enabled =
     contract.collateral.quantity &&
@@ -27,9 +27,9 @@ const BorrowButton = ({
       <button
         className="button is-primary is-cta"
         disabled={!enabled}
-        onClick={() => setPay(true)}
+        onClick={() => setDeposit(true)}
       >
-        Proceed to payment
+        Proceed to deposit
       </button>
     </div>
   )
