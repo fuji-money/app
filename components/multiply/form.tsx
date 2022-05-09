@@ -2,6 +2,7 @@ import MultiplyButton from './button'
 import { useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
+import Image from 'next/image'
 
 interface FormProps {
   setDeposit: any
@@ -16,9 +17,19 @@ const Form = ({ setDeposit }: FormProps) => {
         <div className="columns">
           <div className="column is-4">
             <div className="is-box">
-              <p className="is-size-7 has-text-weight-bold">
-                Liquidation price
-              </p>
+              <div className="is-flex is-justify-content-space-between">
+                <p className="is-size-7 has-text-weight-bold">
+                  Liquidation price
+                </p>
+                <p>
+                  <Image
+                    src="/images/icons/help.svg"
+                    alt="help icon"
+                    height={20}
+                    width={20}
+                  />
+                </p>
+              </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
                 US$ 450.000
               </p>
@@ -27,7 +38,19 @@ const Form = ({ setDeposit }: FormProps) => {
               </p>
             </div>
             <div className="is-box">
-              <p className="is-size-7 has-text-weight-bold">Current price</p>
+            <div className="is-flex is-justify-content-space-between">
+                <p className="is-size-7 has-text-weight-bold">
+                  Current price
+                </p>
+                <p>
+                  <Image
+                    src="/images/icons/help.svg"
+                    alt="help icon"
+                    height={20}
+                    width={20}
+                  />
+                </p>
+              </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
                 US$ 450.000
               </p>
