@@ -8,7 +8,7 @@ interface FormProps {
   setDeposit: any
 }
 
-const Form = ({ setDeposit }: FormProps) => {
+const Form = ({ setDeposit }: FormProps) => {
   const [multiple, setMultiple] = useState(200)
 
   return (
