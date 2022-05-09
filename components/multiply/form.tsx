@@ -3,6 +3,8 @@ import { useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'
+import { openModal } from 'lib/utils'
+import MultiplyModals from 'components/modals/multiply'
 
 interface FormProps {
   setDeposit: any
@@ -22,12 +24,14 @@ const Form = ({ setDeposit }: FormProps) => {
                   Liquidation price
                 </p>
                 <p>
-                  <Image
-                    src="/images/icons/help.svg"
-                    alt="help icon"
-                    height={20}
-                    width={20}
-                  />
+                  <a onClick={() => openModal('liquidation-price-modal')}>
+                    <Image
+                      src="/images/icons/help.svg"
+                      alt="help icon"
+                      height={20}
+                      width={20}
+                    />
+                  </a>
                 </p>
               </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
@@ -43,19 +47,18 @@ const Form = ({ setDeposit }: FormProps) => {
                   Current price
                 </p>
                 <p>
-                  <Image
-                    src="/images/icons/help.svg"
-                    alt="help icon"
-                    height={20}
-                    width={20}
-                  />
+                  <a onClick={() => openModal('current-price-modal')}>
+                    <Image
+                      src="/images/icons/help.svg"
+                      alt="help icon"
+                      height={20}
+                      width={20}
+                    />
+                  </a>
                 </p>
               </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
                 US$ 450.000
-              </p>
-              <p>
-                <span className="is-size-7 is-grey">$54.321 after</span>
               </p>
             </div>
             <div className="row">
@@ -107,9 +110,7 @@ const Form = ({ setDeposit }: FormProps) => {
               <p className="has-text-weight-bold mt-5 mb-4">
                 Adjust your multiply
               </p>
-              <p className="has-text-weight-bold mt-5 mb-4">
-                <Range multiple={multiple} setMultiple={setMultiple} />
-              </p>
+              <Range multiple={multiple} setMultiple={setMultiple} />
               <p className="has-text-centered mt-5 mb-4">
                 <MultiplyButton setDeposit={setDeposit} />
               </p>
@@ -117,6 +118,7 @@ const Form = ({ setDeposit }: FormProps) => {
           </div>
         </div>
       </div>
+      <MultiplyModals />
     </section>
   )
 }
