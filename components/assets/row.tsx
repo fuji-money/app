@@ -2,7 +2,7 @@ import { prettyNumber } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
-import MultiplyButton from 'components/buttons/multiply'
+import TradeButton from 'components/buttons/trade'
 
 interface AssetRowProps {
   asset: Asset
@@ -29,7 +29,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           </p>
         </div>
         <div className="column is-6 has-text-right">
-          <MultiplyButton ticker={asset.ticker} />
+          <TradeButton />
           <FilterButton ticker={asset.ticker} />
         </div>
       </div>
