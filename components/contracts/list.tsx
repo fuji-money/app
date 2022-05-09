@@ -29,7 +29,10 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
     })
   }, [wallet])
 
-  if (!wallet) return <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
+  if (!wallet)
+    return (
+      <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
+    )
   if (isLoading) return <Spinner />
   if (!contracts) return <EmptyState>Error getting contracts</EmptyState>
 

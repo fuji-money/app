@@ -4,7 +4,7 @@ interface SnippetProps {
   after: string
 }
 
-const Snippet = ({ title, value, after}: SnippetProps) => {
+const Snippet = ({ title, value, after }: SnippetProps) => {
   return (
     <div>
       <p className="is-size-7 is-grey">{title}</p>

@@ -25,7 +25,10 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
     })
   }, [wallet])
 
-  if (!wallet) return <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
+  if (!wallet)
+    return (
+      <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
+    )
   if (isLoading) return <Spinner />
   if (!activities) return <SomeError>Error getting activities</SomeError>
 

@@ -5,7 +5,12 @@ interface TopupButtonProps {
   topup: number
 }
 
-const TopupButton = ({ minRatio, ratio, setDeposit, topup }: TopupButtonProps) => {
+const TopupButton = ({
+  minRatio,
+  ratio,
+  setDeposit,
+  topup,
+}: TopupButtonProps) => {
   const enabled = topup > 0 && ratio >= minRatio
 
   return (

@@ -42,10 +42,8 @@ const Form = ({ setDeposit }: FormProps) => {
               </p>
             </div>
             <div className="is-box">
-            <div className="is-flex is-justify-content-space-between">
-                <p className="is-size-7 has-text-weight-bold">
-                  Current price
-                </p>
+              <div className="is-flex is-justify-content-space-between">
+                <p className="is-size-7 has-text-weight-bold">Current price</p>
                 <p>
                   <a onClick={() => openModal('current-price-modal')}>
                     <Image
