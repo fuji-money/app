@@ -1,46 +1,52 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
+// calculate ratio from range value
+const calcRatio = (value: number, min: number, max: number) =>
+  max - value * ((max - min) / 100)
 
 // update range bar colors
-const updateColors = (multiple: number, max: number) => {
-  if (typeof window !== 'undefined') {
-    // don't run server side
-    const target = document.getElementById('range')
-    if (!target) return false
-    target.style.backgroundSize = (multiple / max) * 100 + '% 100%'
-  }
+const updateColors = (value: number) => {
+  if (typeof window === 'undefined') return // don't run server side
+  const target = document.getElementById('range')
+  if (!target) return // element not found
+  target.style.backgroundSize = `${value}% 100%`
 }
 
 interface RangeProps {
-  multiple: number
-  setMultiple: any
+  liquidationPrice: number
+  minRatio: number
+  maxRatio: number
+  ratio: number
+  setRatio: any
 }
 
-const Range = ({ multiple, setMultiple }: RangeProps) => {
-  const max = 400
+const Range = ({ liquidationPrice, minRatio, maxRatio, ratio, setRatio }: RangeProps) => {
+  const [rangeValue, setRangeValue] = useState(0)
 
   useEffect(() => {
-    updateColors(multiple, max)
-  }, [multiple])
+    updateColors(rangeValue)
+    setRatio(calcRatio(rangeValue, minRatio, maxRatio))
+  }, [minRatio, maxRatio, rangeValue, ratio, setRatio])
 
   return (
     <>
       <div className="is-flex is-justify-content-space-between">
         <div>
           <p className="is-size-7">Liquidation price</p>
-          <p className="is-size-5 is-gradient">$ 234,890.00</p>
+          <p className="is-size-5 is-gradient">$ {liquidationPrice.toLocaleString()}</p>
         </div>
         <div className="has-text-right">
           <p className="is-size-7">Collateral ratio</p>
-          <p className="is-size-5">200.00%</p>
+          <p className="is-size-5">{ratio}%</p>
         </div>
       </div>
       <input
         id="range"
         min="0"
-        max={max}
+        max="100"
         type="range"
-        value={multiple}
-        onChange={(e) => setMultiple(parseInt(e.target.value))}
+        value={rangeValue}
+        onChange={(e) => setRangeValue(parseInt(e.target.value))}
       />
       <div className="is-flex is-justify-content-space-between mb-6">
         <p className="is-grey">Decrease risk</p>

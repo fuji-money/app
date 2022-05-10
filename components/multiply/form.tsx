@@ -1,17 +1,70 @@
 import MultiplyButton from './button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'
 import { openModal } from 'lib/utils'
 import MultiplyModals from 'components/modals/multiply'
+import Collateral from './collateral'
+import { fetchAsset } from 'lib/api'
+import { Asset } from 'lib/types'
+import Spinner from 'components/spinner'
+import SomeError from 'components/layout/error'
+
+const calcDebt = (price: number, quantity: number, ratio: number) => {
+  // s = a1 / (1 - q)
+  const q = (1 / ratio) * 100
+  const a = quantity * price * q
+  return a / (1 - q)
+}
+
+const calcExposure = (debt: number, price: number, quantity: number) =>
+  debt / price + quantity
+
+const calcLiquidationPrice = (price: number, ratio: number) => 40_000
 
 interface FormProps {
   setDeposit: any
 }
 
 const Form = ({ setDeposit }: FormProps) => {
-  const [multiple, setMultiple] = useState(200)
+  const [asset, setAsset] = useState<Asset>()
+  const [fujiDebt, setFujiDebt] = useState(0)
+  const [isLoading, setLoading] = useState(false)
+  const [lbtcExposure, setLbtcExposure] = useState(0)
+  const [lbtcQuantity, setLbtcQuantity] = useState(0)
+  const [liquidationPrice, setLiquidationPrice] = useState(0)
+  const [multiplier, setMultiplier] = useState(0)
+  const [ratio, setRatio] = useState(200)
+
+  const currentPrice = 42_000 // TODO
+  const minRatio = 130 // TODO move to constants?
+  const maxRatio = 330 // TODO move to constants?
+
+
+
+  useEffect(() => {
+    setLoading(true)
+    fetchAsset('LBTC').then((data) => {
+      setAsset(data)
+      setLoading(false)
+    })
+  }, [])
+
+  useEffect(() => {
+    const quoc = (1 / ratio) * 100
+    const debt = lbtcQuantity * currentPrice * quoc / (1 - quoc)
+    const expo = debt / currentPrice + lbtcQuantity
+    const mult = expo / lbtcQuantity
+    const liqp = currentPrice / ratio * minRatio
+    setFujiDebt(debt)
+    setMultiplier(mult)
+    setLbtcExposure(expo)
+    setLiquidationPrice(liqp)
+  }, [lbtcQuantity, ratio])
+
+  if (isLoading) return <Spinner />
+  if (!asset) return <SomeError>Error getting offer</SomeError>
 
   return (
     <section>
@@ -35,10 +88,10 @@ const Form = ({ setDeposit }: FormProps) => {
                 </p>
               </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
-                US$ 450.000
+                US$ 0.00
               </p>
               <p>
-                <span className="is-after">$54.321 after</span>
+                <span className="is-after">$ {liquidationPrice.toLocaleString()} after</span>
               </p>
             </div>
             <div className="is-box">
@@ -56,7 +109,7 @@ const Form = ({ setDeposit }: FormProps) => {
                 </p>
               </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
-                US$ 450.000
+                US$ {currentPrice.toLocaleString()}
               </p>
             </div>
             <div className="row">
@@ -65,23 +118,23 @@ const Form = ({ setDeposit }: FormProps) => {
                   <Snippet
                     title="FUJI Debt"
                     value="0.000 FUSD"
-                    after="8787 after"
+                    after={`${fujiDebt.toLocaleString()} after`}
                   />
                 </div>
                 <div className="column is-6">
                   <Snippet
                     title="Total L-BTC exposure"
                     value="0.000 LBTC"
-                    after="12,346 after"
+                    after={`${lbtcExposure.toLocaleString()} after`}
                   />
                 </div>
               </div>
               <div className="columns">
                 <div className="column is-6">
                   <Snippet
-                    title="FUJI Debt multiplier"
+                    title="FUJI debt multiplier"
                     value="0.00x"
-                    after="2.33x after"
+                    after={`${multiplier.toLocaleString()}x after`}
                   />
                 </div>
               </div>
@@ -100,15 +153,17 @@ const Form = ({ setDeposit }: FormProps) => {
               <p className="has-text-weight-bold mt-5 mb-4">
                 Deposit your LBTC
               </p>
-              <div className="has-pink-border info-card px-5 py-4">
-                <p className="amount">Amount to deposit</p>
-                <p className="quantity">20.00 LBTC</p>
-                <p className="value">US$ 8.000.000.246</p>
-              </div>
+              <Collateral asset={asset} setLbtcQuantity={setLbtcQuantity} />
               <p className="has-text-weight-bold mt-5 mb-4">
                 Adjust your multiply
               </p>
-              <Range multiple={multiple} setMultiple={setMultiple} />
+              <Range
+                liquidationPrice={liquidationPrice}
+                minRatio={minRatio}
+                maxRatio={maxRatio}
+                ratio={ratio}
+                setRatio={setRatio}
+              />
               <p className="has-text-centered mt-5 mb-4">
                 <MultiplyButton setDeposit={setDeposit} />
               </p>
