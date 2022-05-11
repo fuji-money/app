@@ -11,37 +11,24 @@ import { Asset } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 
-const calcDebt = (price: number, quantity: number, ratio: number) => {
-  // s = a1 / (1 - q)
-  const q = (1 / ratio) * 100
-  const a = quantity * price * q
-  return a / (1 - q)
-}
-
-const calcExposure = (debt: number, price: number, quantity: number) =>
-  debt / price + quantity
-
-const calcLiquidationPrice = (price: number, ratio: number) => 40_000
-
 interface FormProps {
+  quantity: number
+  ratio: number
   setDeposit: any
+  setQuantity: any
+  setRatio: any
 }
 
-const Form = ({ setDeposit }: FormProps) => {
+const Form = ({ quantity, ratio, setDeposit, setQuantity, setRatio }: FormProps) => {
   const [asset, setAsset] = useState<Asset>()
+  const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
   const [isLoading, setLoading] = useState(false)
-  const [lbtcExposure, setLbtcExposure] = useState(0)
-  const [lbtcQuantity, setLbtcQuantity] = useState(0)
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const [multiplier, setMultiplier] = useState(0)
-  const [ratio, setRatio] = useState(200)
 
-  const currentPrice = 42_000 // TODO
   const minRatio = 130 // TODO move to constants?
   const maxRatio = 330 // TODO move to constants?
-
-
 
   useEffect(() => {
     setLoading(true)
@@ -52,16 +39,18 @@ const Form = ({ setDeposit }: FormProps) => {
   }, [])
 
   useEffect(() => {
-    const quoc = (1 / ratio) * 100
-    const debt = lbtcQuantity * currentPrice * quoc / (1 - quoc)
-    const expo = debt / currentPrice + lbtcQuantity
-    const mult = expo / lbtcQuantity
-    const liqp = currentPrice / ratio * minRatio
-    setFujiDebt(debt)
-    setMultiplier(mult)
-    setLbtcExposure(expo)
-    setLiquidationPrice(liqp)
-  }, [lbtcQuantity, ratio])
+    if (asset) {
+      const quoc = (1 / ratio) * 100
+      const debt = quantity * asset.value * quoc / (1 - quoc)
+      const expo = debt / asset.value + quantity
+      const mult = quantity ? expo / quantity : 0
+      const liqp = asset.value / ratio * minRatio
+      setFujiDebt(debt)
+      setMultiplier(mult)
+      setExposure(expo)
+      setLiquidationPrice(liqp)
+    }
+  }, [asset, quantity, ratio])
 
   if (isLoading) return <Spinner />
   if (!asset) return <SomeError>Error getting offer</SomeError>
@@ -109,7 +98,7 @@ const Form = ({ setDeposit }: FormProps) => {
                 </p>
               </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
-                US$ {currentPrice.toLocaleString()}
+                US$ {asset.value.toLocaleString()}
               </p>
             </div>
             <div className="row">
@@ -125,7 +114,7 @@ const Form = ({ setDeposit }: FormProps) => {
                   <Snippet
                     title="Total L-BTC exposure"
                     value="0.000 LBTC"
-                    after={`${lbtcExposure.toLocaleString()} after`}
+                    after={`${exposure.toLocaleString()} after`}
                   />
                 </div>
               </div>
@@ -153,7 +142,7 @@ const Form = ({ setDeposit }: FormProps) => {
               <p className="has-text-weight-bold mt-5 mb-4">
                 Deposit your LBTC
               </p>
-              <Collateral asset={asset} setLbtcQuantity={setLbtcQuantity} />
+              <Collateral asset={asset} setQuantity={setQuantity} />
               <p className="has-text-weight-bold mt-5 mb-4">
                 Adjust your multiply
               </p>

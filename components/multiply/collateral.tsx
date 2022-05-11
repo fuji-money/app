@@ -3,12 +3,10 @@ import { Asset } from 'lib/types'
 
 interface CollateralProps {
   asset: Asset
-  setLbtcQuantity: any
+  setQuantity: any
 }
 
-const Collateral = ({ asset, setLbtcQuantity }: CollateralProps) => {
-  const setQuantity = (e: any) => setLbtcQuantity(parseFloat(e.target.value))
-
+const Collateral = ({ asset, setQuantity }: CollateralProps) => {
   return (
     <div className="level has-pink-border has-pink-background">
       <div className="level-left">
@@ -31,7 +29,7 @@ const Collateral = ({ asset, setLbtcQuantity }: CollateralProps) => {
             min="0"
             placeholder="0.00"
             type="number"
-            onChange={setQuantity}
+            onChange={(e) => setQuantity(parseFloat(e.target.value))}
           />
         </div>
       </div>
