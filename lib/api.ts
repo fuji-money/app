@@ -4,7 +4,6 @@ import { Asset, Offer } from './types'
 
 export async function fetchAsset(ticker: string): Promise<Asset> {
   const asset = await fetchURL(`/api/assets/${ticker}`)
-  if (ticker === 'LBTC') asset.value = await getBTCvalue()
   return asset
 }
 

@@ -42,33 +42,40 @@ const fbmn = {
   value: 309415.05,
 }
 
-export const apiAssets = [lbtc, usdt, fusd, fbmn]
+export const apiAssets = async () => {
+  lbtc.value = await getBTCvalue()
+  return [lbtc, usdt, fusd, fbmn]
+}
 
-export const apiOffers = [
-  {
-    id: '5530bdbb7c61227eac28429debef062c845f829522280612c5dd9f5e1a2082ee',
-    collateral: lbtc,
-    payout: 0.25,
-    synthetic: fusd,
-  },
-  {
-    id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
-    collateral: lbtc,
-    payout: 0.25,
-    synthetic: fbmn,
-  },
-  {
-    id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
-    collateral: usdt,
-    payout: 0.25,
-    synthetic: fbmn,
-  },
-]
+export const apiOffers = async () => {
+  return [
+    {
+      id: '5530bdbb7c61227eac28429debef062c845f829522280612c5dd9f5e1a2082ee',
+      collateral: await findAssetByTicker('lbtc'),
+      payout: 0.25,
+      synthetic: await findAssetByTicker('fusd'),
+    },
+    {
+      id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
+      collateral: await findAssetByTicker('lbtc'),
+      payout: 0.25,
+      synthetic: await findAssetByTicker('fbmn'),
+    },
+    {
+      id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
+      collateral: await findAssetByTicker('usdt'),
+      payout: 0.25,
+      synthetic: await findAssetByTicker('fbmn'),
+    },
+  ]
+}
 
-export const findAssetByTicker = (ticker: any) => {
-  return apiAssets.find(
-    (asset) => asset.ticker.toLowerCase() === ticker.toLowerCase(),
+export const findAssetByTicker = async (ticker: any) => {
+  const asset = (await apiAssets()).find(
+    (a) => a.ticker.toLowerCase() === ticker.toLowerCase(),
   )
+  if (!asset) throw new Error(`Asset with ticker ${ticker} not found`)
+  return asset
 }
 
 export const getBTCvalue = async () => {

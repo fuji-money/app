@@ -2,9 +2,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { findAssetByTicker } from 'lib/server'
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { ticker } = req.query
-  const asset = findAssetByTicker(ticker)
-  if (!asset) res.status(404)
+  const asset = await findAssetByTicker(ticker)
+  if (!asset) return res.status(404)
   res.status(200).json(asset)
 }

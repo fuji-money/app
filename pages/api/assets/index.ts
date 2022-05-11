@@ -3,11 +3,11 @@ import { Asset } from 'lib/types'
 import { apiAssets } from 'lib/server'
 import { balance } from 'lib/marina'
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Asset[]>,
 ) {
-  const assets = apiAssets.map((asset: Asset) => {
+  const assets = (await apiAssets()).map((asset: Asset) => {
     asset.quantity = balance(asset.ticker)
     return asset
   })
