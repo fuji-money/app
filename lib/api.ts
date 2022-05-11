@@ -1,17 +1,20 @@
+import { fetchURL } from './fetch'
+import { getBTCvalue } from './server'
 import { Asset, Offer } from './types'
 
-export async function fetchURL(url: string) {
-  const res = await fetch(url)
-  const data = await res.json()
-  return data
-}
-
 export async function fetchAsset(ticker: string): Promise<Asset> {
-  return await fetchURL(`/api/assets/${ticker}`)
+  const asset = await fetchURL(`/api/assets/${ticker}`)
+  if (ticker === 'LBTC') asset.value = await getBTCvalue()
+  return asset
 }
 
 export async function fetchAssets(): Promise<Asset[]> {
-  return await fetchURL('/api/assets')
+  const value = await getBTCvalue()
+  const assets = await fetchURL('/api/assets')
+  assets.forEach((asset: Asset) => {
+    if (asset.ticker === 'LBTC') asset.value = value
+  })
+  return assets
 }
 
 export async function fetchOffer(

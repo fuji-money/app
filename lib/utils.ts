@@ -1,6 +1,5 @@
-import { findAsset } from './fetch'
-import { Asset, Contract, ContractState } from './types'
-import { Decimal } from 'decimal.js'
+import Decimal from "decimal.js"
+import { Contract, ContractState } from "./types"
 
 // get contract ratio
 export const getContractRatio = (contract: Contract): number => {
