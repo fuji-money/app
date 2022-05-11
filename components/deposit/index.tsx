@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Asset, Contract } from 'lib/types'
+import { Contract } from 'lib/types'
 import Network from './network'
 import Qrcode from './qrcode'
 import Result from './result'
