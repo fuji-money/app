@@ -6,7 +6,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const { params } = req.query
   if (params.length !== 2) res.status(404).json({ message: `invalid url` })
   const offer = apiOffers.find(
-    (o) => o.collateral === params[1] && o.synthetic === params[0],
+    (_offer) =>
+      _offer.collateral.ticker === params[1] &&
+      _offer.synthetic.ticker === params[0]
   )
   if (!offer) res.status(404).json({ message: `offer not found` })
   res.status(200).json(offer)

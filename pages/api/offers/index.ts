@@ -11,8 +11,8 @@ export default function handler(
   res: NextApiResponse<Offer[]>,
 ) {
   const offers = apiOffers.map((offer) => {
-    const collateral = finder(offer.collateral)
-    const synthetic = finder(offer.synthetic)
+    const collateral = finder(offer.collateral.ticker)
+    const synthetic = finder(offer.synthetic.ticker)
     if (!collateral || !synthetic) throw new Error('Offer with unknown asset')
     return { ...offer, collateral, synthetic }
   })
