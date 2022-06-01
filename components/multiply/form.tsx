@@ -1,5 +1,5 @@
 import MultiplyButton from './button'
-import { useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'
@@ -7,53 +7,60 @@ import { openModal } from 'lib/utils'
 import MultiplyModals from 'components/modals/multiply'
 import Collateral from './collateral'
 import { fetchAsset } from 'lib/api'
-import { Asset } from 'lib/types'
+import { Asset, Contract } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 
-interface FormProps {
-  quantity: number
-  ratio: number
-  setDeposit: any
-  setQuantity: any
-  setRatio: any
+interface MultiplyFormProps {
+  contract: Contract
+  setContract: Dispatch<SetStateAction<Contract>>
+  setDeposit: Dispatch<SetStateAction<boolean>>
 }
 
-const Form = ({ quantity, ratio, setDeposit, setQuantity, setRatio }: FormProps) => {
-  const [asset, setAsset] = useState<Asset>()
+const MultiplyForm = ({ contract, setContract, setDeposit }: MultiplyFormProps) => {
+  const minRatio = 130 // TODO move to constants?
+  const maxRatio = 330 // TODO move to constants?
+
+  const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
   const [isLoading, setLoading] = useState(false)
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const [multiplier, setMultiplier] = useState(0)
-
-  const minRatio = 130 // TODO move to constants?
-  const maxRatio = 330 // TODO move to constants?
+  const [quantity, setQuantity] = useState(0)
+  const [ratio, setRatio] = useState(maxRatio)
 
   useEffect(() => {
     setLoading(true)
     fetchAsset('LBTC').then((data) => {
-      setAsset(data)
+      setLbtc(data)
       setLoading(false)
     })
   }, [])
 
+
+
   useEffect(() => {
-    if (asset) {
+    if (lbtc) {
       const quoc = (1 / ratio) * 100
-      const debt = quantity * asset.value * quoc / (1 - quoc)
-      const expo = debt / asset.value + quantity
+      const debt = quantity * lbtc.value * quoc / (1 - quoc)
+      const expo = debt / lbtc.value + quantity
       const mult = quantity ? expo / quantity : 0
-      const liqp = asset.value / ratio * minRatio
+      const liqp = lbtc.value / ratio * minRatio
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
       setLiquidationPrice(liqp)
+      setContract(c => {
+        const collateral = { ...c.collateral, quantity }
+        const synthetic = { ...c.synthetic, quantity: debt }
+        return { ...c, collateral, synthetic }
+      })
     }
-  }, [asset, quantity, ratio])
+  }, [lbtc, quantity, ratio, setContract])
 
   if (isLoading) return <Spinner />
-  if (!asset) return <SomeError>Error getting offer</SomeError>
+  if (!lbtc) return <SomeError>Error getting LBTC asset</SomeError>
 
   return (
     <section>
@@ -98,7 +105,7 @@ const Form = ({ quantity, ratio, setDeposit, setQuantity, setRatio }: FormProps)
                 </p>
               </div>
               <p className="is-size-5 is-gradient has-text-weight-bold">
-                US$ {asset.value.toLocaleString()}
+                US$ {lbtc.value.toLocaleString()}
               </p>
             </div>
             <div className="row">
@@ -142,7 +149,7 @@ const Form = ({ quantity, ratio, setDeposit, setQuantity, setRatio }: FormProps)
               <p className="has-text-weight-bold mt-5 mb-4">
                 Deposit your LBTC
               </p>
-              <Collateral asset={asset} setQuantity={setQuantity} />
+              <Collateral asset={lbtc} setQuantity={setQuantity} />
               <p className="has-text-weight-bold mt-5 mb-4">
                 Adjust your multiply
               </p>
@@ -165,4 +172,4 @@ const Form = ({ quantity, ratio, setDeposit, setQuantity, setRatio }: FormProps)
   )
 }
 
-export default Form
+export default MultiplyForm
