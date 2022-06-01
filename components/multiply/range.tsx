@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 
 // calculate ratio from range value
 const calcRatio = (value: number, min: number, max: number) =>
@@ -17,7 +17,7 @@ interface RangeProps {
   minRatio: number
   maxRatio: number
   ratio: number
-  setRatio: any
+  setRatio: Dispatch<SetStateAction<number>>
 }
 
 const Range = ({ liquidationPrice, minRatio, maxRatio, ratio, setRatio }: RangeProps) => {

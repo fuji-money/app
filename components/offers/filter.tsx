@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface IconProps {
   filter: string
-  reset: any
+  reset: () => void
 }
 
 const Icon = ({ filter, reset }: IconProps) => {

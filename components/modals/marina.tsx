@@ -3,6 +3,7 @@ import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
 import { prettyNumber } from 'lib/pretty'
+import { Dispatch, SetStateAction } from 'react'
 
 interface IntroProps {
   ticker: Ticker
@@ -25,7 +26,7 @@ const Intro = ({ ticker, topup }: IntroProps) => {
 interface MarinaModalProps {
   contract: Contract
   topup: number | undefined
-  setResult: any
+  setResult: Dispatch<SetStateAction<string>>
 }
 
 const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {

@@ -1,7 +1,9 @@
+import { Dispatch, SetStateAction } from "react"
+
 interface TopupButtonProps {
   minRatio: number
   ratio: number
-  setDeposit: any
+  setDeposit: Dispatch<SetStateAction<boolean>>
   topup: number
 }
 

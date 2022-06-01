@@ -1,5 +1,6 @@
 import { Contract } from 'lib/types'
 import { getCollateralQuantity } from 'lib/utils'
+import { Dispatch, SetStateAction } from 'react'
 import Collateral from './collateral'
 import Ratio from './ratio'
 import Synthetic from './synthetic'
@@ -7,8 +8,8 @@ import Synthetic from './synthetic'
 interface BorrowFormProps {
   contract: Contract
   ratio: number
-  setContract: any
-  setRatio: any
+  setContract: Dispatch<SetStateAction<Contract>>
+  setRatio: Dispatch<SetStateAction<number>>
 }
 
 const BorrowForm = ({

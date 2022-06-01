@@ -1,10 +1,11 @@
 import { Contract } from 'lib/types'
+import { Dispatch, SetStateAction } from 'react'
 
 interface BorrowButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  setDeposit: any
+  setDeposit: Dispatch<SetStateAction<boolean>>
 }
 
 const BorrowButton = ({

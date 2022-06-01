@@ -21,7 +21,7 @@ const filterOffers = (offers: Offer[] | undefined) => (filter: string) => {
 
 interface OffersProps {
   offers: Offer[]
-  ticker: any
+  ticker: string
 }
 
 const Offers = ({ offers, ticker }: OffersProps) => {

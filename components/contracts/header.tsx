@@ -1,6 +1,8 @@
+import { Dispatch, SetStateAction } from "react"
+
 interface ContractsHeaderProps {
   showActive: boolean
-  setShowActive: any
+  setShowActive: Dispatch<SetStateAction<boolean>>
 }
 
 const ContractsHeader = ({

@@ -2,6 +2,7 @@ import { Contract } from 'lib/types'
 import { getCollateralQuantity } from 'lib/utils'
 import Ratio from 'components/borrow/ratio'
 import Summary from './summary'
+import { Dispatch, SetStateAction } from 'react'
 
 const getContractWithTopup = (contract: Contract, quantity = 0) => {
   return {
@@ -15,7 +16,7 @@ const getContractWithTopup = (contract: Contract, quantity = 0) => {
 interface FormProps {
   contract: Contract
   ratio: number
-  setRatio: any
+  setRatio: Dispatch<SetStateAction<number>>
 }
 
 const Form = ({ contract, ratio, setRatio }: FormProps) => {

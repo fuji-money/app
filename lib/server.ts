@@ -70,7 +70,7 @@ export const apiOffers = async () => {
   ]
 }
 
-export const findAssetByTicker = async (ticker: any) => {
+export const findAssetByTicker = async (ticker: string) => {
   const asset = (await apiAssets()).find(
     (a) => a.ticker.toLowerCase() === ticker.toLowerCase(),
   )

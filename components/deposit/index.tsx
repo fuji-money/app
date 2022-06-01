@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { Contract } from 'lib/types'
 import Network from './network'
 import Qrcode from './qrcode'
@@ -8,7 +8,7 @@ import Marina from './marina'
 interface DepositProps {
   contract: Contract
   network: string
-  setNetwork: any
+  setNetwork: Dispatch<SetStateAction<string>>
   topup: number
 }
 

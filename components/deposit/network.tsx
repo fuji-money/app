@@ -1,9 +1,10 @@
 import Image from 'next/image'
 import { Ticker } from 'lib/types'
+import { Dispatch, SetStateAction } from 'react'
 
 interface NetworkProps {
   ticker: Ticker
-  setNetwork: any
+  setNetwork: Dispatch<SetStateAction<string>>
 }
 
 const Network = ({ ticker, setNetwork }: NetworkProps) => {

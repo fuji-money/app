@@ -3,11 +3,12 @@ import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
+import { Dispatch, SetStateAction } from 'react'
 
 interface MarinaProps {
   contract: Contract
   topup: number | undefined
-  setResult: any
+  setResult: Dispatch<SetStateAction<string>>
 }
 
 const Marina = ({ contract, topup, setResult }: MarinaProps) => {

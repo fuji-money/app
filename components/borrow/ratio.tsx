@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { Dispatch, SetStateAction, useEffect } from 'react'
 import { prettyRatio } from 'lib/pretty'
 import { Asset } from 'lib/types'
 import { getRatioState } from 'lib/utils'
@@ -34,14 +34,14 @@ const updateLabels = (min: number, safe: number) => {
 interface RatioProps {
   collateral: Asset
   ratio?: number
-  setContractRatio: any
+  setContractRatio: (ratio: number) => void
 }
 
 const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
   const min = collateral.ratio || 0
   const safe = min + 50
   const state = getRatioState(ratio, min)
-  const setRatio = (e: any) => setContractRatio(e.target.value)
+  const setRatio = (e: any) => setContractRatio(Number(e.target.value))
 
   useEffect(() => {
     updateLabels(min, safe)

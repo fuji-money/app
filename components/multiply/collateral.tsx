@@ -1,9 +1,10 @@
 import Image from 'next/image'
 import { Asset } from 'lib/types'
+import { Dispatch, SetStateAction } from 'react'
 
 interface CollateralProps {
   asset: Asset
-  setQuantity: any
+  setQuantity: Dispatch<SetStateAction<number>>
 }
 
 const Collateral = ({ asset, setQuantity }: CollateralProps) => {
