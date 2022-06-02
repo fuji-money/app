@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface RedeemButtonProps {
   contract: Contract
-  setRedeem: Dispatch<SetStateAction<Contract>>
+  setRedeem: Dispatch<SetStateAction<Contract | undefined>>
 }
 
 const RedeemButton = ({ contract, setRedeem }: RedeemButtonProps) => {

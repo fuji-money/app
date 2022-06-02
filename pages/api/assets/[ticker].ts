@@ -6,7 +6,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const { ticker } = req.query
+  const { params } = req.query
+  const ticker = typeof params === 'string' ? params : params[0]
   const asset = await findAssetByTicker(ticker)
   if (!asset) return res.status(404)
   res.status(200).json(asset)
