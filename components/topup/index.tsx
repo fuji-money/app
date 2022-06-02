@@ -1,4 +1,4 @@
-import { Contract } from 'lib/types'
+import { Contract, Oracle } from 'lib/types'
 import { useState } from 'react'
 import { getCollateralQuantity, getContractRatio } from 'lib/utils'
 import Form from './form'
@@ -10,9 +10,11 @@ import Notifications from 'components/notifications'
 
 interface TopupProps {
   contract: Contract
+  oracles: Oracle[]
+  setContract: any
 }
 
-const Topup = ({ contract }: TopupProps) => {
+const Topup = ({ contract, oracles, setContract }: TopupProps) => {
   const [deposit, setDeposit] = useState(false)
   const [network, setNetwork] = useState('')
   const [ratio, setRatio] = useState(getContractRatio(contract))
@@ -29,7 +31,13 @@ const Topup = ({ contract }: TopupProps) => {
           <div className="column is-8">
             {!deposit && (
               <>
-                <Form contract={contract} ratio={ratio} setRatio={setRatio} />
+                <Form
+                  contract={contract}
+                  oracles={oracles}
+                  ratio={ratio}
+                  setRatio={setRatio}
+                  setContract={setContract}
+                />
                 <Notifications
                   contract={contract}
                   minRatio={minRatio}
@@ -37,6 +45,7 @@ const Topup = ({ contract }: TopupProps) => {
                   topup={topup}
                 />
                 <TopupButton
+                  oracles={contract.oracles}
                   minRatio={minRatio}
                   ratio={ratio}
                   setDeposit={setDeposit}

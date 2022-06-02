@@ -1,28 +1,33 @@
-import { Contract } from 'lib/types'
+import { Contract, Oracle } from 'lib/types'
 import { getCollateralQuantity } from 'lib/utils'
 import Ratio from 'components/borrow/ratio'
 import Summary from './summary'
 import { Dispatch, SetStateAction } from 'react'
+import Oracles from 'components/oracles'
 
-const getContractWithTopup = (contract: Contract, quantity = 0) => {
-  return {
-    ...contract,
-    collateral: {
-      ...contract.collateral,
-      quantity: (contract.collateral.quantity || 0) + quantity,
-    },
-  }
-}
 interface FormProps {
   contract: Contract
+  oracles: Oracle[]
   ratio: number
+  setContract: Dispatch<SetStateAction<Contract>>
   setRatio: Dispatch<SetStateAction<number>>
 }
 
-const Form = ({ contract, ratio, setRatio }: FormProps) => {
+const Form = ({
+  contract,
+  oracles,
+  ratio,
+  setContract,
+  setRatio,
+}: FormProps) => {
   const quantity = getCollateralQuantity(contract, ratio)
   const collateral = { ...contract.collateral, quantity }
   const future = { ...contract, collateral }
+
+  const setContractOracles = (oracles: string[]) => {
+    setContract({ ...contract, oracles })
+  }
+
   return (
     <div className="is-box">
       <h3 className="mt-4">
@@ -44,6 +49,15 @@ const Form = ({ contract, ratio, setRatio }: FormProps) => {
         Confirm new values
       </h3>
       <Summary contract={future} />
+      <h3 className="mt-6">
+        <span className="stepper">4</span>
+        Select oracle provider
+      </h3>
+      <Oracles
+        contract={contract}
+        oracles={oracles}
+        setContractOracles={setContractOracles}
+      />
     </div>
   )
 }

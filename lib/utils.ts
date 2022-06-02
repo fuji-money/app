@@ -1,5 +1,5 @@
-import Decimal from "decimal.js"
-import { Contract, ContractState } from "./types"
+import Decimal from 'decimal.js'
+import { Contract, ContractState } from './types'
 
 // get contract ratio
 export const getContractRatio = (contract: Contract): number => {

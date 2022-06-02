@@ -1,7 +1,8 @@
-import { Dispatch, SetStateAction } from "react"
+import { Dispatch, SetStateAction } from 'react'
 
 interface TopupButtonProps {
   minRatio: number
+  oracles: string[]
   ratio: number
   setDeposit: Dispatch<SetStateAction<boolean>>
   topup: number
@@ -9,11 +10,12 @@ interface TopupButtonProps {
 
 const TopupButton = ({
   minRatio,
+  oracles,
   ratio,
   setDeposit,
   topup,
 }: TopupButtonProps) => {
-  const enabled = topup > 0 && ratio >= minRatio
+  const enabled = topup > 0 && ratio >= minRatio && oracles.length > 0
 
   return (
     <div className="has-text-centered">

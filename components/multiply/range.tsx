@@ -20,7 +20,13 @@ interface RangeProps {
   setRatio: Dispatch<SetStateAction<number>>
 }
 
-const Range = ({ liquidationPrice, minRatio, maxRatio, ratio, setRatio }: RangeProps) => {
+const Range = ({
+  liquidationPrice,
+  minRatio,
+  maxRatio,
+  ratio,
+  setRatio,
+}: RangeProps) => {
   const [rangeValue, setRangeValue] = useState(0)
 
   useEffect(() => {
@@ -33,7 +39,9 @@ const Range = ({ liquidationPrice, minRatio, maxRatio, ratio, setRatio }: RangeP
       <div className="is-flex is-justify-content-space-between">
         <div>
           <p className="is-size-7">Liquidation price</p>
-          <p className="is-size-5 is-gradient">$ {liquidationPrice.toLocaleString()}</p>
+          <p className="is-size-5 is-gradient">
+            $ {liquidationPrice.toLocaleString()}
+          </p>
         </div>
         <div className="has-text-right">
           <p className="is-size-7">Collateral ratio</p>

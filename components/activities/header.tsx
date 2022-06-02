@@ -6,7 +6,6 @@ interface ActivitiesHeaderProps {
 }
 
 const ActivitiesHeader = ({ setActivityType }: ActivitiesHeaderProps) => {
-  const change = (e: any) => setActivityType(e.target.value)
   return (
     <div className="header level mb-4">
       <div className="level-left">
@@ -18,7 +17,7 @@ const ActivitiesHeader = ({ setActivityType }: ActivitiesHeaderProps) => {
         <div className="level-item">
           <p className="has-text-weight-bold">Filter by:</p>
           <div className="select is-rounded is-primary is-small ml-4">
-            <select onChange={change}>
+            <select onChange={(e: any) => setActivityType(e.target.value)}>
               <option value={ActivityType.Creation}>
                 {ActivityType.Creation}
               </option>

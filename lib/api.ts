@@ -1,6 +1,6 @@
 import { fetchURL } from './fetch'
 import { getBTCvalue } from './server'
-import { Asset, Offer } from './types'
+import { Asset, Offer, Oracle } from './types'
 
 export async function fetchAsset(ticker: string): Promise<Asset> {
   const asset = await fetchURL(`/api/assets/${ticker}`)
@@ -25,4 +25,8 @@ export async function fetchOffer(
 
 export async function fetchOffers(): Promise<Offer[]> {
   return await fetchURL('/api/offers')
+}
+
+export async function fetchOracles(): Promise<Oracle[]> {
+  return await fetchURL('/api/oracles')
 }

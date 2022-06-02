@@ -17,7 +17,11 @@ interface MultiplyFormProps {
   setDeposit: Dispatch<SetStateAction<boolean>>
 }
 
-const MultiplyForm = ({ contract, setContract, setDeposit }: MultiplyFormProps) => {
+const MultiplyForm = ({
+  contract,
+  setContract,
+  setDeposit,
+}: MultiplyFormProps) => {
   const minRatio = 130 // TODO move to constants?
   const maxRatio = 330 // TODO move to constants?
 
@@ -38,20 +42,18 @@ const MultiplyForm = ({ contract, setContract, setDeposit }: MultiplyFormProps) 
     })
   }, [])
 
-
-
   useEffect(() => {
     if (lbtc) {
       const quoc = (1 / ratio) * 100
-      const debt = quantity * lbtc.value * quoc / (1 - quoc)
+      const debt = (quantity * lbtc.value * quoc) / (1 - quoc)
       const expo = debt / lbtc.value + quantity
       const mult = quantity ? expo / quantity : 0
-      const liqp = lbtc.value / ratio * minRatio
+      const liqp = (lbtc.value / ratio) * minRatio
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
       setLiquidationPrice(liqp)
-      setContract(c => {
+      setContract((c) => {
         const collateral = { ...c.collateral, quantity }
         const synthetic = { ...c.synthetic, quantity: debt }
         return { ...c, collateral, synthetic }
@@ -87,7 +89,9 @@ const MultiplyForm = ({ contract, setContract, setDeposit }: MultiplyFormProps) 
                 US$ 0.00
               </p>
               <p>
-                <span className="is-after">$ {liquidationPrice.toLocaleString()} after</span>
+                <span className="is-after">
+                  $ {liquidationPrice.toLocaleString()} after
+                </span>
               </p>
             </div>
             <div className="is-box">

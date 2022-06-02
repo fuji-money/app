@@ -40,6 +40,7 @@ const contracts = [
       quantity: 20,
     },
     createdAt: 1647874196970,
+    oracles: ['id1', 'id3'],
     payout: 0.25,
     synthetic: {
       ticker: 'fBMN',
@@ -53,6 +54,7 @@ const contracts = [
       quantity: 1.1,
     },
     createdAt: 1647874996970,
+    oracles: ['id2', 'id3'],
     payout: 0.25,
     synthetic: {
       ticker: 'fUSD',
@@ -66,6 +68,7 @@ const contracts = [
       quantity: 500000,
     },
     createdAt: 1647874906970,
+    oracles: ['id2'],
     payout: 0.25,
     synthetic: {
       ticker: 'fBMN',

@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError from 'components/layout/error'
 import Offers from 'components/offers'
-import { fetchOffers } from 'lib/api'
-import { Offer } from 'lib/types'
+import { fetchOffers, fetchOracles } from 'lib/api'
+import { Offer, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 
 const BorrowTicker: NextPage = () => {
@@ -13,17 +13,22 @@ const BorrowTicker: NextPage = () => {
   const { params } = router.query
   const [offers, setOffers] = useState<Offer[]>()
   const [isLoading, setLoading] = useState(false)
+  const [oracles, setOracles] = useState<Oracle[]>()
 
   useEffect(() => {
     setLoading(true)
-    fetchOffers().then((data) => {
-      setOffers(data)
-      setLoading(false)
+    fetchOracles().then((data) => {
+      setOracles(data)
+      fetchOffers().then((data) => {
+        setOffers(data)
+        setLoading(false)
+      })
     })
   }, [])
 
   if (isLoading) return <Spinner />
   if (!offers) return <SomeError>Error getting offers</SomeError>
+  if (!oracles) return <SomeError>Oracles not found</SomeError>
   if (!params?.length || params.length > 2)
     return <SomeError>Invalid URL</SomeError>
 
@@ -38,7 +43,7 @@ const BorrowTicker: NextPage = () => {
           synthetic.ticker === params[0] && collateral.ticker === params[1],
       )
       if (!offer) return <SomeError>Offer not found</SomeError>
-      return <Borrow offer={offer} />
+      return <Borrow offer={offer} oracles={oracles} />
     default:
       return <></>
   }

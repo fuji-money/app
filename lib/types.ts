@@ -35,6 +35,7 @@ export interface Contract {
   payout: number
   synthetic: Asset
   createdAt?: number
+  oracles: string[]
   state?: ContractState
   txid?: string
 }
@@ -57,8 +58,14 @@ export interface Activity {
 export interface Offer {
   id: string
   collateral: Asset
+  oracles: string[]
   payout: number
   synthetic: Asset
+}
+
+export interface Oracle {
+  id: string
+  name: string
 }
 
 export type Ticker = string

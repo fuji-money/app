@@ -1,4 +1,5 @@
-import { Contract } from 'lib/types'
+import Oracles from 'components/oracles'
+import { Contract, Oracle } from 'lib/types'
 import { getCollateralQuantity } from 'lib/utils'
 import { Dispatch, SetStateAction } from 'react'
 import Collateral from './collateral'
@@ -7,6 +8,7 @@ import Synthetic from './synthetic'
 
 interface BorrowFormProps {
   contract: Contract
+  oracles: Oracle[]
   ratio: number
   setContract: Dispatch<SetStateAction<Contract>>
   setRatio: Dispatch<SetStateAction<number>>
@@ -14,6 +16,7 @@ interface BorrowFormProps {
 
 const BorrowForm = ({
   contract,
+  oracles,
   ratio,
   setContract,
   setRatio,
@@ -33,6 +36,10 @@ const BorrowForm = ({
     const quantity = getCollateralQuantity(contract, ratio)
     const collateral = { ...contract.collateral, quantity }
     setContract({ ...contract, collateral })
+  }
+
+  const setContractOracles = (oracles: string[]) => {
+    setContract({ ...contract, oracles })
   }
 
   return (
@@ -62,6 +69,15 @@ const BorrowForm = ({
       </h3>
       <p className="is-size-6 ml-5 mb-4">Lorem ipsum dolor</p>
       <Collateral asset={collateral} />
+      <h3 className="mt-6">
+        <span className="stepper">4</span>
+        Select oracle provider
+      </h3>
+      <Oracles
+        contract={contract}
+        oracles={oracles}
+        setContractOracles={setContractOracles}
+      />
     </div>
   )
 }

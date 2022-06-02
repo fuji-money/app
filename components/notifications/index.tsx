@@ -2,6 +2,7 @@ import { Contract } from 'lib/types'
 import { fetchAsset } from 'lib/api'
 import { useEffect, useState } from 'react'
 import NotEnoughFundsNotification from 'components/notifications/notEnoughFunds'
+import NotEnoughOraclesNotification from 'components/notifications/notEnoughOracles'
 import RatioTooLowNotification from 'components/notifications/ratioTooLow'
 import RatioUnsafeNotification from 'components/notifications/ratioUnsafe'
 import BorrowFeeNotification from './borrowFee'
@@ -20,6 +21,7 @@ const Notifications = ({
   topup,
 }: NotificationsProps) => {
   const [notEnoughFunds, setNotEnoughFunds] = useState(false)
+  const [notEnoughOracles, setNotEnoughOracles] = useState(false)
   const [ratioTooLow, setRatioTooLow] = useState(false)
   const [ratioUnsafe, setRatioUnsafe] = useState(false)
 
@@ -41,10 +43,15 @@ const Notifications = ({
     setRatioUnsafe(ratio < safeLimit)
   }, [contract.collateral.ratio, ratio])
 
+  useEffect(() => {
+    setNotEnoughOracles(contract?.oracles?.length === 0)
+  }, [contract.oracles])
+
   return (
     <>
-      <BorrowFeeNotification payout={payout} />
       {notEnoughFunds && <NotEnoughFundsNotification />}
+      {notEnoughOracles && <NotEnoughOraclesNotification />}
+      <BorrowFeeNotification payout={payout} />
       {ratioTooLow && <RatioTooLowNotification />}
       {ratioUnsafe && <RatioUnsafeNotification />}
     </>

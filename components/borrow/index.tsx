@@ -1,4 +1,4 @@
-import { Contract, Offer } from 'lib/types'
+import { Contract, Offer, Oracle } from 'lib/types'
 import Form from './form'
 import Balance from 'components/balance'
 import { useState } from 'react'
@@ -10,9 +10,10 @@ import Notifications from 'components/notifications'
 
 interface BorrowProps {
   offer: Offer
+  oracles: Oracle[]
 }
 
-const Borrow = ({ offer }: BorrowProps) => {
+const Borrow = ({ offer, oracles }: BorrowProps) => {
   const [deposit, setDeposit] = useState(false)
   const [network, setNetwork] = useState('')
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
@@ -31,8 +32,9 @@ const Borrow = ({ offer }: BorrowProps) => {
               <>
                 <Form
                   contract={contract}
-                  setContract={setContract}
+                  oracles={oracles}
                   ratio={ratio}
+                  setContract={setContract}
                   setRatio={setRatio}
                 />
                 <Info contract={contract} />

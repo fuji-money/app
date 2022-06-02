@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react"
+import { Dispatch, SetStateAction } from 'react'
 
 interface MultiplyButtonProps {
   setDeposit: Dispatch<SetStateAction<boolean>>

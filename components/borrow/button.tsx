@@ -21,7 +21,9 @@ const BorrowButton = ({
     ratio >= minRatio &&
     contract.synthetic.quantity &&
     contract.synthetic.quantity > 0 &&
-    contract.synthetic.value > 0
+    contract.synthetic.value > 0 &&
+    contract.oracles &&
+    contract.oracles.length > 0
 
   return (
     <div className="has-text-centered">
