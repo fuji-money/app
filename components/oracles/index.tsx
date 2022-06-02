@@ -38,6 +38,7 @@ export default function Oracles({
           background-color: #f9d6ff;
           border-radius: 16px;
           color: #80288e;
+          cursor: pointer;
           font-weight: 700;
           font-size: 14px;
           letter-spacing: 0.04em;
