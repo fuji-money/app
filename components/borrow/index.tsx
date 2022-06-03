@@ -1,5 +1,5 @@
 import { Contract, Offer, Oracle } from 'lib/types'
-import Form from './form'
+import BorrowForm from './form'
 import Balance from 'components/balance'
 import { useState } from 'react'
 import Info from './info'
@@ -30,7 +30,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
           <div className="column is-8">
             {!deposit && (
               <>
-                <Form
+                <BorrowForm
                   contract={contract}
                   oracles={oracles}
                   ratio={ratio}

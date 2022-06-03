@@ -3,27 +3,27 @@ import { Contract, Oracle } from 'lib/types'
 interface OraclesProps {
   contract: Contract
   oracles: Oracle[]
-  setContractOracles: any
+  setContract: any
 }
 
 export default function Oracles({
   contract,
   oracles,
-  setContractOracles,
+  setContract,
 }: OraclesProps) {
-  const selected = (id: string) => contract.oracles.includes(id)
+  const hasOracle = (id: string) => contract.oracles.includes(id)
   const handleClick = ({ id }: Oracle) => {
-    const aux = selected(id)
+    const newOracles = hasOracle(id)
       ? contract.oracles.filter((o) => o != id)
       : [...contract.oracles, id]
-    setContractOracles(aux)
+    setContract({ ...contract, oracles: newOracles })
   }
   return (
     <div>
       {oracles.map((oracle, index) => (
         <p
           key={index}
-          className={selected(oracle.id) ? 'selected' : ''}
+          className={hasOracle(oracle.id) ? 'selected' : ''}
           onClick={() => handleClick(oracle)}
         >
           {oracle.name}

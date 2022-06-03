@@ -26,7 +26,6 @@ const TopupContract: NextPage = () => {
           setLoading(false)
         })
       })
-
     }
   }, [txid])
 
@@ -34,7 +33,9 @@ const TopupContract: NextPage = () => {
   if (!contract) return <SomeError>Contract not found</SomeError>
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
-  return <Topup contract={contract} oracles={oracles} setContract={setContract} />
+  return (
+    <Topup contract={contract} oracles={oracles} setContract={setContract} />
+  )
 }
 
 export default TopupContract

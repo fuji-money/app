@@ -6,10 +6,11 @@ import Image from 'next/image'
 import { openModal } from 'lib/utils'
 import MultiplyModals from 'components/modals/multiply'
 import Collateral from './collateral'
-import { fetchAsset } from 'lib/api'
-import { Asset, Contract } from 'lib/types'
+import { fetchAsset, fetchOracles } from 'lib/api'
+import { Asset, Contract, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
+import Oracles from 'components/oracles'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -32,13 +33,17 @@ const MultiplyForm = ({
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const [multiplier, setMultiplier] = useState(0)
   const [quantity, setQuantity] = useState(0)
+  const [oracles, setOracles] = useState<Oracle[]>()
   const [ratio, setRatio] = useState(maxRatio)
 
   useEffect(() => {
     setLoading(true)
-    fetchAsset('LBTC').then((data) => {
-      setLbtc(data)
-      setLoading(false)
+    fetchOracles().then((data) => {
+      setOracles(data)
+      fetchAsset('LBTC').then((data) => {
+        setLbtc(data)
+        setLoading(false)
+      })
     })
   }, [])
 
@@ -63,6 +68,7 @@ const MultiplyForm = ({
 
   if (isLoading) return <Spinner />
   if (!lbtc) return <SomeError>Error getting LBTC asset</SomeError>
+  if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
   return (
     <section>
@@ -163,6 +169,12 @@ const MultiplyForm = ({
                 maxRatio={maxRatio}
                 ratio={ratio}
                 setRatio={setRatio}
+              />
+              <p className="has-text-weight-bold mt-5 mb-4">Choose oracles</p>
+              <Oracles
+                contract={contract}
+                oracles={oracles}
+                setContract={setContract}
               />
               <p className="has-text-centered mt-5 mb-4">
                 <MultiplyButton setDeposit={setDeposit} />

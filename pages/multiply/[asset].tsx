@@ -10,6 +10,7 @@ import Spinner from 'components/spinner'
 const MultiplyAsset: NextPage = () => {
   const router = useRouter()
   const { asset } = router.query
+
   const [offer, setOffer] = useState<Offer>()
   const [isLoading, setLoading] = useState(false)
 

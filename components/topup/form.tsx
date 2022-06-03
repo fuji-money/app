@@ -5,7 +5,7 @@ import Summary from './summary'
 import { Dispatch, SetStateAction } from 'react'
 import Oracles from 'components/oracles'
 
-interface FormProps {
+interface TopupFormProps {
   contract: Contract
   oracles: Oracle[]
   ratio: number
@@ -13,20 +13,16 @@ interface FormProps {
   setRatio: Dispatch<SetStateAction<number>>
 }
 
-const Form = ({
+const TopupForm = ({
   contract,
   oracles,
   ratio,
   setContract,
   setRatio,
-}: FormProps) => {
+}: TopupFormProps) => {
   const quantity = getCollateralQuantity(contract, ratio)
   const collateral = { ...contract.collateral, quantity }
   const future = { ...contract, collateral }
-
-  const setContractOracles = (oracles: string[]) => {
-    setContract({ ...contract, oracles })
-  }
 
   return (
     <div className="is-box">
@@ -56,10 +52,10 @@ const Form = ({
       <Oracles
         contract={contract}
         oracles={oracles}
-        setContractOracles={setContractOracles}
+        setContract={setContract}
       />
     </div>
   )
 }
 
-export default Form
+export default TopupForm

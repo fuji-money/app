@@ -38,10 +38,6 @@ const BorrowForm = ({
     setContract({ ...contract, collateral })
   }
 
-  const setContractOracles = (oracles: string[]) => {
-    setContract({ ...contract, oracles })
-  }
-
   return (
     <div className="is-box">
       <h3 className="mt-4">
@@ -76,7 +72,7 @@ const BorrowForm = ({
       <Oracles
         contract={contract}
         oracles={oracles}
-        setContractOracles={setContractOracles}
+        setContract={setContract}
       />
     </div>
   )

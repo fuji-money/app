@@ -1,7 +1,7 @@
 import { Contract, Oracle } from 'lib/types'
 import { useState } from 'react'
 import { getCollateralQuantity, getContractRatio } from 'lib/utils'
-import Form from './form'
+import TopupForm from './form'
 import Balance from 'components/balance'
 import TopupButton from './button'
 import Deposit from 'components/deposit'
@@ -31,7 +31,7 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
           <div className="column is-8">
             {!deposit && (
               <>
-                <Form
+                <TopupForm
                   contract={contract}
                   oracles={oracles}
                   ratio={ratio}
