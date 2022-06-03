@@ -156,11 +156,11 @@ const MultiplyForm = ({
                 ipsum sed ornare. Facilisis id sem quam elementum euismod ante
                 ut.
               </p>
-              <p className="has-text-weight-bold mt-5 mb-4">
+              <p className="has-text-weight-bold mt-6 mb-4">
                 Deposit your LBTC
               </p>
               <Collateral asset={lbtc} setQuantity={setQuantity} />
-              <p className="has-text-weight-bold mt-5 mb-4">
+              <p className="has-text-weight-bold mt-6 mb-4">
                 Adjust your multiply
               </p>
               <Range
@@ -176,7 +176,7 @@ const MultiplyForm = ({
                 oracles={oracles}
                 setContract={setContract}
               />
-              <p className="has-text-centered mt-5 mb-4">
+              <p className="has-text-centered mt-6 mb-4">
                 <MultiplyButton setDeposit={setDeposit} />
               </p>
             </div>
