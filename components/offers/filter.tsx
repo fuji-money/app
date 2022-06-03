@@ -35,7 +35,10 @@ interface OffersFilterProps {
 
 const OffersFilter = ({ filter, setFilter }: OffersFilterProps) => {
   const reset = () => setFilter('')
-  const updateFilter = (e: any) => setFilter(e.target.value)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFilter(e.target.value)
+
   return (
     <p className="control has-icons-left">
       <input
@@ -43,7 +46,7 @@ const OffersFilter = ({ filter, setFilter }: OffersFilterProps) => {
         type="text"
         placeholder="Search"
         value={filter}
-        onChange={updateFilter}
+        onChange={handleChange}
       />
       <span className="icon is-left">
         <Icon filter={filter} reset={reset} />

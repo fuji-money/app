@@ -47,8 +47,11 @@ const TopupForm = ({
       <Summary contract={future} />
       <h3 className="mt-6">
         <span className="stepper">4</span>
-        Select oracle provider
+        Select oracle providers
       </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        Gravida sed gravida in rhoncus enim. Nullam vitae at.
+      </p>
       <Oracles
         contract={contract}
         oracles={oracles}

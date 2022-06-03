@@ -1,14 +1,12 @@
 import Image from 'next/image'
 import { Asset } from 'lib/types'
-import { Dispatch, SetStateAction } from 'react'
 
 interface SyntheticProps {
   asset: Asset
-  setSyntheticQuantity: Dispatch<SetStateAction<number>>
+  setSyntheticQuantity: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
-  const handleChange = (e: any) => setSyntheticQuantity(Number(e.target.value))
   return (
     <div className="level has-pink-border has-pink-background">
       <div className="level-left">
@@ -31,7 +29,7 @@ const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
             min="0"
             placeholder="0.00"
             type="number"
-            onChange={handleChange}
+            onChange={setSyntheticQuantity}
           />
         </div>
       </div>

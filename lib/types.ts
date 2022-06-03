@@ -28,6 +28,7 @@ export enum ContractState {
   Critical = 'critical',
   Liquidated = 'liquidated',
   Redeemed = 'redeemed',
+  Unknown = 'unknown',
 }
 
 export interface Contract {

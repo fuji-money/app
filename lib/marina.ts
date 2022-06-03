@@ -37,7 +37,7 @@ const contracts = [
   {
     collateral: {
       ticker: 'LBTC',
-      quantity: 20,
+      quantity: 42,
     },
     createdAt: 1647874196970,
     oracles: ['id1', 'id3'],
@@ -51,7 +51,7 @@ const contracts = [
   {
     collateral: {
       ticker: 'LBTC',
-      quantity: 1.1,
+      quantity: 1.5,
     },
     createdAt: 1647874996970,
     oracles: ['id2', 'id3'],
@@ -65,7 +65,7 @@ const contracts = [
   {
     collateral: {
       ticker: 'USDt',
-      quantity: 500000,
+      quantity: 400000,
     },
     createdAt: 1647874906970,
     oracles: ['id2'],

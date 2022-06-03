@@ -41,7 +41,9 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
   const min = collateral.ratio || 0
   const safe = min + 50
   const state = getRatioState(ratio, min)
-  const setRatio = (e: any) => setContractRatio(Number(e.target.value))
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setContractRatio(Number(e.target.value))
 
   useEffect(() => {
     updateLabels(min, safe)
@@ -68,7 +70,7 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
               type="range"
               className={state}
               value={ratio}
-              onChange={setRatio}
+              onChange={handleChange}
             />
           </div>
         </div>
@@ -80,7 +82,7 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
                 placeholder="{ratio}%"
                 type="number"
                 value={ratio}
-                onChange={setRatio}
+                onChange={handleChange}
               />
               <span>%</span>
             </div>

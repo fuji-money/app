@@ -1,5 +1,5 @@
 import { Contract, Oracle } from 'lib/types'
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { getCollateralQuantity, getContractRatio } from 'lib/utils'
 import TopupForm from './form'
 import Balance from 'components/balance'
@@ -11,7 +11,7 @@ import Notifications from 'components/notifications'
 interface TopupProps {
   contract: Contract
   oracles: Oracle[]
-  setContract: any
+  setContract: Dispatch<SetStateAction<Contract>>
 }
 
 const Topup = ({ contract, oracles, setContract }: TopupProps) => {

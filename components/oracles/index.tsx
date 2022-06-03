@@ -1,9 +1,10 @@
 import { Contract, Oracle } from 'lib/types'
+import { Dispatch, SetStateAction } from 'react'
 
 interface OraclesProps {
   contract: Contract
   oracles: Oracle[]
-  setContract: any
+  setContract: Dispatch<SetStateAction<Contract>>
 }
 
 export default function Oracles({

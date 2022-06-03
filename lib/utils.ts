@@ -26,8 +26,8 @@ export const getRatioState = (
 // get contract state
 export const getContractState = (
   contract: Contract,
-): ContractState | undefined => {
-  if (!contract?.collateral?.ratio) return
+): ContractState => {
+  if (!contract?.collateral?.ratio) return ContractState.Unknown
   const ratio = getContractRatio(contract)
   return getRatioState(ratio, contract.collateral.ratio)
 }

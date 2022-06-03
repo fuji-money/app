@@ -27,8 +27,8 @@ const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
         </div>
         <div className="column is-8 has-text-right">
           {contract.txid && <ExplorerLink txid={contract.txid} />}
-          <RedeemButton contract={contract} setRedeem={setRedeem} />
-          <TopupButton contract={contract} />
+          <RedeemButton contract={contract} setRedeem={setRedeem} state={state} />
+          <TopupButton contract={contract} state={state} />
         </div>
       </div>
     </div>

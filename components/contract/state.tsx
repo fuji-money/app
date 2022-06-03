@@ -1,7 +1,7 @@
 import { ContractState } from 'lib/types'
 
 interface PrettyStateProps {
-  state: ContractState | undefined
+  state: ContractState
 }
 
 const PrettyState = ({ state }: PrettyStateProps) => {
@@ -48,7 +48,8 @@ const PrettyState = ({ state }: PrettyStateProps) => {
           background-color: #ffdedf;
           color: #ff4e53;
         }
-        .state.liquidated {
+        .state.liquidated,
+        .state.unknown {
           background-color: #eee;
           color: #000;
         }
