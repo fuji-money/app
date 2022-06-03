@@ -1,6 +1,6 @@
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Topup from 'components/topup'
 import { getContract } from 'lib/marina'
@@ -22,7 +22,7 @@ const ContractTopup: NextPage = () => {
       fetchOracles().then((data) => {
         setOracles(data)
         getContract(txid).then((contract) => {
-          setContract(contract)
+          if (contract) setContract(contract)
           setLoading(false)
         })
       })
@@ -34,7 +34,11 @@ const ContractTopup: NextPage = () => {
   if (!oracles) return <SomeError>Oracles not found</SomeError>
 
   return (
-    <Topup contract={contract} oracles={oracles} setContract={setContract} />
+    <Topup
+      contract={contract}
+      oracles={oracles}
+      setContract={setContract as Dispatch<SetStateAction<Contract>>}
+    />
   )
 }
 

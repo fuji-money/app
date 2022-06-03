@@ -1,4 +1,10 @@
-import { useContext, useEffect, useState } from 'react'
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 import { getContracts } from 'lib/marina'
 import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
@@ -45,7 +51,11 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
       <RedeemModal contract={redeem} />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
-          <ContractRow key={index} contract={contract} setRedeem={setReedem} />
+          <ContractRow
+            key={index}
+            contract={contract}
+            setRedeem={setReedem as Dispatch<SetStateAction<Contract>>}
+          />
         ))}
     </>
   )

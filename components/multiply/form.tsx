@@ -170,7 +170,9 @@ const MultiplyForm = ({
                 ratio={ratio}
                 setRatio={setRatio}
               />
-              <p className="has-text-weight-bold mt-5 mb-4">Choose oracle providers</p>
+              <p className="has-text-weight-bold mt-5 mb-4">
+                Choose oracle providers
+              </p>
               <Oracles
                 contract={contract}
                 oracles={oracles}

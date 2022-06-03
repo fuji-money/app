@@ -8,7 +8,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface ContractRowProps {
   contract: Contract
-  setRedeem: Dispatch<SetStateAction<Contract | undefined>>
+  setRedeem: Dispatch<SetStateAction<Contract>>
 }
 
 const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
@@ -27,7 +27,11 @@ const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
         </div>
         <div className="column is-8 has-text-right">
           {contract.txid && <ExplorerLink txid={contract.txid} />}
-          <RedeemButton contract={contract} setRedeem={setRedeem} state={state} />
+          <RedeemButton
+            contract={contract}
+            setRedeem={setRedeem}
+            state={state}
+          />
           <TopupButton contract={contract} state={state} />
         </div>
       </div>
