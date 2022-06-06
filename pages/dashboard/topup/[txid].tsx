@@ -37,7 +37,7 @@ const TopupContract: NextPage = () => {
     <Topup
       contract={contract}
       oracles={oracles}
-      setContract={setContract as any}
+      setContract={setContract}
     />
   )
 }

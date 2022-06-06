@@ -1,6 +1,7 @@
 import { fetchURL } from './fetch'
+import { Asset, Offer, Oracle } from './types'
 
-const lbtc = {
+const lbtc: Asset = {
   icon: '/images/assets/lbtc.svg',
   id: '144c654344aa716d6f3abcc1ca90e5641e4e2a7f633bc09fe3baf64585819a49',
   isSynthetic: false,
@@ -11,7 +12,7 @@ const lbtc = {
   value: 40000,
 }
 
-const usdt = {
+const usdt: Asset = {
   icon: '/images/assets/usdt.svg',
   id: 'f3d1ec678811398cd2ae277cbe3849c6f6dbd72c74bc542f7c4b11ff0e820958',
   isSynthetic: false,
@@ -22,7 +23,7 @@ const usdt = {
   value: 1,
 }
 
-const fusd = {
+const fusd: Asset = {
   icon: '/images/assets/fusd.svg',
   id: '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568',
   isSynthetic: true,
@@ -32,7 +33,7 @@ const fusd = {
   value: 1,
 }
 
-const fbmn = {
+const fbmn: Asset = {
   icon: '/images/assets/fbmn.svg',
   id: '0256e332a5134f31dbea899e0cb7c75d3e2cff969d3958d066f8198caaee3a61',
   isSynthetic: true,
@@ -42,19 +43,19 @@ const fbmn = {
   value: 309415.05,
 }
 
-const oracles = [
+const oracles: Oracle[] = [
   { id: 'id1', name: 'provider 1' },
   { id: 'id2', name: 'provider 2' },
   { id: 'id3', name: 'provider 3' },
   { id: 'id4', name: 'provider 4' },
 ]
 
-export const apiAssets = async () => {
+export const apiAssets = async (): Promise<Asset[]> => {
   lbtc.value = await getBTCvalue()
   return [lbtc, usdt, fusd, fbmn]
 }
 
-export const apiOffers = async () => [
+export const apiOffers = async (): Promise<Offer[]> => [
   {
     id: '5530bdbb7c61227eac28429debef062c845f829522280612c5dd9f5e1a2082ee',
     collateral: await findAssetByTicker('lbtc'),
@@ -78,9 +79,9 @@ export const apiOffers = async () => [
   },
 ]
 
-export const apiOracles = () => oracles
+export const apiOracles = (): Oracle[] => oracles
 
-export const findAssetByTicker = async (ticker: string) => {
+export const findAssetByTicker = async (ticker: string): Promise<Asset> => {
   const asset = (await apiAssets()).find(
     (a) => a.ticker.toLowerCase() === ticker.toLowerCase(),
   )
@@ -88,9 +89,9 @@ export const findAssetByTicker = async (ticker: string) => {
   return asset
 }
 
-export const getBTCvalue = async () => {
+export const getBTCvalue = async (): Promise<number> => {
   const data = await fetchURL(
     'https://api.coindesk.com/v1/bpi/currentprice.json',
   )
-  return data.bpi.USD.rate_float
+  return Number(data.bpi.USD.rate_float)
 }

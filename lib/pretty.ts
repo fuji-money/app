@@ -1,7 +1,7 @@
-import { Asset, Contract, ContractState } from './types'
+import { Asset } from './types'
 
 // format numbers
-export const prettyNumber = (num = 0, min = 2, max = 8) => {
+export const prettyNumber = (num = 0, min = 2, max = 8): string => {
   return new Intl.NumberFormat('en-us', {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
@@ -9,11 +9,11 @@ export const prettyNumber = (num = 0, min = 2, max = 8) => {
 }
 
 // format asset
-export const prettyAsset = (asset: Asset) =>
+export const prettyAsset = (asset: Asset): string =>
   `${prettyNumber(asset.quantity)} ${asset.ticker}`
 
 // format amount (amount is quantity x value)
-export const prettyAmount = (asset: Asset) =>
+export const prettyAmount = (asset: Asset): string =>
   `US $${prettyNumber((asset.quantity || 0) * asset.value)}`
 
 // show pretty ago time

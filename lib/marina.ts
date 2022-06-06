@@ -1,4 +1,4 @@
-import { fetchAsset, fetchAssets } from './api'
+import { fetchAsset } from './api'
 import { randomMessage, randomTime, randomTxId } from './random'
 import { Activity, ActivityType, Contract, Ticker } from './types'
 import { detectProvider, MarinaProvider } from 'marina-provider'
@@ -78,7 +78,7 @@ const contracts = [
   },
 ]
 
-export async function getContracts() {
+export async function getContracts(): Promise<Contract[]> {
   if (!checkMarina()) return []
   const promises = contracts.map(async (contract) => {
     const collateral = await fetchAsset(contract.collateral.ticker)
@@ -98,7 +98,7 @@ export async function getContracts() {
   return Promise.all(promises)
 }
 
-export async function getContract(txid: string) {
+export async function getContract(txid: string): Promise<Contract | undefined> {
   const contracts = await getContracts()
   return contracts.find((c) => c.txid === txid)
 }
