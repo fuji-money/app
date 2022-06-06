@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface ContractsHeaderProps {
   showActive: boolean
-  setShowActive: Dispatch<SetStateAction<boolean>>
+  setShowActive: any
 }
 
 const ContractsHeader = ({

@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react'
 
 interface MultiplyButtonProps {
-  setDeposit: Dispatch<SetStateAction<boolean>>
+  setDeposit: any
 }
 
 const MultiplyButton = ({ setDeposit }: MultiplyButtonProps) => {

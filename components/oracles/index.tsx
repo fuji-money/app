@@ -4,7 +4,7 @@ import { Dispatch, SetStateAction } from 'react'
 interface OraclesProps {
   contract: Contract
   oracles: Oracle[]
-  setContract: Dispatch<SetStateAction<Contract>>
+  setContract: any
 }
 
 export default function Oracles({

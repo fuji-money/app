@@ -17,7 +17,7 @@ interface RangeProps {
   minRatio: number
   maxRatio: number
   ratio: number
-  setRatio: Dispatch<SetStateAction<number>>
+  setRatio: any
 }
 
 const Range = ({

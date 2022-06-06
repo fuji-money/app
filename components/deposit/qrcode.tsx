@@ -5,7 +5,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface QrcodeProps {
   contract: Contract
-  setResult: Dispatch<SetStateAction<string>>
+  setResult: any
   topup: number
 }
 

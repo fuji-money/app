@@ -9,8 +9,8 @@ interface TopupFormProps {
   contract: Contract
   oracles: Oracle[]
   ratio: number
-  setContract: Dispatch<SetStateAction<Contract>>
-  setRatio: Dispatch<SetStateAction<number>>
+  setContract: any
+  setRatio: any
 }
 
 const TopupForm = ({

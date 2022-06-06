@@ -51,11 +51,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
       <RedeemModal contract={redeem} />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
-          <ContractRow
-            key={index}
-            contract={contract}
-            setRedeem={setReedem as Dispatch<SetStateAction<Contract>>}
-          />
+          <ContractRow key={index} contract={contract} setRedeem={setReedem} />
         ))}
     </>
   )

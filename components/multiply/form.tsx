@@ -14,8 +14,8 @@ import Oracles from 'components/oracles'
 
 interface MultiplyFormProps {
   contract: Contract
-  setContract: Dispatch<SetStateAction<Contract>>
-  setDeposit: Dispatch<SetStateAction<boolean>>
+  setContract: any
+  setDeposit: any
 }
 
 const MultiplyForm = ({
@@ -58,7 +58,7 @@ const MultiplyForm = ({
       setMultiplier(mult)
       setExposure(expo)
       setLiquidationPrice(liqp)
-      setContract((c) => {
+      setContract((c: Contract) => {
         const collateral = { ...c.collateral, quantity }
         const synthetic = { ...c.synthetic, quantity: debt }
         return { ...c, collateral, synthetic }

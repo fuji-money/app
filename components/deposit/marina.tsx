@@ -8,7 +8,7 @@ import { Dispatch, SetStateAction } from 'react'
 interface MarinaProps {
   contract: Contract
   topup: number | undefined
-  setResult: Dispatch<SetStateAction<string>>
+  setResult: any
 }
 
 const Marina = ({ contract, topup, setResult }: MarinaProps) => {

@@ -5,7 +5,7 @@ interface BorrowButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  setDeposit: Dispatch<SetStateAction<boolean>>
+  setDeposit: any
 }
 
 const BorrowButton = ({

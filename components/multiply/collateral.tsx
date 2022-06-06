@@ -4,7 +4,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface CollateralProps {
   asset: Asset
-  setQuantity: Dispatch<SetStateAction<number>>
+  setQuantity: any
 }
 
 const Collateral = ({ asset, setQuantity }: CollateralProps) => {

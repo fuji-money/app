@@ -8,7 +8,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface ContractRowProps {
   contract: Contract
-  setRedeem: Dispatch<SetStateAction<Contract>>
+  setRedeem: any
 }
 
 const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {

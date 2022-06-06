@@ -4,7 +4,7 @@ import { Dispatch, SetStateAction } from 'react'
 
 interface NetworkProps {
   ticker: Ticker
-  setNetwork: Dispatch<SetStateAction<string>>
+  setNetwork: any
 }
 
 const Network = ({ ticker, setNetwork }: NetworkProps) => {

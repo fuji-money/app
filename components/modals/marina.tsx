@@ -26,7 +26,7 @@ const Intro = ({ ticker, topup }: IntroProps) => {
 interface MarinaModalProps {
   contract: Contract
   topup: number | undefined
-  setResult: Dispatch<SetStateAction<string>>
+  setResult: any
 }
 
 const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {

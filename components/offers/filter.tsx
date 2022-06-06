@@ -30,7 +30,7 @@ const Icon = ({ filter, reset }: IconProps) => {
 
 interface OffersFilterProps {
   filter: string
-  setFilter: Dispatch<SetStateAction<string>>
+  setFilter: any
 }
 
 const OffersFilter = ({ filter, setFilter }: OffersFilterProps) => {

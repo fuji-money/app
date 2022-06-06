@@ -11,7 +11,7 @@ import Notifications from 'components/notifications'
 interface TopupProps {
   contract: Contract
   oracles: Oracle[]
-  setContract: Dispatch<SetStateAction<Contract>>
+  setContract: any
 }
 
 const Topup = ({ contract, oracles, setContract }: TopupProps) => {

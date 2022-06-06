@@ -4,7 +4,7 @@ interface TopupButtonProps {
   minRatio: number
   oracles: string[]
   ratio: number
-  setDeposit: Dispatch<SetStateAction<boolean>>
+  setDeposit: any
   topup: number
 }
 

@@ -8,7 +8,7 @@ import Marina from './marina'
 interface DepositProps {
   contract: Contract
   network: string
-  setNetwork: Dispatch<SetStateAction<string>>
+  setNetwork: any
   topup: number
 }
 
