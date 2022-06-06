@@ -1,5 +1,5 @@
 import { Contract, Oracle } from 'lib/types'
-import { Dispatch, SetStateAction, useState } from 'react'
+import { useState } from 'react'
 import { getCollateralQuantity, getContractRatio } from 'lib/utils'
 import TopupForm from './form'
 import Balance from 'components/balance'

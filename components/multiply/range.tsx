@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // calculate ratio from range value
 const calcRatio = (value: number, min: number, max: number) =>

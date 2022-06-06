@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from 'react'
 
 interface TopupButtonProps {
   minRatio: number

@@ -1,5 +1,4 @@
 import { Contract, Oracle } from 'lib/types'
-import { Dispatch, SetStateAction } from 'react'
 
 interface OraclesProps {
   contract: Contract

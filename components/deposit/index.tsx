@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from 'react'
+import { useState } from 'react'
 import { Contract } from 'lib/types'
 import Network from './network'
 import Qrcode from './qrcode'

@@ -2,7 +2,6 @@ import { Contract, Oracle } from 'lib/types'
 import { getCollateralQuantity } from 'lib/utils'
 import Ratio from 'components/borrow/ratio'
 import Summary from './summary'
-import { Dispatch, SetStateAction } from 'react'
 import Oracles from 'components/oracles'
 
 interface TopupFormProps {

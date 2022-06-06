@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect } from 'react'
+import { useEffect } from 'react'
 import { prettyRatio } from 'lib/pretty'
 import { Asset } from 'lib/types'
 import { getRatioState } from 'lib/utils'

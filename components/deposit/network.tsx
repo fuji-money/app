@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import { Ticker } from 'lib/types'
-import { Dispatch, SetStateAction } from 'react'
 
 interface NetworkProps {
   ticker: Ticker

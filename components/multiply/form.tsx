@@ -1,5 +1,5 @@
 import MultiplyButton from './button'
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'

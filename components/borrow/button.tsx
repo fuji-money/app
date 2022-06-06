@@ -1,5 +1,4 @@
 import { Contract } from 'lib/types'
-import { Dispatch, SetStateAction } from 'react'
 
 interface BorrowButtonProps {
   contract: Contract

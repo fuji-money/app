@@ -1,5 +1,4 @@
 import { Contract, ContractState } from 'lib/types'
-import { Dispatch, SetStateAction } from 'react'
 
 interface RedeemButtonProps {
   contract: Contract

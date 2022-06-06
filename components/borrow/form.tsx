@@ -1,7 +1,6 @@
 import Oracles from 'components/oracles'
 import { Contract, Oracle } from 'lib/types'
 import { getCollateralQuantity } from 'lib/utils'
-import { Dispatch, SetStateAction } from 'react'
 import Collateral from './collateral'
 import Ratio from './ratio'
 import Synthetic from './synthetic'

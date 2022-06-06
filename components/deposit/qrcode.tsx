@@ -1,7 +1,6 @@
 import { Contract } from 'lib/types'
 import Image from 'next/image'
 import { prettyNumber } from 'lib/pretty'
-import { Dispatch, SetStateAction } from 'react'
 
 interface QrcodeProps {
   contract: Contract

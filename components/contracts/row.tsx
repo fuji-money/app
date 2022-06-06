@@ -4,7 +4,6 @@ import RedeemButton from 'components/buttons/redeem'
 import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'
 import ExplorerLink from 'components/links/explorer'
-import { Dispatch, SetStateAction } from 'react'
 
 interface ContractRowProps {
   contract: Contract

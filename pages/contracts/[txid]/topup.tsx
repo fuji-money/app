@@ -1,6 +1,6 @@
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Topup from 'components/topup'
 import { getContract } from 'lib/marina'
