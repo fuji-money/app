@@ -62,11 +62,10 @@ const Failure = () => {
 }
 
 interface ResultProps {
-  contract: Contract
   result: string
 }
 
-const Result = ({ contract, result }: ResultProps) => {
+const Result = ({ result }: ResultProps) => {
   if (result === 'success') return <Success />
   if (result === 'failure') return <Failure />
   return <></>

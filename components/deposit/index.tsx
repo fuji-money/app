@@ -26,7 +26,7 @@ const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
       {marina && (
         <Marina contract={contract} setResult={setResult} topup={topup} />
       )}
-      {result && <Result contract={contract} result={result} />}
+      {result && <Result result={result} />}
     </div>
   )
 }
