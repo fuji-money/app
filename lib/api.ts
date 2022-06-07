@@ -1,6 +1,6 @@
 import { fetchURL } from './fetch'
 import { getBTCvalue } from './server'
-import { Asset, Offer, Oracle } from './types'
+import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
 export async function fetchAsset(ticker: string): Promise<Asset> {
   const asset = await fetchURL(`/api/assets/${ticker}`)
@@ -16,6 +16,10 @@ export async function fetchAssets(): Promise<Asset[]> {
   return assets
 }
 
+export async function fetchInvestments(): Promise<Investment[]> {
+  return await fetchURL('/api/investments')
+}
+
 export async function fetchOffer(
   synthetic: string,
   collateral: string,
@@ -29,4 +33,8 @@ export async function fetchOffers(): Promise<Offer[]> {
 
 export async function fetchOracles(): Promise<Oracle[]> {
   return await fetchURL('/api/oracles')
+}
+
+export async function fetchStocks(): Promise<Stock[]> {
+  return await fetchURL('/api/stocks')
 }

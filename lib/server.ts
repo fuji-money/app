@@ -1,5 +1,5 @@
 import { fetchURL } from './fetch'
-import { Asset, Offer, Oracle } from './types'
+import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
 const lbtc: Asset = {
   icon: '/images/assets/lbtc.svg',
@@ -43,6 +43,8 @@ const fbmn: Asset = {
   value: 309415.05,
 }
 
+const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
+
 const oracles: Oracle[] = [
   { id: 'id1', name: 'provider 1' },
   { id: 'id2', name: 'provider 2' },
@@ -52,8 +54,16 @@ const oracles: Oracle[] = [
 
 export const apiAssets = async (): Promise<Asset[]> => {
   lbtc.value = await getBTCvalue()
-  return [lbtc, usdt, fusd, fbmn]
+  return assets
 }
+
+export const apiInvestments = (): Investment[] => [
+  {
+    asset: fbmn,
+    delta: -0.11,
+    quantity: 0.1,
+  },
+]
 
 export const apiOffers = async (): Promise<Offer[]> => [
   {
@@ -80,6 +90,11 @@ export const apiOffers = async (): Promise<Offer[]> => [
 ]
 
 export const apiOracles = (): Oracle[] => oracles
+
+export const apiStocks = (): Stock[] =>
+  assets
+    .filter((asset) => asset.isSynthetic)
+    .map((asset) => ({ asset, delta: 0.159 }))
 
 export const findAssetByTicker = async (ticker: string): Promise<Asset> => {
   const asset = (await apiAssets()).find(

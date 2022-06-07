@@ -192,3 +192,14 @@ p.confirm {
   font-size: .6rem;
   padding: .4rem 1rem;
 }
+
+p.delta {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+p.delta.red {
+  color: red;
+}
+p.delta.green {
+  color: green;
+}

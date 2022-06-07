@@ -10,6 +10,21 @@ export type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout
 }
 
+export enum ActivityType {
+  Creation = 'Creation',
+  Redeemed = 'Redeemed',
+  Liquidated = 'Liquidated',
+  Topup = 'Topup',
+}
+
+export interface Activity {
+  contract: Contract
+  createdAt: number
+  message: string
+  txid: string
+  type: string
+}
+
 export interface Asset {
   icon: string
   id: string
@@ -41,19 +56,10 @@ export interface Contract {
   txid?: string
 }
 
-export enum ActivityType {
-  Creation = 'Creation',
-  Redeemed = 'Redeemed',
-  Liquidated = 'Liquidated',
-  Topup = 'Topup',
-}
-
-export interface Activity {
-  contract: Contract
-  createdAt: number
-  message: string
-  txid: string
-  type: string
+export interface Investment {
+  asset: Asset
+  delta: number
+  quantity: number
 }
 
 export interface Offer {
@@ -67,6 +73,11 @@ export interface Offer {
 export interface Oracle {
   id: string
   name: string
+}
+
+export interface Stock {
+  asset: Asset
+  delta: number
 }
 
 export type Ticker = string
