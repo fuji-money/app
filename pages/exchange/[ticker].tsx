@@ -6,6 +6,7 @@ import { Offer } from 'lib/types'
 import { fetchAsset, fetchOffer } from 'lib/api'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
+import ExchangeForm from 'components/exchange/form'
 
 const ExchangeTicker: NextPage = () => {
   const router = useRouter()
@@ -31,7 +32,9 @@ const ExchangeTicker: NextPage = () => {
   if (isLoading) return <Spinner />
   if (!offer) return <SomeError>Error getting offer</SomeError>
 
-  return <Multiply offer={offer} />
+  return (
+    <ExchangeForm offer={offer} />
+  )
 }
 
 export default ExchangeTicker

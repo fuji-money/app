@@ -207,3 +207,10 @@ p.delta.red {
 p.delta.green {
   color: green;
 }
+
+p.active {
+  background-color: #FFF1E3 !important;
+  border: 1px solid $my-pink;
+  border-radius: 3px;
+  cursor: pointer;
+}
