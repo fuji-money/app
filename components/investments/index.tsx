@@ -22,10 +22,8 @@ const Investments = () => {
 
   return (
     <section>
-      <h2>Investments</h2>
-      <div className="has-pink-border has-pink-background mb-6">
-        <InvestmentsList />
-      </div>
+      <h2 className="mb-4">Investments</h2>
+      <InvestmentsList />
     </section>
   )
 }

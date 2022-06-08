@@ -10,7 +10,7 @@ interface AssetRowProps {
 
 const AssetRow = ({ asset }: AssetRowProps) => {
   return (
-    <div className="is-box row">
+    <div className="is-box has-pink-border row">
       <div className="columns level">
         <div className="column is-flex is-3">
           <div className="pr-4">

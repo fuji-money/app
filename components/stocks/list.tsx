@@ -20,7 +20,7 @@ const StocksList = () => {
   if (!stocks) return <SomeError>Error getting stocks</SomeError>
 
   return (
-    <div className="stocks-list">
+    <div className="stocks-list is-box no-shadow mb-6">
       {stocks &&
         stocks.map((stock: Stock, index: number) => (
           <StockRow key={index} stock={stock} />

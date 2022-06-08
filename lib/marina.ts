@@ -3,7 +3,7 @@ import { randomMessage, randomTime, randomTxId } from './random'
 import { Activity, ActivityType, Contract, Ticker } from './types'
 import { detectProvider, MarinaProvider } from 'marina-provider'
 
-export const balance = (ticker: Ticker): number => {
+export const getBalance = (ticker: Ticker): number => {
   switch (ticker) {
     case 'LBTC':
       return 2

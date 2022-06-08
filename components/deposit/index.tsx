@@ -18,7 +18,7 @@ const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
   const qrcode = !result && network === 'lightning'
   const marina = !result && network === 'liquid'
   return (
-    <div className="is-box py-6 px-6">
+    <div className="is-box has-pink-border py-6 px-6">
       {!network && <Network ticker={ticker} setNetwork={setNetwork} />}
       {qrcode && (
         <Qrcode contract={contract} setResult={setResult} topup={topup} />

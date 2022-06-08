@@ -20,7 +20,7 @@ const InvestmentsList = () => {
   if (!investments) return <SomeError>Error getting investments</SomeError>
 
   return (
-    <div className="investments-list">
+    <div className="is-box has-pink-border has-pink-background mb-6">
       {investments &&
         investments.map((investment: Investment, index: number) => (
           <InvestmentRow key={index} investment={investment} />

@@ -14,7 +14,7 @@ const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
   const state = getContractState(contract)
   return (
-    <div className="is-box row">
+    <div className="is-box has-pink-border row">
       <div className="columns level">
         <div className="column is-2">
           <p className="has-text-weight-bold">

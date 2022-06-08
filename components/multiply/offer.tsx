@@ -4,7 +4,7 @@ import Link from 'next/link'
 const MultiplyOffer = () => {
   return (
     <div>
-      <div className="is-box mx-auto mt-6">
+      <div className="is-box has-pink-border mx-auto mt-6">
         <div className="icon-container is-justify-content-center level">
           <Image
             src="/images/assets/btc.svg"

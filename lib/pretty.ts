@@ -36,8 +36,11 @@ export const prettyAgo = (timestamp: number): string => {
   return `${seconds}s`
 }
 
-export const prettyPercentage = (number: number): string =>
-  `${number < 0 ? '🔻' : '🔥'} ${number * 100} %`
+export const prettyPercentage = (number: number, min = 2, max = 2): string => {
+  const num = Number(prettyNumber(number * 100, min, max))
+  return `${num < 0 ? '🔻' : '🔥'} ${num} %`
+}
+
 
 
 // show pretty ratio

@@ -24,7 +24,7 @@ const TopupForm = ({
   const future = { ...contract, collateral }
 
   return (
-    <div className="is-box">
+    <div className="is-box has-pink-border">
       <h3 className="mt-4">
         <span className="stepper">1</span>
         Your present contract

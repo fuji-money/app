@@ -75,7 +75,7 @@ const MultiplyForm = ({
       <div className="row">
         <div className="columns">
           <div className="column is-4">
-            <div className="is-box">
+            <div className="is-box has-pink-border">
               <div className="is-flex is-justify-content-space-between">
                 <p className="is-size-7 has-text-weight-bold">
                   Liquidation price
@@ -100,7 +100,7 @@ const MultiplyForm = ({
                 </span>
               </p>
             </div>
-            <div className="is-box">
+            <div className="is-box has-pink-border">
               <div className="is-flex is-justify-content-space-between">
                 <p className="is-size-7 has-text-weight-bold">Current price</p>
                 <p>
@@ -148,7 +148,7 @@ const MultiplyForm = ({
           </div>
           <div className="column is-1"></div>
           <div className="column is-7">
-            <div className="is-box">
+            <div className="is-box has-pink-border">
               <p className="has-text-weight-bold">Configure your vault</p>
               <p className="is-size-7 mt-5">
                 In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing

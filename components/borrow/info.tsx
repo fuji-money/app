@@ -10,7 +10,7 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
   const { quantity, ticker, value } = synthetic
   const borrowFee = ((quantity || 0) * value * payout) / 100
   return (
-    <div className="is-box">
+    <div className="is-box has-pink-border">
       <div className="level">
         <div className="level-left">
           <div className="level-item">

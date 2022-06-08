@@ -9,9 +9,9 @@ interface InvestmentRowProps {
 const InvestmentRow = ({ investment }: InvestmentRowProps) => {
   const { asset, delta, quantity } = investment
   const deltaClass = delta < 0 ? 'delta red' : 'delta green'
-  const invested = prettyNumber((quantity || 0) * asset.value)
+  const invested = prettyNumber((quantity || 0) * asset.value, 2, 2)
   return (
-    <div className="is-box row">
+    <div className="row">
       <div className="columns level">
         <div className="column is-flex is-3">
           <div className="pr-4">

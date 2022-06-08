@@ -60,8 +60,8 @@ export const apiAssets = async (): Promise<Asset[]> => {
 export const apiInvestments = (): Investment[] => [
   {
     asset: fbmn,
-    delta: -0.11,
-    quantity: 0.1,
+    delta: -0.1125,
+    quantity: 0.001,
   },
 ]
 
