@@ -208,9 +208,14 @@ p.delta.green {
   color: green;
 }
 
-p.active {
+p.is-tab-selector {
+  color: $my-secondary-purple;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+p.is-tab-selector.active {
   background-color: #FFF1E3 !important;
   border: 1px solid $my-pink;
   border-radius: 3px;
-  cursor: pointer;
+  color: $my-purple;
 }

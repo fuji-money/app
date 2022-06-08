@@ -5,6 +5,8 @@ import { fetchAsset, fetchOracles } from 'lib/api'
 import { Asset, Contract, Offer, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
+import ExchangeOverview from './overview'
+import ExchangeTransactions from './transactions'
 
 interface ExchangeFormProps {
   offer: Offer
@@ -18,7 +20,7 @@ const ExchangeForm = ({ offer }: ExchangeFormProps) => {
     <div className="row">
       <div className="columns">
         <div className="column is-4">
-          <div className="is-box has-pink-border">
+          <div className="is-box has-pink-border mb-6">
             <div className="level">
               <div className="level-left is-block">
                 <h2>{synthetic.name}</h2>
@@ -45,11 +47,11 @@ const ExchangeForm = ({ offer }: ExchangeFormProps) => {
               </p>
             </div>
           </div>
-          <div className="row">
+          <div className="row mb-6">
             <div className="columns has-text-centered">
               <div className="column is-6">
                 <p
-                  className={showOverview ? 'active' : 'is-clickable'}
+                  className={`is-tab-selector ${showOverview ? 'active' : ''}`}
                   onClick={() => setShowOverview(!showOverview)}
                 >
                   Overview
@@ -57,7 +59,7 @@ const ExchangeForm = ({ offer }: ExchangeFormProps) => {
               </div>
               <div className="column is-6">
                 <p
-                  className={showOverview ? 'is-clickable' : 'active'}
+                  className={`is-tab-selector ${showOverview ? '' : 'active'}`}
                   onClick={() => setShowOverview(!showOverview)}
                 >
                   Transactions
@@ -65,7 +67,7 @@ const ExchangeForm = ({ offer }: ExchangeFormProps) => {
               </div>
             </div>
           </div>
-          {showOverview ? <p>Overview</p> : <p>Transactions</p>}
+          {showOverview ? <ExchangeOverview /> : <ExchangeTransactions />}
         </div>
         <div className="column is-1"></div>
         <div className="column is-7">
