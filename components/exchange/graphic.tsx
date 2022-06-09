@@ -1,9 +1,10 @@
 import BalanceInFiat from 'components/balance/fiat'
-import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Chart from './chart'
 
 const ExchangeGraphic = () => {
   const [period, setPeriod] = useState('Day')
+  const [days, setDays] = useState(24)
 
   const tab = (p: string) => {
     const cn = `is-tab-selector ${period === p ? 'active' : ''}`
@@ -16,6 +17,25 @@ const ExchangeGraphic = () => {
       </div>
     )
   }
+
+  useEffect(() => {
+    switch (period) {
+      case 'Day':
+        setDays(24)
+        break;
+      case 'Week':
+        setDays(7)
+        break;
+      case 'Month':
+        setDays(30)
+        break;
+      case 'Year':
+        setDays(365)
+        break;
+      default:
+        break;
+    }
+  }, [period])
 
   return (
     <div className="is-box has-pink-border">
@@ -30,7 +50,7 @@ const ExchangeGraphic = () => {
           {tab('Year')}
         </div>
       </div>
-      <Image src="/images/graph.svg" alt="graphic" width={877} height={410} />
+      <Chart days={days} />
     </div>
   )
 }
