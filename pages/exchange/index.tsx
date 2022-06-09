@@ -1,5 +1,5 @@
 import Investments from 'components/investments'
-import BalanceInFiat from 'components/investments/balance'
+import TotalBalance from 'components/investments/balance'
 import Stocks from 'components/stocks'
 import type { NextPage } from 'next'
 
@@ -8,7 +8,7 @@ const ExchangePage: NextPage = () => {
     <section>
       <h1>Exchange</h1>
       <div className='is-box has-pink-border'>
-        <BalanceInFiat />
+        <TotalBalance />
         <Investments />
         <Stocks />
       </div>

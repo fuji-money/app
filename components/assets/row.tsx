@@ -25,7 +25,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
         </div>
         <div className="column is-3">
           <p className="has-text-weight-bold is-gradient">
-            US ${prettyNumber((asset.quantity || 0) * asset.value)}
+            US$ {prettyNumber((asset.quantity || 0) * asset.value)}
           </p>
         </div>
         <div className="column is-6 has-text-right">

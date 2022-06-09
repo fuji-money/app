@@ -30,7 +30,7 @@ const InvestmentRow = ({ investment }: InvestmentRowProps) => {
           </div>
         </div>
         <div className="column is-6 has-text-right is-purple">
-          <p className="has-text-weight-bold">US ${invested}</p>
+          <p className="has-text-weight-bold">US$ {invested}</p>
           <p className={deltaClass}>{prettyPercentage(delta)}</p>
         </div>
       </div>

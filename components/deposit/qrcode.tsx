@@ -32,7 +32,7 @@ const Qrcode = ({ contract, setResult, topup }: QrcodeProps) => {
                 {prettyNumber(quantity)} {ticker}
               </p>
               <p className="value">
-                US ${prettyNumber((quantity || 0) * value)}
+                US$ {prettyNumber((quantity || 0) * value)}
               </p>
             </div>
           </div>

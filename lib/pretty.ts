@@ -14,7 +14,7 @@ export const prettyAsset = (asset: Asset): string =>
 
 // format amount (amount is quantity x value)
 export const prettyAmount = (asset: Asset): string =>
-  `US $${prettyNumber((asset.quantity || 0) * asset.value)}`
+  `US$ ${prettyNumber((asset.quantity || 0) * asset.value)}`
 
 // show pretty ago time
 export const prettyAgo = (timestamp: number): string => {

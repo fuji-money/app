@@ -40,7 +40,7 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
               <p>
                 {prettyNumber(quantity)} {ticker}
               </p>
-              <p>US ${prettyNumber((quantity || 0) * value)}</p>
+              <p>US$ {prettyNumber((quantity || 0) * value)}</p>
             </div>
           </div>
         </div>
