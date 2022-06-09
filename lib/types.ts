@@ -81,3 +81,10 @@ export interface Stock {
 }
 
 export type Ticker = string
+
+export enum TradeTypes {
+  Buy = 'Buy',
+  None = 'None',
+  Sell = 'Sell',
+  Statement = 'Statement',
+}

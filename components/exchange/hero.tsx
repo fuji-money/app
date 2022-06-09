@@ -1,9 +1,14 @@
 import { Asset } from 'lib/types'
 import Image from 'next/image'
 
-const ExchangeHero = ({ synthetic }: { synthetic: Asset }) => {
+interface ExchangeHeroProps {
+  setTrade: any
+  synthetic: Asset
+}
+
+const ExchangeHero = ({ setTrade, synthetic }: ExchangeHeroProps) => {
   const label = (icon: string, text: string) => (
-    <p className="is-after">
+    <p className="is-after" onClick={() => setTrade(text)}>
       <span className="image-container">
         <Image
           src={`/images/icons/${icon}.svg`}
@@ -24,7 +29,9 @@ const ExchangeHero = ({ synthetic }: { synthetic: Asset }) => {
       <div className="level">
         <div className="level-left is-block">
           <h2>{name}</h2>
-          <p className="is-size-7 is-grey">{ticker} | {state}</p>
+          <p className="is-size-7 is-grey">
+            {ticker} | {state}
+          </p>
         </div>
         <div className="level-right">
           <Image alt="asset logo" height={60} src={icon} width={40} />

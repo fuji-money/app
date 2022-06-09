@@ -1,12 +1,11 @@
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
-import Multiply from 'components/multiply'
 import { useRouter } from 'next/router'
 import { Offer } from 'lib/types'
 import { fetchAsset, fetchOffer } from 'lib/api'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
-import ExchangeForm from 'components/exchange/form'
+import ExchangeDashboard from 'components/exchange/dashboard'
 
 const ExchangeTicker: NextPage = () => {
   const router = useRouter()
@@ -33,7 +32,7 @@ const ExchangeTicker: NextPage = () => {
   if (!offer) return <SomeError>Error getting offer</SomeError>
 
   return (
-    <ExchangeForm offer={offer} />
+    <ExchangeDashboard offer={offer} />
   )
 }
 
