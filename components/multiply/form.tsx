@@ -11,6 +11,7 @@ import { Asset, Contract, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
+import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -23,9 +24,6 @@ const MultiplyForm = ({
   setContract,
   setDeposit,
 }: MultiplyFormProps) => {
-  const minRatio = 130 // TODO move to constants?
-  const maxRatio = 330 // TODO move to constants?
-
   const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
@@ -34,7 +32,7 @@ const MultiplyForm = ({
   const [multiplier, setMultiplier] = useState(0)
   const [quantity, setQuantity] = useState(0)
   const [oracles, setOracles] = useState<Oracle[]>()
-  const [ratio, setRatio] = useState(maxRatio)
+  const [ratio, setRatio] = useState(maxMultiplyRatio)
 
   useEffect(() => {
     setLoading(true)
@@ -53,7 +51,7 @@ const MultiplyForm = ({
       const debt = (quantity * lbtc.value * quoc) / (1 - quoc)
       const expo = debt / lbtc.value + quantity
       const mult = quantity ? expo / quantity : 0
-      const liqp = (lbtc.value / ratio) * minRatio
+      const liqp = (lbtc.value / ratio) * minMultiplyRatio
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
@@ -163,8 +161,8 @@ const MultiplyForm = ({
           </p>
           <Range
             liquidationPrice={liquidationPrice}
-            minRatio={minRatio}
-            maxRatio={maxRatio}
+            minRatio={minMultiplyRatio}
+            maxRatio={maxMultiplyRatio}
             ratio={ratio}
             setRatio={setRatio}
           />
