@@ -105,8 +105,7 @@ export const findAssetByTicker = async (ticker: string): Promise<Asset> => {
 }
 
 export const getBTCvalue = async (): Promise<number> => {
-  const data = await fetchURL(
-    'https://api.coindesk.com/v1/bpi/currentprice.json',
-  )
-  return Number(data.bpi.USD.rate_float)
+  const url = 'https://fuji-oracle.herokuapp.com/oracle/BTCUSD'
+  const data = await fetchURL(url)
+  return Number(data.lastPrice)
 }
