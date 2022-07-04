@@ -38,7 +38,9 @@ const ExchangeTrade = ({ setTrade, synthetic, trade }: ExchangeTradeProps) => {
       </div>
       <p className="has-text-weight-bold mb-2">fBMN</p>
       <div className="has-pink-border p-2 mb-4">
-        <p className="is-purple is-size-7 has-text-weight-bold">Amount to {trade}</p>
+        <p className="is-purple is-size-7 has-text-weight-bold">
+          Amount to {trade}
+        </p>
         <input className="input" min="0" placeholder="0.00" type="number" />
       </div>
       <p className="has-text-right">
@@ -52,7 +54,9 @@ const ExchangeTrade = ({ setTrade, synthetic, trade }: ExchangeTradeProps) => {
       </p>
       <p className="has-text-weight-bold mb-2">fUSD</p>
       <div className="has-pink-border p-2 mb-5">
-        <p className="is-purple is-size-7 has-text-weight-bold">Amount to {trade}</p>
+        <p className="is-purple is-size-7 has-text-weight-bold">
+          Amount to {trade}
+        </p>
         <input className="input" min="0" placeholder="0.00" type="number" />
       </div>
       <ReviewOrderButton />

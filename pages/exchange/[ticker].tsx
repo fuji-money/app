@@ -31,9 +31,7 @@ const ExchangeTicker: NextPage = () => {
   if (isLoading) return <Spinner />
   if (!offer) return <SomeError>Error getting offer</SomeError>
 
-  return (
-    <ExchangeDashboard offer={offer} />
-  )
+  return <ExchangeDashboard offer={offer} />
 }
 
 export default ExchangeTicker

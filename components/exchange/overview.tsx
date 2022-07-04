@@ -1,10 +1,10 @@
 const ExchangeOverview = () => {
   const box = (left: string, right: string) => (
     <div className="is-box level is-size-7 mb-1">
-      <div className='level-left'>
-        <p className='ml-2'>{left}</p>
+      <div className="level-left">
+        <p className="ml-2">{left}</p>
       </div>
-      <div className='level-right'>
+      <div className="level-right">
         <p className="has-text-weight-bold">{right}</p>
       </div>
     </div>

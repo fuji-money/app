@@ -41,8 +41,6 @@ export const prettyPercentage = (number: number, min = 2, max = 2): string => {
   return `${num < 0 ? '🔻' : '🔥'} ${num} %`
 }
 
-
-
 // show pretty ratio
 export const prettyRatio = (ratio: number): number =>
   parseFloat(ratio.toFixed(2))

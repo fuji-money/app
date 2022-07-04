@@ -31,7 +31,8 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)
-  if (filteredActivities.length === 0) return <EmptyState>No activities yet</EmptyState>
+  if (filteredActivities.length === 0)
+    return <EmptyState>No activities yet</EmptyState>
 
   return (
     <div className="activity-list">

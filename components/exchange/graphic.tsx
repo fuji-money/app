@@ -22,18 +22,18 @@ const ExchangeGraphic = () => {
     switch (period) {
       case 'Day':
         setDays(24)
-        break;
+        break
       case 'Week':
         setDays(7)
-        break;
+        break
       case 'Month':
         setDays(30)
-        break;
+        break
       case 'Year':
         setDays(365)
-        break;
+        break
       default:
-        break;
+        break
     }
   }, [period])
 

@@ -73,9 +73,7 @@ const MultiplyForm = ({
       <div className="column is-4">
         <div className="is-box has-pink-border">
           <div className="is-flex is-justify-content-space-between">
-            <p className="is-size-7 has-text-weight-bold">
-              Liquidation price
-            </p>
+            <p className="is-size-7 has-text-weight-bold">Liquidation price</p>
             <p>
               <a onClick={() => openModal('liquidation-price-modal')}>
                 <Image
@@ -87,9 +85,7 @@ const MultiplyForm = ({
               </a>
             </p>
           </div>
-          <p className="is-size-5 is-gradient has-text-weight-bold">
-            US$ 0.00
-          </p>
+          <p className="is-size-5 is-gradient has-text-weight-bold">US$ 0.00</p>
           <p>
             <span className="is-after">
               $ {liquidationPrice.toLocaleString()} after
@@ -147,18 +143,13 @@ const MultiplyForm = ({
         <div className="is-box has-pink-border">
           <p className="has-text-weight-bold">Configure your vault</p>
           <p className="is-size-7 mt-5">
-            In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing
-            eget vel ut non duis vitae. Augue mi, bibendum ac imperdiet
-            ipsum sed ornare. Facilisis id sem quam elementum euismod ante
-            ut.
+            In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing eget
+            vel ut non duis vitae. Augue mi, bibendum ac imperdiet ipsum sed
+            ornare. Facilisis id sem quam elementum euismod ante ut.
           </p>
-          <p className="has-text-weight-bold mt-6 mb-4">
-            Deposit your LBTC
-          </p>
+          <p className="has-text-weight-bold mt-6 mb-4">Deposit your LBTC</p>
           <Collateral asset={lbtc} setQuantity={setQuantity} />
-          <p className="has-text-weight-bold mt-6 mb-4">
-            Adjust your multiply
-          </p>
+          <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
           <Range
             liquidationPrice={liquidationPrice}
             minRatio={minMultiplyRatio}

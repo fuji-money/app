@@ -34,11 +34,7 @@ const TopupContract: NextPage = () => {
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
   return (
-    <Topup
-      contract={contract}
-      oracles={oracles}
-      setContract={setContract}
-    />
+    <Topup contract={contract} oracles={oracles} setContract={setContract} />
   )
 }
 

@@ -9,7 +9,7 @@ const TotalBalance = () => {
   if (!wallet) return <p>🔌 Connect your wallet to view your balance</p>
 
   return (
-    <div className='level mb-6'>
+    <div className="level mb-6">
       <div className="level-left is-block">
         <BalanceInFiat />
       </div>
