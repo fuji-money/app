@@ -3,6 +3,7 @@ import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
 import { prettyNumber } from 'lib/pretty'
+import { addContract } from 'lib/contracts'
 
 interface IntroProps {
   ticker: Ticker
@@ -30,6 +31,10 @@ interface MarinaModalProps {
 
 const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {
   const { ticker } = contract.collateral
+  const handleConfirmation = () => {
+    addContract(contract)
+    setResult('success')
+  }
   return (
     <Modal id="marina-modal">
       {contract && (
@@ -38,7 +43,7 @@ const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {
           <h3 className="mt-4">Waiting for confirmation...</h3>
           <Intro ticker={ticker} topup={topup} />
           <Summary contract={contract} />
-          <p className="confirm" onClick={() => setResult('success')}>
+          <p className="confirm" onClick={handleConfirmation}>
             Confirm this transaction in your Marina wallet
           </p>
         </>

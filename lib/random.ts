@@ -10,11 +10,6 @@ export function randomMessage(type: string): string {
   return `Contract ${type.toLowerCase()} with success - ${suffix}`
 }
 
-export function randomTime(): number {
-  const now = new Date().getSeconds()
-  return now - Math.floor(Math.random() * 100_000)
-}
-
 export function randomTxId(): string {
   let txid = ''
   for (let i = 0; i < 16; i++) {

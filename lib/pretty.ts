@@ -18,8 +18,8 @@ export const prettyAmount = (asset: Asset): string =>
 
 // show pretty ago time
 export const prettyAgo = (timestamp: number): string => {
-  const now = new Date().getSeconds()
-  const delta = now - timestamp
+  const now = Date.now()
+  const delta = Math.floor((now - timestamp) / 1_000)
   if (delta > 86_400) {
     const days = Math.floor(delta / 86_400)
     return `${days}d`

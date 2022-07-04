@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { getActivities } from 'lib/marina'
+import { getActivities } from 'lib/activities'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
@@ -19,10 +19,8 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
 
   useEffect(() => {
     setLoading(true)
-    getActivities().then((data) => {
-      setActivities(data)
-      setLoading(false)
-    })
+    setActivities(getActivities())
+    setLoading(false)
   }, [wallet])
 
   if (!wallet)
@@ -33,6 +31,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)
+  if (filteredActivities.length === 0) return <EmptyState>No activities yet</EmptyState>
 
   return (
     <div className="activity-list">

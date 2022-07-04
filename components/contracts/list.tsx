@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { getContracts } from 'lib/marina'
+import { getContracts } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
 import EmptyState from 'components/layout/empty'
