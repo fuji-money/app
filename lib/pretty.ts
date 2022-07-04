@@ -10,7 +10,7 @@ export const prettyNumber = (num = 0, min = 2, max = 8): string => {
 
 // format asset
 export const prettyAsset = (asset: Asset): string =>
-  `${prettyNumber(asset.quantity)} ${asset.ticker}`
+  `${prettyQuantity(asset)} ${asset.ticker}`
 
 // format amount (amount is quantity x value)
 export const prettyAmount = (asset: Asset): string =>
@@ -36,6 +36,7 @@ export const prettyAgo = (timestamp: number): string => {
   return `${seconds}s`
 }
 
+// show pretty percentage - TODO
 export const prettyPercentage = (number: number, min = 2, max = 2): string => {
   const num = Number(prettyNumber(number * 100, min, max))
   return `${num < 0 ? '🔻' : '🔥'} ${num} %`
@@ -44,3 +45,8 @@ export const prettyPercentage = (number: number, min = 2, max = 2): string => {
 // show pretty ratio
 export const prettyRatio = (ratio: number): number =>
   parseFloat(ratio.toFixed(2))
+
+// show asset quantity in unities
+export const prettyQuantity = (asset: Asset): string => {
+  return prettyNumber((asset.quantity || 0) / Math.pow(10, asset.precision))
+}

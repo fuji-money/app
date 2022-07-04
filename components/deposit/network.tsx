@@ -7,7 +7,7 @@ interface NetworkProps {
 }
 
 const Network = ({ ticker, setNetwork }: NetworkProps) => {
-  const disabled = ticker !== 'LBTC'
+  const disabled = ticker !== 'L-BTC'
   return (
     <div>
       <div className="has-text-centered">

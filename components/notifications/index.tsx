@@ -30,7 +30,8 @@ const Notifications = ({
 
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
-      if (asset?.quantity) setNotEnoughFunds(spendQuantity > asset.quantity)
+      const quantity = spendQuantity * Math.pow(10, asset.precision)
+      if (asset?.quantity) setNotEnoughFunds(quantity > asset.quantity)
     })
   }, [contract.collateral.ticker, spendQuantity])
 

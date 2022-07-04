@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { prettyNumber } from 'lib/pretty'
+import { prettyQuantity } from 'lib/pretty'
 import { Asset } from 'lib/types'
 
 interface BalanceRowProps {
@@ -19,7 +19,7 @@ const BalanceRow = ({ asset }: BalanceRowProps) => {
         </div>
         <span className="ml-5">{asset.ticker}</span>
       </td>
-      <td>{prettyNumber(asset.quantity)}</td>
+      <td>{prettyQuantity(asset)}</td>
       <style jsx>{`
         td:nth-child(2) {
           text-align: right;

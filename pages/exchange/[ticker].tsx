@@ -19,7 +19,7 @@ const ExchangeTicker: NextPage = () => {
     if (ticker && typeof ticker === 'string') {
       fetchAsset(ticker).then((asset) => {
         if (asset) {
-          fetchOffer(asset.ticker, 'LBTC').then((data) => {
+          fetchOffer(asset.ticker, 'L-BTC').then((data) => {
             setOffer(data)
             setLoading(false)
           })

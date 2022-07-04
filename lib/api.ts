@@ -1,19 +1,26 @@
 import { fetchURL } from './fetch'
+import { getBalance } from './marina'
 import { getBTCvalue } from './server'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
 export async function fetchAsset(ticker: string): Promise<Asset> {
   const asset = await fetchURL(`/api/assets/${ticker}`)
+  if (asset.ticker === 'L-BTC') {
+    asset.value = await getBTCvalue()
+  }
+  asset.quantity = await getBalance(asset.ticker)
   return asset
 }
 
 export async function fetchAssets(): Promise<Asset[]> {
   const value = await getBTCvalue()
   const assets = await fetchURL('/api/assets')
-  assets.forEach((asset: Asset) => {
-    if (asset.ticker === 'LBTC') asset.value = value
+  const promises = assets.map(async (asset: Asset) => {
+    if (asset.ticker === 'L-BTC') asset.value = value
+    asset.quantity = await getBalance(asset.ticker)
+    return asset
   })
-  return assets
+  return Promise.all(promises)
 }
 
 export async function fetchInvestments(): Promise<Investment[]> {

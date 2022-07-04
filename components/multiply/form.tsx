@@ -38,7 +38,7 @@ const MultiplyForm = ({
     setLoading(true)
     fetchOracles().then((data) => {
       setOracles(data)
-      fetchAsset('LBTC').then((data) => {
+      fetchAsset('L-BTC').then((data) => {
         setLbtc(data)
         setLoading(false)
       })
@@ -65,7 +65,7 @@ const MultiplyForm = ({
   }, [lbtc, quantity, ratio, setContract])
 
   if (isLoading) return <Spinner />
-  if (!lbtc) return <SomeError>Error getting LBTC asset</SomeError>
+  if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
   return (
@@ -122,7 +122,7 @@ const MultiplyForm = ({
             <div className="column is-6">
               <Snippet
                 title="Total L-BTC exposure"
-                value="0.000 LBTC"
+                value="0.000 L-BTC"
                 after={`${exposure.toLocaleString()} after`}
               />
             </div>
@@ -147,7 +147,7 @@ const MultiplyForm = ({
             vel ut non duis vitae. Augue mi, bibendum ac imperdiet ipsum sed
             ornare. Facilisis id sem quam elementum euismod ante ut.
           </p>
-          <p className="has-text-weight-bold mt-6 mb-4">Deposit your LBTC</p>
+          <p className="has-text-weight-bold mt-6 mb-4">Deposit your L-BTC</p>
           <Collateral asset={lbtc} setQuantity={setQuantity} />
           <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
           <Range

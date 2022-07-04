@@ -1,19 +1,18 @@
 import { Ticker } from './types'
-import { detectProvider, MarinaProvider } from 'marina-provider'
+import { detectProvider, MarinaProvider, Balance } from 'marina-provider'
 
-export const getBalance = (ticker: Ticker): number => {
-  switch (ticker) {
-    case 'LBTC':
-      return 2
-    case 'USDt':
-      return 42_000
-    case 'fUSD':
-      return 4_200
-    case 'fBMN':
-      return 0.001
-    default:
-      return 0
-  }
+export async function getBalances(): Promise<Balance[]> {
+  const marina = await getMarina()
+  if (!marina) return []
+  return await marina.getBalances()
+}
+
+export const getBalance = async (ticker: Ticker): Promise<number> => {
+  const balances = await getBalances()
+  if (!balances) return 0
+  const asset = balances.find((a) => a.asset.ticker === ticker)
+  if (!asset) return 0
+  return asset.amount
 }
 
 export async function checkMarina(): Promise<boolean> {
@@ -23,6 +22,7 @@ export async function checkMarina(): Promise<boolean> {
 }
 
 export async function getMarina(): Promise<MarinaProvider | undefined> {
+  if (typeof window === 'undefined') return undefined
   try {
     return await detectProvider('marina')
   } catch {

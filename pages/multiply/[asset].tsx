@@ -17,7 +17,7 @@ const MultiplyAsset: NextPage = () => {
   useEffect(() => {
     setLoading(true)
     if (asset === 'btc-long') {
-      fetchOffer('fUSD', 'LBTC').then((data) => {
+      fetchOffer('fUSD', 'L-BTC').then((data) => {
         setOffer(data)
         setLoading(false)
       })

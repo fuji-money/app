@@ -37,7 +37,7 @@ const BorrowTicker: NextPage = () => {
       // /borrow/fBMN => show list of offers filtered by ticker
       return <Offers offers={offers} ticker={params[0]} />
     case 2:
-      // /borrow/fBMN/LBTC => show form to borrow synthetic
+      // /borrow/fBMN/L-BTC => show form to borrow synthetic
       const offer = offers.find(
         ({ synthetic, collateral }) =>
           synthetic.ticker === params[0] && collateral.ticker === params[1],
