@@ -34,7 +34,6 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 export async function addContract(contract: Contract): Promise<void> {
   if (typeof window === 'undefined') return
   const contracts = await getContracts()
-  contract.state = getContractState(contract)
   contracts.push(contract)
   localStorage.setItem('fujiContracts', JSON.stringify(contracts))
   addActivity(contract, ActivityType.Creation)
