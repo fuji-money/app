@@ -7,3 +7,5 @@ export const oraclePubKey =
   '0256e332a5134f31dbea899e0cb7c75d3e2cff969d3958d066f8198caaee3a6159'
 
 export const oracleURL = 'https://fuji-oracle.herokuapp.com/oracle/BTCUSD'
+
+export const fUSDtestnet = '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568'
