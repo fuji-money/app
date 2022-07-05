@@ -1,3 +1,4 @@
+import { oracleURL } from './constants'
 import { fetchURL } from './fetch'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
@@ -105,7 +106,6 @@ export const findAssetByTicker = async (ticker: string): Promise<Asset> => {
 }
 
 export const getBTCvalue = async (): Promise<number> => {
-  const url = 'https://fuji-oracle.herokuapp.com/oracle/BTCUSD'
-  const data = await fetchURL(url)
+  const data = await fetchURL(oracleURL)
   return Number(data.lastPrice)
 }
