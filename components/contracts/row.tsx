@@ -12,7 +12,7 @@ interface ContractRowProps {
 
 const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
-  const state = getContractState(contract)
+  contract.state ||= getContractState(contract)
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
@@ -22,16 +22,15 @@ const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
           </p>
         </div>
         <div className="column is-2">
-          <PrettyState state={state} />
+          <PrettyState state={contract.state} />
         </div>
         <div className="column is-8 has-text-right">
           {contract.txid && <ExplorerLink txid={contract.txid} />}
           <RedeemButton
             contract={contract}
             setRedeem={setRedeem}
-            state={state}
           />
-          <TopupButton contract={contract} state={state} />
+          <TopupButton contract={contract} />
         </div>
       </div>
     </div>

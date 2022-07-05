@@ -4,6 +4,7 @@ import Spinner from 'components/spinner'
 import Modal from './modal'
 import { prettyNumber } from 'lib/pretty'
 import { addContract } from 'lib/contracts'
+import { randomTxId } from 'lib/random'
 
 interface IntroProps {
   ticker: Ticker
@@ -32,6 +33,7 @@ interface MarinaModalProps {
 const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {
   const { ticker } = contract.collateral
   const handleConfirmation = () => {
+    contract.txid = randomTxId()
     addContract(contract)
     setResult('success')
   }

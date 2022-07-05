@@ -47,3 +47,8 @@ export const getCollateralQuantity = (
 export const openModal = (id: string): void => {
   document.getElementById(id)?.classList.add('is-active')
 }
+
+// close modal
+export const closeModal = (id: string): void => {
+  document.getElementById(id)?.classList.remove('is-active')
+}

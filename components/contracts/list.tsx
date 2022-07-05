@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { getContracts } from 'lib/contracts'
+import { contractIsExpired, getContracts } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
 import EmptyState from 'components/layout/empty'
@@ -36,7 +36,11 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   if (isLoading) return <Spinner />
   if (!contracts) return <EmptyState>Error getting contracts</EmptyState>
 
-  const filteredContracts = showActive ? contracts : []
+  const filteredContracts = contracts.filter((contract) =>
+    showActive
+      ? !contractIsExpired(contract)
+      : contractIsExpired(contract),
+  )
   if (filteredContracts.length === 0)
     return <EmptyState>No contracts yet</EmptyState>
 

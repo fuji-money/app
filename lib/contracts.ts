@@ -1,6 +1,7 @@
 import { fetchAsset } from './api'
-import { ActivityType, Contract } from './types'
+import { ActivityType, Contract, ContractState } from './types'
 import { addActivity } from './activities'
+import { getContractState } from './utils'
 
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
@@ -33,7 +34,23 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 export async function addContract(contract: Contract): Promise<void> {
   if (typeof window === 'undefined') return
   const contracts = await getContracts()
+  contract.state = getContractState(contract)
   contracts.push(contract)
   localStorage.setItem('fujiContracts', JSON.stringify(contracts))
   addActivity(contract, ActivityType.Creation)
+}
+
+export async function redeemContract(contract: Contract): Promise<void> {
+  if (typeof window === 'undefined') return
+  const contracts = (await getContracts()).map((c) => {
+    if (c.txid === contract.txid) c.state = ContractState.Redeemed
+    return c
+  })
+  localStorage.setItem('fujiContracts', JSON.stringify(contracts))
+  addActivity(contract, ActivityType.Redeemed)
+}
+
+export const contractIsExpired = (contract: Contract): boolean => {
+  if (!contract.state) return false
+  return [ContractState.Redeemed, ContractState.Liquidated].includes(contract.state)
 }
