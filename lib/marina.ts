@@ -4,6 +4,7 @@ import { detectProvider, MarinaProvider, Balance } from 'marina-provider'
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
   if (!marina) return []
+  if (!(await marina.isEnabled())) return []
   return await marina.getBalances()
 }
 
