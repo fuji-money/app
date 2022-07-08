@@ -1,5 +1,5 @@
 import { Ticker } from './types'
-import { detectProvider, MarinaProvider, Balance } from 'marina-provider'
+import { detectProvider, MarinaProvider, Balance, Utxo } from 'marina-provider'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
@@ -30,4 +30,22 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
     console.log('Please install Marina extension')
     return undefined
   }
+}
+
+export function coinSelect(
+  utxos: Utxo[],
+  asset: string,
+  minAmount: number,
+): Utxo {
+  for (const utxo of utxos) {
+    if (!utxo.value || !utxo.asset) continue;
+    if (utxo.asset === asset) {
+      if (utxo.value >= minAmount) {
+        return utxo;
+      }
+    }
+  }
+  throw new Error(
+    `No enough coins found for ${asset}. Do you have enough funds? Utxo wanted: ${minAmount}`
+  );
 }
