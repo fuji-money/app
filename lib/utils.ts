@@ -54,8 +54,10 @@ export const getContractPriceLevel = (contract: Contract): number => {
 }
 
 // number to string
-export const numberToString = (num: number): string => {
-  return '20000'
+export const numberToString = (n: number): string => {
+  const buf = Buffer.alloc(8);
+  buf.writeBigUInt64LE(BigInt(n));
+  return '0x'.concat(buf.toString('hex'));
 }
 
 // open modal
