@@ -43,6 +43,21 @@ export const getCollateralQuantity = (
     .toNumber()
 }
 
+// get contract payout
+export const getContractPayout = (contract: Contract): number => {
+  return 1500 // TODO
+}
+
+// get contract price level
+export const getContractPriceLevel = (contract: Contract): number => {
+  return 20000 // TODO
+}
+
+// number to string
+export const numberToString = (num: number): string => {
+  return '20000'
+}
+
 // open modal
 export const openModal = (id: string): void => {
   document.getElementById(id)?.classList.add('is-active')
