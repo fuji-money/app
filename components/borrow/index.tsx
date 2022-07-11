@@ -7,6 +7,7 @@ import BorrowButton from './button'
 import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
+import { makeBorrowTx } from 'lib/marina'
 
 interface BorrowProps {
   offer: Offer
@@ -21,6 +22,8 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
   const minRatio = offer.collateral.ratio || 150
 
   const topup = 0
+
+  if (deposit) makeBorrowTx(contract) // TODO
 
   return (
     <section>

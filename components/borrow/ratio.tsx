@@ -45,10 +45,11 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setContractRatio(Number(e.target.value))
 
+  updateLabels(min, safe)
+
   useEffect(() => {
-    updateLabels(min, safe)
     updateColors(ratio)
-  }, [min, safe, ratio])
+  }, [ratio])
 
   return (
     <>

@@ -4,7 +4,6 @@ import Network from './network'
 import Qrcode from './qrcode'
 import Result from './result'
 import Marina from './marina'
-import { makeBorrowTx } from 'lib/marina'
 
 interface DepositProps {
   contract: Contract
@@ -18,7 +17,6 @@ const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
   const [result, setResult] = useState('')
   const qrcode = !result && network === 'lightning'
   const marina = !result && network === 'liquid'
-  makeBorrowTx(contract)
   return (
     <div className="is-box has-pink-border py-6 px-6">
       {!network && <Network ticker={ticker} setNetwork={setNetwork} />}
