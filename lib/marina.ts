@@ -3,6 +3,15 @@ import { detectProvider, MarinaProvider, Balance, Utxo } from 'marina-provider'
 import { issuerPubKey, issuerScriptProgram, marinaAccountID, oraclePubKey } from 'lib/constants'
 import { synthAssetArtifact} from 'lib/artifacts'
 import { getContractPayout, getContractPriceLevel, numberToString } from './utils'
+import {
+  networks,
+  payments,
+  TxOutput,
+  Psbt,
+  confidential,
+  AssetHash,
+  address,
+} from 'liquidjs-lib';
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
@@ -48,8 +57,13 @@ export async function makeBorrowTx(contract: Contract) {
   // validate contract
   const { collateral, synthetic } = contract
   if (!synthetic.quantity || !collateral.quantity) throw new Error('Invalid contract')
+  // validate we have necessary utxo
+  const network = networks.testnet
+  const lbtc = network.assetHash
+  const collateralUtxo = coinSelect(await marina.getCoins(), lbtc, collateral.quantity)
+  if (!collateralUtxo || !collateralUtxo.value) throw new Error('Not enough funds')
   // get next address
-  const addr = await marina.getNextAddress({
+  const nextAddress = await marina.getNextAddress({
     borrowAsset: synthetic.id,
     borrowAmount: synthetic.quantity,
     collateralAsset: collateral.id,
@@ -61,13 +75,38 @@ export async function makeBorrowTx(contract: Contract) {
     priceLevel: getContractPriceLevel(contract), // if value is lower than this, then liquidate
     setupTimestamp: numberToString(Date.now()),
   })
+  const changeAddress = await marina.getNextChangeAddress()
+  // build Psbt
+  const feeAmount = 500
+  const psbt = new Psbt({ network });
+  // add collateral input
+  psbt.addInput({
+    hash: collateralUtxo.txid,
+    index: collateralUtxo.vout,
+    witnessUtxo: collateralUtxo.prevout,
+  });
+  // add covenant in position 0
+  psbt.addOutput({
+    script: Buffer.from(nextAddress.confidentialAddress),
+    value: confidential.satoshiToConfidentialValue(collateral.quantity),
+    asset: AssetHash.fromHex(network.assetHash, false).bytes,
+    nonce: Buffer.alloc(0),
+  });
+  // add change output, already subtracted of the covenant amount and fee amount
+  const changeAmount = collateralUtxo.value - collateral.quantity - feeAmount
+  psbt.addOutput({
+    script: Buffer.from(changeAddress.confidentialAddress),
+    value: confidential.satoshiToConfidentialValue(changeAmount),
+    asset: AssetHash.fromHex(network.assetHash, false).bytes,
+    nonce: Buffer.alloc(0),
+  });
 }
 
 export function coinSelect(
   utxos: Utxo[],
   asset: string,
   minAmount: number,
-): Utxo {
+): Utxo | undefined {
   for (const utxo of utxos) {
     if (!utxo.value || !utxo.asset) continue;
     if (utxo.asset === asset) {
@@ -76,9 +115,7 @@ export function coinSelect(
       }
     }
   }
-  throw new Error(
-    `No enough coins found for ${asset}. Do you have enough funds? Utxo wanted: ${minAmount}`
-  );
+  return undefined
 }
 
 export async function bootstrapMarinaAccount(marina: MarinaProvider) {
