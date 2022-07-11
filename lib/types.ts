@@ -50,8 +50,9 @@ export interface Contract {
   collateral: Asset
   payout: number
   synthetic: Asset
-  createdAt?: number
+  priceLevel?: number
   oracles: string[]
+  createdAt?: number
   state?: ContractState
   txid?: string
 }

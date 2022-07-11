@@ -50,15 +50,22 @@ export const getContractPayout = (contract: Contract): number => {
 }
 
 // get contract price level
-export const getContractPriceLevel = (contract: Contract): number => {
-  return 20000 // TODO
+export const getContractPriceLevel = (contract: Contract, ratio: number): number => {
+  const { collateral } = contract
+  if (!collateral.ratio) throw new Error('Collateral without minimum ratio')
+  return collateral.value * collateral.ratio / ratio
 }
 
 // number to string
 export const numberToString = (n: number): string => {
-  const buf = Buffer.alloc(8);
-  buf.writeBigUInt64LE(BigInt(n));
-  return '0x'.concat(buf.toString('hex'));
+  return n.toString()
+  // const buf = Buffer.alloc(8);
+  // buf.writeBigUInt64LE(BigInt(n));
+  // return '0x'.concat(buf.toString('hex'));
+}
+
+export function toSatoshi(fractional: number, precision: number = 8): number {
+  return Math.floor(new Decimal(fractional).mul(Decimal.pow(10, precision)).toNumber());
 }
 
 // open modal

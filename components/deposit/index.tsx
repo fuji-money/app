@@ -4,6 +4,7 @@ import Network from './network'
 import Qrcode from './qrcode'
 import Result from './result'
 import Marina from './marina'
+import { makeBorrowTx } from 'lib/marina'
 
 interface DepositProps {
   contract: Contract
