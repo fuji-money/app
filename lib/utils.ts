@@ -58,7 +58,7 @@ export const getContractPriceLevel = (contract: Contract, ratio: number): number
 }
 
 // number to string
-export function numberToString(n: number): string {
+export function numberToHexEncodedUint64LE(n: number): string {
   const num = Math.floor(n)
   const buf = Buffer.alloc(8);
   writeUInt64LE(buf, num, 0);

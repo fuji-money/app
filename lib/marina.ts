@@ -7,7 +7,7 @@ import {
   oraclePubKey,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import { getContractPayout, numberToString, toSatoshi } from './utils'
+import { getContractPayout, numberToHexEncodedUint64LE, toSatoshi } from './utils'
 import {
   networks,
   payments,
@@ -92,8 +92,8 @@ export async function makeBorrowTx(contract: Contract) {
     oraclePk: oraclePubKey,
     issuerPk: issuerPubKey,
     issuerScriptProgram, // payment.p2wksh (issuerPubKey)
-    priceLevel: numberToString(contract.priceLevel), // if value is lower than this, then liquidate
-    setupTimestamp: numberToString(Date.now()),
+    priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
+    setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
   }
   console.log('covenantConstructor', covenantConstrutor)
   const nextAddress = await marina.getNextAddress(covenantConstrutor)
