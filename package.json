@@ -9,9 +9,13 @@
     "lint": "next lint",
     "prettier": "npx prettier --check pages/ components/ lib/"
   },
+  "resolutions": {
+    "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+  },
   "dependencies": {
     "bulma": "^0.9.3",
     "decimal.js": "^10.3.1",
+    "liquidjs-lib": "^6.0.2-liquid.8",
     "marina-provider": "^1.7.1",
     "next": "12.1.4",
     "react": "18.0.0",
