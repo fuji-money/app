@@ -74,8 +74,6 @@ export async function makeBorrowTx(contract: Contract) {
   const collateralAmount = toSatoshi(collateral.quantity)
 
   // validate we have necessary utxo
-  const feeAmount = 500 // TODO
-  const network = networks.testnet // TODO
   const collateralUtxo = coinSelect(
     await marina.getCoins(),
     collateral.id,
@@ -102,6 +100,7 @@ export async function makeBorrowTx(contract: Contract) {
   const changeAddress = await marina.getNextChangeAddress()
 
   // build Psbt
+  const network = networks.testnet // TODO
   const psbt = new Psbt({ network })
   // add collateral input
   psbt.addInput({
@@ -113,15 +112,16 @@ export async function makeBorrowTx(contract: Contract) {
   psbt.addOutput({
     script: Buffer.from(nextAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(collateralAmount),
-    asset: AssetHash.fromHex(network.assetHash, false).bytes,
+    asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
   // add change output
+  const feeAmount = 500 // TODO
   const changeAmount = collateralUtxo.value - collateralAmount - feeAmount
   psbt.addOutput({
     script: Buffer.from(changeAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(changeAmount),
-    asset: AssetHash.fromHex(network.assetHash, false).bytes,
+    asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
   console.log('nextAddress', nextAddress)
