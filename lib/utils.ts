@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js'
 import { Contract, ContractState } from './types'
+import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils';
 
 // get contract ratio
 export const getContractRatio = (contract: Contract): number => {
@@ -57,11 +58,11 @@ export const getContractPriceLevel = (contract: Contract, ratio: number): number
 }
 
 // number to string
-export const numberToString = (n: number): string => {
-  return n.toString()
-  // const buf = Buffer.alloc(8);
-  // buf.writeBigUInt64LE(BigInt(n));
-  // return '0x'.concat(buf.toString('hex'));
+export function numberToString(n: number): string {
+  const num = Math.floor(n)
+  const buf = Buffer.alloc(8);
+  writeUInt64LE(buf, num, 0);
+  return '0x'.concat(buf.toString('hex'));
 }
 
 export function toSatoshi(fractional: number, precision: number = 8): number {

@@ -7,11 +7,7 @@ import {
   oraclePubKey,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import {
-  getContractPayout,
-  numberToString,
-  toSatoshi,
-} from './utils'
+import { getContractPayout, numberToString, toSatoshi } from './utils'
 import {
   networks,
   payments,
@@ -54,33 +50,42 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
 }
 
 export async function makeBorrowTx(contract: Contract) {
+
   // check for marina
   const marina = await getMarina()
   if (!marina) throw new Error('Please install Marina')
+
   // check for marina account, create if doesn't exists
   try {
     await marina.getAccountInfo(marinaAccountID)
   } catch {
     await bootstrapMarinaAccount(marina)
   }
+
   // validate contract
   const { collateral, synthetic } = contract
-  if (!synthetic.quantity || !collateral.quantity || !contract.priceLevel)
-    throw new Error('Invalid contract')
+  if (!collateral.quantity)
+    throw new Error('Invalid contract: no collateral quantity')
+  if (!synthetic.quantity)
+    throw new Error('Invalid contract: no synthetic quantity')
+  if (!contract.priceLevel)
+    throw new Error('Invalid contract: no contract priceLevel')
   const borrowAmount = toSatoshi(synthetic.quantity)
   const collateralAmount = toSatoshi(collateral.quantity)
+
   // validate we have necessary utxo
-  const network = networks.testnet
-  const lbtc = network.assetHash
+  const feeAmount = 500 // TODO
+  const network = networks.testnet // TODO
   const collateralUtxo = coinSelect(
     await marina.getCoins(),
-    lbtc,
+    collateral.id,
     collateral.quantity,
   )
   if (!collateralUtxo || !collateralUtxo.value)
     throw new Error('Not enough funds')
-  // get next address
-  const nextAddress = await marina.getNextAddress({
+
+  // get next and change addresses
+  const covenantConstrutor = {
     borrowAsset: synthetic.id,
     borrowAmount,
     collateralAsset: collateral.id,
@@ -88,13 +93,15 @@ export async function makeBorrowTx(contract: Contract) {
     payoutAmount: getContractPayout(contract),
     oraclePk: oraclePubKey,
     issuerPk: issuerPubKey,
-    issuerScriptProgram: issuerScriptProgram, // payment.p2wksh (issuerPubKey)
-    priceLevel: contract.priceLevel, // if value is lower than this, then liquidate
+    issuerScriptProgram, // payment.p2wksh (issuerPubKey)
+    priceLevel: numberToString(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToString(Date.now()),
-  })
+  }
+  console.log('covenantConstructor', covenantConstrutor)
+  const nextAddress = await marina.getNextAddress(covenantConstrutor)
   const changeAddress = await marina.getNextChangeAddress()
+
   // build Psbt
-  const feeAmount = 500 // TODO
   const psbt = new Psbt({ network })
   // add collateral input
   psbt.addInput({
@@ -109,7 +116,7 @@ export async function makeBorrowTx(contract: Contract) {
     asset: AssetHash.fromHex(network.assetHash, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  // add change output, already subtracted of the covenant amount and fee amount
+  // add change output
   const changeAmount = collateralUtxo.value - collateralAmount - feeAmount
   psbt.addOutput({
     script: Buffer.from(changeAddress.confidentialAddress),
