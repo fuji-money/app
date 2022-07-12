@@ -1,13 +1,24 @@
 import { Contract, Ticker } from './types'
-import { detectProvider, MarinaProvider, Balance, Utxo } from 'marina-provider'
 import {
+  detectProvider,
+  MarinaProvider,
+  Balance,
+  Utxo,
+  AddressInterface,
+} from 'marina-provider'
+import {
+  alphaServerUrl,
   issuerPubKey,
   issuerScriptProgram,
   marinaAccountID,
   oraclePubKey,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import { getContractPayout, numberToHexEncodedUint64LE, toSatoshi } from './utils'
+import {
+  getContractPayout,
+  numberToHexEncodedUint64LE,
+  toSatoshi,
+} from './utils'
 import {
   networks,
   payments,
@@ -17,6 +28,7 @@ import {
   AssetHash,
   address,
 } from 'liquidjs-lib'
+import { postData } from './fetch'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
@@ -50,7 +62,6 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
 }
 
 export async function makeBorrowTx(contract: Contract) {
-
   console.log('makeBorrowTx contract', contract)
 
   // check for marina
@@ -72,6 +83,8 @@ export async function makeBorrowTx(contract: Contract) {
     throw new Error('Invalid contract: no synthetic quantity')
   if (!contract.priceLevel)
     throw new Error('Invalid contract: no contract priceLevel')
+
+  // get amounts in satoshis
   const borrowAmount = toSatoshi(synthetic.quantity)
   const collateralAmount = toSatoshi(collateral.quantity)
 
@@ -85,15 +98,14 @@ export async function makeBorrowTx(contract: Contract) {
     throw new Error('Not enough funds')
 
   // get next and change addresses
-
   const network = networks.testnet // TODO
   const issuer = payments.p2wpkh({
     pubkey: Buffer.from(issuerPubKey, 'hex'),
     network: network,
-  });
+  })
   const oraclePk = Buffer.from(oraclePubKey, 'hex')
   const issuerPk = Buffer.from(issuerPubKey, 'hex')
-  const covenantConstrutor = {
+  const contractParams = {
     borrowAsset: synthetic.id,
     borrowAmount,
     collateralAsset: collateral.id,
@@ -105,8 +117,8 @@ export async function makeBorrowTx(contract: Contract) {
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
   }
-  console.log('covenantConstructor', covenantConstrutor)
-  const nextAddress = await marina.getNextAddress(covenantConstrutor)
+  console.log('contractParams', contractParams)
+  const nextAddress = await marina.getNextAddress(contractParams)
   const changeAddress = await marina.getNextChangeAddress()
   console.log('nextAddress', nextAddress)
   console.log('changeAddress', changeAddress)
@@ -136,6 +148,79 @@ export async function makeBorrowTx(contract: Contract) {
     nonce: Buffer.alloc(0),
   })
   console.log('psbt', psbt)
+
+  let ptx: Psbt
+  const response = await proposeContract(
+    psbt,
+    contractParams,
+    nextAddress,
+    changeAddress,
+  )
+  try {
+    ptx = Psbt.fromBase64(response.partialTransaction)
+  } catch (err: any) {
+    throw new Error(`invalid partial transaction`)
+  }
+  console.log('ptx', ptx)
+}
+
+async function proposeContract(
+  psbt: Psbt,
+  contractParams: any,
+  nextAddress: AddressInterface,
+  changeAddress: AddressInterface,
+) {
+  // deconstruct contractParams
+  const {
+    borrowAsset,
+    borrowAmount,
+    collateralAsset,
+    collateralAmount,
+    payoutAmount,
+    oraclePk,
+    issuerPk,
+    issuerScriptProgram,
+    priceLevel,
+    setupTimestamp,
+  } = contractParams
+
+  // build post body
+  const body = {
+    partialTransaction: psbt.toBase64(),
+    borrowerAddress: nextAddress.confidentialAddress,
+    // anything is fine for now as attestation
+    attestation: {
+      message: '',
+      messageHash: '',
+      signature: '',
+    },
+    contractParams: {
+      borrowAsset,
+      borrowAmount,
+      collateralAsset,
+      collateralAmount,
+      payoutAmount,
+      issuerPublicKey: issuerPk,
+      issuerScriptProgram,
+      oraclePublicKey: oraclePk,
+      borrowerPublicKey: nextAddress.publicKey,
+      priceLevel,
+      setupTimestamp,
+    },
+    blindingPrivKeyOfCollateralInputs: {
+      0: address
+        .fromConfidential(nextAddress.confidentialAddress!)
+        .blindingKey.toString('hex'),
+    },
+    blindingPubKeyForCollateralChange: {
+      1: address
+        .fromConfidential(changeAddress.confidentialAddress!)
+        .blindingKey.toString('hex'),
+    },
+  }
+
+  // post and return
+  return postData(`${alphaServerUrl}/contracts`, body)
 }
 
 export function coinSelect(
