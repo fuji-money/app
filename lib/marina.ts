@@ -51,6 +51,8 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
 
 export async function makeBorrowTx(contract: Contract) {
 
+  console.log('makeBorrowTx contract', contract)
+
   // check for marina
   const marina = await getMarina()
   if (!marina) throw new Error('Please install Marina')
@@ -83,24 +85,33 @@ export async function makeBorrowTx(contract: Contract) {
     throw new Error('Not enough funds')
 
   // get next and change addresses
+
+  const network = networks.testnet // TODO
+  const issuer = payments.p2wpkh({
+    pubkey: Buffer.from(issuerPubKey, 'hex'),
+    network: network,
+  });
+  const oraclePk = Buffer.from(oraclePubKey, 'hex')
+  const issuerPk = Buffer.from(issuerPubKey, 'hex')
   const covenantConstrutor = {
     borrowAsset: synthetic.id,
     borrowAmount,
     collateralAsset: collateral.id,
     collateralAmount,
     payoutAmount: getContractPayout(contract),
-    oraclePk: oraclePubKey,
-    issuerPk: issuerPubKey,
-    issuerScriptProgram, // payment.p2wksh (issuerPubKey)
+    oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
+    issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
+    issuerScriptProgram: `0x${issuer.output!.slice(2).toString('hex')}`,
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
   }
   console.log('covenantConstructor', covenantConstrutor)
   const nextAddress = await marina.getNextAddress(covenantConstrutor)
   const changeAddress = await marina.getNextChangeAddress()
+  console.log('nextAddress', nextAddress)
+  console.log('changeAddress', changeAddress)
 
   // build Psbt
-  const network = networks.testnet // TODO
   const psbt = new Psbt({ network })
   // add collateral input
   psbt.addInput({
@@ -124,7 +135,6 @@ export async function makeBorrowTx(contract: Contract) {
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  console.log('nextAddress', nextAddress)
   console.log('psbt', psbt)
 }
 
