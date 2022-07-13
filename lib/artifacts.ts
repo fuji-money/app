@@ -18,7 +18,7 @@ export const synthAssetArtifact = {
       type: 'value',
     },
     {
-      name: 'test',
+      name: 'borrowerPk',
       type: 'xonlypubkey',
     },
     {
@@ -257,7 +257,7 @@ export const synthAssetArtifact = {
         'OP_EQUALVERIFY',
         '$issuerPk',
         'OP_CHECKSIGVERIFY',
-        '$test',
+        '$borrowerPk',
         'OP_CHECKSIG',
       ],
     },
