@@ -209,9 +209,7 @@ async function proposeContract(
       setupTimestamp,
     },
     blindingPrivKeyOfCollateralInputs: {
-      0: address
-        .fromConfidential(nextAddress.confidentialAddress!)
-        .blindingKey.toString('hex'),
+      0: nextAddress.blindingPrivateKey
     },
     blindingPubKeyForCollateralChange: {
       1: address
