@@ -71,6 +71,7 @@ export async function makeBorrowTx(contract: Contract) {
   // check for marina account, create if doesn't exists
   try {
     await marina.getAccountInfo(marinaAccountID)
+    await marina.useAccount(marinaAccountID)
   } catch {
     await bootstrapMarinaAccount(marina)
   }
