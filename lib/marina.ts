@@ -9,7 +9,6 @@ import {
 import {
   alphaServerUrl,
   issuerPubKey,
-  issuerScriptProgram,
   marinaAccountID,
   oraclePubKey,
 } from 'lib/constants'
@@ -62,7 +61,7 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
 }
 
 export async function makeBorrowTx(contract: Contract) {
-  console.log('makeBorrowTx contract', contract)
+  // console.log('makeBorrowTx contract', contract)
 
   // check for marina
   const marina = await getMarina()
@@ -73,7 +72,7 @@ export async function makeBorrowTx(contract: Contract) {
     await marina.getAccountInfo(marinaAccountID)
     await marina.useAccount(marinaAccountID)
   } catch {
-    await bootstrapMarinaAccount(marina)
+    await createMarinaAccount(marina)
   }
 
   // validate contract
@@ -118,11 +117,11 @@ export async function makeBorrowTx(contract: Contract) {
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
   }
-  console.log('contractParams', contractParams)
+  // console.log('contractParams', contractParams)
   const nextAddress = await marina.getNextAddress(contractParams)
-  const changeAddress = await marina.getNextChangeAddress()
-  console.log('nextAddress', nextAddress)
-  console.log('changeAddress', changeAddress)
+  const changeAddress = await marina.getNextChangeAddress(contractParams)
+  // console.log('nextAddress', nextAddress)
+  // console.log('changeAddress', changeAddress)
 
   // build Psbt
   const psbt = new Psbt({ network })
@@ -148,7 +147,7 @@ export async function makeBorrowTx(contract: Contract) {
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  console.log('psbt', psbt)
+  // console.log('psbt', psbt)
 
   let ptx: Psbt
   const response = await proposeContract(
@@ -162,7 +161,7 @@ export async function makeBorrowTx(contract: Contract) {
   } catch (err: any) {
     throw new Error(`invalid partial transaction`)
   }
-  console.log('ptx', ptx)
+  // console.log('ptx', ptx)
 }
 
 async function proposeContract(
@@ -238,20 +237,17 @@ export function coinSelect(
   return undefined
 }
 
-export async function bootstrapMarinaAccount(marina: MarinaProvider) {
-  // create account 'fuji' on marina if doesn't exists
-  try {
-    await marina.getAccountInfo(marinaAccountID)
-  } catch {
-    await marina.createAccount(marinaAccountID)
-  }
-  // select 'fuji' account from marina
+export async function createMarinaAccount(marina: MarinaProvider) {
+  if (await marinaAccountExists(marina)) return
+  await marina.createAccount(marinaAccountID)
   await marina.useAccount(marinaAccountID)
-  // import template (will throw error if already imported)
-  try {
-    await marina.importTemplate({
-      type: 'ionio-artifact',
-      template: JSON.stringify(synthAssetArtifact),
-    })
-  } catch {}
+  await marina.importTemplate({
+    type: 'ionio-artifact',
+    template: JSON.stringify(synthAssetArtifact),
+  })
+}
+
+export async function marinaAccountExists(marina: MarinaProvider): Promise<boolean> {
+  const accountIDs = await marina.getAccountsIDs()
+  return accountIDs.includes(marinaAccountID)
 }

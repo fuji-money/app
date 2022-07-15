@@ -47,7 +47,6 @@ export const getCollateralQuantity = (
 // get contract payout
 export const getContractPayout = (contract: Contract): number => {
   const collateralAmount = toSatoshi(contract.collateral.quantity || 0)
-  console.log('collateralAmount', collateralAmount)
   return Math.floor(collateralAmount * 0.0025) // 25 basis points, 0.25%
 }
 
