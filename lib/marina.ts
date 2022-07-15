@@ -21,7 +21,6 @@ import {
 import {
   networks,
   payments,
-  TxOutput,
   Psbt,
   confidential,
   AssetHash,
@@ -80,17 +79,18 @@ export async function makeBorrowTx(contract: Contract) {
     throw new Error('Invalid contract: no contract priceLevel')
 
   // get amounts in satoshis
-  const borrowAmount = toSatoshi(synthetic.quantity)
-  const collateralAmount = toSatoshi(collateral.quantity)
+  const borrowAmount = toSatoshi(synthetic.quantity, synthetic.precision)
+  const collateralAmount = toSatoshi(collateral.quantity, collateral.precision)
 
   // validate we have necessary utxo
-  const collateralUtxo = coinSelect(
+  const collateralUtxos = coinSelect(
     await marina.getCoins(),
     collateral.id,
-    collateral.quantity,
+    collateralAmount,
   )
-  if (!collateralUtxo || !collateralUtxo.value)
-    throw new Error('Not enough funds')
+  if (collateralUtxos.length === 0) throw new Error('Not enough funds')
+  console.log('collateralAmount', collateralAmount)
+  console.log('collateralUtxos', collateralUtxos)
 
   // get next and change addresses
   const network = networks.testnet // TODO
@@ -120,12 +120,14 @@ export async function makeBorrowTx(contract: Contract) {
 
   // build Psbt
   const psbt = new Psbt({ network })
-  // add collateral input
-  psbt.addInput({
-    hash: collateralUtxo.txid,
-    index: collateralUtxo.vout,
-    witnessUtxo: collateralUtxo.prevout,
-  })
+  // add collateral inputs
+  for (const utxo of collateralUtxos) {
+    psbt.addInput({
+      hash: utxo.txid,
+      index: utxo.vout,
+      witnessUtxo: utxo.prevout,
+    })
+  }
   // add covenant in position 0
   psbt.addOutput({
     script: Buffer.from(nextAddress.confidentialAddress),
@@ -135,7 +137,11 @@ export async function makeBorrowTx(contract: Contract) {
   })
   // add change output
   const feeAmount = 500 // TODO
-  const changeAmount = collateralUtxo.value - collateralAmount - feeAmount
+  const collateralUtxosAmount = collateralUtxos.reduce(
+    (value, utxo) => value + (utxo.value || 0),
+    0,
+  )
+  const changeAmount = collateralUtxosAmount - collateralAmount - feeAmount
   psbt.addOutput({
     script: Buffer.from(changeAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(changeAmount),
@@ -150,6 +156,7 @@ export async function makeBorrowTx(contract: Contract) {
     contractParams,
     nextAddress,
     changeAddress,
+    collateralUtxos,
   )
   try {
     ptx = Psbt.fromBase64(response.partialTransaction)
@@ -164,6 +171,7 @@ async function proposeContract(
   contractParams: any,
   nextAddress: AddressInterface,
   changeAddress: AddressInterface,
+  collateralUtxos: Utxo[],
 ) {
   // deconstruct contractParams
   const {
@@ -178,6 +186,9 @@ async function proposeContract(
     priceLevel,
     setupTimestamp,
   } = contractParams
+
+  // get blindingPrivKeyOfCollateralInputs for each collateral utxo
+  const blindingPrivKeyOfCollateralInputs = collateralUtxos.map((u) => '00') // TODO
 
   // build post body
   const body = {
@@ -202,9 +213,7 @@ async function proposeContract(
       priceLevel,
       setupTimestamp,
     },
-    blindingPrivKeyOfCollateralInputs: {
-      0: nextAddress.blindingPrivateKey,
-    },
+    blindingPrivKeyOfCollateralInputs,
     blindingPubKeyForCollateralChange: {
       1: address
         .fromConfidential(changeAddress.confidentialAddress!)
@@ -220,16 +229,20 @@ export function coinSelect(
   utxos: Utxo[],
   asset: string,
   minAmount: number,
-): Utxo | undefined {
+): Utxo[] {
+  let totalValue = 0
+  const selectedUtxos: Utxo[] = []
   for (const utxo of utxos) {
     if (!utxo.value || !utxo.asset) continue
     if (utxo.asset === asset) {
-      if (utxo.value >= minAmount) {
-        return utxo
+      selectedUtxos.push(utxo)
+      totalValue += utxo.value
+      if (totalValue >= minAmount) {
+        return selectedUtxos
       }
     }
   }
-  return undefined
+  return []
 }
 
 export async function createFujiAccount(marina: MarinaProvider) {
@@ -246,7 +259,7 @@ export async function fujiAccountMissing(
   marina: MarinaProvider,
 ): Promise<boolean> {
   const accountIDs = await marina.getAccountsIDs()
-  return accountIDs.includes(marinaFujiAccountID)
+  return !accountIDs.includes(marinaFujiAccountID)
 }
 
 export async function mainAccountID(marina: MarinaProvider): Promise<string> {
