@@ -9,7 +9,7 @@ import {
 import {
   alphaServerUrl,
   issuerPubKey,
-  marinaAccountID,
+  marinaFujiAccountID,
   oraclePubKey,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
@@ -68,12 +68,7 @@ export async function makeBorrowTx(contract: Contract) {
   if (!marina) throw new Error('Please install Marina')
 
   // check for marina account, create if doesn't exists
-  try {
-    await marina.getAccountInfo(marinaAccountID)
-    await marina.useAccount(marinaAccountID)
-  } catch {
-    await createMarinaAccount(marina)
-  }
+  if (await fujiAccountMissing(marina)) await createFujiAccount(marina)
 
   // validate contract
   const { collateral, synthetic } = contract
@@ -118,8 +113,8 @@ export async function makeBorrowTx(contract: Contract) {
     setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
   }
   // console.log('contractParams', contractParams)
-  const nextAddress = await marina.getNextAddress(contractParams)
-  const changeAddress = await marina.getNextChangeAddress(contractParams)
+  const nextAddress = await getNextCovenantAddress(marina, contractParams)
+  const changeAddress = await marina.getNextChangeAddress()
   // console.log('nextAddress', nextAddress)
   // console.log('changeAddress', changeAddress)
 
@@ -208,7 +203,7 @@ async function proposeContract(
       setupTimestamp,
     },
     blindingPrivKeyOfCollateralInputs: {
-      0: nextAddress.blindingPrivateKey
+      0: nextAddress.blindingPrivateKey,
     },
     blindingPubKeyForCollateralChange: {
       1: address
@@ -237,17 +232,34 @@ export function coinSelect(
   return undefined
 }
 
-export async function createMarinaAccount(marina: MarinaProvider) {
-  if (await marinaAccountExists(marina)) return
-  await marina.createAccount(marinaAccountID)
-  await marina.useAccount(marinaAccountID)
+export async function createFujiAccount(marina: MarinaProvider) {
+  await marina.createAccount(marinaFujiAccountID)
+  await marina.useAccount(marinaFujiAccountID)
   await marina.importTemplate({
     type: 'ionio-artifact',
     template: JSON.stringify(synthAssetArtifact),
   })
+  await marina.useAccount(await mainAccountID(marina))
 }
 
-export async function marinaAccountExists(marina: MarinaProvider): Promise<boolean> {
+export async function fujiAccountMissing(
+  marina: MarinaProvider,
+): Promise<boolean> {
   const accountIDs = await marina.getAccountsIDs()
-  return accountIDs.includes(marinaAccountID)
+  return accountIDs.includes(marinaFujiAccountID)
+}
+
+export async function mainAccountID(marina: MarinaProvider): Promise<string> {
+  const accountIDs = await marina.getAccountsIDs()
+  return accountIDs[0]
+}
+
+async function getNextCovenantAddress(
+  marina: MarinaProvider,
+  contractParams: any,
+): Promise<AddressInterface> {
+  await marina.useAccount(marinaFujiAccountID)
+  const address = await marina.getNextAddress(contractParams)
+  await marina.useAccount(await mainAccountID(marina))
+  return address
 }

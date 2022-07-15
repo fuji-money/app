@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers'
-import { createMarinaAccount, getMarina, marinaAccountExists } from 'lib/marina'
+import { createFujiAccount, getMarina, fujiAccountMissing } from 'lib/marina'
 import { closeModal, openModal } from 'lib/utils'
 import AccountModal from 'components/modals/account'
 
@@ -15,9 +15,9 @@ const ConnectButton = () => {
       disconnect()
     } else {
       await marina.enable()
-      if (!(await marinaAccountExists(marina))) {
+      if (await fujiAccountMissing(marina)) {
         openModal('account-modal')
-        await createMarinaAccount(marina)
+        await createFujiAccount(marina)
         closeModal('account-modal')
       }
       connect()
