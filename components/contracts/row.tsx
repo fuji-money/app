@@ -1,5 +1,5 @@
 import { Contract } from 'lib/types'
-import { getContractState } from 'lib/utils'
+import { getContractState } from 'lib/contracts'
 import RedeemButton from 'components/buttons/redeem'
 import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'

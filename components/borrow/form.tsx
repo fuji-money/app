@@ -1,6 +1,6 @@
 import Oracles from 'components/oracles'
 import { Contract, Oracle } from 'lib/types'
-import { getCollateralQuantity, getContractPriceLevel } from 'lib/utils'
+import { getCollateralQuantity, getContractPriceLevel } from 'lib/contracts'
 import Collateral from './collateral'
 import Ratio from './ratio'
 import Synthetic from './synthetic'

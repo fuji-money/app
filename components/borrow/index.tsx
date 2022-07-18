@@ -8,7 +8,7 @@ import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
 import { makeBorrowTx } from 'lib/marina'
-import { getContractPriceLevel } from 'lib/utils'
+import { getContractPriceLevel } from 'lib/contracts'
 
 interface BorrowProps {
   offer: Offer

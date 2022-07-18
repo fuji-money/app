@@ -13,11 +13,8 @@ import {
   oraclePubKey,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import {
-  getContractPayout,
-  numberToHexEncodedUint64LE,
-  toSatoshi,
-} from './utils'
+import { getContractPayout } from 'lib/contracts'
+import { numberToHexEncodedUint64LE, toSatoshi } from './utils'
 import {
   networks,
   payments,
@@ -60,7 +57,7 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
 }
 
 export async function makeBorrowTx(contract: Contract) {
-  // console.log('makeBorrowTx contract', contract)
+  console.log('makeBorrowTx contract', contract)
 
   // check for marina
   const marina = await getMarina()
@@ -112,11 +109,11 @@ export async function makeBorrowTx(contract: Contract) {
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
   }
-  // console.log('contractParams', contractParams)
+  console.log('contractParams', contractParams)
   const nextAddress = await getNextCovenantAddress(marina, contractParams)
   const changeAddress = await marina.getNextChangeAddress()
-  // console.log('nextAddress', nextAddress)
-  // console.log('changeAddress', changeAddress)
+  console.log('nextAddress', nextAddress)
+  console.log('changeAddress', changeAddress)
 
   // build Psbt
   const psbt = new Psbt({ network })

@@ -1,6 +1,6 @@
 import { prettyNumber, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { getContractRatio } from 'lib/utils'
+import { getContractRatio } from 'lib/contracts'
 
 interface SummaryProps {
   contract: Contract
@@ -31,7 +31,7 @@ const Summary = ({ contract }: SummaryProps) => {
           {prettyRatio(getContractRatio(contract))}%
         </p>
       </div>
-      <style jsx>{`
+      <style>{`
         .summary-line {
           background-color: #fff;
           display: flex;

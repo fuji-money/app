@@ -1,5 +1,5 @@
 import { Contract, Oracle } from 'lib/types'
-import { getCollateralQuantity } from 'lib/utils'
+import { getCollateralQuantity } from 'lib/contracts'
 import Ratio from 'components/borrow/ratio'
 import Summary from './summary'
 import Oracles from 'components/oracles'
