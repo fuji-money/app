@@ -14,7 +14,7 @@ const ConnectButton = () => {
       await marina.disable()
       disconnect()
     } else {
-      await marina.enable()
+      if (!await marina.isEnabled()) await marina.enable()
       if (await fujiAccountMissing(marina)) {
         openModal('account-modal')
         await createFujiAccount(marina)
