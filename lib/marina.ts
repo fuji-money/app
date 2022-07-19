@@ -25,6 +25,11 @@ import {
 } from 'liquidjs-lib'
 import { postData } from './fetch'
 
+// we will need Utxo with blinding private keys to propose the contract
+type UtxoWithBlindPrivKey = Utxo & {
+  blindPrivKey?: string
+}
+
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
   if (!marina) return []
@@ -82,6 +87,7 @@ export async function makeBorrowTx(contract: Contract) {
   // validate we have necessary utxo
   const collateralUtxos = coinSelect(
     await marina.getCoins(),
+    await marina.getAddresses(),
     collateral.id,
     collateralAmount,
   )
@@ -168,7 +174,7 @@ async function proposeContract(
   contractParams: any,
   nextAddress: AddressInterface,
   changeAddress: AddressInterface,
-  collateralUtxos: Utxo[],
+  collateralUtxos: UtxoWithBlindPrivKey[],
 ) {
   // deconstruct contractParams
   const {
@@ -185,7 +191,7 @@ async function proposeContract(
   } = contractParams
 
   // get blindingPrivKeyOfCollateralInputs for each collateral utxo
-  const blindingPrivKeyOfCollateralInputs = collateralUtxos.map((u) => '00') // TODO
+  const blindingPrivKeyOfCollateralInputs = collateralUtxos.map((u) => u.blindPrivKey)
 
   // build post body
   const body = {
@@ -223,15 +229,29 @@ async function proposeContract(
 }
 
 export function coinSelect(
-  utxos: Utxo[],
+  utxos: UtxoWithBlindPrivKey[],
+  addresses: AddressInterface[],
   asset: string,
   minAmount: number,
-): Utxo[] {
+): UtxoWithBlindPrivKey[] {
   let totalValue = 0
   const selectedUtxos: Utxo[] = []
+
+  // utils to get blinding private key for a coin/utxo
+  const addressScript = (a: AddressInterface) =>
+    address.toOutputScript(a.confidentialAddress).toString('hex')
+  const utxoScript = (u: UtxoWithBlindPrivKey) =>
+    u.prevout.script.toString('hex')
+  const getUtxoBlindPrivKey = (u: Utxo) =>
+    (addresses.find((a) => addressScript(a) === utxoScript(u)))?.blindingPrivateKey
+
+    // select coins and add blinding private key to them
   for (const utxo of utxos) {
     if (!utxo.value || !utxo.asset) continue
     if (utxo.asset === asset) {
+      const blindPrivKey = getUtxoBlindPrivKey(utxo)
+      if (!blindPrivKey) continue
+      utxo.blindPrivKey = blindPrivKey
       selectedUtxos.push(utxo)
       totalValue += utxo.value
       if (totalValue >= minAmount) {
