@@ -153,7 +153,7 @@ export async function makeBorrowTx(contract: Contract) {
   })
   // console.log('psbt', psbt)
 
-  let ptx: Psbt
+  // propose contract to server
   const response = await proposeContract(
     psbt,
     contractParams,
@@ -161,12 +161,13 @@ export async function makeBorrowTx(contract: Contract) {
     changeAddress,
     collateralUtxos,
   )
-  try {
-    ptx = Psbt.fromBase64(response.partialTransaction)
-  } catch (err: any) {
-    throw new Error(`invalid partial transaction`)
-  }
-  // console.log('ptx', ptx)
+
+  // sign and broadcast transaction
+  const ptx = Psbt.fromBase64(response.partialTransaction)
+  const signedPtx = await marina.signTransaction(ptx.extractTransaction().toHex())
+  const rawHex = Psbt.fromBase64(signedPtx).extractTransaction().toHex()
+  const txid = await marina.broadcastTransaction(rawHex)
+  console.log('txid', txid)
 }
 
 async function proposeContract(
@@ -245,7 +246,7 @@ export function coinSelect(
   const getUtxoBlindPrivKey = (u: Utxo) =>
     (addresses.find((a) => addressScript(a) === utxoScript(u)))?.blindingPrivateKey
 
-    // select coins and add blinding private key to them
+  // select coins and add blinding private key to them
   for (const utxo of utxos) {
     if (!utxo.value || !utxo.asset) continue
     if (utxo.asset === asset) {
