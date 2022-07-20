@@ -118,14 +118,21 @@ export async function makeBorrowTx(contract: Contract) {
   }
   console.log('contractParams', contractParams)
   const nextAddress = await getNextCovenantAddress(marina, contractParams)
+  const borrowerAddress = await marina.getNextAddress()
   const changeAddress = await marina.getNextChangeAddress()
   console.log('nextAddress', nextAddress)
   console.log('changeAddress', changeAddress)
 
   // build Psbt
   const psbt = new Psbt({ network })
+  console.log('freshly initiated psbt', psbt.inputCount)
   // add collateral inputs
   for (const utxo of collateralUtxos) {
+    console.log('adding input to psbt', {
+      hash: utxo.txid,
+      index: utxo.vout,
+      witnessUtxo: utxo.prevout,
+    })
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,
@@ -133,12 +140,14 @@ export async function makeBorrowTx(contract: Contract) {
     })
   }
   // add covenant in position 0
-  psbt.addOutput({
-    script: Buffer.from(nextAddress.confidentialAddress),
+  const covenantOutput = {
+    script: address.toOutputScript(nextAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(collateralAmount),
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
-  })
+  }
+  console.log('covenantOutput', covenantOutput)
+  psbt.addOutput(covenantOutput)
   // add change output
   const feeAmount = 500 // TODO
   const collateralUtxosAmount = collateralUtxos.reduce(
@@ -147,12 +156,12 @@ export async function makeBorrowTx(contract: Contract) {
   )
   const changeAmount = collateralUtxosAmount - collateralAmount - feeAmount
   psbt.addOutput({
-    script: Buffer.from(changeAddress.confidentialAddress),
+    script: address.toOutputScript(changeAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(changeAmount),
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  console.log('psbt', psbt)
+  console.log('psbt', psbt.inputCount)
 
   // propose contract to server
   contractParams.setupTimestamp = timestamp.toString()
@@ -162,6 +171,7 @@ export async function makeBorrowTx(contract: Contract) {
     contractParams,
     nextAddress,
     changeAddress,
+    borrowerAddress,
     collateralUtxos,
   )
   console.log('response', response)
@@ -173,6 +183,7 @@ export async function makeBorrowTx(contract: Contract) {
   finalPtx.finalizeAllInputs()
   console.log('finalPtx', finalPtx)
   const rawHex = finalPtx.extractTransaction().toHex()
+  console.log('rawHex', rawHex)
   const txid = await marina.broadcastTransaction(rawHex)
   console.log('txid', txid)
 }
@@ -182,6 +193,7 @@ async function proposeContract(
   contractParams: any,
   nextAddress: AddressInterface,
   changeAddress: AddressInterface,
+  borrowerAddress: AddressInterface,
   collateralUtxos: UtxoWithBlindPrivKey[],
 ) {
   // deconstruct contractParams
@@ -204,7 +216,7 @@ async function proposeContract(
   // build post body
   const body = {
     partialTransaction: psbt.toBase64(),
-    borrowerAddress: nextAddress.confidentialAddress,
+    borrowerAddress: borrowerAddress.confidentialAddress,
     // anything is fine for now as attestation
     attestation: {
       message: '',
@@ -232,6 +244,7 @@ async function proposeContract(
     },
   }
 
+  console.log('body', body)
   // post and return
   return postData(`${alphaServerUrl}/contracts`, body)
 }
