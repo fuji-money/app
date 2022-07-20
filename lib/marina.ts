@@ -96,6 +96,7 @@ export async function makeBorrowTx(contract: Contract) {
   console.log('collateralUtxos', collateralUtxos)
 
   // get next and change addresses
+  const timestamp = Date.now()
   const network = networks.testnet // TODO
   const issuer = payments.p2wpkh({
     pubkey: Buffer.from(issuerPubKey, 'hex'),
@@ -112,8 +113,8 @@ export async function makeBorrowTx(contract: Contract) {
     oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
     issuerScriptProgram: `0x${issuer.output!.slice(2).toString('hex')}`,
-    priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
-    setupTimestamp: numberToHexEncodedUint64LE(Date.now()),
+    priceLevel: numberToHexEncodedUint64LE(Math.floor(contract.priceLevel)), // if value is lower than this, then liquidate
+    setupTimestamp: numberToHexEncodedUint64LE(timestamp),
   }
   console.log('contractParams', contractParams)
   const nextAddress = await getNextCovenantAddress(marina, contractParams)
@@ -151,9 +152,11 @@ export async function makeBorrowTx(contract: Contract) {
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  // console.log('psbt', psbt)
+  console.log('psbt', psbt)
 
   // propose contract to server
+  contractParams.setupTimestamp = timestamp.toString()
+  contractParams.priceLevel = Math.floor(contract.priceLevel).toString()
   const response = await proposeContract(
     psbt,
     contractParams,
@@ -161,11 +164,15 @@ export async function makeBorrowTx(contract: Contract) {
     changeAddress,
     collateralUtxos,
   )
+  console.log('response', response)
 
   // sign and broadcast transaction
   const ptx = Psbt.fromBase64(response.partialTransaction)
-  const signedPtx = await marina.signTransaction(ptx.extractTransaction().toHex())
-  const rawHex = Psbt.fromBase64(signedPtx).extractTransaction().toHex()
+  const signedPtx = await marina.signTransaction(ptx.toBase64())
+  const finalPtx = Psbt.fromBase64(signedPtx)
+  finalPtx.finalizeAllInputs()
+  console.log('finalPtx', finalPtx)
+  const rawHex = finalPtx.extractTransaction().toHex()
   const txid = await marina.broadcastTransaction(rawHex)
   console.log('txid', txid)
 }
