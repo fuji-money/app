@@ -4,6 +4,8 @@ import Spinner from 'components/spinner'
 import Modal from './modal'
 import { redeemContract } from 'lib/contracts'
 import { closeModal } from 'lib/utils'
+import { useEffect, useState } from 'react'
+import { getBalance } from 'lib/marina'
 
 interface RedeemModalProps {
   contract: Contract | undefined
@@ -11,15 +13,31 @@ interface RedeemModalProps {
 
 const RedeemModal = ({ contract }: RedeemModalProps) => {
   const modalId = 'redeem-modal'
+  const [assetBalance, setAssetBalance] = useState(0)
+
   const handleConfirmation = () => {
     if (contract) {
       redeemContract(contract)
       closeModal(modalId)
     }
   }
+
+  useEffect(() => {
+    async function getSyntheticAssetBalance() {
+      if (!contract) return
+      setAssetBalance(await getBalance(contract.synthetic.ticker))
+    }
+    getSyntheticAssetBalance()
+  })
+
+  const ticker = contract?.synthetic.ticker
+  const neededAmount = contract?.synthetic.quantity
+  const hasFunds = neededAmount && assetBalance >= neededAmount
+  const noFunds = neededAmount && assetBalance <  neededAmount
+
   return (
     <Modal id={modalId}>
-      {contract && (
+      {hasFunds && (
         <>
           <Spinner />
           <h3 className="mt-4">Waiting for confirmation...</h3>
@@ -28,6 +46,13 @@ const RedeemModal = ({ contract }: RedeemModalProps) => {
           <p className="confirm" onClick={handleConfirmation}>
             Confirm this transaction in your Marina wallet
           </p>
+        </>
+      )}
+      {noFunds && (
+        <>
+          <h3 className="mt-4">Insufficient funds to redeem contract</h3>
+          <p>You need <strong>{neededAmount} {ticker}</strong></p>
+          <p>Your balance is <strong>{assetBalance} {ticker}</strong></p>
         </>
       )}
     </Modal>
