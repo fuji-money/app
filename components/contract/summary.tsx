@@ -12,7 +12,7 @@ const Summary = ({ contract }: SummaryProps) => {
       <div className="summary-line has-pink-border">
         <p>Borrow</p>
         <p className="is-gradient">
-          {prettyNumber(contract.synthetic.quantity)}
+          {prettyNumber(contract.synthetic.quantity)}{' '}
           {contract.synthetic.ticker}
         </p>
       </div>
@@ -20,7 +20,7 @@ const Summary = ({ contract }: SummaryProps) => {
       <div className="summary-line has-pink-border">
         <p>Collateral</p>
         <p className="is-gradient">
-          {prettyNumber(contract.collateral.quantity)}
+          {prettyNumber(contract.collateral.quantity)}{' '}
           {contract.collateral.ticker}
         </p>
       </div>
