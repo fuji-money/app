@@ -3,6 +3,7 @@ import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
+import { makeBorrowTx } from 'lib/marina'
 
 interface MarinaProps {
   contract: Contract
@@ -19,7 +20,10 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
         <div className="pt-6 mt-5 mr-6">
           <button
             className="button is-primary mt-2"
-            onClick={() => openModal('marina-modal')}
+            onClick={() => {
+              openModal('marina-modal')
+              makeBorrowTx(contract)
+            }}
           >
             <Image
               src="/images/marina.svg"

@@ -7,7 +7,6 @@ import BorrowButton from './button'
 import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
-import { makeBorrowTx } from 'lib/marina'
 import { getContractPriceLevel } from 'lib/contracts'
 
 interface BorrowProps {
@@ -24,8 +23,6 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
   const [contract, setContract] = useState<Contract>({...offer, priceLevel})
 
   const topup = 0
-
-  if (deposit) makeBorrowTx(contract) // TODO
 
   return (
     <section>
