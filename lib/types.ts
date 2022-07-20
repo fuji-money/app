@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react'
 import type { NextPage } from 'next'
 import type { AppProps } from 'next/app'
+import { Utxo } from 'marina-provider'
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode
@@ -88,4 +89,8 @@ export enum TradeTypes {
   None = 'None',
   Sell = 'Sell',
   Statement = 'Statement',
+}
+
+export type UtxoWithBlindPrivKey = Utxo & {
+  blindPrivKey?: string
 }

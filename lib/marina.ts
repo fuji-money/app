@@ -1,4 +1,4 @@
-import { Contract, Ticker } from './types'
+import { Contract, Ticker, UtxoWithBlindPrivKey } from './types'
 import {
   detectProvider,
   MarinaProvider,
@@ -24,11 +24,6 @@ import {
   address,
 } from 'liquidjs-lib'
 import { postData } from './fetch'
-
-// we will need Utxo with blinding private keys to propose the contract
-type UtxoWithBlindPrivKey = Utxo & {
-  blindPrivKey?: string
-}
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
@@ -85,7 +80,7 @@ export async function makeBorrowTx(contract: Contract) {
   const collateralAmount = toSatoshi(collateral.quantity, collateral.precision)
 
   // validate we have necessary utxo
-  const collateralUtxos = coinSelect(
+  const collateralUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins(),
     await marina.getAddresses(),
     collateral.id,
@@ -249,7 +244,7 @@ async function proposeContract(
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
-export function coinSelect(
+function selectCoinsWithBlindPrivKey(
   utxos: UtxoWithBlindPrivKey[],
   addresses: AddressInterface[],
   asset: string,
@@ -300,7 +295,7 @@ export async function fujiAccountMissing(
   return !accountIDs.includes(marinaFujiAccountID)
 }
 
-export async function mainAccountID(marina: MarinaProvider): Promise<string> {
+async function mainAccountID(marina: MarinaProvider): Promise<string> {
   const accountIDs = await marina.getAccountsIDs()
   return accountIDs[0]
 }
