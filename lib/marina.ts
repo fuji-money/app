@@ -120,14 +120,8 @@ export async function makeBorrowTx(contract: Contract) {
 
   // build Psbt
   const psbt = new Psbt({ network })
-  console.log('freshly initiated psbt', psbt.inputCount)
   // add collateral inputs
   for (const utxo of collateralUtxos) {
-    console.log('adding input to psbt', {
-      hash: utxo.txid,
-      index: utxo.vout,
-      witnessUtxo: utxo.prevout,
-    })
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,
@@ -156,7 +150,7 @@ export async function makeBorrowTx(contract: Contract) {
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  console.log('psbt', psbt.inputCount)
+  console.log('psbt', psbt)
 
   // propose contract to server
   contractParams.setupTimestamp = timestamp.toString()
@@ -169,7 +163,7 @@ export async function makeBorrowTx(contract: Contract) {
     borrowerAddress,
     collateralUtxos,
   )
-  console.log('response', response)
+  console.log('response from server', response)
 
   // sign and broadcast transaction
   const ptx = Psbt.fromBase64(response.partialTransaction)
@@ -206,7 +200,12 @@ async function proposeContract(
   } = contractParams
 
   // get blindingPrivKeyOfCollateralInputs for each collateral utxo
-  const blindingPrivKeyOfCollateralInputs = collateralUtxos.map((u) => u.blindPrivKey)
+  const blindingPrivKeyOfCollateralInputs: Record<number, string> = {}
+  collateralUtxos.forEach(
+    (u, idx) => (blindingPrivKeyOfCollateralInputs[idx] = u.blindPrivKey || ''),
+  )
+
+  if (!borrowerAddress.publicKey) return
 
   // build post body
   const body = {
@@ -227,7 +226,7 @@ async function proposeContract(
       issuerPublicKey: issuerPk,
       issuerScriptProgram,
       oraclePublicKey: oraclePk,
-      borrowerPublicKey: nextAddress.publicKey,
+      borrowerPublicKey: '0x'.concat(borrowerAddress.publicKey.slice(2)),
       priceLevel,
       setupTimestamp,
     },
@@ -259,7 +258,8 @@ function selectCoinsWithBlindPrivKey(
   const utxoScript = (u: UtxoWithBlindPrivKey) =>
     u.prevout.script.toString('hex')
   const getUtxoBlindPrivKey = (u: Utxo) =>
-    (addresses.find((a) => addressScript(a) === utxoScript(u)))?.blindingPrivateKey
+    addresses.find((a) => addressScript(a) === utxoScript(u))
+      ?.blindingPrivateKey
 
   // select coins and add blinding private key to them
   for (const utxo of utxos) {
