@@ -109,7 +109,7 @@ export async function makeBorrowTx(contract: Contract): Promise<string> {
     oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
     issuerScriptProgram: `0x${issuer.output!.slice(2).toString('hex')}`,
-    priceLevel: numberToHexEncodedUint64LE(Math.floor(contract.priceLevel)), // if value is lower than this, then liquidate
+    priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToHexEncodedUint64LE(timestamp),
   }
   console.log('contractParams', contractParams)
@@ -159,7 +159,7 @@ export async function makeBorrowTx(contract: Contract): Promise<string> {
 
   // propose contract to server
   contractParams.setupTimestamp = timestamp.toString()
-  contractParams.priceLevel = Math.floor(contract.priceLevel).toString()
+  contractParams.priceLevel = contract.priceLevel.toString()
   const response = await proposeContract(
     psbt,
     contractParams,

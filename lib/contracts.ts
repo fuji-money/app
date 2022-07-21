@@ -92,7 +92,7 @@ export const getCollateralQuantity = (
   ratio: number,
 ): number => {
   const { collateral, synthetic } = contract
-  return Math.floor(
+  return Math.ceil(
     Decimal.mul(synthetic.quantity || 0, synthetic.value)
       .mul(ratio)
       .div(100)
@@ -104,7 +104,7 @@ export const getCollateralQuantity = (
 // get contract payout
 export const getContractPayout = (contract: Contract): number => {
   const collateralAmount = toSatoshis(contract.collateral.quantity || 0)
-  return Math.floor(collateralAmount * 0.0025) // 25 basis points, 0.25%
+  return Math.ceil(collateralAmount * 0.0025) // 25 basis points, 0.25%
 }
 
 // get contract price level
@@ -114,5 +114,5 @@ export const getContractPriceLevel = (
 ): number => {
   const { collateral } = contract
   if (!collateral.ratio) throw new Error('Collateral without minimum ratio')
-  return (collateral.value * collateral.ratio) / ratio
+  return Math.ceil((collateral.value * collateral.ratio) / ratio)
 }
