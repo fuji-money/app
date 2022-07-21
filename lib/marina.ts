@@ -204,11 +204,18 @@ async function proposeContract(
     setupTimestamp,
   } = contractParams
 
-  // get blindingPrivKeyOfCollateralInputs for each collateral utxo
+  // get blinding priv key for each confidential collateral utxo
+  // if utxo is not confidential, we MUST NOT pass the blind priv key
   const blindingPrivKeyOfCollateralInputs: Record<number, string> = {}
-  collateralUtxos.forEach((u, idx) => {
-    if (!u.blindPrivKey) throw new Error('Collateral utxo without blindPrivKey')
-    blindingPrivKeyOfCollateralInputs[idx] = u.blindPrivKey
+
+  const utxoIsConfidential = (u: Utxo) =>
+    u.prevout.rangeProof != null && u.prevout.rangeProof.length > 0
+
+  collateralUtxos.forEach((utxo, idx) => {
+    if (utxoIsConfidential(utxo)) {
+      if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
+      blindingPrivKeyOfCollateralInputs[idx] = utxo.blindPrivKey
+    }
   })
 
   if (!borrowerAddress.publicKey) return
