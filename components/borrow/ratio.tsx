@@ -90,7 +90,7 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
           </div>
         </div>
       </div>
-      <style>{`
+      <style jsx>{`
         p.range-legend span {
           display: inline-block;
           font-size: 0.6rem;

@@ -60,7 +60,7 @@ const Range = ({
         <p className="is-grey">Decrease risk</p>
         <p className="is-grey">Increase risk</p>
       </div>
-      <style>{`
+      <style jsx>{`
         input[type='range'] {
           -webkit-appearance: none;
           margin-right: 15px;

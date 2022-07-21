@@ -11,7 +11,7 @@ const Dashboard: NextPage = () => {
       <Contracts />
       <div className="vertical-space"></div>
       <Activities />
-      <style>{`
+      <style jsx>{`
         div.vertical-space {
           min-height: 3rem;
         }

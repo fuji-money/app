@@ -32,7 +32,7 @@ const Summary = ({ contract }: SummaryProps) => {
           {prettyRatio(getContractRatio(contract))}%
         </p>
       </div>
-      <style>{`
+      <style jsx>{`
         .summary-line {
           background-color: #fff;
           display: flex;

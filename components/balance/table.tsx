@@ -38,7 +38,7 @@ const BalanceTable = () => {
             <BalanceRow key={index} asset={asset} />
           ))}
       </tbody>
-      <style>{`
+      <style jsx>{`
         table {
           font-size: 0.9rem;
         }

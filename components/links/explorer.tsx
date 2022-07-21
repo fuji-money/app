@@ -7,7 +7,7 @@ const ExplorerLink = ({ txid }: ExplorerLinkProps) => {
   return (
     <a href={href} className="button external">
       🔗 Open in explorer
-      <style>{`
+      <style jsx>{`
         a.external {
           border: 0;
         }

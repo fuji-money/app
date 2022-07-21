@@ -20,7 +20,7 @@ const BalanceRow = ({ asset }: BalanceRowProps) => {
         <span className="ml-5">{asset.ticker}</span>
       </td>
       <td>{prettyQuantity(asset)}</td>
-      <style>{`
+      <style jsx>{`
         td:nth-child(2) {
           text-align: right;
         }

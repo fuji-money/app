@@ -28,7 +28,7 @@ const Collateral = ({ asset }: CollateralProps) => {
           <p className="mr-3 my-auto">{prettyNumber(fromSatoshis(asset.quantity))}</p>
         </div>
       </div>
-      <style>{`
+      <style jsx>{`
         .level {
           min-height: 45px;
         }
