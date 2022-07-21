@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
 import TradeModal from 'components/modals/trade'
 import Breadcrumbs from 'components/breadcrumbs'
-import { WalletProvider } from 'components/providers'
+import { WalletProvider } from 'components/providers/wallet'
 
 interface LayoutProps {
   children: ReactNode

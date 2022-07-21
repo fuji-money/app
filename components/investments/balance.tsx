@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import InvestButton from './button'
 import BalanceInFiat from 'components/balance/fiat'
 

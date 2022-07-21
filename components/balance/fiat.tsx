@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import Spinner from 'components/spinner'
 import { prettyNumber, prettyPercentage } from 'lib/pretty'
 

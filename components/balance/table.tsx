@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
 import { Asset } from 'lib/types'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import BalanceRow from './row'
 import Spinner from 'components/spinner'
 

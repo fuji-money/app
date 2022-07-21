@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import { createFujiAccount, getMarina, fujiAccountMissing } from 'lib/marina'
 import { closeModal, openModal } from 'lib/utils'
 import AccountModal from 'components/modals/account'

@@ -4,7 +4,7 @@ import { Contract } from 'lib/types'
 import { openModal } from 'lib/utils'
 import EmptyState from 'components/layout/empty'
 import RedeemModal from 'components/modals/redeem'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import ContractRow from './row'
 import Spinner from 'components/spinner'
 

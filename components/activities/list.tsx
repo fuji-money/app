@@ -3,7 +3,7 @@ import { getActivities } from 'lib/activities'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import ActivityRow from './row'
 import Spinner from 'components/spinner'
 
