@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import TradeModal from 'components/modals/trade'
 import Breadcrumbs from 'components/breadcrumbs'
 import { WalletProvider } from 'components/providers/wallet'
+import { NetworkProvider } from 'components/providers/network'
 
 interface LayoutProps {
   children: ReactNode
@@ -29,15 +30,17 @@ export default function Layout({ children }: LayoutProps) {
   }
   return (
     <WalletProvider>
-      <Navbar />
-      <main>
-        <div className="container">
-          <Breadcrumbs />
-        </div>
-        <div className="container">{children}</div>
-      </main>
-      <Footer />
-      <TradeModal />
+      <NetworkProvider>
+        <Navbar />
+        <main>
+          <div className="container">
+            <Breadcrumbs />
+          </div>
+          <div className="container">{children}</div>
+        </main>
+        <Footer />
+        <TradeModal />
+      </NetworkProvider>
     </WalletProvider>
   )
 }
