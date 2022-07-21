@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Contract } from 'lib/types'
 
 const Success = () => {
   return (

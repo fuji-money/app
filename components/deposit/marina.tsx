@@ -23,7 +23,7 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
             onClick={async () => {
               openModal('marina-modal')
               await makeBorrowTx(contract)
-              closeModal('marina-modal')
+              setResult('success')
             }}
           >
             <Image
