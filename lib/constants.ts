@@ -14,5 +14,6 @@ export const oracleURL = 'https://fuji-oracle.herokuapp.com/oracle/BTCUSD'
 export const fUSDtestnet = '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568'
 
 export const marinaFujiAccountID = 'fuji'
+export const marinaMainAccountID = 'mainAccount'
 
 export const alphaServerUrl = 'https://fuji-factory.herokuapp.com'
