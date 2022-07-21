@@ -1,13 +1,17 @@
-import { randomMessage, randomTxId } from './random'
+import { prettyAsset } from './pretty'
+import { randomTxId } from './random'
 import { Activity, ActivityType, Contract } from './types'
 
 export function addActivity(contract: Contract, type: ActivityType): void {
   if (typeof window === 'undefined') return
   const txid = contract.txid || randomTxId() // TODO
+  const prefix = `Contract ${type.toLowerCase()} with success`
+  const suffix = prettyAsset(contract.synthetic)
+  const message = `${prefix} - ${suffix}`
   const activity: Activity = {
     contract,
     createdAt: Date.now(),
-    message: randomMessage(type),
+    message,
     txid,
     type,
   }
