@@ -10,6 +10,7 @@ import {
   alphaServerUrl,
   issuerPubKey,
   marinaFujiAccountID,
+  marinaMainAccountID,
   oraclePubKey,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
@@ -81,8 +82,8 @@ export async function makeBorrowTx(contract: Contract) {
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
-    await marina.getCoins(),
-    await marina.getAddresses(),
+    await marina.getCoins([marinaMainAccountID]),
+    await marina.getAddresses([marinaMainAccountID]),
     collateral.id,
     collateralAmount,
   )
@@ -112,16 +113,20 @@ export async function makeBorrowTx(contract: Contract) {
     setupTimestamp: numberToHexEncodedUint64LE(timestamp),
   }
   console.log('contractParams', contractParams)
-  const nextAddress = await getNextCovenantAddress(marina, contractParams)
+  await marina.useAccount(marinaFujiAccountID)
+  const covenantAddress = await marina.getNextAddress(contractParams)
+  await marina.useAccount(marinaMainAccountID)
   const borrowerAddress = await marina.getNextAddress()
   const changeAddress = await marina.getNextChangeAddress()
-  console.log('nextAddress', nextAddress)
+  console.log('covenantAddress', covenantAddress)
   console.log('changeAddress', changeAddress)
 
   // build Psbt
   const psbt = new Psbt({ network })
   // add collateral inputs
   for (const utxo of collateralUtxos) {
+    console.log('utxo')
+    console.log(utxo.txid, utxo.vout, utxo.prevout),
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,
@@ -130,7 +135,7 @@ export async function makeBorrowTx(contract: Contract) {
   }
   // add covenant in position 0
   const covenantOutput = {
-    script: address.toOutputScript(nextAddress.confidentialAddress),
+    script: address.toOutputScript(covenantAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(collateralAmount),
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
@@ -158,7 +163,7 @@ export async function makeBorrowTx(contract: Contract) {
   const response = await proposeContract(
     psbt,
     contractParams,
-    nextAddress,
+    covenantAddress,
     changeAddress,
     borrowerAddress,
     collateralUtxos,
@@ -299,14 +304,4 @@ export async function fujiAccountMissing(
 async function mainAccountID(marina: MarinaProvider): Promise<string> {
   const accountIDs = await marina.getAccountsIDs()
   return accountIDs[0]
-}
-
-async function getNextCovenantAddress(
-  marina: MarinaProvider,
-  contractParams: any,
-): Promise<AddressInterface> {
-  await marina.useAccount(marinaFujiAccountID)
-  const address = await marina.getNextAddress(contractParams)
-  await marina.useAccount(await mainAccountID(marina))
-  return address
 }
