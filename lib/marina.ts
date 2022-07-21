@@ -297,7 +297,7 @@ export async function createFujiAccount(marina: MarinaProvider) {
     type: 'ionio-artifact',
     template: JSON.stringify(synthAssetArtifact),
   })
-  await marina.useAccount(await mainAccountID(marina))
+  await marina.useAccount(marinaMainAccountID)
 }
 
 export async function fujiAccountMissing(
@@ -305,9 +305,4 @@ export async function fujiAccountMissing(
 ): Promise<boolean> {
   const accountIDs = await marina.getAccountsIDs()
   return !accountIDs.includes(marinaFujiAccountID)
-}
-
-async function mainAccountID(marina: MarinaProvider): Promise<string> {
-  const accountIDs = await marina.getAccountsIDs()
-  return accountIDs[0]
 }
