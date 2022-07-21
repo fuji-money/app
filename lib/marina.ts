@@ -201,9 +201,10 @@ async function proposeContract(
 
   // get blindingPrivKeyOfCollateralInputs for each collateral utxo
   const blindingPrivKeyOfCollateralInputs: Record<number, string> = {}
-  collateralUtxos.forEach(
-    (u, idx) => (blindingPrivKeyOfCollateralInputs[idx] = u.blindPrivKey || ''),
-  )
+  collateralUtxos.forEach((u, idx) => {
+    if (!u.blindPrivKey) throw new Error('Collateral utxo without blindPrivKey')
+    blindingPrivKeyOfCollateralInputs[idx] = u.blindPrivKey
+  })
 
   if (!borrowerAddress.publicKey) return
 
