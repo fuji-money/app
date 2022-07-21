@@ -4,6 +4,7 @@ import { getCollateralQuantity, getContractPriceLevel } from 'lib/contracts'
 import Collateral from './collateral'
 import Ratio from './ratio'
 import Synthetic from './synthetic'
+import { toSatoshis } from 'lib/utils'
 
 interface BorrowFormProps {
   contract: Contract
@@ -23,7 +24,7 @@ const BorrowForm = ({
   const { collateral, synthetic } = contract
 
   const setSyntheticQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let quantity = parseFloat(e.target.value)
+    let quantity = toSatoshis(parseFloat(e.target.value))
     const synthetic = { ...contract.synthetic, quantity }
     quantity = getCollateralQuantity({ ...contract, synthetic }, ratio)
     const collateral = { ...contract.collateral, quantity }

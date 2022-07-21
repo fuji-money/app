@@ -3,11 +3,11 @@ interface ExplorerLinkProps {
 }
 
 const ExplorerLink = ({ txid }: ExplorerLinkProps) => {
-  const href = `https://blockstream.info/liquid/tx/${txid}`
+  const href = `https://blockstream.info/liquidtestnet/tx/${txid}` // TODO
   return (
     <a href={href} className="button external">
       🔗 Open in explorer
-      <style jsx>{`
+      <style>{`
         a.external {
           border: 0;
         }

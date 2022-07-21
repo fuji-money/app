@@ -29,8 +29,7 @@ const BorrowTicker: NextPage = () => {
   if (isLoading) return <Spinner />
   if (!offers) return <SomeError>Error getting offers</SomeError>
   if (!oracles) return <SomeError>Oracles not found</SomeError>
-  if (!params?.length || params.length > 2)
-    return <SomeError>Invalid URL</SomeError>
+  if (!params || params.length > 2) return <SomeError>Invalid URL</SomeError>
 
   switch (params.length) {
     case 1:

@@ -1,9 +1,10 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { closeModal, openModal } from 'lib/utils'
+import { closeModal, fromSatoshis, openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { makeBorrowTx } from 'lib/marina'
+import { addContract } from 'lib/contracts'
 
 interface MarinaProps {
   contract: Contract
@@ -22,7 +23,8 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
             className="button is-primary mt-2"
             onClick={async () => {
               openModal('marina-modal')
-              await makeBorrowTx(contract)
+              contract.txid = await makeBorrowTx(contract)
+              addContract(contract) // add to local storage TODO
               setResult('success')
             }}
           >
@@ -43,9 +45,9 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
             <div className="has-pink-border info-card px-5 py-4">
               <p>Amount to deposit</p>
               <p>
-                {prettyNumber(quantity)} {ticker}
+                {prettyNumber(fromSatoshis(quantity))} {ticker}
               </p>
-              <p>US$ {prettyNumber((quantity || 0) * value)}</p>
+              <p>US$ {prettyNumber((fromSatoshis(quantity) || 0) * value)}</p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { prettyNumber } from 'lib/pretty'
+import { prettyAmount, prettyNumber, prettyQuantity } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
@@ -19,13 +19,13 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           <div className="is-purple my-auto">
             <p className="is-size-6 mb-0">{asset.name}</p>
             <p className="is-size-6 mb-0 has-text-weight-bold">
-              {prettyNumber(asset.quantity)} {asset.ticker}
+              {prettyQuantity(asset)} {asset.ticker}
             </p>
           </div>
         </div>
         <div className="column is-3">
           <p className="has-text-weight-bold is-gradient">
-            US$ {prettyNumber((asset.quantity || 0) * asset.value)}
+            {prettyAmount(asset)}
           </p>
         </div>
         <div className="column is-6 has-text-right">

@@ -4,6 +4,7 @@ import RedeemButton from 'components/buttons/redeem'
 import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'
 import ExplorerLink from 'components/links/explorer'
+import { fromSatoshis } from 'lib/utils'
 
 interface ContractRowProps {
   contract: Contract
@@ -18,7 +19,7 @@ const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
       <div className="columns level">
         <div className="column is-2">
           <p className="has-text-weight-bold">
-            {quantity} {ticker}
+            {fromSatoshis(quantity)} {ticker}
           </p>
         </div>
         <div className="column is-2">

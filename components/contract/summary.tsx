@@ -1,6 +1,7 @@
 import { prettyNumber, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { getContractRatio } from 'lib/contracts'
+import { fromSatoshis } from 'lib/utils'
 
 interface SummaryProps {
   contract: Contract
@@ -12,7 +13,7 @@ const Summary = ({ contract }: SummaryProps) => {
       <div className="summary-line has-pink-border">
         <p>Borrow</p>
         <p className="is-gradient">
-          {prettyNumber(contract.synthetic.quantity)}{' '}
+          {prettyNumber(fromSatoshis(contract.synthetic.quantity))}{' '}
           {contract.synthetic.ticker}
         </p>
       </div>
@@ -20,7 +21,7 @@ const Summary = ({ contract }: SummaryProps) => {
       <div className="summary-line has-pink-border">
         <p>Collateral</p>
         <p className="is-gradient">
-          {prettyNumber(contract.collateral.quantity)}{' '}
+          {prettyNumber(fromSatoshis(contract.collateral.quantity))}{' '}
           {contract.collateral.ticker}
         </p>
       </div>

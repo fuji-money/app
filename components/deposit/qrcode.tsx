@@ -1,6 +1,7 @@
 import { Contract } from 'lib/types'
 import Image from 'next/image'
 import { prettyNumber } from 'lib/pretty'
+import { fromSatoshis } from 'lib/utils'
 
 interface QrcodeProps {
   contract: Contract
@@ -29,10 +30,10 @@ const Qrcode = ({ contract, setResult, topup }: QrcodeProps) => {
             <div className="has-pink-border info-card px-5 py-4">
               <p className="amount">Amount to deposit</p>
               <p className="quantity">
-                {prettyNumber(quantity)} {ticker}
+                {prettyNumber(fromSatoshis(quantity))} {ticker}
               </p>
               <p className="value">
-                US$ {prettyNumber((quantity || 0) * value)}
+                US$ {prettyNumber(fromSatoshis(quantity) * value)}
               </p>
             </div>
           </div>

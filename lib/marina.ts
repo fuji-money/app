@@ -15,7 +15,7 @@ import {
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
 import { getContractPayout } from 'lib/contracts'
-import { numberToHexEncodedUint64LE, toSatoshi } from './utils'
+import { numberToHexEncodedUint64LE, toSatoshis } from './utils'
 import {
   networks,
   payments,
@@ -58,7 +58,7 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
   }
 }
 
-export async function makeBorrowTx(contract: Contract) {
+export async function makeBorrowTx(contract: Contract): Promise<string> {
   console.log('makeBorrowTx contract', contract)
 
   // check for marina
@@ -78,18 +78,17 @@ export async function makeBorrowTx(contract: Contract) {
     throw new Error('Invalid contract: no contract priceLevel')
 
   // get amounts in satoshis
-  const borrowAmount = toSatoshi(synthetic.quantity, synthetic.precision)
-  const collateralAmount = toSatoshi(collateral.quantity, collateral.precision)
+  const collateralAmount = collateral.quantity
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
     collateral.id,
-    collateralAmount,
+    collateral.quantity,
   )
   if (collateralUtxos.length === 0) throw new Error('Not enough funds')
-  console.log('collateralAmount', collateralAmount)
+  console.log('collateralAmount', collateral.quantity)
   console.log('collateralUtxos', collateralUtxos)
 
   // get next and change addresses
@@ -103,9 +102,9 @@ export async function makeBorrowTx(contract: Contract) {
   const issuerPk = Buffer.from(issuerPubKey, 'hex')
   const contractParams = {
     borrowAsset: synthetic.id,
-    borrowAmount,
+    borrowAmount: synthetic.quantity,
     collateralAsset: collateral.id,
-    collateralAmount,
+    collateralAmount: collateral.quantity,
     payoutAmount: getContractPayout(contract),
     oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
@@ -149,7 +148,7 @@ export async function makeBorrowTx(contract: Contract) {
     (value, utxo) => value + (utxo.value || 0),
     0,
   )
-  const changeAmount = collateralUtxosAmount - collateralAmount - feeAmount
+  const changeAmount = collateralUtxosAmount - collateral.quantity - feeAmount
   psbt.addOutput({
     script: address.toOutputScript(changeAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(changeAmount),
@@ -164,7 +163,6 @@ export async function makeBorrowTx(contract: Contract) {
   const response = await proposeContract(
     psbt,
     contractParams,
-    covenantAddress,
     changeAddress,
     borrowerAddress,
     collateralUtxos,
@@ -179,14 +177,14 @@ export async function makeBorrowTx(contract: Contract) {
   console.log('finalPtx', finalPtx)
   const rawHex = finalPtx.extractTransaction().toHex()
   console.log('rawHex', rawHex)
-  const txid = await marina.broadcastTransaction(rawHex)
-  console.log('txid', txid)
+  const sentTransaction = await marina.broadcastTransaction(rawHex)
+  console.log('txid', sentTransaction.txid)
+  return sentTransaction.txid
 }
 
 async function proposeContract(
   psbt: Psbt,
   contractParams: any,
-  nextAddress: AddressInterface,
   changeAddress: AddressInterface,
   borrowerAddress: AddressInterface,
   collateralUtxos: UtxoWithBlindPrivKey[],

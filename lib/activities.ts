@@ -3,11 +3,12 @@ import { Activity, ActivityType, Contract } from './types'
 
 export function addActivity(contract: Contract, type: ActivityType): void {
   if (typeof window === 'undefined') return
+  const txid = contract.txid || randomTxId() // TODO
   const activity: Activity = {
     contract,
     createdAt: Date.now(),
     message: randomMessage(type),
-    txid: randomTxId(),
+    txid,
     type,
   }
   const activities: Activity[] = JSON.parse(

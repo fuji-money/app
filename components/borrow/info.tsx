@@ -1,5 +1,6 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
+import { fromSatoshis } from 'lib/utils'
 
 interface BorrowInfoProps {
   contract: Contract
@@ -8,7 +9,7 @@ interface BorrowInfoProps {
 const BorrowInfo = ({ contract }: BorrowInfoProps) => {
   const { collateral, payout, synthetic } = contract
   const { quantity, ticker, value } = synthetic
-  const borrowFee = ((quantity || 0) * value * payout) / 100
+  const borrowFee = ((fromSatoshis(quantity)) * value * payout) / 100
   return (
     <div className="is-box has-pink-border">
       <div className="level">

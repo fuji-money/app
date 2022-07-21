@@ -9,8 +9,12 @@ export function numberToHexEncodedUint64LE(n: number): string {
   return '0x'.concat(buf.toString('hex'));
 }
 
-export function toSatoshi(fractional: number, precision: number = 8): number {
+export function toSatoshis(fractional: number, precision: number = 8): number {
   return Math.floor(new Decimal(fractional).mul(Decimal.pow(10, precision)).toNumber());
+}
+
+export function fromSatoshis(integer: number = 0, precision: number = 8): number {
+  return new Decimal(integer).div(Decimal.pow(10, precision)).toNumber();
 }
 
 // open modal

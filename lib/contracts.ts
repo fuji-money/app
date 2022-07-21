@@ -2,7 +2,7 @@ import { fetchAsset } from './api'
 import { ActivityType, Contract, ContractState } from './types'
 import { addActivity } from './activities'
 import Decimal from 'decimal.js'
-import { toSatoshi } from './utils'
+import { toSatoshis } from './utils'
 
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
@@ -52,7 +52,9 @@ export async function redeemContract(contract: Contract): Promise<void> {
 
 export const contractIsExpired = (contract: Contract): boolean => {
   if (!contract.state) return false
-  return [ContractState.Redeemed, ContractState.Liquidated].includes(contract.state)
+  return [ContractState.Redeemed, ContractState.Liquidated].includes(
+    contract.state,
+  )
 }
 
 // get contract ratio
@@ -90,22 +92,27 @@ export const getCollateralQuantity = (
   ratio: number,
 ): number => {
   const { collateral, synthetic } = contract
-  return Decimal.mul(synthetic.quantity || 0, synthetic.value)
-    .mul(ratio)
-    .div(100)
-    .div(collateral.value)
-    .toNumber()
+  return Math.floor(
+    Decimal.mul(synthetic.quantity || 0, synthetic.value)
+      .mul(ratio)
+      .div(100)
+      .div(collateral.value)
+      .toNumber(),
+  )
 }
 
 // get contract payout
 export const getContractPayout = (contract: Contract): number => {
-  const collateralAmount = toSatoshi(contract.collateral.quantity || 0)
+  const collateralAmount = toSatoshis(contract.collateral.quantity || 0)
   return Math.floor(collateralAmount * 0.0025) // 25 basis points, 0.25%
 }
 
 // get contract price level
-export const getContractPriceLevel = (contract: Contract, ratio: number): number => {
+export const getContractPriceLevel = (
+  contract: Contract,
+  ratio: number,
+): number => {
   const { collateral } = contract
   if (!collateral.ratio) throw new Error('Collateral without minimum ratio')
-  return collateral.value * collateral.ratio / ratio
+  return (collateral.value * collateral.ratio) / ratio
 }

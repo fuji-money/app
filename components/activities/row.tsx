@@ -28,7 +28,7 @@ const ActivityRow = ({ activity }: ActivityRowProps) => {
           <p className="time">{prettyAgo(createdAt)}</p>
         </div>
       </div>
-      <style jsx>{`
+      <style>{`
         img {
           height: 60px;
           padding: 10px;
