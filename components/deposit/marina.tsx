@@ -1,6 +1,6 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { openModal } from 'lib/utils'
+import { closeModal, openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { makeBorrowTx } from 'lib/marina'
@@ -20,9 +20,10 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
         <div className="pt-6 mt-5 mr-6">
           <button
             className="button is-primary mt-2"
-            onClick={() => {
+            onClick={async () => {
               openModal('marina-modal')
-              makeBorrowTx(contract)
+              await makeBorrowTx(contract)
+              closeModal('marina-modal')
             }}
           >
             <Image
