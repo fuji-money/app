@@ -1,4 +1,4 @@
-import { Contract, Ticker, UtxoWithBlindPrivKey } from './types'
+import { Asset, Contract, Ticker, UtxoWithBlindPrivKey } from './types'
 import {
   detectProvider,
   MarinaProvider,
@@ -26,19 +26,20 @@ import {
 } from 'liquidjs-lib'
 import { postData } from './fetch'
 
-export async function getBalances(): Promise<Balance[]> {
+async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
   if (!marina) return []
   if (!(await marina.isEnabled())) return []
   return await marina.getBalances()
 }
 
-export async function getBalance(ticker: Ticker): Promise<number> {
+export async function getBalance(asset: Asset): Promise<number> {
+  const assetHash = asset.id
   const balances = await getBalances()
   if (!balances) return 0
-  const asset = balances.find((a) => a.asset.ticker === ticker)
-  if (!asset) return 0
-  return asset.amount
+  const found = balances.find((a) => a.asset.assetHash === assetHash)
+  if (!found) return 0
+  return found.amount
 }
 
 export async function checkMarina(): Promise<boolean> {
@@ -126,7 +127,7 @@ export async function makeBorrowTx(contract: Contract) {
   // add collateral inputs
   for (const utxo of collateralUtxos) {
     console.log('utxo')
-    console.log(utxo.txid, utxo.vout, utxo.prevout),
+    console.log(utxo.txid, utxo.vout, utxo.prevout)
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,

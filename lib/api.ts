@@ -8,7 +8,7 @@ export async function fetchAsset(ticker: string): Promise<Asset> {
   if (asset.ticker === 'L-BTC') {
     asset.value = await getBTCvalue()
   }
-  asset.quantity = await getBalance(asset.ticker)
+  asset.quantity = await getBalance(asset)
   return asset
 }
 
@@ -17,7 +17,7 @@ export async function fetchAssets(): Promise<Asset[]> {
   const assets = await fetchURL('/api/assets')
   const promises = assets.map(async (asset: Asset) => {
     if (asset.ticker === 'L-BTC') asset.value = value
-    asset.quantity = await getBalance(asset.ticker)
+    asset.quantity = await getBalance(asset)
     return asset
   })
   return Promise.all(promises)

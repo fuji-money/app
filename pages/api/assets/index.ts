@@ -9,7 +9,7 @@ export default async function handler(
 ) {
   const assets = await apiAssets()
   const promises = assets.map(async (asset: Asset) => {
-    asset.quantity = await getBalance(asset.ticker)
+    asset.quantity = await getBalance(asset)
     return asset
   })
   res.status(200).json(await Promise.all(promises))

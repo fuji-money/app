@@ -25,7 +25,7 @@ const RedeemModal = ({ contract }: RedeemModalProps) => {
   useEffect(() => {
     async function getSyntheticAssetBalance() {
       if (!contract) return
-      setAssetBalance(await getBalance(contract.synthetic.ticker))
+      setAssetBalance(await getBalance(contract.synthetic))
     }
     getSyntheticAssetBalance()
   })
