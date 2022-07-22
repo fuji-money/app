@@ -3,8 +3,10 @@ import { Contract } from 'lib/types'
 import { closeModal, fromSatoshis, openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
-import { makeBorrowTx } from 'lib/marina'
+import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
+import { signAndBroadcastTx } from 'lib/marina'
 import { addContract } from 'lib/contracts'
+import { useState } from 'react'
 
 interface MarinaProps {
   contract: Contract
@@ -14,6 +16,7 @@ interface MarinaProps {
 
 const Marina = ({ contract, topup, setResult }: MarinaProps) => {
   const { ticker, value } = contract.collateral
+  const [ step, setStep ] = useState(0)
   const quantity = topup || contract.collateral.quantity
   return (
     <>
@@ -23,7 +26,10 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
             className="button is-primary mt-2"
             onClick={async () => {
               openModal('marina-modal')
-              contract.txid = await makeBorrowTx(contract)
+              const preparedTx = await prepareBorrowTx(contract)
+              const { partialTransaction } = await proposeBorrowContract(preparedTx)
+              setStep(1)
+              contract.txid = await signAndBroadcastTx(partialTransaction)
               addContract(contract) // add to local storage TODO
               setResult('success')
             }}
@@ -59,7 +65,7 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
         pharetra a. Eu diam nunc nulla risus arcu, integer nulla diam, est. Nisl
         accumsan potenti mattis consectetur pellentesque.
       </p>
-      <MarinaModal contract={contract} setResult={setResult} topup={topup} />
+      <MarinaModal contract={contract} step={step} topup={topup} />
     </>
   )
 }

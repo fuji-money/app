@@ -26,23 +26,29 @@ const Intro = ({ ticker, topup }: IntroProps) => {
 
 interface MarinaModalProps {
   contract: Contract
+  step: number
   topup: number | undefined
-  setResult: any
 }
 
-const MarinaModal = ({ contract, topup, setResult }: MarinaModalProps) => {
+const MarinaModal = ({ contract, step, topup }: MarinaModalProps) => {
   const { ticker } = contract.collateral
+  const mainMessage = [
+    'Preparing transaction...',
+    'Waiting for confirmation...'
+  ][step]
+  const secondaryMessage = [
+    'Waiting for Fuji approval',
+    'Confirm this transaction in your Marina wallet'
+  ][step]
   return (
     <Modal id="marina-modal">
       {contract && (
         <>
           <Spinner />
-          <h3 className="mt-4">Waiting for confirmation...</h3>
+          <h3 className="mt-4">{mainMessage}</h3>
           <Intro ticker={ticker} topup={topup} />
           <Summary contract={contract} />
-          <p className="confirm">
-            Confirm this transaction in your Marina wallet
-          </p>
+          <p className="confirm">{secondaryMessage}</p>
         </>
       )}
     </Modal>
