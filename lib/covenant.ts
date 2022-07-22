@@ -1,8 +1,5 @@
 import { Contract, UtxoWithBlindPrivKey } from './types'
-import {
-  Utxo,
-  AddressInterface,
-} from 'marina-provider'
+import { Utxo, AddressInterface } from 'marina-provider'
 import {
   alphaServerUrl,
   issuerPubKey,
@@ -21,17 +18,24 @@ import {
   address,
 } from 'liquidjs-lib'
 import { postData } from './fetch'
-import { createFujiAccount, fujiAccountMissing, getMarina, selectCoinsWithBlindPrivKey } from './marina'
+import {
+  createFujiAccount,
+  fujiAccountMissing,
+  getMarina,
+  selectCoinsWithBlindPrivKey,
+} from './marina'
 
 interface PreparedBorrowTx {
-  psbt: Psbt,
-  contractParams: any,
-  changeAddress: AddressInterface,
-  borrowerAddress: AddressInterface,
-  collateralUtxos: UtxoWithBlindPrivKey[],
+  psbt: Psbt
+  contractParams: any
+  changeAddress: AddressInterface
+  borrowerAddress: AddressInterface
+  collateralUtxos: UtxoWithBlindPrivKey[]
 }
 
-export async function prepareBorrowTx(contract: Contract): Promise<PreparedBorrowTx> {
+export async function prepareBorrowTx(
+  contract: Contract,
+): Promise<PreparedBorrowTx> {
   console.log('prepareBorrowTx contract', contract)
 
   // check for marina

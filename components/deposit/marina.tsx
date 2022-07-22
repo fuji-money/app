@@ -26,12 +26,16 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
             className="button is-primary mt-2"
             onClick={async () => {
               openModal('marina-modal')
-              const preparedTx = await prepareBorrowTx(contract)
-              const { partialTransaction } = await proposeBorrowContract(preparedTx)
-              setStep(1)
-              contract.txid = await signAndBroadcastTx(partialTransaction)
-              addContract(contract) // add to local storage TODO
-              setResult('success')
+              try {
+                const preparedTx = await prepareBorrowTx(contract)
+                const { partialTransaction } = await proposeBorrowContract(preparedTx)
+                setStep(1)
+                contract.txid = await signAndBroadcastTx(partialTransaction)
+                addContract(contract) // add to local storage TODO
+                setResult('success')
+              } catch(_) {
+                setResult('failure')
+              }
             }}
           >
             <Image
