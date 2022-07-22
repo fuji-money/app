@@ -1,3 +1,4 @@
+import { oracleURL } from './constants'
 import { fetchURL } from './fetch'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
@@ -8,7 +9,7 @@ const lbtc: Asset = {
   name: 'Liquid BTC',
   precision: 8,
   ratio: 200,
-  ticker: 'LBTC',
+  ticker: 'L-BTC',
   value: 40000,
 }
 
@@ -68,14 +69,14 @@ export const apiInvestments = (): Investment[] => [
 export const apiOffers = async (): Promise<Offer[]> => [
   {
     id: '5530bdbb7c61227eac28429debef062c845f829522280612c5dd9f5e1a2082ee',
-    collateral: await findAssetByTicker('lbtc'),
+    collateral: await findAssetByTicker('l-btc'),
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fusd'),
   },
   {
     id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
-    collateral: await findAssetByTicker('lbtc'),
+    collateral: await findAssetByTicker('l-btc'),
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fbmn'),
@@ -105,8 +106,6 @@ export const findAssetByTicker = async (ticker: string): Promise<Asset> => {
 }
 
 export const getBTCvalue = async (): Promise<number> => {
-  const data = await fetchURL(
-    'https://api.coindesk.com/v1/bpi/currentprice.json',
-  )
-  return Number(data.bpi.USD.rate_float)
+  const data = await fetchURL(oracleURL)
+  return Number(data.lastPrice)
 }

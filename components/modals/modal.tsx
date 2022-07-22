@@ -17,7 +17,9 @@ const Modal = ({ children, id }: ModalProps) => {
     <div className="modal" id={id}>
       <div onClick={closeModals} className="modal-background" />
       <div className="modal-content">
-        <div className="is-box has-pink-border has-text-centered">{children}</div>
+        <div className="is-box has-pink-border has-text-centered">
+          {children}
+        </div>
       </div>
       <button
         onClick={closeModals}

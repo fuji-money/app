@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { prettyRatio } from 'lib/pretty'
 import { Asset } from 'lib/types'
-import { getRatioState } from 'lib/utils'
+import { getRatioState } from 'lib/contracts'
 
 // update range bar colors
 const updateColors = (ratio: number) => {
@@ -45,10 +45,11 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setContractRatio(Number(e.target.value))
 
+  updateLabels(min, safe)
+
   useEffect(() => {
-    updateLabels(min, safe)
     updateColors(ratio)
-  }, [min, safe, ratio])
+  }, [ratio])
 
   return (
     <>

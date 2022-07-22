@@ -1,6 +1,7 @@
 import { prettyNumber, prettyPercentage } from 'lib/pretty'
 import Image from 'next/image'
 import { Investment } from 'lib/types'
+import { fromSatoshis } from 'lib/utils'
 
 interface InvestmentRowProps {
   investment: Investment
@@ -9,7 +10,7 @@ interface InvestmentRowProps {
 const InvestmentRow = ({ investment }: InvestmentRowProps) => {
   const { asset, delta, quantity } = investment
   const deltaClass = delta < 0 ? 'delta red' : 'delta green'
-  const invested = prettyNumber((quantity || 0) * asset.value, 2, 2)
+  const invested = prettyNumber(fromSatoshis(quantity) * asset.value, 2, 2)
   return (
     <div className="row">
       <div className="columns level">

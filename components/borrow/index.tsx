@@ -7,6 +7,7 @@ import BorrowButton from './button'
 import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
+import { getContractPriceLevel } from 'lib/contracts'
 
 interface BorrowProps {
   offer: Offer
@@ -17,8 +18,9 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
   const [deposit, setDeposit] = useState(false)
   const [network, setNetwork] = useState('')
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
-  const [contract, setContract] = useState<Contract>(offer)
   const minRatio = offer.collateral.ratio || 150
+  const priceLevel = getContractPriceLevel(offer, minRatio)
+  const [contract, setContract] = useState<Contract>({...offer, priceLevel})
 
   const topup = 0
 

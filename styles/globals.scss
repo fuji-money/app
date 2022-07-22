@@ -62,6 +62,10 @@ main {
     border: 0;
     color: #fff;
     padding: 20px 42px;
+    &.is-solid-purple {
+      background-color: $my-purple;
+      background-image: none;
+    }
   }
   &.is-cta {
     min-width: 400px;

@@ -1,11 +1,12 @@
 import { useContext, useEffect, useState } from 'react'
-import { getActivities } from 'lib/marina'
+import { getActivities } from 'lib/activities'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import ActivityRow from './row'
 import Spinner from 'components/spinner'
+import { NetworkContext } from 'components/providers/network'
 
 interface ActivitiesListProps {
   activityType: ActivityType
@@ -15,15 +16,16 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const [activities, setActivities] = useState<Activity[]>()
   const [isLoading, setLoading] = useState(false)
 
+  const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
 
   useEffect(() => {
-    setLoading(true)
-    getActivities().then((data) => {
-      setActivities(data)
+    (async () => {
+      setLoading(true)
+      setActivities(await getActivities())
       setLoading(false)
-    })
-  }, [wallet])
+    })()
+  }, [wallet, network])
 
   if (!wallet)
     return (
@@ -33,6 +35,8 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)
+  if (filteredActivities.length === 0)
+    return <EmptyState>No activities yet</EmptyState>
 
   return (
     <div className="activity-list">

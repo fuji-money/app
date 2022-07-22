@@ -9,7 +9,7 @@ interface BorrowButtonProps {
 const BorrowButton = ({ collateral, synthetic }: BorrowButtonProps) => {
   return (
     <Link href={`/borrow/${synthetic}/${collateral}`}>
-      <a className="button is-primary">Borrow</a>
+      <a className="button is-primary is-solid-purple">Borrow</a>
     </Link>
   )
 }

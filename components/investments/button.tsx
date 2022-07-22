@@ -1,4 +1,3 @@
-
 const InvestButton = () => {
   const enabled = true // TODO
   const setInvest = (bool: boolean) => {} // TODO

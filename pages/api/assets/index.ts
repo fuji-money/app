@@ -7,9 +7,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Asset[]>,
 ) {
-  const assets = (await apiAssets()).map((asset: Asset) => {
-    asset.quantity = getBalance(asset.ticker)
+  const assets = await apiAssets()
+  const promises = assets.map(async (asset: Asset) => {
+    asset.quantity = await getBalance(asset)
     return asset
   })
-  res.status(200).json(assets)
+  res.status(200).json(await Promise.all(promises))
 }

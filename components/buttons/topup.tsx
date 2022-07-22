@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { Contract, ContractState } from 'lib/types'
+import { contractIsExpired } from 'lib/contracts'
 
 interface TopupButtonProps {
   contract: Contract
-  state: ContractState
 }
 
-const TopupButton = ({ contract, state }: TopupButtonProps) => {
-  if (state === ContractState.Liquidated) {
+const TopupButton = ({ contract }: TopupButtonProps) => {
+  if (contractIsExpired(contract)) {
     return (
       <button className="button ml-3" disabled>
         Topup

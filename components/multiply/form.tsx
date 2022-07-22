@@ -11,6 +11,7 @@ import { Asset, Contract, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
+import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -23,9 +24,6 @@ const MultiplyForm = ({
   setContract,
   setDeposit,
 }: MultiplyFormProps) => {
-  const minRatio = 130 // TODO move to constants?
-  const maxRatio = 330 // TODO move to constants?
-
   const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
@@ -34,13 +32,13 @@ const MultiplyForm = ({
   const [multiplier, setMultiplier] = useState(0)
   const [quantity, setQuantity] = useState(0)
   const [oracles, setOracles] = useState<Oracle[]>()
-  const [ratio, setRatio] = useState(maxRatio)
+  const [ratio, setRatio] = useState(maxMultiplyRatio)
 
   useEffect(() => {
     setLoading(true)
     fetchOracles().then((data) => {
       setOracles(data)
-      fetchAsset('LBTC').then((data) => {
+      fetchAsset('L-BTC').then((data) => {
         setLbtc(data)
         setLoading(false)
       })
@@ -53,7 +51,7 @@ const MultiplyForm = ({
       const debt = (quantity * lbtc.value * quoc) / (1 - quoc)
       const expo = debt / lbtc.value + quantity
       const mult = quantity ? expo / quantity : 0
-      const liqp = (lbtc.value / ratio) * minRatio
+      const liqp = (lbtc.value / ratio) * minMultiplyRatio
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
@@ -67,7 +65,7 @@ const MultiplyForm = ({
   }, [lbtc, quantity, ratio, setContract])
 
   if (isLoading) return <Spinner />
-  if (!lbtc) return <SomeError>Error getting LBTC asset</SomeError>
+  if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
   return (
@@ -75,9 +73,7 @@ const MultiplyForm = ({
       <div className="column is-4">
         <div className="is-box has-pink-border">
           <div className="is-flex is-justify-content-space-between">
-            <p className="is-size-7 has-text-weight-bold">
-              Liquidation price
-            </p>
+            <p className="is-size-7 has-text-weight-bold">Liquidation price</p>
             <p>
               <a onClick={() => openModal('liquidation-price-modal')}>
                 <Image
@@ -89,9 +85,7 @@ const MultiplyForm = ({
               </a>
             </p>
           </div>
-          <p className="is-size-5 is-gradient has-text-weight-bold">
-            US$ 0.00
-          </p>
+          <p className="is-size-5 is-gradient has-text-weight-bold">US$ 0.00</p>
           <p>
             <span className="is-after">
               $ {liquidationPrice.toLocaleString()} after
@@ -128,7 +122,7 @@ const MultiplyForm = ({
             <div className="column is-6">
               <Snippet
                 title="Total L-BTC exposure"
-                value="0.000 LBTC"
+                value="0.000 L-BTC"
                 after={`${exposure.toLocaleString()} after`}
               />
             </div>
@@ -149,22 +143,17 @@ const MultiplyForm = ({
         <div className="is-box has-pink-border">
           <p className="has-text-weight-bold">Configure your vault</p>
           <p className="is-size-7 mt-5">
-            In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing
-            eget vel ut non duis vitae. Augue mi, bibendum ac imperdiet
-            ipsum sed ornare. Facilisis id sem quam elementum euismod ante
-            ut.
+            In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing eget
+            vel ut non duis vitae. Augue mi, bibendum ac imperdiet ipsum sed
+            ornare. Facilisis id sem quam elementum euismod ante ut.
           </p>
-          <p className="has-text-weight-bold mt-6 mb-4">
-            Deposit your LBTC
-          </p>
+          <p className="has-text-weight-bold mt-6 mb-4">Deposit your L-BTC</p>
           <Collateral asset={lbtc} setQuantity={setQuantity} />
-          <p className="has-text-weight-bold mt-6 mb-4">
-            Adjust your multiply
-          </p>
+          <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
           <Range
             liquidationPrice={liquidationPrice}
-            minRatio={minRatio}
-            maxRatio={maxRatio}
+            minRatio={minMultiplyRatio}
+            maxRatio={maxMultiplyRatio}
             ratio={ratio}
             setRatio={setRatio}
           />

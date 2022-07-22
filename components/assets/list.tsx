@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
 import { Asset } from 'lib/types'
 import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
+import { NetworkContext } from 'components/providers/network'
 
 const AssetsList = () => {
   const [assets, setAssets] = useState<Asset[]>()
   const [isLoading, setLoading] = useState(false)
+  const { network } = useContext(NetworkContext)
 
   useEffect(() => {
     const onlySynth = (asset: Asset) => asset.isSynthetic
@@ -16,7 +18,7 @@ const AssetsList = () => {
       setAssets(data.filter(onlySynth))
       setLoading(false)
     })
-  }, [])
+  }, [network])
 
   if (isLoading) return <Spinner />
   if (!assets) return <SomeError>Error getting assets</SomeError>

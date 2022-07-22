@@ -1,6 +1,8 @@
 import { useContext } from 'react'
-import { WalletContext } from 'components/providers'
-import { getMarina } from 'lib/marina'
+import { WalletContext } from 'components/providers/wallet'
+import { createFujiAccount, getMarina, fujiAccountMissing } from 'lib/marina'
+import { closeModal, openModal } from 'lib/utils'
+import AccountModal from 'components/modals/account'
 
 const ConnectButton = () => {
   const { connect, disconnect, wallet } = useContext(WalletContext)
@@ -12,7 +14,12 @@ const ConnectButton = () => {
       await marina.disable()
       disconnect()
     } else {
-      await marina.enable()
+      if (!await marina.isEnabled()) await marina.enable()
+      if (await fujiAccountMissing(marina)) {
+        openModal('account-modal')
+        await createFujiAccount(marina)
+        closeModal('account-modal')
+      }
       connect()
     }
   }
@@ -20,9 +27,12 @@ const ConnectButton = () => {
   const message = wallet ? 'Disconnect' : 'Connect wallet'
 
   return (
-    <button onClick={toggle} className="button is-primary my-auto">
-      {message}
-    </button>
+    <>
+      <button onClick={toggle} className="button is-primary my-auto">
+        {message}
+      </button>
+      <AccountModal />
+    </>
   )
 }
 

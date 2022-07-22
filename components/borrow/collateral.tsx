@@ -1,5 +1,6 @@
 import { prettyNumber } from 'lib/pretty'
 import { Asset } from 'lib/types'
+import { fromSatoshis } from 'lib/utils'
 import Image from 'next/image'
 
 interface CollateralProps {
@@ -24,7 +25,7 @@ const Collateral = ({ asset }: CollateralProps) => {
       </div>
       <div className="level-right">
         <div className="level-item">
-          <p className="mr-3 my-auto">{prettyNumber(asset.quantity)}</p>
+          <p className="mr-3 my-auto">{prettyNumber(fromSatoshis(asset.quantity))}</p>
         </div>
       </div>
       <style jsx>{`

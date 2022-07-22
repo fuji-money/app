@@ -1,5 +1,13 @@
 export async function fetchURL(url: string) {
   const res = await fetch(url)
-  const data = await res.json()
-  return data
+  return await res.json()
+}
+
+export async function postData(url: string, data = {}) {
+  const res = await fetch(url, {
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  })
+  return await res.json()
 }

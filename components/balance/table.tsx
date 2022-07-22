@@ -1,14 +1,16 @@
 import { useContext, useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
 import { Asset } from 'lib/types'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import BalanceRow from './row'
 import Spinner from 'components/spinner'
+import { NetworkContext } from 'components/providers/network'
 
 const BalanceTable = () => {
   const [assets, setAssets] = useState<Asset[]>()
   const [isLoading, setLoading] = useState(false)
   const { wallet } = useContext(WalletContext)
+  const { network } = useContext(NetworkContext)
 
   useEffect(() => {
     setLoading(true)
@@ -16,7 +18,7 @@ const BalanceTable = () => {
       setAssets(data)
       setLoading(false)
     })
-  }, [wallet])
+  }, [wallet, network])
 
   if (!wallet) return <p>🔌 Connect your wallet to view your balance</p>
   if (isLoading) return <Spinner />

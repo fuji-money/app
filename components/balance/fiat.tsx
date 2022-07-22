@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { fetchAssets } from 'lib/api'
-import { WalletContext } from 'components/providers'
+import { WalletContext } from 'components/providers/wallet'
 import Spinner from 'components/spinner'
 import { prettyNumber, prettyPercentage } from 'lib/pretty'
 
@@ -16,11 +16,13 @@ const BalanceInFiat = () => {
   useEffect(() => {
     setLoading(true)
     fetchAssets().then((data) => {
-      setBalance(data.reduce((prev, asset) => {
-        const quantity = asset.quantity || 0
-        prev += quantity * asset.value
-        return prev
-      }, 0))
+      setBalance(
+        data.reduce((prev, asset) => {
+          const quantity = asset.quantity || 0
+          prev += quantity * asset.value
+          return prev
+        }, 0),
+      )
       setLoading(false)
     })
   }, [wallet])
@@ -30,8 +32,10 @@ const BalanceInFiat = () => {
 
   return (
     <>
-      <h2 className='is-gradient'>US$ {prettyNumber(balance, 2, 2)}</h2>
-      <p className={deltaClass}>{prettyNumber(delta, 2, 2)} {calcDelta()}</p>
+      <h2 className="is-gradient">US$ {prettyNumber(balance, 2, 2)}</h2>
+      <p className={deltaClass}>
+        {prettyNumber(delta, 2, 2)} {calcDelta()}
+      </p>
     </>
   )
 }

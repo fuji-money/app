@@ -14,8 +14,8 @@ const ExchangeTransactions = () => {
           description: 'Send to Euro',
           icon: '/images/icons/vulpem.png',
           value: -0.00321,
-        }
-      ]
+        },
+      ],
     },
     {
       date: 'Feb 1',
@@ -30,7 +30,7 @@ const ExchangeTransactions = () => {
           icon: '/images/icons/vulpem.png',
           value: 0.00333,
         },
-      ]
+      ],
     },
     {
       date: 'Jan 30',
@@ -45,8 +45,8 @@ const ExchangeTransactions = () => {
           icon: '/images/icons/vulpem.png',
           value: 0.00333,
         },
-      ]
-    }
+      ],
+    },
   ]
 
   return (
@@ -54,22 +54,26 @@ const ExchangeTransactions = () => {
       {transactions.map((day, index) => {
         return (
           <>
-            <h3 key={index} className="mt-6 is-purple">{day.date}</h3>
+            <h3 key={index} className="mt-6 is-purple">
+              {day.date}
+            </h3>
             {day.txs.map((tx, index) => {
               const prefix = `${tx.value > 0 ? '+' : ''}`
               return (
                 <div key={index} className="is-box level is-size-7 mb-1">
-                  <div className='level-left'>
+                  <div className="level-left">
                     <Image
                       src={tx.icon}
-                      alt='transaction logo'
+                      alt="transaction logo"
                       height={20}
                       width={20}
                     />
-                    <p className='ml-2'>{tx.description}</p>
+                    <p className="ml-2">{tx.description}</p>
                   </div>
-                  <div className='level-right'>
-                    <p className="has-text-weight-bold">{prefix} {tx.value} fBMN</p>
+                  <div className="level-right">
+                    <p className="has-text-weight-bold">
+                      {prefix} {tx.value} fBMN
+                    </p>
                   </div>
                 </div>
               )

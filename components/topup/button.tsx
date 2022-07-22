@@ -1,4 +1,3 @@
-
 interface TopupButtonProps {
   minRatio: number
   oracles: string[]

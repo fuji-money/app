@@ -1,8 +1,14 @@
 import type { NextPage } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
+  const router = useRouter()
+  if (typeof window !== 'undefined') router.push('/dashboard')
+
+  return <></> // TODO
+
   return (
     <section>
       <div className="has-text-centered">

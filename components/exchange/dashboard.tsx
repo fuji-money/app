@@ -26,7 +26,11 @@ const ExchangeDashboard = ({ offer }: ExchangeDashboardProps) => {
           ) : trade === TradeTypes.Statement ? (
             <p>Statement</p>
           ) : (
-            <ExchangeTrade setTrade={setTrade} synthetic={synthetic} trade={trade} />
+            <ExchangeTrade
+              setTrade={setTrade}
+              synthetic={synthetic}
+              trade={trade}
+            />
           )}
         </div>
         <div className="column is-1"></div>

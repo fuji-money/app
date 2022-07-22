@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react'
 import type { NextPage } from 'next'
 import type { AppProps } from 'next/app'
+import { Utxo } from 'marina-provider'
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode
@@ -21,6 +22,7 @@ export interface Activity {
   contract: Contract
   createdAt: number
   message: string
+  network: string
   txid: string
   type: string
 }
@@ -50,8 +52,10 @@ export interface Contract {
   collateral: Asset
   payout: number
   synthetic: Asset
-  createdAt?: number
+  priceLevel?: number
   oracles: string[]
+  createdAt?: number
+  network?: string
   state?: ContractState
   txid?: string
 }
@@ -87,4 +91,8 @@ export enum TradeTypes {
   None = 'None',
   Sell = 'Sell',
   Statement = 'Statement',
+}
+
+export type UtxoWithBlindPrivKey = Utxo & {
+  blindPrivKey?: string
 }

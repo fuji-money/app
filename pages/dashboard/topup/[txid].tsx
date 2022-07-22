@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Topup from 'components/topup'
-import { getContract } from 'lib/marina'
+import { getContract } from 'lib/contracts'
 import { Contract, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 import { fetchOracles } from 'lib/api'
@@ -34,11 +34,7 @@ const TopupContract: NextPage = () => {
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
   return (
-    <Topup
-      contract={contract}
-      oracles={oracles}
-      setContract={setContract}
-    />
+    <Topup contract={contract} oracles={oracles} setContract={setContract} />
   )
 }
 

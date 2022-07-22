@@ -1,7 +1,6 @@
-import { useState } from "react"
-import ExchangeOverview from "./overview"
-import ExchangeTransactions from "./transactions"
-
+import { useState } from 'react'
+import ExchangeOverview from './overview'
+import ExchangeTransactions from './transactions'
 
 const ExchangeInfo = () => {
   const [showOverview, setShowOverview] = useState(true)
