@@ -6,7 +6,8 @@ import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { signAndBroadcastTx } from 'lib/marina'
 import { addContract } from 'lib/contracts'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
+import { NetworkContext } from 'components/providers/network'
 
 interface MarinaProps {
   contract: Contract
@@ -18,6 +19,7 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
   const { ticker, value } = contract.collateral
   const [ step, setStep ] = useState(0)
   const quantity = topup || contract.collateral.quantity
+  const { network } = useContext(NetworkContext)
   return (
     <>
       <div className="is-flex">
@@ -31,6 +33,7 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
                 const { partialTransaction } = await proposeBorrowContract(preparedTx)
                 setStep(1)
                 contract.txid = await signAndBroadcastTx(partialTransaction)
+                contract.network = network
                 addContract(contract) // add to local storage TODO
                 setResult('success')
               } catch(_) {

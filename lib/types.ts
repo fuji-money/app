@@ -54,6 +54,7 @@ export interface Contract {
   priceLevel?: number
   oracles: string[]
   createdAt?: number
+  network?: string
   state?: ContractState
   txid?: string
 }
