@@ -4,7 +4,7 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { getMarina } from 'lib/marina'
+import { getMarina, getNetwork } from 'lib/marina'
 import { MarinaProvider } from 'marina-provider'
 
 export const NetworkContext = createContext({
@@ -29,7 +29,10 @@ export const NetworkProvider = ({ children }: NetworkProviderProps) => {
   // push network to state
   useEffect(() => {
     ;(async () => {
-      if (marina) setNetwork(await marina.getNetwork())
+      if (marina) {
+        const network = await getNetwork()
+        if (network) setNetwork(network)
+      }
     })()
   })
 

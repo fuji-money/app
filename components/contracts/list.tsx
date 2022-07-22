@@ -7,6 +7,7 @@ import RedeemModal from 'components/modals/redeem'
 import { WalletContext } from 'components/providers/wallet'
 import ContractRow from './row'
 import Spinner from 'components/spinner'
+import { NetworkContext } from 'components/providers/network'
 
 interface ContractsListProps {
   showActive: boolean
@@ -19,6 +20,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const [redeem, setReedem] = useState<Contract>()
   if (redeem) openModal('redeem-modal')
 
+  const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
 
   useEffect(() => {
@@ -27,7 +29,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
       setContracts(data)
       setLoading(false)
     })
-  }, [wallet])
+  }, [wallet, network])
 
   if (!wallet)
     return (

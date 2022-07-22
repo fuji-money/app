@@ -22,6 +22,7 @@ export interface Activity {
   contract: Contract
   createdAt: number
   message: string
+  network: string
   txid: string
   type: string
 }
