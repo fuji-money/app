@@ -3,27 +3,31 @@ import { ActivityType, Contract, ContractState } from './types'
 import { addActivity } from './activities'
 import Decimal from 'decimal.js'
 import { toSatoshis } from './utils'
+import { getNetwork } from './marina'
 
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
+  const network = (await getNetwork()) || 'testnet' // TODO
   const key = 'fujiContracts'
   if (!localStorage.getItem(key)) return []
   const contracts = JSON.parse(localStorage.getItem(key) || '[]')
-  const promises = contracts.map(async (contract: Contract) => {
-    const collateral = await fetchAsset(contract.collateral.ticker)
-    const synthetic = await fetchAsset(contract.synthetic.ticker)
-    if (!collateral)
-      throw new Error(
-        `Contract with unknown collateral ${contract.collateral.ticker}`,
-      )
-    if (!synthetic)
-      throw new Error(
-        `Contract with unknown synthetic ${contract.synthetic.ticker}`,
-      )
-    contract.collateral = { ...collateral, ...contract.collateral }
-    contract.synthetic = { ...synthetic, ...contract.synthetic }
-    return contract
-  })
+  const promises = contracts
+    .filter((contract: Contract) => contract.network === network)
+    .map(async (contract: Contract) => {
+      const collateral = await fetchAsset(contract.collateral.ticker)
+      const synthetic = await fetchAsset(contract.synthetic.ticker)
+      if (!collateral)
+        throw new Error(
+          `Contract with unknown collateral ${contract.collateral.ticker}`,
+        )
+      if (!synthetic)
+        throw new Error(
+          `Contract with unknown synthetic ${contract.synthetic.ticker}`,
+        )
+      contract.collateral = { ...collateral, ...contract.collateral }
+      contract.synthetic = { ...synthetic, ...contract.synthetic }
+      return contract
+    })
   return Promise.all(promises)
 }
 

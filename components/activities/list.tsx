@@ -6,6 +6,7 @@ import SomeError from 'components/layout/error'
 import { WalletContext } from 'components/providers/wallet'
 import ActivityRow from './row'
 import Spinner from 'components/spinner'
+import { NetworkContext } from 'components/providers/network'
 
 interface ActivitiesListProps {
   activityType: ActivityType
@@ -15,13 +16,16 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const [activities, setActivities] = useState<Activity[]>()
   const [isLoading, setLoading] = useState(false)
 
+  const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
 
   useEffect(() => {
-    setLoading(true)
-    setActivities(getActivities())
-    setLoading(false)
-  }, [wallet])
+    (async () => {
+      setLoading(true)
+      setActivities(await getActivities())
+      setLoading(false)
+    })()
+  }, [wallet, network])
 
   if (!wallet)
     return (

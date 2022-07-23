@@ -22,6 +22,7 @@ export interface Activity {
   contract: Contract
   createdAt: number
   message: string
+  network: string
   txid: string
   type: string
 }
@@ -54,6 +55,7 @@ export interface Contract {
   priceLevel?: number
   oracles: string[]
   createdAt?: number
+  network?: string
   state?: ContractState
   txid?: string
 }

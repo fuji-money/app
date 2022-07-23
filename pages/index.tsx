@@ -1,6 +1,7 @@
 import type { NextPage } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
   const handleSubmit = async (event: any) => {
@@ -22,6 +23,10 @@ const Home: NextPage = () => {
     // router.push('/dashboard')
     // } else { /* handle errors */ }
   };
+  const router = useRouter()
+  if (typeof window !== 'undefined') router.push('/dashboard')
+
+  return <></> // TODO
 
   return (
     <section>

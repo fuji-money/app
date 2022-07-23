@@ -48,6 +48,11 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
   }
 }
 
+export async function getNetwork(): Promise<string | undefined> {
+  const marina = await getMarina()
+  if (marina) return await marina.getNetwork()
+}
+
 export async function signAndBroadcastTx(partialTransaction: any) {
   // check for marina
   const marina = await getMarina()
