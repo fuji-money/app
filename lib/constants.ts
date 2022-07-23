@@ -17,3 +17,4 @@ export const marinaFujiAccountID = 'fuji'
 export const marinaMainAccountID = 'mainAccount'
 
 export const alphaServerUrl = 'https://fuji-factory.herokuapp.com'
+//export const alphaServerUrl = 'http://localhost:8000'
