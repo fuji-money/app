@@ -3,6 +3,26 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 const Home: NextPage = () => {
+  const handleSubmit = async (event: any) => {
+    event.preventDefault();
+
+    const { elements } = event.target;
+
+    // Add the Magic code here
+
+    // Once we have the token from magic,
+    // update our own database
+
+    // const authRequest = await fetch()
+
+    // if (authRequest.ok) {
+    // We successfully logged in, our API
+    // set authorization cookies and now we
+    // can redirect to the dashboard!
+    // router.push('/dashboard')
+    // } else { /* handle errors */ }
+  };
+
   return (
     <section>
       <div className="has-text-centered">
@@ -16,20 +36,19 @@ const Home: NextPage = () => {
           />
         </p>
         <p className="links-intro">
-          Choose any link below to access the decentralized web app
+          Welcome to the Fuji.Money closed beta
         </p>
         <div className="links-wrapper">
-          <p>
-            <Link href="/dashboard">
-              <a>fuji.money</a>
-            </Link>
-          </p>
-          <p>
-            <a href="https://tryfuji.com">tryfuji.com</a>
-          </p>
-          <p>
-            <a href="https://fujiapp.io">fujiapp.io</a>
-          </p>
+          <div className="columns">
+            <div className="column is-4 is-offset-4">
+              <form className="form" onSubmit={handleSubmit}>
+                <label className="label" htmlFor="email">Email</label>
+                <input className="input is-large" type="email" placeholder="Email"></input>
+              </form>
+              <button className="button">Log in</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
