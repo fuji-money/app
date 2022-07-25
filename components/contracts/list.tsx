@@ -23,6 +23,11 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
 
+  const resetReedem = (c: Contract) => {
+    setReedem(undefined)
+    setReedem(c)
+  }
+
   useEffect(() => {
     setLoading(true)
     getContracts().then((data) => {
@@ -51,7 +56,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
       <RedeemModal contract={redeem} />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
-          <ContractRow key={index} contract={contract} setRedeem={setReedem} />
+          <ContractRow key={index} contract={contract} setRedeem={resetReedem} />
         ))}
     </>
   )
