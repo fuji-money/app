@@ -222,3 +222,7 @@ export async function proposeBorrowContract({
   // post and return
   return postData(`${alphaServerUrl}/contracts`, body)
 }
+
+export async function prepareRedeemTx(contract: Contract) {
+  return new Promise(resolve => setTimeout(resolve, 2000))
+}

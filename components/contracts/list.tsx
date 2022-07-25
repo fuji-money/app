@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
-import { contractIsExpired, getContracts } from 'lib/contracts'
+import { contractIsExpired } from 'lib/contracts'
+import { getContracts } from 'lib/storage'
 import { Contract } from 'lib/types'
-import { openModal } from 'lib/utils'
 import EmptyState from 'components/layout/empty'
 import RedeemModal from 'components/modals/redeem'
 import { WalletContext } from 'components/providers/wallet'
@@ -18,15 +18,9 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const [contracts, setContracts] = useState<Contract[]>()
 
   const [redeem, setReedem] = useState<Contract>()
-  if (redeem) openModal('redeem-modal')
 
   const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
-
-  const resetReedem = (c: Contract) => {
-    setReedem(undefined)
-    setReedem(c)
-  }
 
   useEffect(() => {
     setLoading(true)
@@ -56,7 +50,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
       <RedeemModal contract={redeem} />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
-          <ContractRow key={index} contract={contract} setRedeem={resetReedem} />
+          <ContractRow key={index} contract={contract} setRedeem={setReedem} />
         ))}
     </>
   )

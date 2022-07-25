@@ -5,7 +5,7 @@ import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { signAndBroadcastTx } from 'lib/marina'
-import { addContract } from 'lib/contracts'
+import { addContract } from 'lib/storage'
 import { useContext, useState } from 'react'
 import { NetworkContext } from 'components/providers/network'
 

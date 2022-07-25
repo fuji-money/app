@@ -1,5 +1,7 @@
 import { contractIsExpired } from 'lib/contracts'
-import { Contract, ContractState } from 'lib/types'
+import { prepareRedeemTx } from 'lib/covenant'
+import { Contract } from 'lib/types'
+import { closeModal, openModal } from 'lib/utils'
 
 interface RedeemButtonProps {
   contract: Contract
@@ -7,9 +9,16 @@ interface RedeemButtonProps {
 }
 
 const RedeemButton = ({ contract, setRedeem }: RedeemButtonProps) => {
+  const handleClick = async () => {
+    setRedeem(contract)
+    openModal('redeem-modal')
+    await prepareRedeemTx(contract)
+    closeModal('redeem-modal')
+  }
+
   return (
     <button
-      onClick={() => setRedeem(contract)}
+      onClick={handleClick}
       className="button is-primary ml-3"
       disabled={contractIsExpired(contract)}
     >

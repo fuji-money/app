@@ -2,7 +2,7 @@ import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
-import { redeemContract } from 'lib/contracts'
+import { redeemContract } from 'lib/storage'
 import { closeModal } from 'lib/utils'
 import { useEffect, useState } from 'react'
 import { getBalance } from 'lib/marina'
@@ -14,13 +14,6 @@ interface RedeemModalProps {
 const RedeemModal = ({ contract }: RedeemModalProps) => {
   const modalId = 'redeem-modal'
   const [assetBalance, setAssetBalance] = useState(0)
-
-  const handleConfirmation = () => {
-    if (contract) {
-      redeemContract(contract)
-      closeModal(modalId)
-    }
-  }
 
   useEffect(() => {
     async function getSyntheticAssetBalance() {
@@ -43,7 +36,7 @@ const RedeemModal = ({ contract }: RedeemModalProps) => {
           <h3 className="mt-4">Waiting for confirmation...</h3>
           <p>Redeem contract:</p>
           <Summary contract={contract} />
-          <p className="confirm" onClick={handleConfirmation}>
+          <p className="confirm">
             Confirm this transaction in your Marina wallet
           </p>
         </>
