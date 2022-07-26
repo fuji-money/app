@@ -9,25 +9,25 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>App - Fuji Money</title>
         <meta
-          content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries."
+          content="Borrow bitcoin-backed stablecoins &amp; synthetic assets without intermediaries."
           name="description"
         />
         <meta content="App - Fuji Money" property="og:title" />
         <meta
-          content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries."
+          content="Borrow bitcoin-backed stablecoins &amp; synthetic assets without intermediaries."
           property="og:description"
         />
         <meta
-          content="https://raw.githubusercontent.com/fuji-money/website/main/src/images/og_image.png"
+          content="https://raw.githubusercontent.com/fuji-money/website/main/images/og_image.png"
           property="og:image"
         />
         <meta content="App - Fuji Money" property="twitter:title" />
         <meta
-          content="Borrow bitcoin-backed stable coins, synthetic stocks &amp; bonds without intermediaries."
+          content="Borrow bitcoin-backed stablecoins &amp; synthetic assets without intermediaries."
           property="twitter:description"
         />
         <meta
-          content="https://raw.githubusercontent.com/fuji-money/website/main/src/images/og_image.png"
+          content="https://raw.githubusercontent.com/fuji-money/website/main/images/og_image.png"
           property="twitter:image"
         />
         <meta property="og:type" content="website" />
