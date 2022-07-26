@@ -30,6 +30,7 @@ interface PreparedBorrowTx {
   contractParams: any
   changeAddress: AddressInterface
   borrowerAddress: AddressInterface
+  borrowerPublicKey: string
   collateralUtxos: UtxoWithBlindPrivKey[]
 }
 
@@ -136,12 +137,13 @@ export async function prepareBorrowTx(
 
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
-  contractParams.priceLevel = contract.priceLevel.toString()
+  contractParams.priceLevel = contract.priceLevel.toString();
   return {
     psbt,
     contractParams,
     changeAddress,
     borrowerAddress,
+    borrowerPublicKey: (covenantAddress as any).constructorParams.fuji,
     collateralUtxos,
   }
 }
@@ -151,6 +153,7 @@ export async function proposeBorrowContract({
   contractParams,
   changeAddress,
   borrowerAddress,
+  borrowerPublicKey,
   collateralUtxos,
 }: PreparedBorrowTx) {
   // deconstruct contractParams
@@ -165,6 +168,7 @@ export async function proposeBorrowContract({
     issuerScriptProgram,
     priceLevel,
     setupTimestamp,
+    fuji,
   } = contractParams
 
   // get blinding priv key for each confidential collateral utxo
@@ -202,7 +206,7 @@ export async function proposeBorrowContract({
       issuerPublicKey: issuerPk,
       issuerScriptProgram,
       oraclePublicKey: oraclePk,
-      borrowerPublicKey: '0x'.concat(borrowerAddress.publicKey.slice(2)),
+      borrowerPublicKey,
       priceLevel,
       setupTimestamp,
     },
