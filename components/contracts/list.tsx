@@ -19,6 +19,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
 
   const [redeem, setReedem] = useState<Contract>()
   const [assetBalance, setAssetBalance] = useState(0)
+  const [step, setStep] = useState(0)
 
   const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
@@ -46,7 +47,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
 
   return (
     <>
-      <RedeemModal contract={redeem} assetBalance={assetBalance} />
+      <RedeemModal contract={redeem} assetBalance={assetBalance} step={step} />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
           <ContractRow
@@ -54,6 +55,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
             contract={contract}
             setRedeem={setReedem}
             setAssetBalance={setAssetBalance}
+            setStep={setStep}
           />
         ))}
     </>

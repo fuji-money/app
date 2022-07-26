@@ -8,14 +8,15 @@ interface RedeemButtonProps {
   contract: Contract
   setAssetBalance: any
   setRedeem: any
+  setStep: any
 }
 
-const RedeemButton = ({ contract, setAssetBalance, setRedeem }: RedeemButtonProps) => {
+const RedeemButton = ({ contract, setAssetBalance, setRedeem, setStep }: RedeemButtonProps) => {
   const handleClick = async () => {
     setAssetBalance(await getBalance(contract.synthetic))
     setRedeem(contract)
     openModal('redeem-modal')
-    await prepareRedeemTx(contract)
+    await prepareRedeemTx(contract, setStep)
     closeModal('redeem-modal')
   }
 

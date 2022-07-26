@@ -226,7 +226,7 @@ export async function proposeBorrowContract({
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
-export async function prepareRedeemTx(contract: Contract) {
+export async function prepareRedeemTx(contract: Contract, setStep: any) {
   console.log('contract to redeem', contract)
 
   // check for marina
@@ -351,6 +351,7 @@ export async function prepareRedeemTx(contract: Contract) {
   }
   tx.withFeeOutput(feeAmount)
   console.log('redeem tx', tx)
+  setStep(1)
   await tx.unlock()
   // you can access the psbt directly
   tx.psbt.finalizeAllInputs();

@@ -6,9 +6,21 @@ import Modal from './modal'
 interface RedeemModalProps {
   contract: Contract | undefined
   assetBalance: number
+  step: number
 }
 
-const RedeemModal = ({ contract, assetBalance }: RedeemModalProps) => {
+const RedeemModal = ({ contract, assetBalance, step }: RedeemModalProps) => {
+  // messages to show on different steps of the process
+  const mainMessage = [
+    'Preparing transaction...',
+    'Waiting for confirmation...',
+  ][step]
+  const secondaryMessage = [
+    'Searching in your utxos',
+    'Confirm this transaction in your Marina wallet',
+  ][step]
+
+  // decision variables
   const ticker = contract?.synthetic.ticker
   const neededAmount = contract?.synthetic.quantity
   const hasFunds = contract && neededAmount && assetBalance >= neededAmount
@@ -19,10 +31,10 @@ const RedeemModal = ({ contract, assetBalance }: RedeemModalProps) => {
       {hasFunds && (
         <>
           <Spinner />
-          <h3 className="mt-4">Waiting for confirmation...</h3>
+          <h3 className="mt-4">{mainMessage}</h3>
           <p>Redeem contract:</p>
           <Summary contract={contract} />
-          <p className="confirm">Confirm this transaction in your Marina wallet</p>
+          <p className="confirm">{secondaryMessage}</p>
         </>
       )}
       {noFunds && (

@@ -1,6 +1,6 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { closeModal, fromSatoshis, openModal } from 'lib/utils'
+import { fromSatoshis, openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
