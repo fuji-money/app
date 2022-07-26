@@ -73,6 +73,7 @@ export interface Offer {
   oracles: string[]
   payout: number
   synthetic: Asset
+  isAvailable: boolean
 }
 
 export interface Oracle {

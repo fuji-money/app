@@ -76,6 +76,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fusd'),
+    isAvailable: true
   },
   {
     id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
@@ -83,6 +84,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fbmn'),
+    isAvailable: false
   },
   {
     id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
@@ -90,6 +92,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fbmn'),
+    isAvailable: false
   },
 ]
 
