@@ -3,7 +3,7 @@ import { ActivityType, Contract, ContractState } from './types'
 import { addActivity } from './activities'
 import { getNetwork } from './marina'
 
-export async function getContracts(): Promise<Contract[]> {
+export async function getContractsFromStorage(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = (await getNetwork()) || 'testnet' // TODO
   const key = 'fujiContracts'
@@ -29,22 +29,22 @@ export async function getContracts(): Promise<Contract[]> {
   return Promise.all(promises)
 }
 
-export async function getContract(txid: string): Promise<Contract | undefined> {
-  const contracts = await getContracts()
+export async function getContractFromStorage(txid: string): Promise<Contract | undefined> {
+  const contracts = await getContractsFromStorage()
   return contracts.find((c) => c.txid === txid)
 }
 
-export async function addContract(contract: Contract): Promise<void> {
+export async function addContractToStorage(contract: Contract): Promise<void> {
   if (typeof window === 'undefined') return
-  const contracts = await getContracts()
+  const contracts = await getContractsFromStorage()
   contracts.push(contract)
   localStorage.setItem('fujiContracts', JSON.stringify(contracts))
   addActivity(contract, ActivityType.Creation)
 }
 
-export async function redeemContract(contract: Contract): Promise<void> {
+export async function redeemContractToStorage(contract: Contract): Promise<void> {
   if (typeof window === 'undefined') return
-  const contracts = (await getContracts()).map((c) => {
+  const contracts = (await getContractsFromStorage()).map((c) => {
     if (c.txid === contract.txid) c.state = ContractState.Redeemed
     return c
   })

@@ -16,5 +16,4 @@ export const fUSDtestnet = '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029d
 export const marinaFujiAccountID = 'fuji'
 export const marinaMainAccountID = 'mainAccount'
 
-export const alphaServerUrl = 'https://fuji-factory.herokuapp.com'
-//export const alphaServerUrl = 'http://localhost:8000'
+export const alphaServerUrl = 'https://alpha-factory.fuji.money'

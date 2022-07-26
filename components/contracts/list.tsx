@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import { contractIsExpired } from 'lib/contracts'
-import { getContracts } from 'lib/storage'
+import { getContractsFromStorage } from 'lib/storage'
 import { Contract } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import RedeemModal from 'components/modals/redeem'
@@ -18,13 +18,14 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const [contracts, setContracts] = useState<Contract[]>()
 
   const [redeem, setReedem] = useState<Contract>()
+  const [assetBalance, setAssetBalance] = useState(0)
 
   const { network } = useContext(NetworkContext)
   const { wallet } = useContext(WalletContext)
 
   useEffect(() => {
     setLoading(true)
-    getContracts().then((data) => {
+    getContractsFromStorage().then((data) => {
       setContracts(data)
       setLoading(false)
     })
@@ -38,19 +39,22 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   if (!contracts) return <EmptyState>Error getting contracts</EmptyState>
 
   const filteredContracts = contracts.filter((contract) =>
-    showActive
-      ? !contractIsExpired(contract)
-      : contractIsExpired(contract),
+    showActive ? !contractIsExpired(contract) : contractIsExpired(contract),
   )
   if (filteredContracts.length === 0)
     return <EmptyState>No contracts yet</EmptyState>
 
   return (
     <>
-      <RedeemModal contract={redeem} />
+      <RedeemModal contract={redeem} assetBalance={assetBalance} />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
-          <ContractRow key={index} contract={contract} setRedeem={setReedem} />
+          <ContractRow
+            key={index}
+            contract={contract}
+            setRedeem={setReedem}
+            setAssetBalance={setAssetBalance}
+          />
         ))}
     </>
   )

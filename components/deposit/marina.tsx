@@ -5,7 +5,7 @@ import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { signAndBroadcastTx } from 'lib/marina'
-import { addContract } from 'lib/storage'
+import { addContractToStorage } from 'lib/storage'
 import { useContext, useState } from 'react'
 import { NetworkContext } from 'components/providers/network'
 
@@ -34,7 +34,9 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
                 setStep(1)
                 contract.txid = await signAndBroadcastTx(partialTransaction)
                 contract.network = network
-                addContract(contract) // add to local storage TODO
+                contract.borrowerPubKey = preparedTx.borrowerPublicKey
+                contract.contractParams = preparedTx.contractParams
+                addContractToStorage(contract) // add to local storage TODO
                 setResult('success')
               } catch(_) {
                 setResult('failure')

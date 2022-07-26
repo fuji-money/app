@@ -1,15 +1,18 @@
 import { contractIsExpired } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
+import { getBalance } from 'lib/marina'
 import { Contract } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
 
 interface RedeemButtonProps {
   contract: Contract
+  setAssetBalance: any
   setRedeem: any
 }
 
-const RedeemButton = ({ contract, setRedeem }: RedeemButtonProps) => {
+const RedeemButton = ({ contract, setAssetBalance, setRedeem }: RedeemButtonProps) => {
   const handleClick = async () => {
+    setAssetBalance(await getBalance(contract.synthetic))
     setRedeem(contract)
     openModal('redeem-modal')
     await prepareRedeemTx(contract)
