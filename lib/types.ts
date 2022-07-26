@@ -31,6 +31,7 @@ export interface Asset {
   icon: string
   id: string
   isSynthetic: boolean
+  isAvailable: boolean
   name: string
   precision: number
   quantity?: number
