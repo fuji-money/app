@@ -2,6 +2,7 @@ import { Contract, UtxoWithBlindPrivKey } from './types'
 import { Utxo, AddressInterface } from 'marina-provider'
 import {
   alphaServerUrl,
+  feeAmount,
   issuerPubKey,
   marinaFujiAccountID,
   marinaMainAccountID,
@@ -125,7 +126,6 @@ export async function prepareBorrowTx(
   console.log('covenantOutput', covenantOutput)
   psbt.addOutput(covenantOutput)
   // add change output
-  const feeAmount = 500 // TODO
   const collateralUtxosAmount = collateralUtxos.reduce(
     (value, utxo) => value + (utxo.value || 0),
     0,
@@ -243,7 +243,6 @@ export async function prepareRedeemTx(contract: Contract) {
     throw new Error('Invalid contract: no contract priceLevel')
 
   // fee amount will be taken from covenant
-  const feeAmount = 500 // TODO
   const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
   const network = networks.testnet // TODO
 
