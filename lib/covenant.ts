@@ -280,7 +280,7 @@ export async function prepareRedeemTx(contract: Contract) {
   );
   ionioInstance.from(
     contract.txid!,
-    0, // it should be 0, but best to store it
+    0, // it should be 0, but best to store it TODO
     {
       script: ionioInstance.scriptPubKey,
       value: confidential.satoshiToConfidentialValue(contract.collateral.quantity!),
@@ -339,7 +339,8 @@ export async function prepareRedeemTx(contract: Contract) {
   const collateralAddress = await marina.getNextAddress()
   console.log('output collateral back', collateral.quantity - payoutAmount - feeAmount)
   tx.withRecipient(
-    address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
+    // address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
+    collateralAddress.confidentialAddress,
     collateral.quantity - payoutAmount - feeAmount,
     collateral.id
   )

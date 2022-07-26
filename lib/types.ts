@@ -58,8 +58,8 @@ export interface Contract {
   network?: string
   state?: ContractState
   txid?: string
-  contractParams: any // TODO
-  borrowerPubKey: string
+  contractParams?: any // TODO
+  borrowerPubKey?: string
 }
 
 export interface Investment {
