@@ -3,8 +3,6 @@ import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
 import { prettyNumber } from 'lib/pretty'
-import { addContract } from 'lib/contracts'
-import { randomTxId } from 'lib/random'
 
 interface IntroProps {
   ticker: Ticker

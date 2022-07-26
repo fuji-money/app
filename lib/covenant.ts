@@ -24,6 +24,9 @@ import {
   getMarina,
   selectCoinsWithBlindPrivKey,
 } from './marina'
+import { synthAssetArtifact } from 'lib/artifacts'
+import * as ecc from 'tiny-secp256k1';
+import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio';
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -57,6 +60,7 @@ export async function prepareBorrowTx(
 
   // get amounts in satoshis
   const collateralAmount = collateral.quantity
+  const payoutAmount = getContractPayout(contract)
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
@@ -83,7 +87,7 @@ export async function prepareBorrowTx(
     borrowAmount: synthetic.quantity,
     collateralAsset: collateral.id,
     collateralAmount: collateral.quantity,
-    payoutAmount: getContractPayout(contract),
+    payoutAmount,
     oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
     issuerScriptProgram: `0x${issuer.output!.slice(2).toString('hex')}`,
@@ -168,7 +172,6 @@ export async function proposeBorrowContract({
     issuerScriptProgram,
     priceLevel,
     setupTimestamp,
-    fuji,
   } = contractParams
 
   // get blinding priv key for each confidential collateral utxo
@@ -221,4 +224,140 @@ export async function proposeBorrowContract({
   console.log('body', body)
   // post and return
   return postData(`${alphaServerUrl}/contracts`, body)
+}
+
+export async function prepareRedeemTx(contract: Contract) {
+  console.log('contract to redeem', contract)
+
+  // check for marina
+  const marina = await getMarina()
+  if (!marina) throw new Error('Please install Marina')
+
+  // validate contract
+  const { collateral, synthetic } = contract
+  if (!collateral.quantity)
+    throw new Error('Invalid contract: no collateral quantity')
+  if (!synthetic.quantity)
+    throw new Error('Invalid contract: no synthetic quantity')
+  if (!contract.priceLevel)
+    throw new Error('Invalid contract: no contract priceLevel')
+
+  // fee amount will be taken from covenant
+  const feeAmount = 500 // TODO
+  const payoutAmount = getContractPayout(contract)
+  const network = networks.testnet // TODO
+
+  // get ionio instance
+  const params = contract.contractParams
+  const constructorParams = [
+    // borrow asset
+    params.borrowAsset,
+    // collateral asset
+    params.collateralAsset,
+    // borrow amount
+    params.borrowAmount,
+    // payout on redeem amount for issuer
+    payoutAmount,
+    // borrower public key
+    contract.borrowerPubKey,
+    // oracle public key
+    params.oraclePk,
+    // issuer public key
+    params.issuerPk,
+    // issuer output
+    params.issuerScriptProgram, // segwit program
+    // price level
+    numberToHexEncodedUint64LE(params.priceLevel),
+    // timestamp
+    numberToHexEncodedUint64LE(params.setupTimestamp),
+  ]
+  console.log('constructorParams to ionio contract', constructorParams)
+  const ionioInstance = new IonioContract(
+    synthAssetArtifact as Artifact,
+    constructorParams,
+    network,
+    ecc
+  );
+  ionioInstance.from(
+    contract.txid!,
+    0, // it should be 0, but best to store it
+    {
+      script: ionioInstance.scriptPubKey,
+      value: confidential.satoshiToConfidentialValue(contract.collateral.quantity!),
+      asset: AssetHash.fromHex(contract.collateral.id, false).bytes,
+      nonce: Buffer.alloc(0),
+    }
+  )
+  console.log('ionioInstance', ionioInstance)
+
+  // validate we have sufficient synthetic funds
+  const syntheticUtxos = selectCoinsWithBlindPrivKey(
+    await marina.getCoins([marinaMainAccountID]),
+    await marina.getAddresses([marinaMainAccountID]),
+    synthetic.id,
+    synthetic.quantity,
+  )
+  if (syntheticUtxos.length === 0) throw new Error('Not enough synthetic funds')
+  console.log('synthetic.quantity', synthetic.quantity)
+  console.log('syntheticUtxos', syntheticUtxos)
+
+  // calculate synthetic change amount
+  const syntheticUtxosAmount = syntheticUtxos.reduce(
+    (value, utxo) => value + (utxo.value || 0),
+    0,
+  )
+  const syntheticChangeAmount = syntheticUtxosAmount - synthetic.quantity
+
+  // get issuer address
+  const issuer = payments.p2wpkh({
+    pubkey: Buffer.from(issuerPubKey, 'hex'),
+    network: network,
+  })
+
+
+  console.log('input covenant', contract.collateral.quantity)
+  // get redeem transaction
+  const marinaSigner = {
+    signTransaction: async (base64: string) => await marina.signTransaction(base64)
+  }
+  const tx = ionioInstance.functions.redeem(marinaSigner)
+  // add synthetic inputs
+  // are these inputs confidential? if so, we need to pass the unblindData field of the coin
+  // https://github.com/ionio-lang/ionio/blob/master/packages/ionio/test/e2e/transferWithKey.test.ts#L54
+  for (const utxo of syntheticUtxos) {
+    console.log('input synthetic utxo', utxo.value)
+    const { txid, vout, prevout, unblindData } = utxo
+    tx.withUtxo({txid, vout, prevout, unblindData})
+  }
+  // burn synthetic
+  console.log('output op_return', synthetic.quantity)
+  tx.withOpReturn(synthetic.quantity, synthetic.id)
+  // payout to issuer
+  console.log('output payout to issuer', payoutAmount)
+  tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
+  // get collateral back
+  const collateralAddress = await marina.getNextAddress()
+  console.log('output collateral back', collateral.quantity - payoutAmount - feeAmount)
+  tx.withRecipient(
+    address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
+    collateral.quantity - payoutAmount - feeAmount,
+    collateral.id
+  )
+  // add synthetic change if any
+  if (syntheticChangeAmount > 0) {
+    const borrowChangeAddress = await marina.getNextChangeAddress()
+    console.log('output synthetic change', syntheticChangeAmount)
+    tx.withRecipient(borrowChangeAddress.confidentialAddress, syntheticChangeAmount, synthetic.id);
+  }
+  tx.withFeeOutput(feeAmount)
+  console.log('redeem tx', tx)
+  await tx.unlock()
+  // you can access the psbt directly
+  tx.psbt.finalizeAllInputs();
+  const rawHex = tx.psbt.extractTransaction().toHex()
+  console.log('rawHex', rawHex)
+  const sentTransaction = await marina.broadcastTransaction(rawHex)
+  console.log('txid', sentTransaction.txid)
+  console.log('unlocked tx', tx)
+  // return new Promise(resolve => setTimeout(resolve, 2000))
 }
