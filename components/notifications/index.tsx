@@ -8,6 +8,7 @@ import RatioUnsafeNotification from 'components/notifications/ratioUnsafe'
 import BorrowFeeNotification from './borrowFee'
 import { getContractPayout } from 'lib/contracts'
 import BelowDustLimitNotification from './belowDustLimit'
+import { minDustLimit } from 'lib/constants'
 
 interface NotificationsProps {
   contract: Contract
@@ -52,18 +53,17 @@ const Notifications = ({
   }, [contract.oracles])
 
   useEffect(() => {
-    const dustLimit = 300
-    setBelowDustLimit(getContractPayout(contract) < dustLimit)
+    setBelowDustLimit(getContractPayout(contract) < minDustLimit)
   }, [contract])
 
   return (
     <>
-      {notEnoughFunds && <NotEnoughFundsNotification />}
       {notEnoughOracles && <NotEnoughOraclesNotification />}
       {belowDustLimit && <BelowDustLimitNotification />}
-      <BorrowFeeNotification payout={payout} />
+      {notEnoughFunds && <NotEnoughFundsNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
       {ratioUnsafe && <RatioUnsafeNotification />}
+      <BorrowFeeNotification payout={payout} />
     </>
   )
 }

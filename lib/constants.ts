@@ -17,3 +17,5 @@ export const marinaFujiAccountID = 'fuji'
 export const marinaMainAccountID = 'mainAccount'
 
 export const alphaServerUrl = 'https://alpha-factory.fuji.money'
+
+export const minDustLimit = 300
