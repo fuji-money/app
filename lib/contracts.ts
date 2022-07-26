@@ -57,8 +57,8 @@ export const getCollateralQuantity = (
 }
 
 // get contract payout
-export const getContractPayout = (contract: Contract): number => {
-  const collateralAmount = contract.collateral.quantity || 0
+export const getContractPayout = (contract: Contract, quantity?: number): number => {
+  const collateralAmount = quantity || contract.collateral.quantity || 0
   return Math.ceil(collateralAmount * 0.0025) // 25 basis points, 0.25%
 }
 

@@ -7,7 +7,6 @@ import {
   marinaMainAccountID,
   oraclePubKey,
 } from 'lib/constants'
-import { getContractPayout } from 'lib/contracts'
 import { numberToHexEncodedUint64LE } from './utils'
 import {
   networks,
@@ -27,6 +26,7 @@ import {
 import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1';
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio';
+import { getCollateralQuantity, getContractPayout } from './contracts'
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -60,7 +60,7 @@ export async function prepareBorrowTx(
 
   // get amounts in satoshis
   const collateralAmount = collateral.quantity
-  const payoutAmount = getContractPayout(contract)
+  const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
@@ -244,7 +244,7 @@ export async function prepareRedeemTx(contract: Contract) {
 
   // fee amount will be taken from covenant
   const feeAmount = 500 // TODO
-  const payoutAmount = getContractPayout(contract)
+  const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
   const network = networks.testnet // TODO
 
   // get ionio instance

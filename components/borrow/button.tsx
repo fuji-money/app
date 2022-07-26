@@ -1,5 +1,4 @@
 import { minDustLimit } from 'lib/constants'
-import { getContractPayout } from 'lib/contracts'
 import { Contract } from 'lib/types'
 
 interface BorrowButtonProps {
@@ -25,7 +24,8 @@ const BorrowButton = ({
     contract.synthetic.value > 0 &&
     contract.oracles &&
     contract.oracles.length > 0 &&
-    getContractPayout(contract) > minDustLimit
+    contract.payoutAmount &&
+    contract.payoutAmount >= minDustLimit
 
   return (
     <div className="has-text-centered">

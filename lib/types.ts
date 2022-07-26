@@ -60,6 +60,7 @@ export interface Contract {
   txid?: string
   contractParams?: any // TODO
   borrowerPubKey?: string
+  payoutAmount?: number
 }
 
 export interface Investment {
