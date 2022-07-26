@@ -72,7 +72,7 @@ const ExchangeTransactions = () => {
                   </div>
                   <div className="level-right">
                     <p className="has-text-weight-bold">
-                      {prefix} {tx.value} fBMN
+                      {prefix} {tx.value} FBMN
                     </p>
                   </div>
                 </div>

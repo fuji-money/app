@@ -30,7 +30,7 @@ const fusd: Asset = {
   isSynthetic: true,
   name: 'FUJI USD',
   precision: 8,
-  ticker: 'fUSD',
+  ticker: 'FUSD',
   value: 1,
 }
 
@@ -40,17 +40,16 @@ const fbmn: Asset = {
   isSynthetic: true,
   name: 'FUJI BMN',
   precision: 8,
-  ticker: 'fBMN',
+  ticker: 'FBMN',
   value: 309415.05,
 }
 
 const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
 
 const oracles: Oracle[] = [
-  { id: 'id1', name: 'provider 1' },
-  { id: 'id2', name: 'provider 2' },
-  { id: 'id3', name: 'provider 3' },
-  { id: 'id4', name: 'provider 4' },
+  { id: 'id0', name: 'Fuji.Money', disabled: true },
+  { id: 'id1', name: 'Bitfinex (Coming soon)', disabled: true },
+  { id: 'id2', name: 'Blockstream (Coming soon)', disabled: true },
 ]
 
 export const apiAssets = async (): Promise<Asset[]> => {

@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 const MultiplyOffer = () => {
   return (
-    <div className>
+    <div>
       <div className="is-box has-pink-border mx-auto mt-6">
         <div className="icon-container is-justify-content-center level">
           <Image

@@ -77,6 +77,7 @@ export interface Offer {
 export interface Oracle {
   id: string
   name: string
+  disabled: boolean
 }
 
 export interface Stock {
