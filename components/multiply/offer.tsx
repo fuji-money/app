@@ -26,10 +26,10 @@ const MultiplyOffer = () => {
             width={60}
           />
         </div>
-        <h2 className="has-text-centered">BTC-L</h2>
+        <h2 className="has-text-centered">BTC-LONG</h2>
         <p className="has-text-centered is-size-7 mt-4 mb-5 px-4">
           Only the collateral will be locked on the Liquid Network, redeemable
-          anytime. The borrow amount is converted into BTC automatically.
+          anytime. The FUJI USD amount is converted into BTC automatically.
         </p>
         <div className="is-flex is-justify-content-space-between">
           <div>
@@ -42,12 +42,12 @@ const MultiplyOffer = () => {
             <p className="is-secondary-purple has-text-weight-bold is-size-7 has-text-right">
               Redeem & Swap fee
             </p>
-            <h3 className="is-purple has-text-right">0.25%</h3>
+            <h3 className="is-purple has-text-right">1.5%</h3>
           </div>
         </div>
         <p className="has-text-centered mt-2">
-          <Link href={`/multiply/btc-long`}>
-            <a className="button is-primary ml-3">Multiply</a>
+          <Link href={`/multiply/btc-long`} passHref>
+            <button disabled className="button is-primary ml-3">Coming soon</button>
           </Link>
         </p>
       </div>
