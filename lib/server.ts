@@ -6,6 +6,7 @@ const lbtc: Asset = {
   icon: '/images/assets/lbtc.svg',
   id: '144c654344aa716d6f3abcc1ca90e5641e4e2a7f633bc09fe3baf64585819a49',
   isSynthetic: false,
+  isAvailable: false,
   name: 'Liquid BTC',
   precision: 8,
   ratio: 200,
@@ -17,6 +18,7 @@ const usdt: Asset = {
   icon: '/images/assets/usdt.svg',
   id: 'f3d1ec678811398cd2ae277cbe3849c6f6dbd72c74bc542f7c4b11ff0e820958',
   isSynthetic: false,
+  isAvailable: false,
   name: 'Tether USD',
   precision: 8,
   ratio: 150,
@@ -28,9 +30,10 @@ const fusd: Asset = {
   icon: '/images/assets/fusd.svg',
   id: '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568',
   isSynthetic: true,
+  isAvailable: true,
   name: 'FUJI USD',
   precision: 8,
-  ticker: 'fUSD',
+  ticker: 'FUSD',
   value: 1,
 }
 
@@ -38,19 +41,19 @@ const fbmn: Asset = {
   icon: '/images/assets/fbmn.svg',
   id: '0256e332a5134f31dbea899e0cb7c75d3e2cff969d3958d066f8198caaee3a61',
   isSynthetic: true,
+  isAvailable: false,
   name: 'FUJI BMN',
   precision: 8,
-  ticker: 'fBMN',
+  ticker: 'FBMN',
   value: 309415.05,
 }
 
 const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
 
 const oracles: Oracle[] = [
-  { id: 'id1', name: 'provider 1' },
-  { id: 'id2', name: 'provider 2' },
-  { id: 'id3', name: 'provider 3' },
-  { id: 'id4', name: 'provider 4' },
+  { id: 'id0', name: 'Fuji.Money', disabled: false },
+  { id: 'id1', name: 'Bitfinex (Coming soon)', disabled: true },
+  { id: 'id2', name: 'Blockstream (Coming soon)', disabled: true },
 ]
 
 export const apiAssets = async (): Promise<Asset[]> => {
@@ -73,6 +76,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fusd'),
+    isAvailable: true
   },
   {
     id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
@@ -80,6 +84,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fbmn'),
+    isAvailable: false
   },
   {
     id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
@@ -87,6 +92,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fbmn'),
+    isAvailable: false
   },
 ]
 

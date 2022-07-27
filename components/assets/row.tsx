@@ -10,7 +10,7 @@ interface AssetRowProps {
 
 const AssetRow = ({ asset }: AssetRowProps) => {
   return (
-    <div className="is-box has-pink-border row">
+    <div className={`is-box has-pink-border row ${!asset.isAvailable && `disabled`}`}>
       <div className="columns level">
         <div className="column is-flex is-3">
           <div className="pr-4">
@@ -29,10 +29,26 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           </p>
         </div>
         <div className="column is-6 has-text-right">
-          <TradeButton />
-          <FilterButton ticker={asset.ticker} />
+          {
+            asset.isAvailable ?
+              (
+                <>
+                  <TradeButton />
+                  <FilterButton ticker={asset.ticker} />
+                </>
+              ) : (
+                <p className="is-size-6 has-text-weight-bold has-text-right mr-3">
+                  Coming soon
+                </p>
+              )
+          }
         </div>
       </div>
+      <style jsx>{`
+        .disabled {
+          opacity: 0.5;
+        }
+      `}</style>
     </div>
   )
 }
