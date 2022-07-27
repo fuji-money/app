@@ -142,12 +142,14 @@ export async function prepareBorrowTx(
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString();
+  const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
+  console.log('borrowerPublicKey', borrowerPublicKey)
   return {
     psbt,
     contractParams,
     changeAddress,
     borrowerAddress,
-    borrowerPublicKey: (covenantAddress as any).constructorParams.fuji,
+    borrowerPublicKey,
     collateralUtxos,
   }
 }
