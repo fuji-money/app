@@ -51,7 +51,7 @@ const fbmn: Asset = {
 const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
 
 const oracles: Oracle[] = [
-  { id: 'id0', name: 'Fuji.Money', disabled: true },
+  { id: 'id0', name: 'Fuji.Money', disabled: false },
   { id: 'id1', name: 'Bitfinex (Coming soon)', disabled: true },
   { id: 'id2', name: 'Blockstream (Coming soon)', disabled: true },
 ]
