@@ -271,13 +271,13 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     numberToHexEncodedUint64LE(params.setupTimestamp),
   ]
   console.log('constructorParams to ionio contract', constructorParams)
-  const ionioInstance = new IonioContract(
+  let ionioInstance = new IonioContract(
     synthAssetArtifact as Artifact,
     constructorParams,
     network,
     ecc
   );
-  ionioInstance.from(
+  ionioInstance = ionioInstance.from(
     contract.txid!,
     0, // it should be 0, but best to store it TODO
     {
@@ -317,7 +317,12 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   console.log('input covenant', contract.collateral.quantity)
   // get redeem transaction
   const marinaSigner = {
-    signTransaction: async (base64: string) => await marina.signTransaction(base64)
+    signTransaction: async (base64: string) => {
+      console.log('marinaSigner marina', marina)
+      const signed = await marina.signTransaction(base64)
+      console.log('marinaSigner signed', signed)
+      return signed
+    }
   }
   const tx = ionioInstance.functions.redeem(marinaSigner)
   // add synthetic inputs
