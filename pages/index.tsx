@@ -5,9 +5,28 @@ import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
   const router = useRouter()
-  if (typeof window !== 'undefined') router.push('/dashboard')
+  const handleSubmit = async (event: any) => {
+    event.preventDefault()
 
-  return <></> // TODO
+    const email = event.target.email.value
+
+    // Once we have the did from magic, login with our own API
+    const authRequest = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(email),
+    })
+
+    console.log('page index authRequest', authRequest.status)
+    if (authRequest.ok) {
+      // We successfully logged in, our API
+      // set authorization cookies and now we
+      // can redirect to the dashboard!
+      router.push('/dashboard')
+    } else {
+      console.log('Email not in short list')
+    }
+  }
 
   return (
     <section>
@@ -21,31 +40,30 @@ const Home: NextPage = () => {
             height="128"
           />
         </p>
-        <p className="links-intro">
-          Choose any link below to access the decentralized web app
-        </p>
-        <div className="links-wrapper">
-          <p>
-            <Link href="/dashboard">
-              <a>fuji.money</a>
-            </Link>
-          </p>
-          <p>
-            <a href="https://tryfuji.com">tryfuji.com</a>
-          </p>
-          <p>
-            <a href="https://fujiapp.io">fujiapp.io</a>
-          </p>
-        </div>
+        <p className="intro">Login with your email</p>
+        <form onSubmit={handleSubmit}>
+          <input name="email" type="email" placeholder="me@email.com" />
+          <br />
+          <br />
+          <button className="button is-primary">Log in</button>
+        </form>
       </div>
 
       <style jsx>{`
-        .links-intro {
+        input {
+          border: 2px solid #88389d;
+          border-radius: 96px;
+          color: #88389d;
+          line-height: inherit;
+          min-width: 200px;
+          padding: 10px;
+        }
+        .links-.intro {
           color: #2c024d;
           display: inline-block;
-          font-size: 1.5rem;
+          font-size: 1.2rem;
           font-weight: 400;
-          margin: auto;
+          margin: 1em auto;
           max-width: 500px;
         }
         .logo {
