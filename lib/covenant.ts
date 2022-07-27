@@ -325,6 +325,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     }
   }
   const tx = ionioInstance.functions.redeem(marinaSigner)
+  console.log('initial tx', tx)
   // add synthetic inputs
   // are these inputs confidential? if so, we need to pass the unblindData field of the coin
   // https://github.com/ionio-lang/ionio/blob/master/packages/ionio/test/e2e/transferWithKey.test.ts#L54
@@ -357,13 +358,12 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   tx.withFeeOutput(feeAmount)
   console.log('redeem tx', tx)
   setStep(1)
-  await tx.unlock()
-  // you can access the psbt directly
-  tx.psbt.finalizeAllInputs();
-  const rawHex = tx.psbt.extractTransaction().toHex()
+  const signed = await tx.unlock()
+  signed.psbt.finalizeInput(1);
+  const rawHex = signed.psbt.extractTransaction().toHex()
   console.log('rawHex', rawHex)
   const sentTransaction = await marina.broadcastTransaction(rawHex)
   console.log('txid', sentTransaction.txid)
-  console.log('unlocked tx', tx)
+  console.log('signed tx', signed)
   // return new Promise(resolve => setTimeout(resolve, 2000))
 }
