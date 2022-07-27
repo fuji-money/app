@@ -64,7 +64,7 @@ const BorrowForm = ({
         <span className="stepper">3</span>
         Confirm collateral amount
       </h3>
-      <p className="is-size-6 ml-5 mb-4">Amount of collateral to be locked in the contract</p>
+      <p className="is-size-6 ml-5 mb-4">Amount of collateral to be locked in the contract.</p>
       <Collateral asset={collateral} />
       <h3 className="mt-6">
         <span className="stepper">4</span>
