@@ -246,6 +246,13 @@
   dependencies:
     styled-jsx "*"
 
+"@types/tiny-secp256k1@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@types/tiny-secp256k1/-/tiny-secp256k1-2.0.1.tgz#a2a1a1e8f377ac63419464c6ce05b8bec109c39c"
+  integrity sha512-3UmSOVZR8nqCk50r/ODnT58+FutNzf1NpJHSW69Lc33ZDvOVciKHYOcBN/BXPzYWzWvM0GvHVnxv6HNHxOKXbg==
+  dependencies:
+    tiny-secp256k1 "*"
+
 "@types/wif@^2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@types/wif/-/wif-2.0.2.tgz#5bd845e29406bc7d49acca6d2a6c3230f3b53d3c"
@@ -1548,7 +1555,7 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
-liquidjs-lib@^6.0.2-liquid.7, liquidjs-lib@^6.0.2-liquid.8, "liquidjs-lib@git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support":
+liquidjs-lib@^6.0.2-liquid.7, "liquidjs-lib@git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support":
   version "6.0.2-liquid.8"
   resolved "git+https://github.com/louisinger/liquidjs-lib.git#680f5d94d27aa85935fe4a3caa444bf217e3739b"
   dependencies:

@@ -1,6 +1,7 @@
 import { contractIsExpired } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { getBalance } from 'lib/marina'
+import { redeemContractToStorage } from 'lib/storage'
 import { Contract } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
 
@@ -17,6 +18,7 @@ const RedeemButton = ({ contract, setAssetBalance, setRedeem, setStep }: RedeemB
     setRedeem(contract)
     openModal('redeem-modal')
     await prepareRedeemTx(contract, setStep)
+    redeemContractToStorage(contract)
     closeModal('redeem-modal')
   }
 

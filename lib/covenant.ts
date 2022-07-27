@@ -25,8 +25,8 @@ import {
   selectCoinsWithBlindPrivKey,
 } from './marina'
 import { synthAssetArtifact } from 'lib/artifacts'
-import * as ecc from 'tiny-secp256k1';
-import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio';
+import * as ecc from 'tiny-secp256k1'
+import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getCollateralQuantity, getContractPayout } from './contracts'
 
 interface PreparedBorrowTx {
@@ -141,7 +141,7 @@ export async function prepareBorrowTx(
 
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
-  contractParams.priceLevel = contract.priceLevel.toString();
+  contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   console.log('borrowerPublicKey', borrowerPublicKey)
   return {
@@ -277,18 +277,18 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     synthAssetArtifact as Artifact,
     constructorParams,
     network,
-    ecc
-  );
-  ionioInstance = ionioInstance.from(
-    contract.txid!,
-    0, // it should be 0, but best to store it TODO
-    {
-      script: ionioInstance.scriptPubKey,
-      value: confidential.satoshiToConfidentialValue(contract.collateral.quantity!),
-      asset: AssetHash.fromHex(contract.collateral.id, false).bytes,
-      nonce: Buffer.alloc(0),
-    }
+    ecc,
   )
+
+  // find coin for this contract
+  const coins = await marina.getCoins([marinaFujiAccountID])
+  const coinToRedeem = coins.find(
+    (c) => c.txid === contract.txid && c.vout === 0,
+  )
+  if (!coinToRedeem) throw new Error('Coin not found')
+
+  const { txid, vout, prevout, unblindData } = coinToRedeem
+  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
   console.log('ionioInstance', ionioInstance)
 
   // validate we have sufficient synthetic funds
@@ -315,7 +315,6 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     network: network,
   })
 
-
   console.log('input covenant', contract.collateral.quantity)
   // get redeem transaction
   const marinaSigner = {
@@ -324,7 +323,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
       const signed = await marina.signTransaction(base64)
       console.log('marinaSigner signed', signed)
       return signed
-    }
+    },
   }
   const tx = ionioInstance.functions.redeem(marinaSigner)
   console.log('initial tx', tx)
@@ -334,7 +333,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   for (const utxo of syntheticUtxos) {
     console.log('input synthetic utxo', utxo.value)
     const { txid, vout, prevout, unblindData } = utxo
-    tx.withUtxo({txid, vout, prevout, unblindData})
+    tx.withUtxo({ txid, vout, prevout, unblindData })
   }
   // burn synthetic
   console.log('output op_return', synthetic.quantity)
@@ -344,24 +343,31 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
   // get collateral back
   const collateralAddress = await marina.getNextAddress()
-  console.log('output collateral back', collateral.quantity - payoutAmount - feeAmount)
+  console.log(
+    'output collateral back',
+    collateral.quantity - payoutAmount - feeAmount,
+  )
   tx.withRecipient(
     // address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
     collateralAddress.confidentialAddress,
     collateral.quantity - payoutAmount - feeAmount,
-    collateral.id
+    collateral.id,
   )
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
     console.log('output synthetic change', syntheticChangeAmount)
-    tx.withRecipient(borrowChangeAddress.confidentialAddress, syntheticChangeAmount, synthetic.id);
+    tx.withRecipient(
+      borrowChangeAddress.confidentialAddress,
+      syntheticChangeAmount,
+      synthetic.id,
+    )
   }
   tx.withFeeOutput(feeAmount)
   console.log('redeem tx', tx)
   setStep(1)
   const signed = await tx.unlock()
-  signed.psbt.finalizeInput(1);
+  signed.psbt.finalizeInput(1)
   const rawHex = signed.psbt.extractTransaction().toHex()
   console.log('rawHex', rawHex)
   const sentTransaction = await marina.broadcastTransaction(rawHex)
