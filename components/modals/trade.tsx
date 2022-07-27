@@ -5,10 +5,10 @@ const TradeModal = () => {
   return (
     <Modal id="trade-modal">
       <h3 className="mb-5">Trade</h3>
-      <p className="is-size-7 mb-5">Trade your assets in this exchanges:</p>
+      <p className="is-size-7 mb-5">FUJI assets are available for trade in the following venues</p>
       <div className="is-flex is-justify-content-center box-container">
         <div>
-          <a href="https://tdex.network/">
+          <a href="https://tdex.network">
             <p>
               <Image
                 src="/images/trade/tdex.svg"
@@ -21,7 +21,7 @@ const TradeModal = () => {
           </a>
         </div>
         <div>
-          <a href="https://demo.bitmatrix.app/">
+          <a href="https://beta.bitmatrix.app">
             <p>
               <Image
                 src="/images/trade/bitmatrix.svg"
@@ -33,7 +33,7 @@ const TradeModal = () => {
             <p>Bitmatrix</p>
           </a>
         </div>
-        <div>
+        {/* <div>
           <a href="https://dex.vulpem.com/">
             <p>
               <Image
@@ -45,7 +45,7 @@ const TradeModal = () => {
             </p>
             <p>Vulpem</p>
           </a>
-        </div>
+        </div> */}
       </div>
       <style jsx>{`
         div.box-container > div {
