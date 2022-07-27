@@ -31,6 +31,7 @@ export interface Asset {
   icon: string
   id: string
   isSynthetic: boolean
+  isAvailable: boolean
   name: string
   precision: number
   quantity?: number
@@ -72,11 +73,13 @@ export interface Offer {
   oracles: string[]
   payout: number
   synthetic: Asset
+  isAvailable: boolean
 }
 
 export interface Oracle {
   id: string
   name: string
+  disabled: boolean
 }
 
 export interface Stock {

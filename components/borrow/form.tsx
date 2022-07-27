@@ -45,7 +45,7 @@ const BorrowForm = ({
         <span className="stepper">1</span>
         How much {synthetic.ticker} you want to borrow?
       </h3>
-      <p className="is-size-6 ml-5 mb-4">Lorem ipsum dolor</p>
+      <p className="is-size-6 ml-5 mb-4">Position can be closed by repaying the borrowed amount.</p>
       <Synthetic
         asset={synthetic}
         setSyntheticQuantity={setSyntheticQuantity}
@@ -54,7 +54,7 @@ const BorrowForm = ({
         <span className="stepper">2</span>
         Set a collateral ratio
       </h3>
-      <p className="is-size-6 ml-5 mb-4">Lorem ipsum dolor</p>
+      <p className="is-size-6 ml-5 mb-4">Position will be liquidated below the minimum.</p>
       <Ratio
         collateral={collateral}
         ratio={ratio}
@@ -64,14 +64,14 @@ const BorrowForm = ({
         <span className="stepper">3</span>
         Confirm collateral amount
       </h3>
-      <p className="is-size-6 ml-5 mb-4">Lorem ipsum dolor</p>
+      <p className="is-size-6 ml-5 mb-4">Amount of collateral to be locked in the contract.</p>
       <Collateral asset={collateral} />
       <h3 className="mt-6">
         <span className="stepper">4</span>
         Select oracle providers
       </h3>
       <p className="is-size-6 ml-5 mb-4">
-        Gravida sed gravida in rhoncus enim. Nullam vitae at.
+        You can choose one or more oracles to use to determine the price of the collateral.
       </p>
       <Oracles
         contract={contract}
