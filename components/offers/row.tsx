@@ -19,7 +19,7 @@ interface OfferRowProps {
 
 const OfferRow = ({ offer }: OfferRowProps) => {
   return (
-    <div className={`is-box has-pink-border row ${!offer.isAvailable && `disabled`}`}>
+    <div className={`is-box has-pink-border row ${!offer.isAvailable && 'disabled'}`}>
       <div className="columns level">
         <div className="column is-flex is-2">
           <div className="icon-container">
