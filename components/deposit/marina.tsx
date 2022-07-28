@@ -11,11 +11,12 @@ import { NetworkContext } from 'components/providers/network'
 
 interface MarinaProps {
   contract: Contract
-  topup: number | undefined
+  setError: any
   setResult: any
+  topup: number | undefined
 }
 
-const Marina = ({ contract, topup, setResult }: MarinaProps) => {
+const Marina = ({ contract, setError, setResult, topup }: MarinaProps) => {
   const { ticker, value } = contract.collateral
   const [ step, setStep ] = useState(0)
   const quantity = topup || contract.collateral.quantity
@@ -36,7 +37,8 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
                 contract.network = network
                 addContract(contract) // add to local storage TODO
                 setResult('success')
-              } catch(_) {
+              } catch(error) {
+                setError(error)
                 setResult('failure')
               }
             }}
