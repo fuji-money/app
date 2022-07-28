@@ -48,6 +48,5 @@ export const prettyRatio = (ratio: number): number =>
   parseFloat(ratio.toFixed(2))
 
 // show asset quantity in unities
-export const prettyQuantity = (asset: Asset): string => {
-  return prettyNumber((asset.quantity || 0) / Math.pow(10, asset.precision))
-}
+export const prettyQuantity = (asset: Asset): string =>
+  prettyNumber(fromSatoshis(asset.quantity))

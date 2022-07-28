@@ -1,11 +1,11 @@
 import { getNetwork } from './marina'
 import { prettyAsset } from './pretty'
-import { randomTxId } from './random'
 import { Activity, ActivityType, Contract } from './types'
 
 export function addActivity(contract: Contract, type: ActivityType): void {
   if (typeof window === 'undefined') return
-  const txid = contract.txid || randomTxId() // TODO
+  if (!contract.txid) throw new Error('Error: contract with no txid')
+  const txid = contract.txid
   const prefix = `Contract ${type.toLowerCase()} with success`
   const suffix = prettyAsset(contract.synthetic)
   const message = `${prefix} - ${suffix}`

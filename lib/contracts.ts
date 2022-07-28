@@ -47,20 +47,22 @@ export const getCollateralQuantity = (
   ratio: number,
 ): number => {
   const { collateral, synthetic } = contract
-  return Math.ceil(
+  return Decimal.ceil(
     Decimal.mul(synthetic.quantity || 0, synthetic.value)
       .mul(ratio)
       .div(100)
       .div(collateral.value)
-      .toNumber(),
-  )
+  ).toNumber()
 }
 
 // get contract payout
 export const getContractPayout = (contract: Contract, quantity?: number): number => {
   const collateralAmount = quantity || contract.collateral.quantity || 0
   const payout = contract.payout ||  0.25 // 25 basis points, 0.25%
-  return Decimal.ceil(Decimal.mul(collateralAmount, payout).div(100)).toNumber()
+  return Decimal.ceil(
+    Decimal.mul(collateralAmount, payout)
+      .div(100)
+  ).toNumber()
 }
 
 // get contract price level
