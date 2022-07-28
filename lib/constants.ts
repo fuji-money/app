@@ -19,3 +19,5 @@ export const alphaServerUrl = process.env.NEXT_PUBLIC_FACTORY_URL || 'https://al
 
 export const minDustLimit = 500
 export const feeAmount = 500
+
+export const twitterMessage = "I'm using fuji.money, give it a try"

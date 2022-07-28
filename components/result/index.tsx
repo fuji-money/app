@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import ExplorerLink from 'components/links/explorer'
+import TwitterLink from 'components/links/twitter'
+import { twitterMessage } from 'lib/constants'
 
 const Success = ({ cleanUp, txid }: { cleanUp: any, txid: any }) => {
   return (
@@ -15,6 +17,7 @@ const Success = ({ cleanUp, txid }: { cleanUp: any, txid: any }) => {
       </p>
       <h2 className="mt-4 mb-4">Success</h2>
       <ExplorerLink txid={txid} />
+      <TwitterLink message={twitterMessage} />
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">
           <a className="button is-primary is-cta" onClick={cleanUp}>
