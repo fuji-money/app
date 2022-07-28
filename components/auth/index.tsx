@@ -21,4 +21,5 @@ export default function Auth({ children }: AuthProps) {
   })
 
   if (validUser) return <>{children}</>
+  return <></>
 }
