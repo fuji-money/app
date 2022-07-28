@@ -2,7 +2,7 @@ import Notification from './notification'
 
 const NotEnoughFundsNotification = () => {
   const label = 'Not enough funds on Marina'
-  const type = 'danger'
+  const type = 'warning'
   return <Notification label={label} type={type} />
 }
 
