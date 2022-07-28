@@ -1,7 +1,6 @@
-import { userNotAllowed } from 'lib/auth'
-import { fetchURL, postData } from 'lib/fetch'
+import { postData } from 'lib/fetch'
 import { useRouter } from 'next/router'
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 
 interface AuthProps {
   children: ReactNode
@@ -9,15 +8,17 @@ interface AuthProps {
 
 export default function Auth({ children }: AuthProps) {
   const router = useRouter()
+  const [validUser, setValidUser] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const validUser = await postData('/api/login/check', document.cookie)
-      if (!validUser) router.push('/')
+      const valid = await postData('/api/login/check', document.cookie)
+      if (!valid) router.push('/')
+      setValidUser(valid)
     }
     if (typeof document === 'undefined' || !document.cookie) router.push('/')
     checkAuth()
   })
 
-  return <>{children}</>
+  if (validUser) return <>{children}</>
 }
