@@ -1,6 +1,6 @@
+import { setAuthCookie } from 'lib/auth'
 import type { NextPage } from 'next'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 
 const Home: NextPage = () => {
@@ -10,21 +10,20 @@ const Home: NextPage = () => {
 
     const email = event.target.email.value
 
-    // Once we have the did from magic, login with our own API
-    const authRequest = await fetch('/api/login', {
+    // check if email is valid, gets cookie value
+    const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(email),
     })
 
-    console.log('page index authRequest', authRequest.status)
-    if (authRequest.ok) {
-      // We successfully logged in, our API
-      // set authorization cookies and now we
-      // can redirect to the dashboard!
+    if (res.ok) {
+      const cookie = await res.json()
+      setAuthCookie(cookie)
       router.push('/dashboard')
     } else {
       console.log('Email not in short list')
+      // deleteCookie()
     }
   }
 

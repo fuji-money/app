@@ -6,6 +6,7 @@ import TradeModal from 'components/modals/trade'
 import Breadcrumbs from 'components/breadcrumbs'
 import { WalletProvider } from 'components/providers/wallet'
 import { NetworkProvider } from 'components/providers/network'
+import Auth from 'components/auth'
 
 interface LayoutProps {
   children: ReactNode
@@ -29,18 +30,20 @@ export default function Layout({ children }: LayoutProps) {
     )
   }
   return (
-    <WalletProvider>
-      <NetworkProvider>
-        <Navbar />
-        <main>
-          <div className="container">
-            <Breadcrumbs />
-          </div>
-          <div className="container">{children}</div>
-        </main>
-        <Footer />
-        <TradeModal />
-      </NetworkProvider>
-    </WalletProvider>
+    <Auth>
+      <WalletProvider>
+        <NetworkProvider>
+          <Navbar />
+          <main>
+            <div className="container">
+              <Breadcrumbs />
+            </div>
+            <div className="container">{children}</div>
+          </main>
+          <Footer />
+          <TradeModal />
+        </NetworkProvider>
+      </WalletProvider>
+    </Auth>
   )
 }
