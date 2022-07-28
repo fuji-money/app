@@ -1,5 +1,5 @@
 import { getContractPayout } from 'lib/contracts'
-import { prettyNumber } from 'lib/pretty'
+import { prettyNumber, prettyQuantity } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
 
@@ -8,7 +8,7 @@ interface BorrowInfoProps {
 }
 
 const BorrowInfo = ({ contract }: BorrowInfoProps) => {
-  const { collateral, payout, synthetic } = contract
+  const { collateral, priceLevel, contractParams, synthetic } = contract
   const { ticker, value } = collateral
   const payoutAmount = getContractPayout(contract)
   return (
@@ -17,24 +17,23 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
         <div className="level-left">
           <div className="level-item">
             <div>
-              <p>Oracle price</p>
-              <p>Payout amount</p>
-              <p>Collateral price</p>
+              <p>Current reference price</p>
+              <p>Liquidation price level</p>
+              <p>Borrow amount</p>
+              <p>Collateral amount</p>
+              <p>Redemption fee</p>
             </div>
           </div>
         </div>
         <div className="level-right">
           <div className="level-item has-text-right">
             <div className="has-text-right">
-              <p>
-                1 {synthetic.ticker} = {prettyNumber(synthetic.value)} USDt
-              </p>
-              <p>
-                {payout}% = {prettyNumber(payoutAmount)} {ticker}
-              </p>
-              <p>
-                1 {ticker} = {prettyNumber(value)} USDt
-              </p>
+              <p>{prettyNumber(value)}</p>
+              <p>{prettyNumber(priceLevel)}</p>
+              <p>{prettyQuantity(synthetic)} {synthetic.ticker}</p>
+              <p>{prettyQuantity(collateral)} {collateral.ticker}</p>
+              <p>{prettyNumber(fromSatoshis(payoutAmount))} {collateral.ticker}</p>
+              <p>{contractParams?.setupTimestamp}</p>
             </div>
           </div>
         </div>
