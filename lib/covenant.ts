@@ -282,6 +282,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
 
   // find coin for this contract
   const coins = await marina.getCoins([marinaFujiAccountID])
+// TODO stores the vout in storage. Now we assume is ALWAYS 0
   const coinToRedeem = coins.find(
     (c) => c.txid === contract.txid && c.vout === 0,
   )
@@ -298,7 +299,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     synthetic.id,
     synthetic.quantity,
   )
-  if (syntheticUtxos.length === 0) throw new Error('Not enough synthetic funds')
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji assets')
   console.log('synthetic.quantity', synthetic.quantity)
   console.log('syntheticUtxos', syntheticUtxos)
 

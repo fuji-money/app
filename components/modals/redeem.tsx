@@ -12,11 +12,11 @@ interface RedeemModalProps {
 const RedeemModal = ({ contract, assetBalance, step }: RedeemModalProps) => {
   // messages to show on different steps of the process
   const mainMessage = [
-    'Preparing transaction...',
+    'Preparing the transaction...',
     'Waiting for confirmation...',
   ][step]
   const secondaryMessage = [
-    'Searching in your utxos',
+    'Looking for coins in your wallet...',
     'Confirm this transaction in your Marina wallet',
   ][step]
 
