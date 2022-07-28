@@ -59,17 +59,6 @@ const ftsla: Asset = {
   value: 309415.05,
 }
 
-const famzn: Asset = {
-  icon: '/images/assets/FAMZN.svg',
-  id: 'famzn',
-  isSynthetic: true,
-  isAvailable: false,
-  name: 'FUJI AMZN',
-  precision: 8,
-  ticker: 'FAMZN',
-  value: 309415.05,
-}
-
 const faapl: Asset = {
   icon: '/images/assets/FAAPL.svg',
   id: 'faapl',
@@ -82,7 +71,7 @@ const faapl: Asset = {
 }
 
 
-const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl, famzn]
+const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl]
 
 const oracles: Oracle[] = [
   { id: 'id0', name: 'Fuji.Money', disabled: false },
