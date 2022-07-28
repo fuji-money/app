@@ -9,5 +9,9 @@ export async function postData(url: string, data = {}) {
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
   })
+  if (!res.ok) {
+    const errorMessage = await res.text()
+    throw new Error(errorMessage)
+  }
   return await res.json()
 }

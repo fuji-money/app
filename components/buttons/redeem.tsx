@@ -32,7 +32,7 @@ const RedeemButton = ({
       setData(txid)
       setResult('success')
     } catch(error) {
-      setData(error)
+      setData(error instanceof Error ? error.message : error)
       setResult('failure')
     }
     closeModal('redeem-modal')
