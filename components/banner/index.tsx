@@ -6,7 +6,7 @@ export default function Banner() {
 
   const text =
     network === 'testnet'
-      ? 'Testnet tokens have no value'
+      ? 'This is a Testnet environment. The assets have no value'
       : 'Change network to testnet'
 
   const bgColor = network === 'testnet' ? 'info' : 'danger'
