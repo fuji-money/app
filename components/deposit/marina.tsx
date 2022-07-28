@@ -40,7 +40,7 @@ const Marina = ({ contract, setError, setResult, topup }: MarinaProps) => {
                 addContractToStorage(contract) // add to local storage TODO
                 setResult('success')
               } catch(error) {
-                setError(error)
+                setError(error instanceof Error ? error.message : error)
                 setResult('failure')
               }
             }}

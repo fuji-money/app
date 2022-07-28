@@ -36,9 +36,7 @@ const Failure = ({ error }: { error: any }) => {
       <h2 className="mt-4">Something went wrong</h2>
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
-        <Link href="/dashboard">
-          <a className="button is-cta">Back to dashboard</a>
-        </Link>
+      <button className="button is-cta" onClick={() => window.location.reload()}>Try again</button>
       </p>
     </div>
   )
