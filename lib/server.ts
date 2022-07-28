@@ -9,7 +9,7 @@ const lbtc: Asset = {
   isAvailable: false,
   name: 'Liquid BTC',
   precision: 8,
-  ratio: 200,
+  ratio: 150,
   ticker: 'L-BTC',
   value: 40000,
 }
@@ -39,7 +39,7 @@ const fusd: Asset = {
 
 const fbmn: Asset = {
   icon: '/images/assets/fbmn.svg',
-  id: '0256e332a5134f31dbea899e0cb7c75d3e2cff969d3958d066f8198caaee3a61',
+  id: 'fbmn',
   isSynthetic: true,
   isAvailable: false,
   name: 'FUJI BMN',
@@ -48,7 +48,41 @@ const fbmn: Asset = {
   value: 309415.05,
 }
 
-const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
+const ftsla: Asset = {
+  icon: '/images/assets/FTSLA.svg',
+  id: 'ftsla',
+  isSynthetic: true,
+  isAvailable: false,
+  name: 'FUJI TSLA',
+  precision: 8,
+  ticker: 'FTSLA',
+  value: 309415.05,
+}
+
+const famzn: Asset = {
+  icon: '/images/assets/FAMZN.svg',
+  id: 'famzn',
+  isSynthetic: true,
+  isAvailable: false,
+  name: 'FUJI AMZN',
+  precision: 8,
+  ticker: 'FAMZN',
+  value: 309415.05,
+}
+
+const faapl: Asset = {
+  icon: '/images/assets/FAAPL.svg',
+  id: 'faapl',
+  isSynthetic: true,
+  isAvailable: false,
+  name: 'FUJI AAPL',
+  precision: 8,
+  ticker: 'FAAPL',
+  value: 309415.05,
+}
+
+
+const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl, famzn]
 
 const oracles: Oracle[] = [
   { id: 'id0', name: 'Fuji.Money', disabled: false },
@@ -79,15 +113,23 @@ export const apiOffers = async (): Promise<Offer[]> => [
     isAvailable: true
   },
   {
-    id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
-    collateral: await findAssetByTicker('l-btc'),
+    id: 'usdtftsla',
+    collateral: await findAssetByTicker('usdt'),
     oracles: [oracles[0].id],
     payout: 0.25,
-    synthetic: await findAssetByTicker('fbmn'),
+    synthetic: await findAssetByTicker('ftsla'),
     isAvailable: false
   },
   {
-    id: '30c044bbf89dab097ccf7cab1c297a95727f4f39a4c3e37d9619708e9d902f27',
+    id: 'usdtfaapl',
+    collateral: await findAssetByTicker('usdt'),
+    oracles: [oracles[0].id],
+    payout: 0.25,
+    synthetic: await findAssetByTicker('faapl'),
+    isAvailable: false
+  },
+  {
+    id: 'usdtfbmn',
     collateral: await findAssetByTicker('usdt'),
     oracles: [oracles[0].id],
     payout: 0.25,
