@@ -7,6 +7,7 @@ import Breadcrumbs from 'components/breadcrumbs'
 import { WalletProvider } from 'components/providers/wallet'
 import { NetworkProvider } from 'components/providers/network'
 import Auth from 'components/auth'
+import Banner from 'components/banner'
 
 interface LayoutProps {
   children: ReactNode
@@ -33,6 +34,7 @@ export default function Layout({ children }: LayoutProps) {
     <Auth>
       <WalletProvider>
         <NetworkProvider>
+          <Banner />
           <Navbar />
           <main>
             <div className="container">
