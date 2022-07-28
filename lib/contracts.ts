@@ -1,9 +1,7 @@
-import { fetchAsset } from './api'
-import { ActivityType, Contract, ContractState } from './types'
-import { addActivity } from './activities'
+import { Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { toSatoshis } from './utils'
-import { getNetwork } from './marina'
+
+import { minDustLimit } from './constants'
 
 export const contractIsExpired = (contract: Contract): boolean => {
   if (!contract.state) return false
@@ -59,7 +57,7 @@ export const getCollateralQuantity = (
 // get contract payout
 export const getContractPayout = (contract: Contract, quantity?: number): number => {
   const collateralAmount = quantity || contract.collateral.quantity || 0
-  return Math.ceil(collateralAmount * 0.0025) // 25 basis points, 0.25%
+  return minDustLimit + Math.ceil(collateralAmount * 0.0025) // 25 basis points, 0.25%
 }
 
 // get contract price level
