@@ -1,20 +1,18 @@
 export const minMultiplyRatio = 130
 export const maxMultiplyRatio = 330
 
+// marina account IDs
+export const marinaFujiAccountID = 'fuji'
+export const marinaMainAccountID = 'mainAccount'
+
 // covenant
 export const issuerPubKey =
   '02a3d89442c53fa319737bce93e0408d00f817f992a276fea1a2aa0ffbdc4a8a76'
 export const oraclePubKey =
   '0256e332a5134f31dbea899e0cb7c75d3e2cff969d3958d066f8198caaee3a6159'
-export const issuerScriptProgram =
-  '000000000000000000000000000000000000000000000000000000000000000000' // TODO
 
-export const oracleURL = 'https://fuji-oracle.herokuapp.com/oracle/BTCUSD'
 
-export const fUSDtestnet = '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568'
+export const fUSDtestnet = process.env.NEXT_PUBLIC_FUSD_ASSET_ID || '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568'
 
-export const marinaFujiAccountID = 'fuji'
-export const marinaMainAccountID = 'mainAccount'
-
-export const alphaServerUrl = 'https://alpha-factory.fuji.money'
-//export const alphaServerUrl = 'http://localhost:8000'
+export const oracleURL = process.env.NEXT_PUBLIC_ORACLE_URL || 'https://oracle.fuji.money/oracle/BTCUSD'
+export const alphaServerUrl = process.env.NEXT_PUBLIC_FACTORY_URL || 'https://alpha-factory.fuji.money'
