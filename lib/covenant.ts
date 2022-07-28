@@ -298,7 +298,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     synthetic.id,
     synthetic.quantity,
   )
-  if (syntheticUtxos.length === 0) throw new Error('Not enough synthetic funds')
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji assets')
   console.log('synthetic.quantity', synthetic.quantity)
   console.log('syntheticUtxos', syntheticUtxos)
 
