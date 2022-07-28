@@ -15,6 +15,7 @@ interface DepositProps {
 const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
   const ticker = contract.collateral.ticker
   const [result, setResult] = useState('')
+  const [error, setError] = useState<any>()
   const qrcode = !result && network === 'lightning'
   const marina = !result && network === 'liquid'
 
@@ -22,12 +23,12 @@ const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
     <div className="is-box has-pink-border py-6 px-6">
       {!network && <Network ticker={ticker} setNetwork={setNetwork} />}
       {qrcode && (
-        <Qrcode contract={contract} setResult={setResult} topup={topup} />
+        <Qrcode contract={contract} setError={setError} setResult={setResult} topup={topup} />
       )}
       {marina && (
-        <Marina contract={contract} setResult={setResult} topup={topup} />
+        <Marina contract={contract} setError={setError} setResult={setResult} topup={topup} />
       )}
-      {result && <Result result={result} />}
+      {result && <Result error={error} result={result} />}
     </div>
   )
 }
