@@ -59,7 +59,8 @@ export const getCollateralQuantity = (
 // get contract payout
 export const getContractPayout = (contract: Contract, quantity?: number): number => {
   const collateralAmount = quantity || contract.collateral.quantity || 0
-  return Math.ceil(collateralAmount * 0.0025) // 25 basis points, 0.25%
+  const payout = contract.payout ||  0.25 // 25 basis points, 0.25%
+  return Decimal.ceil(Decimal.mul(collateralAmount, payout).div(100)).toNumber()
 }
 
 // get contract price level
@@ -69,5 +70,5 @@ export const getContractPriceLevel = (
 ): number => {
   const { collateral } = contract
   if (!collateral.ratio) throw new Error('Collateral without minimum ratio')
-  return Math.ceil((collateral.value * collateral.ratio) / ratio)
+  return Decimal.ceil(Decimal.mul(collateral.value, collateral.ratio).div(ratio)).toNumber()
 }
