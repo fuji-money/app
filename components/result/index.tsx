@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import ExplorerLink from 'components/links/explorer'
 
-const Success = () => {
+const Success = ({ cleanUp, txid }: { cleanUp: any, txid: any }) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -12,17 +13,20 @@ const Success = () => {
           width={100}
         />
       </p>
-      <h2 className="mt-4">Success</h2>
+      <h2 className="mt-4 mb-4">Success</h2>
+      <ExplorerLink txid={txid} />
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">
-          <a className="button is-primary is-cta">Back to dashboard</a>
+          <a className="button is-primary is-cta" onClick={cleanUp}>
+            Back to dashboard
+          </a>
         </Link>
       </p>
     </div>
   )
 }
 
-const Failure = ({ error }: { error: any }) => {
+const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -37,7 +41,7 @@ const Failure = ({ error }: { error: any }) => {
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">
-          <a className="button is-cta">Back to dashboard</a>
+          <a className="button is-cta" onClick={cleanUp}>Back to dashboard</a>
         </Link>
       </p>
     </div>
@@ -45,13 +49,19 @@ const Failure = ({ error }: { error: any }) => {
 }
 
 interface ResultProps {
-  error: any
+  data: any
   result: string
+  setData: any
+  setResult: any
 }
 
-const Result = ({ error, result }: ResultProps) => {
-  if (result === 'success') return <Success />
-  if (result === 'failure') return <Failure error={error} />
+const Result = ({ data, result, setData, setResult }: ResultProps) => {
+  const cleanUp = () => {
+    setData('')
+    setResult('')
+  }
+  if (result === 'success') return <Success cleanUp={cleanUp} txid={data} />
+  if (result === 'failure') return <Failure cleanUp={cleanUp} error={data} />
   return <></>
 }
 

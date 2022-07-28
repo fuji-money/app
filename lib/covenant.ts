@@ -374,5 +374,5 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   const sentTransaction = await marina.broadcastTransaction(rawHex)
   console.log('txid', sentTransaction.txid)
   console.log('signed tx', signed)
-  // return new Promise(resolve => setTimeout(resolve, 2000))
+  return sentTransaction.txid
 }

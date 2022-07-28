@@ -10,15 +10,31 @@ interface RedeemButtonProps {
   setAssetBalance: any
   setRedeem: any
   setStep: any
+  setData: any
+  setResult: any
 }
 
-const RedeemButton = ({ contract, setAssetBalance, setRedeem, setStep }: RedeemButtonProps) => {
+const RedeemButton = ({
+  contract,
+  setAssetBalance,
+  setRedeem,
+  setStep,
+  setData,
+  setResult,
+}: RedeemButtonProps) => {
   const handleClick = async () => {
     setAssetBalance(await getBalance(contract.synthetic))
     setRedeem(contract)
     openModal('redeem-modal')
-    await prepareRedeemTx(contract, setStep)
-    redeemContractToStorage(contract)
+    try {
+      const txid = await prepareRedeemTx(contract, setStep)
+      redeemContractToStorage(contract)
+      setData(txid)
+      setResult('success')
+    } catch(error) {
+      setData(error)
+      setResult('failure')
+    }
     closeModal('redeem-modal')
   }
 

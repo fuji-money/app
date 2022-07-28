@@ -4,7 +4,7 @@ import { Activity, ActivityType, Contract } from './types'
 
 export function addActivity(contract: Contract, type: ActivityType): void {
   if (typeof window === 'undefined') return
-  if (!contract.txid) throw new Error('Error: contract with no txid')
+  if (!contract.txid) throw new Error('Contract with no txid')
   const txid = contract.txid
   const prefix = `Contract ${type.toLowerCase()} with success`
   const suffix = prettyAsset(contract.synthetic)

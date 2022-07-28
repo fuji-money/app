@@ -5,7 +5,7 @@ import { fromSatoshis } from 'lib/utils'
 
 interface QrcodeProps {
   contract: Contract
-  setError: any
+  setData: any
   setResult: any
   topup: number
 }
