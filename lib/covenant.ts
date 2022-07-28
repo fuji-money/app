@@ -282,7 +282,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
 
   // find coin for this contract
   const coins = await marina.getCoins([marinaFujiAccountID])
-// TODO stores the vout in storage. Now we assume is ALWAYS 0 
+  // TODO stores the vout in storage. Now we assume is ALWAYS 0 
   const coinToRedeem = coins.find(
     (c) => c.txid === contract.txid && c.vout === 0,
   )
@@ -368,7 +368,13 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   console.log('redeem tx', tx)
   setStep(1)
   const signed = await tx.unlock()
-  signed.psbt.finalizeInput(1)
+
+  // finalize the fuji asset input
+  // we skip utxo in position 0 since is finalized already by the redeem function
+  for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
+    signed.psbt.finalizeInput(index);
+  }
+
   const rawHex = signed.psbt.extractTransaction().toHex()
   console.log('rawHex', rawHex)
   const sentTransaction = await marina.broadcastTransaction(rawHex)
