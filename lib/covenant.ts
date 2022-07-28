@@ -282,6 +282,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
 
   // find coin for this contract
   const coins = await marina.getCoins([marinaFujiAccountID])
+// TODO stores the vout in storage. Now we assume is ALWAYS 0 
   const coinToRedeem = coins.find(
     (c) => c.txid === contract.txid && c.vout === 0,
   )
