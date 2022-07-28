@@ -1,21 +1,22 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { closeModal, fromSatoshis, openModal } from 'lib/utils'
+import { fromSatoshis, openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { signAndBroadcastTx } from 'lib/marina'
-import { addContract } from 'lib/contracts'
+import { addContractToStorage } from 'lib/storage'
 import { useContext, useState } from 'react'
 import { NetworkContext } from 'components/providers/network'
 
 interface MarinaProps {
   contract: Contract
-  topup: number | undefined
+  setError: any
   setResult: any
+  topup: number | undefined
 }
 
-const Marina = ({ contract, topup, setResult }: MarinaProps) => {
+const Marina = ({ contract, setError, setResult, topup }: MarinaProps) => {
   const { ticker, value } = contract.collateral
   const [ step, setStep ] = useState(0)
   const quantity = topup || contract.collateral.quantity
@@ -34,9 +35,12 @@ const Marina = ({ contract, topup, setResult }: MarinaProps) => {
                 setStep(1)
                 contract.txid = await signAndBroadcastTx(partialTransaction)
                 contract.network = network
-                addContract(contract) // add to local storage TODO
+                contract.borrowerPubKey = preparedTx.borrowerPublicKey
+                contract.contractParams = preparedTx.contractParams
+                addContractToStorage(contract) // add to local storage TODO
                 setResult('success')
-              } catch(_) {
+              } catch(error) {
+                setError(error)
                 setResult('failure')
               }
             }}

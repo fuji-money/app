@@ -8,10 +8,12 @@ import { fromSatoshis } from 'lib/utils'
 
 interface ContractRowProps {
   contract: Contract
+  setAssetBalance: any
   setRedeem: any
+  setStep: any
 }
 
-const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
+const ContractRow = ({ contract, setAssetBalance, setRedeem, setStep }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
   contract.state ||= getContractState(contract)
   return (
@@ -30,6 +32,8 @@ const ContractRow = ({ contract, setRedeem }: ContractRowProps) => {
           <RedeemButton
             contract={contract}
             setRedeem={setRedeem}
+            setAssetBalance={setAssetBalance}
+            setStep={setStep}
           />
           <TopupButton contract={contract} />
         </div>

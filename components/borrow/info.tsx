@@ -8,7 +8,7 @@ interface BorrowInfoProps {
 
 const BorrowInfo = ({ contract }: BorrowInfoProps) => {
   const { collateral, payout, synthetic } = contract
-  const { quantity, ticker, value } = synthetic
+  const { quantity, ticker, value } = collateral
   const borrowFee = ((fromSatoshis(quantity)) * value * payout) / 100
   return (
     <div className="is-box has-pink-border">
@@ -26,13 +26,13 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
           <div className="level-item has-text-right">
             <div className="has-text-right">
               <p>
-                1 {ticker} = {prettyNumber(value)} USDt
+                1 {synthetic.ticker} = {prettyNumber(synthetic.value)} USDt
               </p>
               <p>
                 {payout}% = {prettyNumber(borrowFee)} USDt
               </p>
               <p>
-                1 {collateral.ticker} = {prettyNumber(collateral.value)} USDt
+                1 {ticker} = {prettyNumber(value)} USDt
               </p>
             </div>
           </div>

@@ -16,3 +16,6 @@ export const fUSDtestnet = process.env.NEXT_PUBLIC_FUSD_ASSET_ID || '04e28b85876
 
 export const oracleURL = process.env.NEXT_PUBLIC_ORACLE_URL || 'https://oracle.fuji.money/oracle/BTCUSD'
 export const alphaServerUrl = process.env.NEXT_PUBLIC_FACTORY_URL || 'https://alpha-factory.fuji.money'
+
+export const minDustLimit = 500
+export const feeAmount = 500
