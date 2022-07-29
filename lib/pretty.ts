@@ -48,5 +48,5 @@ export const prettyRatio = (ratio: number): number =>
   parseFloat(ratio.toFixed(2))
 
 // show asset quantity in unities
-export const prettyQuantity = (asset: Asset): string =>
-  prettyNumber(fromSatoshis(asset.quantity))
+export const prettyQuantity = (asset: Asset, min?: number, max?: number): string =>
+  prettyNumber(fromSatoshis(asset.quantity), min, max)

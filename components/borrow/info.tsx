@@ -30,8 +30,8 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
               <p>{prettyNumber(collateral.value)}</p>
               <p>{prettyNumber(priceLevel)}</p>
               <p>{prettyQuantity(synthetic)} {synthetic.ticker}</p>
-              <p>{prettyQuantity(collateral)} {collateral.ticker}</p>
-              <p>{prettyNumber(fromSatoshis(payoutAmount))} {collateral.ticker}</p>
+              <p>{prettyQuantity(collateral, 8)} {collateral.ticker}</p>
+              <p>{prettyNumber(fromSatoshis(payoutAmount), 8)} {collateral.ticker}</p>
             </div>
           </div>
         </div>
