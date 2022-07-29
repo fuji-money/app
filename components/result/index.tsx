@@ -17,6 +17,7 @@ const Success = ({ cleanUp, txid }: { cleanUp: any, txid: any }) => {
       </p>
       <h2 className="mt-4 mb-4">Success</h2>
       <ExplorerLink txid={txid} />
+      &nbsp;
       <TwitterLink message={twitterMessage} />
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">

@@ -16,11 +16,6 @@ const ExplorerLink = ({ txid }: ExplorerLinkProps) => {
   return (
     <a href={href} className="button external" target="_blank" rel="noreferrer">
       🔗 Open in explorer
-      <style jsx>{`
-        a.external {
-          border: 0;
-        }
-      `}</style>
     </a>
   )
 }
