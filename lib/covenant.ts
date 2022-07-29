@@ -6,6 +6,7 @@ import {
   issuerPubKey,
   marinaFujiAccountID,
   marinaMainAccountID,
+  minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
 import { numberToHexEncodedUint64LE } from './utils'
@@ -243,6 +244,10 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     throw new Error('Invalid contract: no synthetic quantity')
   if (!contract.priceLevel)
     throw new Error('Invalid contract: no contract priceLevel')
+  if (!contract.payoutAmount)
+    throw new Error('Invalid contract: no contract payoutAmount')
+  if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
+    throw new Error('Invalid contract: collateral amount too low')
 
   // fee amount will be taken from covenant
   const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO

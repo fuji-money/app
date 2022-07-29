@@ -27,7 +27,7 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
         <div className="level-right">
           <div className="level-item has-text-right">
             <div className="has-text-right">
-              <p>{prettyNumber(collateral.value)}</p>
+              <p>{prettyNumber(collateral.value, 2)}</p>
               <p>{prettyNumber(priceLevel)}</p>
               <p>{prettyQuantity(synthetic)} {synthetic.ticker}</p>
               <p>{prettyQuantity(collateral, 8)} {collateral.ticker}</p>
