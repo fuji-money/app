@@ -39,7 +39,7 @@ const Home: NextPage = () => {
             height="128"
           />
         </p>
-        <p className="intro">Login with your email</p>
+        <p className="intro mt-6">Login with your email</p>
         <form onSubmit={handleSubmit}>
           <input name="email" type="email" placeholder="me@email.com" />
           <br />
