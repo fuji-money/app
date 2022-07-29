@@ -22,6 +22,7 @@ const Home: NextPage = () => {
   const handleSubmit = async (event: any) => {
     event.preventDefault()
     const email = event.target.email.value
+    if (!email) return
 
     // check if email is valid, gets cookie value
     const res = await fetch('/api/login', {
