@@ -27,7 +27,7 @@ import {
 import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { getCollateralQuantity, getContractPayout } from './contracts'
+import { getCollateralQuantity, getContractPayoutAmount } from './contracts'
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -61,7 +61,7 @@ export async function prepareBorrowTx(
 
   // get amounts in satoshis
   const collateralAmount = collateral.quantity
-  const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
+  const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
@@ -245,7 +245,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     throw new Error('Invalid contract: no contract priceLevel')
 
   // fee amount will be taken from covenant
-  const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
+  const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO
   const network = networks.testnet // TODO
 
   // get ionio instance

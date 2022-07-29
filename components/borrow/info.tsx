@@ -1,4 +1,4 @@
-import { getContractPayout } from 'lib/contracts'
+import { getContractPayoutAmount } from 'lib/contracts'
 import { prettyNumber, prettyQuantity } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
@@ -8,9 +8,8 @@ interface BorrowInfoProps {
 }
 
 const BorrowInfo = ({ contract }: BorrowInfoProps) => {
-  const { collateral, priceLevel, contractParams, synthetic } = contract
-  const { ticker, value } = collateral
-  const payoutAmount = getContractPayout(contract)
+  const { collateral, priceLevel, synthetic } = contract
+  const payoutAmount = getContractPayoutAmount(contract)
   return (
     <div className="is-box has-pink-border">
       <div className="level">
@@ -28,12 +27,11 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
         <div className="level-right">
           <div className="level-item has-text-right">
             <div className="has-text-right">
-              <p>{prettyNumber(value)}</p>
+              <p>{prettyNumber(collateral.value)}</p>
               <p>{prettyNumber(priceLevel)}</p>
               <p>{prettyQuantity(synthetic)} {synthetic.ticker}</p>
               <p>{prettyQuantity(collateral)} {collateral.ticker}</p>
               <p>{prettyNumber(fromSatoshis(payoutAmount))} {collateral.ticker}</p>
-              <p>{contractParams?.setupTimestamp}</p>
             </div>
           </div>
         </div>
