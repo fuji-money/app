@@ -58,7 +58,7 @@ const Home: NextPage = () => {
           <input name="email" type="email" placeholder="me@email.com" />
           <br />
           <br />
-          <button className="button is-primary">Log in</button>
+          <button className="button is-primary">Enter</button>
         </form>
       </div>
       <InvalidEmailModal />
