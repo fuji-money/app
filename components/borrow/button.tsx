@@ -1,5 +1,7 @@
+import { WalletContext } from 'components/providers/wallet'
 import { minDustLimit } from 'lib/constants'
 import { Contract } from 'lib/types'
+import { useContext } from 'react'
 
 interface BorrowButtonProps {
   contract: Contract
@@ -14,7 +16,10 @@ const BorrowButton = ({
   ratio,
   setDeposit,
 }: BorrowButtonProps) => {
+  const { wallet } = useContext(WalletContext)
+
   const enabled =
+    wallet &&
     contract.collateral.quantity &&
     contract.collateral.quantity > 0 &&
     contract.collateral.value > 0 &&
