@@ -38,7 +38,7 @@ const Network = ({ ticker, setNetwork }: NetworkProps) => {
               height={20}
               width={20}
             />
-            Lightning
+            Lightning (coming soon)
           </button>
         </p>
         {disabled && (
