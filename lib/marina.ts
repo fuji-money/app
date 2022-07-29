@@ -20,7 +20,7 @@ async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()
   if (!marina) return []
   if (!(await marina.isEnabled())) return []
-  return await marina.getBalances()
+  return await marina.getBalances([marinaMainAccountID])
 }
 
 export async function getBalance(asset: Asset): Promise<number> {
