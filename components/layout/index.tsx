@@ -13,12 +13,22 @@ interface LayoutProps {
   children: ReactNode
 }
 
+const UseDesktopBanner = () => (
+  <div className="container is-hidden-desktop">
+    <div className='is-box has-pink-border mt-6 mx-6 has-text-centered'>
+      <h3>Fuji.Money is not supported on mobile devices</h3>
+      <p>Use a browser on a desktop device</p>
+    </div>
+  </div>
+)
+
 export default function Layout({ children }: LayoutProps) {
   const { route } = useRouter()
   if (route === '/') {
     return (
       <main>
-        <div className="container">{children}</div>
+        <UseDesktopBanner />
+        <div className="container is-hidden-touch">{children}</div>
         <style jsx>{`
           main {
             background-image: url('/images/homebg.svg');
@@ -34,16 +44,19 @@ export default function Layout({ children }: LayoutProps) {
     <Auth>
       <WalletProvider>
         <NetworkProvider>
-          <Banner />
-          <Navbar />
-          <main>
-            <div className="container">
-              <Breadcrumbs />
-            </div>
-            <div className="container">{children}</div>
-          </main>
-          <Footer />
-          <TradeModal />
+          <UseDesktopBanner />
+          <div className="is-hidden-touch">
+            <Banner />
+            <Navbar />
+            <main>
+              <div className="container">
+                <Breadcrumbs />
+              </div>
+              <div className="container">{children}</div>
+            </main>
+            <Footer />
+            <TradeModal />
+          </div>
         </NetworkProvider>
       </WalletProvider>
     </Auth>
