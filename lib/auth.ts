@@ -1,11 +1,15 @@
-import { sha256 } from 'liquidjs-lib/src/crypto'
+import crypto from 'crypto'
 
 const separator = '#'
 const secret = process.env.ENCRYPTION_SECRET
 const cookieName = 'fujiauth'
 
 const hashEmail = (email: string) =>
-  sha256(Buffer.from(email + secret)).toString('hex')
+  crypto
+    .createHash('sha256')
+    .update(email + secret)
+    .digest()
+    .toString('hex')
 
 export const calcAuthCookie = (email: string) =>
   cookieName + '=' + email + separator + hashEmail(email)
@@ -27,4 +31,3 @@ export const checkAuthCookie = (cookie: string) => {
 
 export const userNotAllowed = (cookies: string) =>
   !cookies.split('; ').find((cookie) => checkAuthCookie(cookie))
-

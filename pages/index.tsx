@@ -1,13 +1,26 @@
+import InvalidEmailModal from 'components/modals/invalidEmail'
 import { setAuthCookie } from 'lib/auth'
+import { postData } from 'lib/fetch'
+import { openModal } from 'lib/utils'
 import type { NextPage } from 'next'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 
 const Home: NextPage = () => {
   const router = useRouter()
+
+  useEffect(() => {
+    console.log('useEffect')
+    const checkAuth = async () => {
+      const validUser = await postData('/api/login/check', document.cookie)
+      if (validUser) router.push('/dashboard')
+    }
+    checkAuth()
+  })
+
   const handleSubmit = async (event: any) => {
     event.preventDefault()
-
     const email = event.target.email.value
 
     // check if email is valid, gets cookie value
@@ -23,6 +36,7 @@ const Home: NextPage = () => {
       router.push('/dashboard')
     } else {
       console.log('Email not in short list')
+      openModal('invalid-email-modal')
       // deleteCookie()
     }
   }
@@ -39,7 +53,7 @@ const Home: NextPage = () => {
             height="128"
           />
         </p>
-        <p className="intro mt-6">Login with your email</p>
+        <p className="intro mt-6">Get access to the Closed Beta</p>
         <form onSubmit={handleSubmit}>
           <input name="email" type="email" placeholder="me@email.com" />
           <br />
@@ -47,7 +61,7 @@ const Home: NextPage = () => {
           <button className="button is-primary">Log in</button>
         </form>
       </div>
-
+      <InvalidEmailModal />
       <style jsx>{`
         input {
           border: 2px solid #88389d;
