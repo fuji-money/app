@@ -291,7 +291,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   const coinToRedeem = coins.find(
     (c) => c.txid === contract.txid && c.vout === 0,
   )
-  if (!coinToRedeem) throw new Error('Coin not found')
+  if (!coinToRedeem) throw new Error('Contract cannot be found in the connect wallet. Wait for confirmations or try to reload the wallet and try again.')
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
   ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
