@@ -4,18 +4,17 @@ import { postData } from 'lib/fetch'
 import { openModal } from 'lib/utils'
 import type { NextPage } from 'next'
 import Image from 'next/image'
-import { useRouter } from 'next/router'
+import Router from 'next/router'
 import { useEffect, useState } from 'react'
 
 const Home: NextPage = () => {
-  const router = useRouter()
 
   useEffect(() => {
     console.log('useEffect')
     const checkAuth = async () => {
       try {
         const validUser = await postData('/api/login/check', document.cookie)
-        if (validUser) router.push('/dashboard')
+        if (validUser) Router.push('/dashboard')
       } catch(ignore) {}
     }
     checkAuth()
@@ -38,7 +37,7 @@ const Home: NextPage = () => {
     if (res.ok) {
       const cookie = await res.json()
       setAuthCookie(cookie)
-      router.push('/dashboard')
+      Router.push('/dashboard')
     } else {
       console.log('Email not in short list')
       openModal('invalid-email-modal')

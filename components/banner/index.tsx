@@ -7,7 +7,7 @@ export default function Banner() {
   const text =
     network === 'testnet'
       ? 'This is a Testnet environment. The assets have no value'
-      : 'Change network to testnet'
+      : '⚠️ Fuji App is only available on the Liquid Testnet. Change network in your wallet'
 
   const bgColor = network === 'testnet' ? 'info' : 'danger'
 
