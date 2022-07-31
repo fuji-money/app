@@ -11,9 +11,11 @@ import { NetworkContext } from 'components/providers/network'
 
 interface ContractsListProps {
   showActive: boolean
+  setData: any
+  setResult: any
 }
 
-const ContractsList = ({ showActive }: ContractsListProps) => {
+const ContractsList = ({ showActive, setData, setResult }: ContractsListProps) => {
   const [isLoading, setLoading] = useState(false)
   const [contracts, setContracts] = useState<Contract[]>()
 
@@ -56,6 +58,8 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
             setRedeem={setReedem}
             setAssetBalance={setAssetBalance}
             setStep={setStep}
+            setData={setData}
+            setResult={setResult}
           />
         ))}
     </>

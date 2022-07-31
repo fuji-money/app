@@ -6,6 +6,7 @@ import {
   issuerPubKey,
   marinaFujiAccountID,
   marinaMainAccountID,
+  minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
 import { numberToHexEncodedUint64LE } from './utils'
@@ -27,7 +28,7 @@ import {
 import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { getCollateralQuantity, getContractPayout } from './contracts'
+import { getCollateralQuantity, getContractPayoutAmount } from './contracts'
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -61,7 +62,7 @@ export async function prepareBorrowTx(
 
   // get amounts in satoshis
   const collateralAmount = collateral.quantity
-  const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
+  const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
@@ -243,9 +244,13 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     throw new Error('Invalid contract: no synthetic quantity')
   if (!contract.priceLevel)
     throw new Error('Invalid contract: no contract priceLevel')
+  if (!contract.payoutAmount)
+    throw new Error('Invalid contract: no contract payoutAmount')
+  if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
+    throw new Error('Invalid contract: collateral amount too low')
 
   // fee amount will be taken from covenant
-  const payoutAmount = contract.payoutAmount || getContractPayout(contract) // TODO
+  const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO
   const network = networks.testnet // TODO
 
   // get ionio instance
@@ -282,11 +287,11 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
 
   // find coin for this contract
   const coins = await marina.getCoins([marinaFujiAccountID])
-  // TODO stores the vout in storage. Now we assume is ALWAYS 0 
+  // TODO stores the vout in storage. Now we assume is ALWAYS 0
   const coinToRedeem = coins.find(
     (c) => c.txid === contract.txid && c.vout === 0,
   )
-  if (!coinToRedeem) throw new Error('Coin not found')
+  if (!coinToRedeem) throw new Error('Contract cannot be found in the connect wallet. Wait for confirmations or try to reload the wallet and try again.')
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
   ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
@@ -380,5 +385,5 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   const sentTransaction = await marina.broadcastTransaction(rawHex)
   console.log('txid', sentTransaction.txid)
   console.log('signed tx', signed)
-  // return new Promise(resolve => setTimeout(resolve, 2000))
+  return sentTransaction.txid
 }

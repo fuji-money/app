@@ -1,6 +1,7 @@
 import { Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-
+import { toSatoshis } from './utils'
+import { getNetwork } from './marina'
 import { minDustLimit } from './constants'
 
 export const contractIsExpired = (contract: Contract): boolean => {
@@ -45,19 +46,25 @@ export const getCollateralQuantity = (
   ratio: number,
 ): number => {
   const { collateral, synthetic } = contract
-  return Math.ceil(
+  return Decimal.ceil(
     Decimal.mul(synthetic.quantity || 0, synthetic.value)
       .mul(ratio)
       .div(100)
-      .div(collateral.value)
-      .toNumber(),
-  )
+      .div(collateral.value),
+  ).toNumber()
 }
 
 // get contract payout
-export const getContractPayout = (contract: Contract, quantity?: number): number => {
+export const getContractPayoutAmount = (
+  contract: Contract,
+  quantity?: number,
+): number => {
   const collateralAmount = quantity || contract.collateral.quantity || 0
-  return minDustLimit + Math.ceil(collateralAmount * 0.0025) // 25 basis points, 0.25%
+  if (!collateralAmount) return 0
+  const payout = contract.payout || 0.25 // default is 25 basis points, 0.25%
+  return Decimal.ceil(
+    Decimal.mul(collateralAmount, payout).div(100).add(minDustLimit),
+  ).toNumber()
 }
 
 // get contract price level
@@ -67,5 +74,7 @@ export const getContractPriceLevel = (
 ): number => {
   const { collateral } = contract
   if (!collateral.ratio) throw new Error('Collateral without minimum ratio')
-  return Math.ceil((collateral.value * collateral.ratio) / ratio)
+  return Decimal.ceil(
+    Decimal.mul(collateral.value, collateral.ratio).div(ratio),
+  ).toNumber()
 }
