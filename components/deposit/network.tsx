@@ -14,7 +14,7 @@ const Network = ({ ticker, setNetwork }: NetworkProps) => {
         <h2 className="has-text-weight-bold is-size-4 mb-4">
           Choose how to deposit {ticker}
         </h2>
-        <p>
+        <div className="content mt-6">
           <button
             className="button is-primary"
             onClick={() => setNetwork('liquid')}
@@ -25,7 +25,7 @@ const Network = ({ ticker, setNetwork }: NetworkProps) => {
               height={20}
               width={20}
             />
-            Liquid
+            Liquid Network
           </button>
           <button
             className="button is-primary"
@@ -38,14 +38,9 @@ const Network = ({ ticker, setNetwork }: NetworkProps) => {
               height={20}
               width={20}
             />
-            Lightning (coming soon)
+            Lightning (Coming soon)
           </button>
-        </p>
-        {disabled && (
-          <p className="has-text-weight-bold is-size-7 mt-6">
-            {ticker} swaps in Lightning are still in development.
-          </p>
-        )}
+        </div>
       </div>
       <style jsx>{`
         button {

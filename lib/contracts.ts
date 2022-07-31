@@ -1,6 +1,4 @@
-import { fetchAsset } from './api'
-import { ActivityType, Contract, ContractState } from './types'
-import { addActivity } from './activities'
+import { Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
 import { toSatoshis } from './utils'
 import { getNetwork } from './marina'
