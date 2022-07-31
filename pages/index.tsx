@@ -5,7 +5,8 @@ import { openModal } from 'lib/utils'
 import type { NextPage } from 'next'
 import Image from 'next/image'
 import Router from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import Script from 'next/script'
 
 const Home: NextPage = () => {
 
@@ -88,6 +89,7 @@ const Home: NextPage = () => {
           margin: 80px auto;
         }
       `}</style>
+      <Script defer data-domain="alpha-app.fuji.money" src="https://analytics.fuji.money/js/plausible.js" strategy="lazyOnload" />
     </section>
   )
 }
