@@ -15,7 +15,7 @@ const TopupButton = ({ contract }: TopupButtonProps) => {
     )
   }
   return (
-    <Link href={`/contracts/${contract.txid}/topup`}>
+    <Link passHref href={`/contracts/${contract.txid}/topup`}>
       <button disabled className="button ml-3">Topup (Coming soon)</button>
     </Link>
   )
