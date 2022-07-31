@@ -3,9 +3,9 @@ import Modal from './modal'
 const InvalidEmailModal = () => {
   return (
     <Modal id="invalid-email-modal">
-      <h3 className="mt-4">Invalid email</h3>
-      <p>Email not in the list of allowed emails for closed beta</p>
-      <p>Soon will be open to everyone</p>
+      <h3 className="mt-4">It's not your turn (yet)</h3>
+      <p>Email has not been granted access to closed beta</p>
+      <p><a href="https://fuji.money" target="_blank">Check your position</a> and keep sharing your link to your friends</p>
     </Modal>
   )
 }

@@ -13,11 +13,15 @@ const Home: NextPage = () => {
   useEffect(() => {
     console.log('useEffect')
     const checkAuth = async () => {
-      const validUser = await postData('/api/login/check', document.cookie)
-      if (validUser) router.push('/dashboard')
+      try {
+        const validUser = await postData('/api/login/check', document.cookie)
+        if (validUser) router.push('/dashboard')
+      } catch(ignore) {}
     }
     checkAuth()
-  })
+    // this now gets called when the component unmounts
+    return () => {};
+  }, [])
 
   const handleSubmit = async (event: any) => {
     event.preventDefault()

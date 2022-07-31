@@ -11,7 +11,7 @@ export async function postData(url: string, data = {}) {
   })
   if (!res.ok) {
     const errorMessage = await res.text()
-    throw new Error(errorMessage)
+    throw new Error(`${res.statusText}: ${errorMessage}`)
   }
   return await res.json()
 }
