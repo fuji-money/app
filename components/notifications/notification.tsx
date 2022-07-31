@@ -18,6 +18,7 @@ const Icon = ({ type }: IconProps) => {
         .icon-container {
           height: 1rem;
           margin: auto 0.5rem;
+          margin-left: 0;
           position: relative;
           top: 3px;
         }
@@ -40,6 +41,7 @@ const Notification = ({ label, type }: NotificationProps) => {
         p {
           border-radius: 3px;
           margin-bottom: 1rem;
+          padding: 1rem;
         }
         .warning {
           background-color: #ffe8d3;

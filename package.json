@@ -13,6 +13,7 @@
     "@ionio-lang/ionio": "^0.1.9",
     "@types/tiny-secp256k1": "^2.0.1",
     "bulma": "^0.9.3",
+    "cookies": "^0.8.0",
     "decimal.js": "^10.3.1",
     "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support",
     "marina-provider": "^1.7.1",

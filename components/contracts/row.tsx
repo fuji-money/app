@@ -11,9 +11,18 @@ interface ContractRowProps {
   setAssetBalance: any
   setRedeem: any
   setStep: any
+  setData: any
+  setResult: any
 }
 
-const ContractRow = ({ contract, setAssetBalance, setRedeem, setStep }: ContractRowProps) => {
+const ContractRow = ({
+  contract,
+  setAssetBalance,
+  setRedeem,
+  setStep,
+  setData,
+  setResult,
+}: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
   contract.state ||= getContractState(contract)
   return (
@@ -34,6 +43,8 @@ const ContractRow = ({ contract, setAssetBalance, setRedeem, setStep }: Contract
             setRedeem={setRedeem}
             setAssetBalance={setAssetBalance}
             setStep={setStep}
+            setData={setData}
+            setResult={setResult}
           />
           <TopupButton contract={contract} />
         </div>
