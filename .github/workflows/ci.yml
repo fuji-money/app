@@ -16,4 +16,5 @@ jobs:
           node-version: "16"
       - run: yarn
       - run: yarn lint
+      - run: yarn prettier
       - run: yarn build

@@ -25,7 +25,9 @@ const Collateral = ({ asset }: CollateralProps) => {
       </div>
       <div className="level-right">
         <div className="level-item">
-          <p className="mr-3 my-auto">{prettyNumber(fromSatoshis(asset.quantity))}</p>
+          <p className="mr-3 my-auto">
+            {prettyNumber(fromSatoshis(asset.quantity))}
+          </p>
         </div>
       </div>
       <style jsx>{`

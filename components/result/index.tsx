@@ -4,7 +4,7 @@ import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
 
-const Success = ({ cleanUp, txid }: { cleanUp: any, txid: any }) => {
+const Success = ({ cleanUp, txid }: { cleanUp: any; txid: any }) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -44,7 +44,12 @@ const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
       <h2 className="mt-4">Something went wrong</h2>
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
-      <button className="button is-cta" onClick={() => window.location.reload()}>Try again</button>
+        <button
+          className="button is-cta"
+          onClick={() => window.location.reload()}
+        >
+          Try again
+        </button>
       </p>
     </div>
   )

@@ -42,7 +42,9 @@ const Notifications = ({
       const balance = asset?.quantity || 0
       const payoutAmount = contract.payoutAmount || 0
       setNotEnoughFunds(wallet && spendQuantity > balance)
-      setCollateralTooLow(spendQuantity < payoutAmount + feeAmount + minDustLimit)
+      setCollateralTooLow(
+        spendQuantity < payoutAmount + feeAmount + minDustLimit,
+      )
     })
   }, [contract.collateral.ticker, contract.payoutAmount, spendQuantity, wallet])
 

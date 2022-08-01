@@ -70,7 +70,6 @@ const faapl: Asset = {
   value: 309415.05,
 }
 
-
 const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl]
 
 const oracles: Oracle[] = [
@@ -99,7 +98,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fusd'),
-    isAvailable: true
+    isAvailable: true,
   },
   {
     id: 'usdtftsla',
@@ -107,7 +106,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('ftsla'),
-    isAvailable: false
+    isAvailable: false,
   },
   {
     id: 'usdtfaapl',
@@ -115,7 +114,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('faapl'),
-    isAvailable: false
+    isAvailable: false,
   },
   {
     id: 'usdtfbmn',
@@ -123,7 +122,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     oracles: [oracles[0].id],
     payout: 0.25,
     synthetic: await findAssetByTicker('fbmn'),
-    isAvailable: false
+    isAvailable: false,
   },
 ]
 

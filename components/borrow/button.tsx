@@ -42,7 +42,8 @@ const BorrowButton = ({
     contract.oracles.length > 0 &&
     contract.payoutAmount &&
     contract.payoutAmount >= minDustLimit &&
-    contract.collateral.quantity > contract.payoutAmount + feeAmount + minDustLimit
+    contract.collateral.quantity >
+      contract.payoutAmount + feeAmount + minDustLimit
 
   return (
     <div className="has-text-centered">

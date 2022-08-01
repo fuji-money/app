@@ -7,7 +7,8 @@ export default async function handler(
   res: NextApiResponse,
 ) {
   const { params } = req.query
-  if (typeof params === 'undefined' || params.length !== 2) res.status(404).json({ message: `invalid url` })
+  if (typeof params === 'undefined' || params.length !== 2)
+    res.status(404).json({ message: `invalid url` })
   const offers = await apiOffers()
   if (!offers) res.status(404).json({ message: `offers not found` })
   const offer = offers.find(

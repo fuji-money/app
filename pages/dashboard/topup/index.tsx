@@ -7,7 +7,15 @@ const Topup: NextPage = () => {
   const [result, setResult] = useState('')
   const [data, setData] = useState<any>()
 
-  if (result) return <Result data={data} result={result} setData={setData} setResult={setResult} />
+  if (result)
+    return (
+      <Result
+        data={data}
+        result={result}
+        setData={setData}
+        setResult={setResult}
+      />
+    )
 
   return <Contracts setData={setData} setResult={setResult} />
 }

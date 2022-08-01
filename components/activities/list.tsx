@@ -20,7 +20,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const { wallet } = useContext(WalletContext)
 
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       setLoading(true)
       setActivities(await getActivities())
       setLoading(false)

@@ -6,15 +6,9 @@ import {
   Utxo,
   AddressInterface,
 } from 'marina-provider'
-import {
-  marinaFujiAccountID,
-  marinaMainAccountID,
-} from 'lib/constants'
+import { marinaFujiAccountID, marinaMainAccountID } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import {
-  Psbt,
-  address,
-} from 'liquidjs-lib'
+import { Psbt, address } from 'liquidjs-lib'
 
 async function getBalances(): Promise<Balance[]> {
   const marina = await getMarina()

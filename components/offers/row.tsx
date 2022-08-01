@@ -19,7 +19,11 @@ interface OfferRowProps {
 
 const OfferRow = ({ offer }: OfferRowProps) => {
   return (
-    <div className={`is-box has-pink-border row ${!offer.isAvailable && 'disabled'}`}>
+    <div
+      className={`is-box has-pink-border row ${
+        !offer.isAvailable && 'disabled'
+      }`}
+    >
       <div className="columns level">
         <div className="column is-flex is-2">
           <div className="icon-container">
@@ -45,20 +49,16 @@ const OfferRow = ({ offer }: OfferRowProps) => {
           </p>
         </div>
         <div className="column is-4 has-text-right">
-          {
-            offer.isAvailable ?
-              (
-                <BorrowButton
-                  collateral={offer.collateral.ticker}
-                  synthetic={offer.synthetic.ticker}
-                />
-              ) : (
-                <p className="is-size-6 has-text-weight-bold has-text-right mr-3">
-                  Coming soon
-                </p>
-              )
-          }
-
+          {offer.isAvailable ? (
+            <BorrowButton
+              collateral={offer.collateral.ticker}
+              synthetic={offer.synthetic.ticker}
+            />
+          ) : (
+            <p className="is-size-6 has-text-weight-bold has-text-right mr-3">
+              Coming soon
+            </p>
+          )}
         </div>
       </div>
       <style jsx>{`

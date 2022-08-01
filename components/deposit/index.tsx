@@ -23,12 +23,29 @@ const Deposit = ({ contract, network, setNetwork, topup }: DepositProps) => {
     <div className="is-box has-pink-border py-6 px-6">
       {!network && <Network ticker={ticker} setNetwork={setNetwork} />}
       {qrcode && (
-        <Qrcode contract={contract} setData={setData} setResult={setResult} topup={topup} />
+        <Qrcode
+          contract={contract}
+          setData={setData}
+          setResult={setResult}
+          topup={topup}
+        />
       )}
       {marina && (
-        <Marina contract={contract} setData={setData} setResult={setResult} topup={topup} />
+        <Marina
+          contract={contract}
+          setData={setData}
+          setResult={setResult}
+          topup={topup}
+        />
       )}
-      {result && <Result data={data} result={result} setData={setData} setResult={setResult} />}
+      {result && (
+        <Result
+          data={data}
+          result={result}
+          setData={setData}
+          setResult={setResult}
+        />
+      )}
     </div>
   )
 }

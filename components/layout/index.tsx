@@ -15,7 +15,7 @@ interface LayoutProps {
 
 const UseDesktopBanner = () => (
   <div className="container is-hidden-desktop">
-    <div className='is-box has-pink-border mt-6 mx-6 has-text-centered'>
+    <div className="is-box has-pink-border mt-6 mx-6 has-text-centered">
       <h3>Fuji.Money is not supported on mobile devices</h3>
       <p>Use a browser on a desktop device</p>
     </div>

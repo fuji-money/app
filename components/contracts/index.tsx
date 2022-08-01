@@ -13,7 +13,11 @@ const Contracts = ({ setData, setResult }: ContractsProps) => {
   return (
     <section>
       <ContractsHeader showActive={showActive} setShowActive={setShowActive} />
-      <ContractsList showActive={showActive} setData={setData} setResult={setResult} />
+      <ContractsList
+        showActive={showActive}
+        setData={setData}
+        setResult={setResult}
+      />
     </section>
   )
 }

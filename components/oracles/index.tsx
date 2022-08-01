@@ -13,7 +13,7 @@ export default function Oracles({
 }: OraclesProps) {
   const hasOracle = (id: string) => contract.oracles.includes(id)
   const handleClick = ({ id, disabled }: Oracle) => {
-    if (disabled) return;
+    if (disabled) return
     const newOracles = hasOracle(id)
       ? contract.oracles.filter((o) => o != id)
       : [...contract.oracles, id]

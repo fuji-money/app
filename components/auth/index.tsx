@@ -16,7 +16,7 @@ export default function Auth({ children }: AuthProps) {
         const valid = await postData('/api/login/check', document.cookie)
         if (!valid) router.push('/')
         setValidUser(valid)
-      } catch (err:any) {
+      } catch (err: any) {
         router.push('/')
         console.error(err)
       }

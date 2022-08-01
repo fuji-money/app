@@ -18,7 +18,7 @@ interface MarinaProps {
 
 const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
   const { ticker, value } = contract.collateral
-  const [ step, setStep ] = useState(0)
+  const [step, setStep] = useState(0)
   const quantity = topup || contract.collateral.quantity
   const { network } = useContext(NetworkContext)
   return (
@@ -31,7 +31,9 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
               openModal('marina-modal')
               try {
                 const preparedTx = await prepareBorrowTx(contract)
-                const { partialTransaction } = await proposeBorrowContract(preparedTx)
+                const { partialTransaction } = await proposeBorrowContract(
+                  preparedTx,
+                )
                 setStep(1)
                 contract.txid = await signAndBroadcastTx(partialTransaction)
                 contract.network = network
@@ -40,7 +42,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
                 addContractToStorage(contract) // add to local storage TODO
                 setData(contract.txid)
                 setResult('success')
-              } catch(error) {
+              } catch (error) {
                 setData(error instanceof Error ? error.message : error)
                 setResult('failure')
               }

@@ -62,7 +62,8 @@ export async function prepareBorrowTx(
 
   // get amounts in satoshis
   const collateralAmount = collateral.quantity
-  const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO
+  const payoutAmount =
+    contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
@@ -250,7 +251,8 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     throw new Error('Invalid contract: collateral amount too low')
 
   // fee amount will be taken from covenant
-  const payoutAmount = contract.payoutAmount || getContractPayoutAmount(contract) // TODO
+  const payoutAmount =
+    contract.payoutAmount || getContractPayoutAmount(contract) // TODO
   const network = networks.testnet // TODO
 
   // get ionio instance
@@ -291,7 +293,10 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   const coinToRedeem = coins.find(
     (c) => c.txid === contract.txid && c.vout === 0,
   )
-  if (!coinToRedeem) throw new Error('Contract cannot be found in the connect wallet. Wait for confirmations or try to reload the wallet and try again.')
+  if (!coinToRedeem)
+    throw new Error(
+      'Contract cannot be found in the connect wallet. Wait for confirmations or try to reload the wallet and try again.',
+    )
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
   ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
@@ -377,7 +382,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   // finalize the fuji asset input
   // we skip utxo in position 0 since is finalized already by the redeem function
   for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
-    signed.psbt.finalizeInput(index);
+    signed.psbt.finalizeInput(index)
   }
 
   const rawHex = signed.psbt.extractTransaction().toHex()
