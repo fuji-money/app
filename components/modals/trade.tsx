@@ -5,7 +5,9 @@ const TradeModal = () => {
   return (
     <Modal id="trade-modal">
       <h3 className="mb-5">Trade</h3>
-      <p className="is-size-7 mb-5">FUJI assets are available for trade in the following venues</p>
+      <p className="is-size-7 mb-5">
+        FUJI assets are available for trade in the following venues
+      </p>
       <div className="is-flex is-justify-content-center box-container">
         <div>
           <a href="https://tdex.network">

@@ -32,11 +32,11 @@ const MarinaModal = ({ contract, step, topup }: MarinaModalProps) => {
   const { ticker } = contract.collateral
   const mainMessage = [
     'Preparing transaction...',
-    'Waiting for confirmation...'
+    'Waiting for confirmation...',
   ][step]
   const secondaryMessage = [
     'Waiting for Fuji approval',
-    'Confirm this transaction in your Marina wallet'
+    'Confirm this transaction in your Marina wallet',
   ][step]
   return (
     <Modal id="marina-modal">

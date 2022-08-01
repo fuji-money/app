@@ -1,9 +1,4 @@
-import {
-  createContext,
-  ReactNode,
-  useEffect,
-  useState,
-} from 'react'
+import { createContext, ReactNode, useEffect, useState } from 'react'
 import { getMarina, getNetwork } from 'lib/marina'
 import { MarinaProvider } from 'marina-provider'
 

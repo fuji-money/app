@@ -9,13 +9,21 @@ const Dashboard: NextPage = () => {
   const [result, setResult] = useState('')
   const [data, setData] = useState<any>()
 
-  if (result) return <Result data={data} result={result} setData={setData} setResult={setResult} />
+  if (result)
+    return (
+      <Result
+        data={data}
+        result={result}
+        setData={setData}
+        setResult={setResult}
+      />
+    )
 
   return (
     <>
       <Assets />
       <div className="vertical-space"></div>
-      <Contracts setData={setData} setResult={setResult}/>
+      <Contracts setData={setData} setResult={setResult} />
       <div className="vertical-space"></div>
       <Activities />
       <style jsx>{`

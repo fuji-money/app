@@ -15,7 +15,11 @@ interface ContractsListProps {
   setResult: any
 }
 
-const ContractsList = ({ showActive, setData, setResult }: ContractsListProps) => {
+const ContractsList = ({
+  showActive,
+  setData,
+  setResult,
+}: ContractsListProps) => {
   const [isLoading, setLoading] = useState(false)
   const [contracts, setContracts] = useState<Contract[]>()
 

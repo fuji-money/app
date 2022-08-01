@@ -5,7 +5,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-
   // only posts with body allowed
   if (req.method !== 'POST' || !req.body) return res.status(405).end()
 

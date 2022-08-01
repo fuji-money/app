@@ -1,5 +1,5 @@
-import { WalletContext } from "components/providers/wallet"
-import { useContext } from "react"
+import { WalletContext } from 'components/providers/wallet'
+import { useContext } from 'react'
 
 interface TopupButtonProps {
   minRatio: number

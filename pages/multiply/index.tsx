@@ -6,7 +6,8 @@ const MultiplyPage: NextPage = () => {
     <section>
       <h1>Multiply</h1>
       <p className="is-size-12 mt-6 has-text-centered">
-        Multiply your exposure to your Bitcoin and other digital assets.<br />
+        Multiply your exposure to your Bitcoin and other digital assets.
+        <br />
         Browse our available products below.
       </p>
       <MultiplyOffer />

@@ -47,7 +47,9 @@ const MultiplyOffer = () => {
         </div>
         <p className="has-text-centered mt-2">
           <Link href={`/multiply/btc-long`} passHref>
-            <button disabled className="button is-primary ml-3">Coming soon</button>
+            <button disabled className="button is-primary ml-3">
+              Coming soon
+            </button>
           </Link>
         </p>
       </div>

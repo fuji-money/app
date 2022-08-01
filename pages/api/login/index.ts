@@ -9,7 +9,7 @@ export default async function handler(
   if (req.method !== 'POST' || !req.body) return res.status(405).end()
 
   const email = req.body
-  const vipList = JSON.parse(process.env.VIP_LIST || "[]")
+  const vipList = JSON.parse(process.env.VIP_LIST || '[]')
 
   // if valid email, return cookie value to be set client side
   if (vipList.includes(email))

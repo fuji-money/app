@@ -29,7 +29,9 @@ export async function getContractsFromStorage(): Promise<Contract[]> {
   return Promise.all(promises)
 }
 
-export async function getContractFromStorage(txid: string): Promise<Contract | undefined> {
+export async function getContractFromStorage(
+  txid: string,
+): Promise<Contract | undefined> {
   const contracts = await getContractsFromStorage()
   return contracts.find((c) => c.txid === txid)
 }
@@ -42,7 +44,9 @@ export async function addContractToStorage(contract: Contract): Promise<void> {
   addActivity(contract, ActivityType.Creation)
 }
 
-export async function redeemContractToStorage(contract: Contract): Promise<void> {
+export async function redeemContractToStorage(
+  contract: Contract,
+): Promise<void> {
   if (typeof window === 'undefined') return
   const contracts = (await getContractsFromStorage()).map((c) => {
     if (c.txid === contract.txid) c.state = ContractState.Redeemed

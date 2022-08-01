@@ -7,7 +7,9 @@ const AccountModal = () => {
     <Modal id="account-modal">
       <Spinner />
       <h3 className="mt-4">Waiting for confirmation...</h3>
-      <p>Creating a Marina account named <strong>{marinaFujiAccountID}</strong></p>
+      <p>
+        Creating a Marina account named <strong>{marinaFujiAccountID}</strong>
+      </p>
       <p>Please accept and unlock on Marina</p>
     </Modal>
   )

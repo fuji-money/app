@@ -9,18 +9,17 @@ import { useEffect } from 'react'
 import Script from 'next/script'
 
 const Home: NextPage = () => {
-
   useEffect(() => {
     console.log('useEffect')
     const checkAuth = async () => {
       try {
         const validUser = await postData('/api/login/check', document.cookie)
         if (validUser) Router.push('/dashboard')
-      } catch(ignore) {}
+      } catch (ignore) {}
     }
     checkAuth()
     // this now gets called when the component unmounts
-    return () => {};
+    return () => {}
   }, [])
 
   const handleSubmit = async (event: any) => {
@@ -89,7 +88,12 @@ const Home: NextPage = () => {
           margin: 80px auto;
         }
       `}</style>
-      <Script defer data-domain="alpha-app.fuji.money" src="https://analytics.fuji.money/js/plausible.js" strategy="lazyOnload" />
+      <Script
+        defer
+        data-domain="alpha-app.fuji.money"
+        src="https://analytics.fuji.money/js/plausible.js"
+        strategy="lazyOnload"
+      />
     </section>
   )
 }

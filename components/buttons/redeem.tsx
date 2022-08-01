@@ -31,7 +31,7 @@ const RedeemButton = ({
       redeemContractToStorage(contract)
       setData(txid)
       setResult('success')
-    } catch(error) {
+    } catch (error) {
       setData(error instanceof Error ? error.message : error)
       setResult('failure')
     }
