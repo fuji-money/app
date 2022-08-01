@@ -13,7 +13,7 @@ export const oraclePubKey =
 
 export const fUSDtestnet =
   process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
-  '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568'
+  '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518'
 
 export const oracleURL =
   process.env.NEXT_PUBLIC_ORACLE_URL ||

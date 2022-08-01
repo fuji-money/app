@@ -28,7 +28,7 @@ const usdt: Asset = {
 
 const fusd: Asset = {
   icon: '/images/assets/fusd.svg',
-  id: '04e28b858766654440399712cfcd49bcfa512971b7e79cd4029dbb23d18cd568',
+  id: '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518',
   isSynthetic: true,
   isAvailable: true,
   name: 'FUJI USD',
