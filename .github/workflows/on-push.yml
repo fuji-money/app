@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   test:
@@ -16,5 +16,5 @@ jobs:
           node-version: "16"
       - run: yarn
       - run: yarn lint
-      - run: yarn prettier
+      - run: yarn prettier --check
       - run: yarn build
