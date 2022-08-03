@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prettier": "npx prettier --check pages/ components/ lib/"
+    "prettier": "npx prettier --check pages/ components/ lib/",
+    "prettier:fix": "npx prettier --write pages/ components/ lib/"
   },
   "dependencies": {
     "@ionio-lang/ionio": "^0.1.9",
