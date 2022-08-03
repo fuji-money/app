@@ -6,6 +6,8 @@ interface SyntheticProps {
   setSyntheticQuantity: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
+const inputNumberRegexp = '/^(?:(d|,)+(?:.d*)?|.d+)$/g'
+
 const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
   return (
     <div className="level has-pink-border has-pink-background">
@@ -28,7 +30,7 @@ const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
             className="input has-pink-background has-text-right"
             min="0"
             placeholder="0.00"
-            type="number"
+            pattern={inputNumberRegexp}
             onChange={setSyntheticQuantity}
           />
         </div>
@@ -36,7 +38,7 @@ const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
       <style jsx>{`
         input {
           border: 0;
-          max-width: 100px;
+          max-width: 200px;
         }
         input:focus {
           border-color: inherit;

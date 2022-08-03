@@ -43,6 +43,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
                 setData(contract.txid)
                 setResult('success')
               } catch (error) {
+                console.error(error)
                 setData(error instanceof Error ? error.message : error)
                 setResult('failure')
               }
