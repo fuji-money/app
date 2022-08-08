@@ -5,6 +5,7 @@ import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'
 import ExplorerLink from 'components/links/explorer'
 import { fromSatoshis } from 'lib/utils'
+import { prettyAmount, prettyFiat } from 'lib/pretty'
 
 interface ContractRowProps {
   contract: Contract
@@ -28,15 +29,12 @@ const ContractRow = ({
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
-        <div className="column is-2">
-          <p className="has-text-weight-bold">
+        <div className="column is-12 is-flex is-justify-content-space-between">
+          <p className="my-auto has-text-weight-bold">
             {fromSatoshis(quantity)} {ticker}
           </p>
-        </div>
-        <div className="column is-2">
+          <p className="my-auto is-size-7">{prettyFiat(contract.priceLevel)}</p>
           <PrettyState state={contract.state} />
-        </div>
-        <div className="column is-8 has-text-right">
           {contract.txid && <ExplorerLink txid={contract.txid} />}
           <RedeemButton
             contract={contract}
