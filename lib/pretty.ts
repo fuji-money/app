@@ -17,8 +17,7 @@ export const prettyAsset = (asset: Asset): string =>
 export const prettyAmount = (asset: Asset): string =>
   `US$ ${prettyNumber(fromSatoshis(asset.quantity) * asset.value)}`
 
-export const prettyFiat = (amount = 0): string =>
-  `US$ ${prettyNumber(amount)}`
+export const prettyFiat = (amount = 0): string => `US$ ${prettyNumber(amount)}`
 
 // show pretty ago time
 export const prettyAgo = (timestamp: number): string => {
