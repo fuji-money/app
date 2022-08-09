@@ -48,6 +48,7 @@ const PrettyState = ({ state }: PrettyStateProps) => {
           background-color: #ffdedf;
           color: #ff4e53;
         }
+        .state.closed,
         .state.liquidated,
         .state.unknown {
           background-color: #eee;
