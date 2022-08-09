@@ -6,7 +6,6 @@ import SomeError from 'components/layout/error'
 import { WalletContext } from 'components/providers/wallet'
 import ActivityRow from './row'
 import Spinner from 'components/spinner'
-import { NetworkContext } from 'components/providers/network'
 
 interface ActivitiesListProps {
   activityType: ActivityType
@@ -16,8 +15,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const [activities, setActivities] = useState<Activity[]>()
   const [isLoading, setLoading] = useState(false)
 
-  const { network } = useContext(NetworkContext)
-  const { wallet } = useContext(WalletContext)
+  const { connected, network } = useContext(WalletContext)
 
   useEffect(() => {
     ;(async () => {
@@ -25,9 +23,9 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
       setActivities(await getActivities())
       setLoading(false)
     })()
-  }, [wallet, network])
+  }, [connected, network])
 
-  if (!wallet)
+  if (!connected)
     return (
       <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
     )

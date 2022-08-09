@@ -1,9 +1,11 @@
+import { WalletContext } from 'components/providers/wallet'
 import { contractIsExpired } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
-import { getBalance } from 'lib/marina'
+import { getAssetBalance } from 'lib/marina'
 import { redeemContractToStorage } from 'lib/storage'
 import { Contract } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
+import { useContext } from 'react'
 
 interface RedeemButtonProps {
   contract: Contract
@@ -22,8 +24,9 @@ const RedeemButton = ({
   setData,
   setResult,
 }: RedeemButtonProps) => {
+  const { balances } = useContext(WalletContext)
   const handleClick = async () => {
-    setAssetBalance(await getBalance(contract.synthetic))
+    setAssetBalance(getAssetBalance(contract.synthetic, balances))
     setRedeem(contract)
     openModal('redeem-modal')
     try {

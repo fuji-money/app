@@ -5,6 +5,8 @@ export const maxMultiplyRatio = 330
 export const marinaFujiAccountID = 'fuji'
 export const marinaMainAccountID = 'mainAccount'
 
+export const defaultNetwork = 'testnet'
+
 // covenant
 export const issuerPubKey =
   '02a3d89442c53fa319737bce93e0408d00f817f992a276fea1a2aa0ffbdc4a8a76'

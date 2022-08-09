@@ -1,5 +1,5 @@
 import { fetchURL } from './fetch'
-import { getBalance } from './marina'
+import { getAssetBalance, getBalances } from './marina'
 import { getBTCvalue } from './server'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
@@ -8,16 +8,18 @@ export async function fetchAsset(ticker: string): Promise<Asset> {
   if (asset.ticker === 'L-BTC') {
     asset.value = await getBTCvalue()
   }
-  asset.quantity = await getBalance(asset)
+  const balances = await getBalances()
+  asset.quantity = getAssetBalance(asset, balances)
   return asset
 }
 
 export async function fetchAssets(): Promise<Asset[]> {
   const value = await getBTCvalue()
   const assets = await fetchURL('/api/assets')
+  const balances = await getBalances()
   const promises = assets.map(async (asset: Asset) => {
     if (asset.ticker === 'L-BTC') asset.value = value
-    asset.quantity = await getBalance(asset)
+    asset.quantity = getAssetBalance(asset, balances)
     return asset
   })
   return Promise.all(promises)
