@@ -5,6 +5,7 @@ import {
   Balance,
   Utxo,
   AddressInterface,
+  NetworkString,
 } from 'marina-provider'
 import { marinaFujiAccountID, marinaMainAccountID } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
@@ -42,9 +43,17 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
   }
 }
 
-export async function getNetwork(): Promise<string | undefined> {
+export async function getNetwork(): Promise<NetworkString | undefined> {
   const marina = await getMarina()
   if (marina) return await marina.getNetwork()
+}
+
+export async function getXPubKey(): Promise<string | undefined> {
+  const marina = await getMarina()
+  if (marina) {
+    const info = await marina.getAccountInfo(marinaMainAccountID)
+    return info.masterXPub
+  }
 }
 
 export async function signAndBroadcastTx(partialTransaction: any) {
