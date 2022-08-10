@@ -9,7 +9,7 @@ export const marinaMainAccountID = 'mainAccount'
 export const issuerPubKey =
   '02a3d89442c53fa319737bce93e0408d00f817f992a276fea1a2aa0ffbdc4a8a76'
 export const oraclePubKey =
-  '0256e332a5134f31dbea899e0cb7c75d3e2cff969d3958d066f8198caaee3a6159'
+  '02c304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e'
 
 export const fUSDtestnet =
   process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
