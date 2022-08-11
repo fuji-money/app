@@ -7,33 +7,28 @@ import {
   AddressInterface,
   NetworkString,
 } from 'marina-provider'
-import { marinaFujiAccountID, marinaMainAccountID } from 'lib/constants'
+import {
+  defaultNetwork,
+  marinaFujiAccountID,
+  marinaMainAccountID,
+} from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
 import { Psbt, address } from 'liquidjs-lib'
 
-async function getBalances(): Promise<Balance[]> {
-  const marina = await getMarina()
+export async function getBalances(): Promise<Balance[]> {
+  const marina = await getMarinaProvider()
   if (!marina) return []
   if (!(await marina.isEnabled())) return []
   return await marina.getBalances([marinaMainAccountID])
 }
 
-export async function getBalance(asset: Asset): Promise<number> {
-  const assetHash = asset.id
-  const balances = await getBalances()
-  if (!balances) return 0
-  const found = balances.find((a) => a.asset.assetHash === assetHash)
-  if (!found) return 0
+export function getAssetBalance(asset: Asset, balances: Balance[]): number {
+  const found = balances.find((a) => a.asset.assetHash === asset.id)
+  if (!found || !found.amount) return 0
   return found.amount
 }
 
-export async function checkMarina(): Promise<boolean> {
-  const marina = await getMarina()
-  if (!marina) return false
-  return await marina.isEnabled()
-}
-
-export async function getMarina(): Promise<MarinaProvider | undefined> {
+export async function getMarinaProvider(): Promise<MarinaProvider | undefined> {
   if (typeof window === 'undefined') return undefined
   try {
     return await detectProvider('marina')
@@ -43,13 +38,14 @@ export async function getMarina(): Promise<MarinaProvider | undefined> {
   }
 }
 
-export async function getNetwork(): Promise<NetworkString | undefined> {
-  const marina = await getMarina()
+export async function getNetwork(): Promise<NetworkString> {
+  const marina = await getMarinaProvider()
   if (marina) return await marina.getNetwork()
+  return defaultNetwork
 }
 
 export async function getXPubKey(): Promise<string | undefined> {
-  const marina = await getMarina()
+  const marina = await getMarinaProvider()
   if (marina) {
     const info = await marina.getAccountInfo(marinaMainAccountID)
     return info.masterXPub
@@ -58,7 +54,7 @@ export async function getXPubKey(): Promise<string | undefined> {
 
 export async function signAndBroadcastTx(partialTransaction: any) {
   // check for marina
-  const marina = await getMarina()
+  const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
 
   // sign and broadcast transaction

@@ -11,6 +11,7 @@ import { feeAmount, minDustLimit } from 'lib/constants'
 import { WalletContext } from 'components/providers/wallet'
 import ConnectWalletNotification from './connectWallet'
 import LowCollateralAmountNotification from './lowCollateralAmount'
+import { getAssetBalance } from 'lib/marina'
 
 interface NotificationsProps {
   contract: Contract
@@ -32,21 +33,27 @@ const Notifications = ({
   const [belowDustLimit, setBelowDustLimit] = useState(false)
   const [collateralTooLow, setCollateralTooLow] = useState(false)
 
-  const { wallet } = useContext(WalletContext)
+  const { balances, connected } = useContext(WalletContext)
 
   const spendQuantity = topup ? topup : contract.collateral.quantity || 0
   const { payout } = contract
 
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
-      const balance = asset?.quantity || 0
+      const balance = getAssetBalance(asset, balances)
       const payoutAmount = contract.payoutAmount || 0
-      setNotEnoughFunds(wallet && spendQuantity > balance)
+      setNotEnoughFunds(connected && spendQuantity > balance)
       setCollateralTooLow(
         spendQuantity < payoutAmount + feeAmount + minDustLimit,
       )
     })
-  }, [contract.collateral.ticker, contract.payoutAmount, spendQuantity, wallet])
+  }, [
+    balances,
+    connected,
+    contract.collateral.ticker,
+    contract.payoutAmount,
+    spendQuantity,
+  ])
 
   useEffect(() => {
     setRatioTooLow(ratio < minRatio)
@@ -70,7 +77,7 @@ const Notifications = ({
     <>
       {notEnoughOracles && <NotEnoughOraclesNotification />}
       {belowDustLimit && <BelowDustLimitNotification />}
-      {!wallet && <ConnectWalletNotification />}
+      {!connected && <ConnectWalletNotification />}
       {collateralTooLow && <LowCollateralAmountNotification />}
       {notEnoughFunds && <NotEnoughFundsNotification />}
       {ratioTooLow && <RatioTooLowNotification />}

@@ -22,7 +22,7 @@ import { postData } from './fetch'
 import {
   createFujiAccount,
   fujiAccountMissing,
-  getMarina,
+  getMarinaProvider,
   selectCoinsWithBlindPrivKey,
 } from './marina'
 import { synthAssetArtifact } from 'lib/artifacts'
@@ -45,7 +45,7 @@ export async function prepareBorrowTx(
   console.log('prepareBorrowTx contract', contract)
 
   // check for marina
-  const marina = await getMarina()
+  const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
 
   // check for marina account, create if doesn't exists
@@ -234,7 +234,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   console.log('contract to redeem', contract)
 
   // check for marina
-  const marina = await getMarina()
+  const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
 
   // validate contract

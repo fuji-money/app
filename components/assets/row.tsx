@@ -3,12 +3,16 @@ import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
 import TradeButton from 'components/buttons/trade'
+import { useContext } from 'react'
+import { WalletContext } from 'components/providers/wallet'
+import { getAssetBalance } from 'lib/marina'
 
 interface AssetRowProps {
   asset: Asset
 }
 
 const AssetRow = ({ asset }: AssetRowProps) => {
+  const { balances } = useContext(WalletContext)
   return (
     <div
       className={`is-box has-pink-border row ${
@@ -23,7 +27,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           <div className="is-purple my-auto">
             <p className="is-size-6 mb-0">{asset.name}</p>
             <p className="is-size-6 mb-0 has-text-weight-bold">
-              {prettyQuantity(asset)} {asset.ticker}
+              {prettyQuantity(getAssetBalance(asset, balances))} {asset.ticker}
             </p>
           </div>
         </div>

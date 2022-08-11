@@ -1,8 +1,8 @@
-import { NetworkContext } from 'components/providers/network'
+import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 
 export default function Banner() {
-  const { network } = useContext(NetworkContext)
+  const { network } = useContext(WalletContext)
 
   const text =
     network === 'testnet'
