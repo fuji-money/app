@@ -10,6 +10,12 @@ export default async function handler(
   if (req.method !== 'POST' || !req.body) return res.status(405).end()
 
   const email = req.body
+  const vipList = JSON.parse(process.env.VIP_LIST || '[]')
+
+  const success = () => res.status(200).json(calcAuthCookie(email))
+
+  if (vipList.includes(email)) return success()
+
   const maxOrder = process.env.VIRAL_LOOP_MAX_ORDER
   const publicToken = process.env.VIRAL_LOOP_PUBLIC_TOKEN
 
@@ -21,8 +27,7 @@ export default async function handler(
   const data = await fetchURL(url)
 
   // if valid email, return cookie value to be set client side
-  if (maxOrder && data.order <= maxOrder)
-    return res.status(200).json(calcAuthCookie(email))
+  if (maxOrder && data.order <= maxOrder) return success()
 
   // email not in vip list, return 401
   return res.status(401).end()
