@@ -1,6 +1,7 @@
 import { WalletContext } from 'components/providers/wallet'
 import { fetchAsset } from 'lib/api'
 import { feeAmount, minDustLimit } from 'lib/constants'
+import { getAssetBalance } from 'lib/marina'
 import { Contract } from 'lib/types'
 import { useContext, useEffect, useState } from 'react'
 
@@ -17,19 +18,19 @@ const BorrowButton = ({
   ratio,
   setDeposit,
 }: BorrowButtonProps) => {
-  const { wallet } = useContext(WalletContext)
+  const { balances, connected } = useContext(WalletContext)
   const [enoughFunds, setEnoughFunds] = useState(false)
 
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
-      const funds = asset?.quantity || 0
+      const funds = getAssetBalance(asset, balances)
       const needed = contract.collateral.quantity || 0
-      setEnoughFunds(wallet && funds > needed)
+      setEnoughFunds(connected && funds > needed)
     })
   })
 
   const enabled =
-    wallet &&
+    connected &&
     enoughFunds &&
     contract.collateral.quantity &&
     contract.collateral.quantity > 0 &&

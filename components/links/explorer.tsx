@@ -1,4 +1,4 @@
-import { NetworkContext } from 'components/providers/network'
+import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 
 interface ExplorerLinkProps {
@@ -6,7 +6,7 @@ interface ExplorerLinkProps {
 }
 
 const ExplorerLink = ({ txid }: ExplorerLinkProps) => {
-  const { network } = useContext(NetworkContext)
+  const { network } = useContext(WalletContext)
 
   const href =
     network === 'testnet'
