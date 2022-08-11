@@ -44,6 +44,14 @@ export async function getNetwork(): Promise<NetworkString> {
   return defaultNetwork
 }
 
+export async function getXPubKey(): Promise<string | undefined> {
+  const marina = await getMarinaProvider()
+  if (marina) {
+    const info = await marina.getAccountInfo(marinaMainAccountID)
+    return info.masterXPub
+  }
+}
+
 export async function signAndBroadcastTx(partialTransaction: any) {
   // check for marina
   const marina = await getMarinaProvider()

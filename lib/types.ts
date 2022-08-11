@@ -50,18 +50,19 @@ export enum ContractState {
 }
 
 export interface Contract {
+  borrowerPubKey?: string
   collateral: Asset
-  payout: number
-  synthetic: Asset
-  priceLevel?: number
-  oracles: string[]
+  contractParams?: any // TODO
   createdAt?: number
   network?: string
-  state?: ContractState
-  txid?: string
-  contractParams?: any // TODO
-  borrowerPubKey?: string
+  oracles: string[]
+  payout: number
   payoutAmount?: number
+  priceLevel?: number
+  state?: ContractState
+  synthetic: Asset
+  txid?: string
+  xPubKey?: string
 }
 
 export interface Investment {

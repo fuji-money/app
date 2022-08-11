@@ -1,16 +1,20 @@
 import { fetchAsset } from './api'
 import { ActivityType, Contract, ContractState } from './types'
 import { addActivity } from './activities'
-import { getNetwork } from './marina'
+import { getNetwork, getXPubKey } from './marina'
+
+const localStorageKey = 'fujiContracts'
 
 export async function getContractsFromStorage(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = (await getNetwork()) || 'testnet' // TODO
-  const key = 'fujiContracts'
-  if (!localStorage.getItem(key)) return []
-  const contracts = JSON.parse(localStorage.getItem(key) || '[]')
+  const xPubKey = (await getXPubKey()) || 'xPubKey' // TODO
+  const storedContracts = localStorage.getItem(localStorageKey)
+  if (!storedContracts) return []
+  const contracts = JSON.parse(storedContracts)
   const promises = contracts
     .filter((contract: Contract) => contract.network === network)
+    .filter((contract: Contract) => contract.xPubKey === xPubKey)
     .map(async (contract: Contract) => {
       const collateral = await fetchAsset(contract.collateral.ticker)
       const synthetic = await fetchAsset(contract.synthetic.ticker)
@@ -40,7 +44,7 @@ export async function addContractToStorage(contract: Contract): Promise<void> {
   if (typeof window === 'undefined') return
   const contracts = await getContractsFromStorage()
   contracts.push(contract)
-  localStorage.setItem('fujiContracts', JSON.stringify(contracts))
+  localStorage.setItem(localStorageKey, JSON.stringify(contracts))
   addActivity(contract, ActivityType.Creation)
 }
 
@@ -52,6 +56,6 @@ export async function redeemContractToStorage(
     if (c.txid === contract.txid) c.state = ContractState.Redeemed
     return c
   })
-  localStorage.setItem('fujiContracts', JSON.stringify(contracts))
+  localStorage.setItem(localStorageKey, JSON.stringify(contracts))
   addActivity(contract, ActivityType.Redeemed)
 }
