@@ -45,7 +45,7 @@ export enum ContractState {
   Unsafe = 'unsafe',
   Critical = 'critical',
   Liquidated = 'liquidated',
-  Redeemed = 'redeemed',
+  Redeemed = 'closed',
   Unknown = 'unknown',
 }
 
