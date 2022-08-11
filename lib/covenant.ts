@@ -295,7 +295,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   )
   if (!coinToRedeem)
     throw new Error(
-      'Contract cannot be found in the connect wallet. Wait for confirmations or try to reload the wallet and try again.',
+      'Contract cannot be found in the connected wallet. Wait for confirmations or try to reload the wallet and try again.',
     )
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
