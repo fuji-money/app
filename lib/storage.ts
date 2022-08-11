@@ -5,10 +5,26 @@ import { getNetwork, getXPubKey } from './marina'
 
 const localStorageKey = 'fujiContracts'
 
+const fixMissingXPubKeyOnOldContracts = (xPubKey: string) => {
+  let changed = false
+  const storedContracts = localStorage.getItem(localStorageKey)
+  if (!storedContracts) return
+  // fix missing xPubKey on old contracts and store on local storage
+  const contracts = JSON.parse(storedContracts).map((c: Contract) => {
+    if (!c.xPubKey) {
+      c.xPubKey = xPubKey
+      changed = true
+    }
+    return c
+  })
+  if (changed) localStorage.setItem(localStorageKey, JSON.stringify(contracts))
+}
+
 export async function getContractsFromStorage(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = (await getNetwork()) || 'testnet' // TODO
   const xPubKey = (await getXPubKey()) || 'xPubKey' // TODO
+  fixMissingXPubKeyOnOldContracts(xPubKey) // TODO temporary hack
   const storedContracts = localStorage.getItem(localStorageKey)
   if (!storedContracts) return []
   const contracts = JSON.parse(storedContracts)
