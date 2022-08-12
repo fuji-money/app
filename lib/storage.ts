@@ -1,7 +1,7 @@
 import { fetchAsset } from './api'
 import { ActivityType, Contract, ContractState } from './types'
 import { addActivity } from './activities'
-import { getNetwork, getXPubKey } from './marina'
+import { getFujiCoins, getNetwork, getXPubKey } from './marina'
 
 const localStorageKey = 'fujiContracts'
 
@@ -22,8 +22,9 @@ const fixMissingXPubKeyOnOldContracts = (xPubKey: string) => {
 
 export async function getContractsFromStorage(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
-  const network = (await getNetwork()) || 'testnet' // TODO
-  const xPubKey = (await getXPubKey()) || 'xPubKey' // TODO
+  const network = (await getNetwork())
+  const xPubKey = (await getXPubKey())
+  const fujiCoins = await getFujiCoins()
   fixMissingXPubKeyOnOldContracts(xPubKey) // TODO temporary hack
   const storedContracts = localStorage.getItem(localStorageKey)
   if (!storedContracts) return []
@@ -44,6 +45,11 @@ export async function getContractsFromStorage(): Promise<Contract[]> {
         )
       contract.collateral = { ...collateral, ...contract.collateral }
       contract.synthetic = { ...synthetic, ...contract.synthetic }
+      // if no coin found and the contract was not redeemed,
+      // we'll assume this contract was liquidated
+      const hasCoin = fujiCoins.find((c) => c.txid === contract.txid)
+      if (!hasCoin && contract.state !== ContractState.Redeemed)
+        contract.state = ContractState.Liquidated
       return contract
     })
   return Promise.all(promises)
