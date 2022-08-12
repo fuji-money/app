@@ -22,8 +22,8 @@ const fixMissingXPubKeyOnOldContracts = (xPubKey: string) => {
 
 export async function getContractsFromStorage(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
-  const network = (await getNetwork())
-  const xPubKey = (await getXPubKey())
+  const network = await getNetwork()
+  const xPubKey = await getXPubKey()
   const fujiCoins = await getFujiCoins()
   fixMissingXPubKeyOnOldContracts(xPubKey) // TODO temporary hack
   const storedContracts = localStorage.getItem(localStorageKey)
