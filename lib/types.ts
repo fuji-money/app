@@ -47,11 +47,13 @@ export enum ContractState {
   Liquidated = 'liquidated',
   Redeemed = 'closed',
   Unknown = 'unknown',
+  Unconfirmed = 'unconfirmed',
 }
 
 export interface Contract {
   borrowerPubKey?: string
   collateral: Asset
+  confirmed?: boolean
   contractParams?: any // TODO
   createdAt?: number
   network?: string
@@ -59,7 +61,7 @@ export interface Contract {
   payout: number
   payoutAmount?: number
   priceLevel?: number
-  state?: ContractState
+  state: ContractState
   synthetic: Asset
   txid?: string
   xPubKey?: string

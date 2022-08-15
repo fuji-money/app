@@ -1,8 +1,7 @@
 import { WalletContext } from 'components/providers/wallet'
-import { contractIsExpired } from 'lib/contracts'
+import { contractIsExpired, redeemContract } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
-import { redeemContractToStorage } from 'lib/storage'
 import { Contract } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
 import { useContext } from 'react'
@@ -31,7 +30,7 @@ const RedeemButton = ({
     openModal('redeem-modal')
     try {
       const txid = await prepareRedeemTx(contract, setStep)
-      redeemContractToStorage(contract)
+      redeemContract(contract)
       setData(txid)
       setResult('success')
     } catch (error) {

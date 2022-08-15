@@ -1,6 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { contractIsExpired } from 'lib/contracts'
-import { getContractsFromStorage } from 'lib/storage'
+import { contractIsExpired, getContracts } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import RedeemModal from 'components/modals/redeem'
@@ -26,15 +25,16 @@ const ContractsList = ({
   const [assetBalance, setAssetBalance] = useState(0)
   const [step, setStep] = useState(0)
 
-  const { connected, network } = useContext(WalletContext)
+  const { connected, fujiCoins } = useContext(WalletContext)
 
   useEffect(() => {
+    console.log('fujiCoins')
     setLoading(true)
-    getContractsFromStorage().then((data) => {
-      setContracts(data)
+    getContracts().then((contracts) => {
+      setContracts(contracts)
       setLoading(false)
     })
-  }, [connected, network])
+  }, [fujiCoins])
 
   if (!connected)
     return (

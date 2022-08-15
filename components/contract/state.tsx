@@ -17,7 +17,7 @@ const PrettyState = ({ state }: PrettyStateProps) => {
           line-height: 0.5rem;
           padding: 4px;
           margin: auto 0;
-          width: 5rem;
+          width: 6rem;
         }
         .state span {
           display: block;
@@ -26,7 +26,6 @@ const PrettyState = ({ state }: PrettyStateProps) => {
         .state span:nth-child(1) {
           /* bullet */
           font-size: 2rem;
-          padding-bottom: 2px;
         }
         .state span:nth-child(2) {
           /* string */
@@ -50,6 +49,7 @@ const PrettyState = ({ state }: PrettyStateProps) => {
         }
         .state.closed,
         .state.liquidated,
+        .state.unconfirmed,
         .state.unknown {
           background-color: #eee;
           color: #000;

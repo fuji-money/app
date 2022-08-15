@@ -1,11 +1,23 @@
 import { createContext, ReactNode, useEffect, useState } from 'react'
-import { getBalances, getMarinaProvider, getNetwork } from 'lib/marina'
-import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
+import {
+  getBalances,
+  getFujiCoins,
+  getMarinaProvider,
+  getNetwork,
+} from 'lib/marina'
+import { Balance, MarinaProvider, NetworkString, Utxo } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
+import {
+  confirmContract,
+  getContract,
+  getUnconfirmedContracts,
+} from 'lib/contracts'
+import { getContractsFromStorage } from 'lib/storage'
 
 interface WalletContextProps {
   balances: Balance[]
   connected: boolean
+  fujiCoins: Utxo[]
   marina: MarinaProvider | undefined
   network: NetworkString
 }
@@ -13,6 +25,7 @@ interface WalletContextProps {
 export const WalletContext = createContext<WalletContextProps>({
   balances: [],
   connected: false,
+  fujiCoins: [],
   marina: undefined,
   network: defaultNetwork,
 })
@@ -23,15 +36,16 @@ interface WalletProviderProps {
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [balances, setBalances] = useState<Balance[]>([])
   const [connected, setConnected] = useState(false)
+  const [fujiCoins, setFujiCoins] = useState<Utxo[]>([])
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
 
   const updateBalances = async () => setBalances(await getBalances())
+  const updateFujiCoins = async () => setFujiCoins(await getFujiCoins())
+  const updateNetwork = async () => setNetwork(await getNetwork())
 
   // update marina
-  useEffect(() => {
-    getMarinaProvider().then((payload) => setMarina(payload))
-  })
+  getMarinaProvider().then((payload) => setMarina(payload))
 
   // update connected
   useEffect(() => {
@@ -58,25 +72,46 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // update network and add event listener
   useEffect(() => {
     if (connected && marina) {
-      getNetwork().then((payload) => setNetwork(payload))
-      // add event listener
-      const id = marina.on('NETWORK', (payload) => setNetwork(payload))
+      updateNetwork()
+      const id = marina.on('NETWORK', (_) => updateNetwork())
       return () => marina.off(id)
     }
   }, [connected, marina])
 
-  // update balances and add event listener
+  // on NEW_TX, check if it's a contract confirmation
+  useEffect(() => {
+    if (connected && marina) {
+      const unconfirmedTxIds = getUnconfirmedContracts().map((c) => c.txid)
+      const id = marina.on('NEW_TX', (tx) => {
+        console.log('NEW_TX', tx)
+        if (unconfirmedTxIds.includes(tx.txid)) {
+          getContract(tx.txid).then((contract) => {
+            if (contract) confirmContract(contract)
+          })
+        }
+      })
+      return () => marina.off(id)
+    }
+  }, [connected, marina, network])
+
+  // update fuji coins and add event listener
   useEffect(() => {
     if (connected && marina) {
       updateBalances()
-      // add event listener
-      const id = marina.on('NEW_TX', (_) => updateBalances())
+      updateFujiCoins()
+      const id = marina.on('SPENT_UTXO', (utxo) => {
+        console.log('SPENT_UTXO', utxo)
+        updateBalances()
+        updateFujiCoins()
+      })
       return () => marina.off(id)
     }
   }, [connected, marina, network])
 
   return (
-    <WalletContext.Provider value={{ balances, connected, marina, network }}>
+    <WalletContext.Provider
+      value={{ balances, connected, fujiCoins, marina, network }}
+    >
       {children}
     </WalletContext.Provider>
   )

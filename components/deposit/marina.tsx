@@ -5,9 +5,9 @@ import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
-import { addContractToStorage } from 'lib/storage'
 import { useContext, useState } from 'react'
 import { WalletContext } from 'components/providers/wallet'
+import { addContract } from 'lib/contracts'
 
 interface MarinaProps {
   contract: Contract
@@ -39,8 +39,9 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
                 contract.borrowerPubKey = preparedTx.borrowerPublicKey
                 contract.contractParams = preparedTx.contractParams
                 contract.network = network
+                contract.confirmed = false
                 contract.xPubKey = await getXPubKey()
-                addContractToStorage(contract) // add to local storage TODO
+                addContract(contract)
                 setData(contract.txid)
                 setResult('success')
               } catch (error) {

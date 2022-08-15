@@ -1,5 +1,4 @@
 import { Contract } from 'lib/types'
-import { getContractState } from 'lib/contracts'
 import RedeemButton from 'components/buttons/redeem'
 import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'
@@ -24,7 +23,6 @@ const ContractRow = ({
   setResult,
 }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
-  contract.state ||= getContractState(contract)
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
