@@ -66,7 +66,7 @@ export default async function handler(
   // else, check if user has rank <= max rank defined on env
   // if so, flag him and he will always be allowed to enter
   const maxRank = process.env.VIRAL_LOOP_MAX_RANK || -1
-  const userRank = (await getUserRank(email)) || 0
+  const userRank = await getUserRank(email)
   if (userRank <= maxRank) {
     await flagUser(email)
     return success()
