@@ -47,6 +47,10 @@ export async function getContractsFromStorage(): Promise<Contract[]> {
       contract.synthetic = { ...synthetic, ...contract.synthetic }
       // if no coin found and the contract was not redeemed,
       // we'll assume this contract was liquidated
+      //
+      // TODO check the actual outpoint from exploer for "spentness" 
+      // the element before the last in the witness stack is the script hex
+      // If we decode that script, we can "fingerprint" knonw opcodes of liquidation script path spend
       const hasCoin = fujiCoins.find((c) => c.txid === contract.txid)
       if (!hasCoin && contract.state !== ContractState.Redeemed)
         contract.state = ContractState.Liquidated
