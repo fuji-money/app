@@ -1,4 +1,4 @@
-import { Contract } from 'lib/types'
+import { Contract, ContractState } from 'lib/types'
 import RedeemButton from 'components/buttons/redeem'
 import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'
@@ -23,6 +23,7 @@ const ContractRow = ({
   setResult,
 }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
+  const state = contract.state || ContractState.Unknown
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
@@ -32,7 +33,7 @@ const ContractRow = ({
           </p>
         </div>
         <div className="column is-2">
-          <PrettyState state={contract.state} />
+          <PrettyState state={state} />
         </div>
         <div className="column is-8 has-text-right">
           {contract.txid && <ExplorerLink txid={contract.txid} />}

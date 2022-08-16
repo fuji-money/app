@@ -61,7 +61,7 @@ export interface Contract {
   payout: number
   payoutAmount?: number
   priceLevel?: number
-  state: ContractState
+  state?: ContractState
   synthetic: Asset
   txid?: string
   xPubKey?: string

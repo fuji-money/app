@@ -3,10 +3,10 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Topup from 'components/topup'
-import { getContractFromStorage } from 'lib/storage'
 import { Contract, Oracle } from 'lib/types'
 import Spinner from 'components/spinner'
 import { fetchOracles } from 'lib/api'
+import { getContract } from 'lib/contracts'
 
 const TopupContract: NextPage = () => {
   const [contract, setContract] = useState<Contract>()
@@ -21,7 +21,7 @@ const TopupContract: NextPage = () => {
       setLoading(true)
       fetchOracles().then((data) => {
         setOracles(data)
-        getContractFromStorage(txid).then((contract) => {
+        getContract(txid).then((contract) => {
           setContract(contract)
           setLoading(false)
         })
