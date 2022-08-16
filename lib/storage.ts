@@ -1,3 +1,4 @@
+import { NetworkString } from 'marina-provider'
 import { Activity, Contract } from './types'
 
 // contracts
@@ -9,6 +10,15 @@ export function getContractsFromStorage(): Contract[] {
   const storedContracts = localStorage.getItem(localStorageContractsKey)
   if (!storedContracts) return []
   return JSON.parse(storedContracts)
+}
+
+export function getMyContractsFromStorage(
+  network: NetworkString,
+  xPubKey: string,
+): Contract[] {
+  return getContractsFromStorage()
+    .filter((contract) => contract.network === network)
+    .filter((contract) => contract.xPubKey === xPubKey)
 }
 
 export function saveContractsToStorage(contracts: Contract[]): void {

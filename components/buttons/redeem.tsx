@@ -1,5 +1,6 @@
+import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
-import { contractIsExpired, redeemContract } from 'lib/contracts'
+import { contractIsClosed, redeemContract } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
 import { Contract } from 'lib/types'
@@ -24,6 +25,8 @@ const RedeemButton = ({
   setResult,
 }: RedeemButtonProps) => {
   const { balances } = useContext(WalletContext)
+  const { updateContracts } = useContext(ContractsContext)
+
   const handleClick = async () => {
     setAssetBalance(getAssetBalance(contract.synthetic, balances))
     setRedeem(contract)
@@ -31,6 +34,7 @@ const RedeemButton = ({
     try {
       const txid = await prepareRedeemTx(contract, setStep)
       redeemContract(contract)
+      updateContracts()
       setData(txid)
       setResult('success')
     } catch (error) {
@@ -44,7 +48,7 @@ const RedeemButton = ({
     <button
       onClick={handleClick}
       className="button is-primary ml-3"
-      disabled={contractIsExpired(contract)}
+      disabled={contractIsClosed(contract) || !contract.confirmed}
     >
       Redeem
     </button>

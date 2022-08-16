@@ -1,11 +1,12 @@
 import { useContext, useEffect, useState } from 'react'
-import { contractIsExpired, getContracts } from 'lib/contracts'
+import { contractIsClosed, getContracts } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import RedeemModal from 'components/modals/redeem'
 import { WalletContext } from 'components/providers/wallet'
 import ContractRow from './row'
 import Spinner from 'components/spinner'
+import { ContractsContext } from 'components/providers/contracts'
 
 interface ContractsListProps {
   showActive: boolean
@@ -18,32 +19,22 @@ const ContractsList = ({
   setData,
   setResult,
 }: ContractsListProps) => {
-  const [isLoading, setLoading] = useState(false)
-  const [contracts, setContracts] = useState<Contract[]>()
-
   const [redeem, setReedem] = useState<Contract>()
   const [assetBalance, setAssetBalance] = useState(0)
   const [step, setStep] = useState(0)
 
-  const { connected, fujiCoins } = useContext(WalletContext)
-
-  useEffect(() => {
-    setLoading(true)
-    getContracts().then((contracts) => {
-      setContracts(contracts)
-      setLoading(false)
-    })
-  }, [fujiCoins])
+  const { connected } = useContext(WalletContext)
+  const { contracts, loading } = useContext(ContractsContext)
 
   if (!connected)
     return (
       <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
     )
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!contracts) return <EmptyState>Error getting contracts</EmptyState>
 
   const filteredContracts = contracts.filter((contract) =>
-    showActive ? !contractIsExpired(contract) : contractIsExpired(contract),
+    showActive ? !contractIsClosed(contract) : contractIsClosed(contract),
   )
   if (filteredContracts.length === 0)
     return <EmptyState>No contracts yet</EmptyState>
