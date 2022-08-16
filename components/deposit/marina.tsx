@@ -7,7 +7,7 @@ import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
 import { useContext, useState } from 'react'
 import { WalletContext } from 'components/providers/wallet'
-import { addContract } from 'lib/contracts'
+import { createContract } from 'lib/contracts'
 
 interface MarinaProps {
   contract: Contract
@@ -41,7 +41,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
                 contract.network = network
                 contract.confirmed = false
                 contract.xPubKey = await getXPubKey()
-                addContract(contract)
+                createContract(contract)
                 setData(contract.txid)
                 setResult('success')
               } catch (error) {

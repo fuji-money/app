@@ -4,13 +4,12 @@ import { minDustLimit } from './constants'
 import { fetchAsset } from './api'
 import { getNetwork, getXPubKey, getFujiCoins, getTransactions } from './marina'
 import {
-  saveContractsToStorage,
   getContractsFromStorage,
   updateContractOnStorage,
   addContractToStorage,
 } from './storage'
 import { addActivity } from './activities'
-import { TxStatusEnum } from 'marina-provider'
+import { NetworkString } from 'marina-provider'
 
 // check if a contract is redeemed or liquidated
 export const contractIsExpired = (contract: Contract): boolean => {
@@ -94,38 +93,38 @@ export const getContractPriceLevel = (
 }
 
 // temporary fix
-const fixMissingXPubKeyOnOldContracts = (xPubKey: string) => {
-  let changed = false
+const fixMissingXPubKeyOnOldContracts = (
+  network: NetworkString,
+  xPubKey: string,
+) => {
   // fix missing xPubKey on old contracts and store on local storage
-  const contracts = getContractsFromStorage().map((c: Contract) => {
-    if (!c.xPubKey) {
-      c.xPubKey = xPubKey
-      changed = true
-    }
-    return c
-  })
-  if (changed) saveContractsToStorage(contracts)
+  getContractsFromStorage()
+    .filter((contract) => contract.network === network)
+    .map((contract) => {
+      if (!contract.xPubKey) {
+        contract.xPubKey = xPubKey
+        updateContractOnStorage(contract)
+      }
+    })
 }
 
 const checkUnconfirmedContracts = async () => {
+  const network = await getNetwork()
   const fujiCoins = await getFujiCoins()
   const transactions = await getTransactions()
   const hasCoin = (txid = '') => fujiCoins.some((co) => co.txid === txid)
   const hasTx = (txid = '') => transactions.some((tx) => tx.txId === txid)
-  const contracts = getContractsFromStorage()
-  for (const contract of contracts) {
-    if (!contract.confirmed && hasTx(contract.txid)) confirmContract(contract)
-    if (
-      contract.confirmed &&
-      contract.state !== ContractState.Redeemed &&
-      !hasCoin(contract.txid)
-    )
-      liquidateContract(contract)
-  }
-}
-
-export function getUnconfirmedContracts(): Contract[] {
-  return getContractsFromStorage().filter((c) => !c.confirmed)
+  getContractsFromStorage()
+    .filter((contract) => contract.network === network)
+    .map((contract) => {
+      if (!contract.confirmed && hasTx(contract.txid)) confirmContract(contract)
+      if (
+        contract.confirmed &&
+        contract.state !== ContractState.Redeemed &&
+        !hasCoin(contract.txid)
+      )
+        liquidateContract(contract)
+    })
 }
 
 // get all contacts belonging to this xpub and network
@@ -133,10 +132,9 @@ export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = await getNetwork()
   const xPubKey = await getXPubKey()
-  fixMissingXPubKeyOnOldContracts(xPubKey) // TODO temporary hack
+  fixMissingXPubKeyOnOldContracts(network, xPubKey) // TODO temporary hack
   checkUnconfirmedContracts() // contracts could be confirmed while we were off
-  const contracts = getContractsFromStorage()
-  const promises = contracts
+  const promises = getContractsFromStorage()
     .filter((contract: Contract) => contract.network === network)
     .filter((contract: Contract) => contract.xPubKey === xPubKey)
     .map(async (contract: Contract) => {
@@ -165,7 +163,7 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 }
 
 // add contract to storage and create activity
-export function addContract(contract: Contract): void {
+export function createContract(contract: Contract): void {
   addContractToStorage(contract)
   addActivity(contract, ActivityType.Creation)
 }

@@ -7,11 +7,7 @@ import {
 } from 'lib/marina'
 import { Balance, MarinaProvider, NetworkString, Utxo } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
-import {
-  confirmContract,
-  getContract,
-  getUnconfirmedContracts,
-} from 'lib/contracts'
+import { confirmContract, getContract } from 'lib/contracts'
 import { getContractsFromStorage } from 'lib/storage'
 
 interface WalletContextProps {
@@ -78,10 +74,12 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   }, [connected, marina])
 
-  // on NEW_TX, check if it's a contract confirmation
+  // on a new transaction received, check if it's a contract confirmation
   useEffect(() => {
     if (connected && marina) {
-      const unconfirmedTxIds = getUnconfirmedContracts().map((c) => c.txid)
+      const unconfirmedTxIds = getContractsFromStorage()
+        .filter((contract) => contract.network === network)
+        .filter((contract) => !contract.confirmed)
       const id = marina.on('NEW_TX', (tx) => {
         if (unconfirmedTxIds.includes(tx.txid)) {
           getContract(tx.txid).then((contract) => {
