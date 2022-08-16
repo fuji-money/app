@@ -83,7 +83,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     if (connected && marina) {
       const unconfirmedTxIds = getUnconfirmedContracts().map((c) => c.txid)
       const id = marina.on('NEW_TX', (tx) => {
-        console.log('NEW_TX', tx)
         if (unconfirmedTxIds.includes(tx.txid)) {
           getContract(tx.txid).then((contract) => {
             if (contract) confirmContract(contract)
@@ -100,7 +99,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       updateBalances()
       updateFujiCoins()
       const id = marina.on('SPENT_UTXO', (utxo) => {
-        console.log('SPENT_UTXO', utxo)
         updateBalances()
         updateFujiCoins()
       })

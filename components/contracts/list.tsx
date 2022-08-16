@@ -28,7 +28,6 @@ const ContractsList = ({
   const { connected, fujiCoins } = useContext(WalletContext)
 
   useEffect(() => {
-    console.log('fujiCoins')
     setLoading(true)
     getContracts().then((contracts) => {
       setContracts(contracts)

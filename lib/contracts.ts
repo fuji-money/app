@@ -126,7 +126,6 @@ export function getUnconfirmedContracts(): Contract[] {
 // get all contacts belonging to this xpub and network
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
-  console.log('getting contracts')
   const network = await getNetwork()
   const xPubKey = await getXPubKey()
   fixMissingXPubKeyOnOldContracts(xPubKey) // TODO temporary hack
