@@ -113,9 +113,14 @@ const checkUnconfirmedContracts = async () => {
   const hasCoin = (txid = '') => fujiCoins.some((co) => co.txid === txid)
   const hasTx = (txid = '') => transactions.some((tx) => tx.txId === txid)
   const contracts = getContractsFromStorage()
-  for (const c of contracts) {
-    if (!c.confirmed && hasTx(c.txid)) confirmContract(c)
-    if (c.confirmed && !hasCoin(c.txid)) liquidateContract(c)
+  for (const contract of contracts) {
+    if (!contract.confirmed && hasTx(contract.txid)) confirmContract(contract)
+    if (
+      contract.confirmed &&
+      contract.state !== ContractState.Redeemed &&
+      !hasCoin(contract.txid)
+    )
+      liquidateContract(contract)
   }
 }
 
