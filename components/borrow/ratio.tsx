@@ -36,7 +36,7 @@ const updateLabels = (min: number, safe: number) => {
     const _min = document.getElementById('min')
     const _safe = document.getElementById('safe')
     if (!_min || !_safe) return
-    let left = calcLeft(min) - (_min.offsetWidth / 2)
+    let left = calcLeft(min) - _min.offsetWidth / 2
     _min.style.left = `${left}px`
     if (safe >= min + 40) {
       _safe.style.left = `${left}px`

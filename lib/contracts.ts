@@ -68,10 +68,7 @@ export const getContractPayoutAmount = (
 }
 
 // get contract price level
-export const getContractPriceLevel = (
-  asset: Asset,
-  ratio: number,
-): number => {
+export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
   if (!asset.ratio) throw new Error('Asset without minimum ratio')
   return Decimal.ceil(
     Decimal.mul(asset.value, asset.ratio).div(ratio),
