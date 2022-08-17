@@ -1,7 +1,10 @@
 import { useEffect } from 'react'
-import { prettyRatio } from 'lib/pretty'
+import { prettyAmount, prettyPriceLevel, prettyRatio } from 'lib/pretty'
 import { Asset } from 'lib/types'
-import { getRatioState } from 'lib/contracts'
+import { getContractPriceLevel, getRatioState } from 'lib/contracts'
+
+const thumbWidth = 20
+const maxRatio = 400
 
 // update range bar colors
 const updateColors = (ratio: number) => {
@@ -14,6 +17,18 @@ const updateColors = (ratio: number) => {
   }
 }
 
+const calcLeft = (ratio: number) => {
+  if (typeof window !== 'undefined') {
+    const container = document.getElementById('range')
+    if (container) {
+      const startsOn = thumbWidth / 2
+      const eachRatio = (container.clientWidth - thumbWidth) / maxRatio
+      return startsOn + ratio * eachRatio
+    }
+  }
+  return 0
+}
+
 // put range labels on correct coordinates
 const updateLabels = (min: number, safe: number) => {
   if (typeof window !== 'undefined') {
@@ -21,13 +36,22 @@ const updateLabels = (min: number, safe: number) => {
     const _min = document.getElementById('min')
     const _safe = document.getElementById('safe')
     if (!_min || !_safe) return
-    let left = min - 25 // 25 = 50/2 with 50 = safe delta
+    let left = calcLeft(min) - (_min.offsetWidth / 2)
     _min.style.left = `${left}px`
     if (safe >= min + 40) {
       _safe.style.left = `${left}px`
     } else {
       _safe.style.visibility = 'hidden'
     }
+  }
+}
+
+const updatePriceLevel = (ratio: number) => {
+  if (typeof window !== 'undefined') {
+    const priceLevel = document.getElementById('price-level')
+    const left = calcLeft(ratio)
+    if (!priceLevel || !left) return
+    priceLevel.style.left = `${left - priceLevel.offsetWidth / 2}px`
   }
 }
 
@@ -41,6 +65,7 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
   const min = collateral.ratio || 0
   const safe = min + 50
   const state = getRatioState(ratio, min)
+  const priceLevel = getContractPriceLevel(collateral, ratio)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setContractRatio(Number(e.target.value))
@@ -49,11 +74,12 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
 
   useEffect(() => {
     updateColors(ratio)
+    updatePriceLevel(ratio)
   }, [ratio])
 
   return (
     <>
-      <p className="range-legend">
+      <p>
         <span onClick={() => setContractRatio(min)} id="min">
           min: {prettyRatio(min)}%
         </span>
@@ -61,13 +87,13 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
           safe: {prettyRatio(safe)}%
         </span>
       </p>
-      <div className="level">
+      <div className="level mb-0">
         <div className="level-left">
           <div className="level-item">
             <input
               id="range"
               min="0"
-              max="400"
+              max={maxRatio.toString()}
               type="range"
               className={state}
               value={ratio}
@@ -90,13 +116,21 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
           </div>
         </div>
       </div>
+      <p>
+        <span id="price-level">{prettyPriceLevel(priceLevel)}</span>
+      </p>
       <style jsx>{`
-        p.range-legend span {
+        p span {
           display: inline-block;
           font-size: 0.6rem;
           position: relative;
           text-align: center;
           width: 50px;
+        }
+        #price-level {
+          color: #6b1d9c;
+          font-weight: 700;
+          width: 100px;
         }
         input[type='number'] {
           border: 0;
@@ -125,7 +159,7 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
         input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
           height: 20px;
-          width: 20px;
+          width: ${thumbWidth}px;
           border-radius: 50%;
           background: #aaa;
           cursor: ew-resize;
