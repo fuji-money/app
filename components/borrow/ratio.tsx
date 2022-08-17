@@ -117,7 +117,9 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
         </div>
       </div>
       <p>
-        <span id="price-level">{prettyPriceLevel(priceLevel)}</span>
+        <span id="price-level" className={state}>
+          {prettyPriceLevel(priceLevel)}
+        </span>
       </p>
       <style jsx>{`
         p span {
@@ -128,9 +130,18 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
           width: 50px;
         }
         #price-level {
-          color: #6b1d9c;
           font-weight: 700;
           width: 100px;
+        }
+        #price-level.safe {
+          color: #6b1d9c;
+        }
+        #price-level.unsafe {
+          color: #ff712c;
+        }
+        #price-level.critical,
+        #price-level.liquidated {
+          color: #e30f00;
         }
         input[type='number'] {
           border: 0;
