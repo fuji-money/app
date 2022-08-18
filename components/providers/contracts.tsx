@@ -88,7 +88,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   const onNewTxListener = () => {
     if (marina) {
-      marina.on('NEW_TX', ({ tx, accountID }) => {
+      marina.on('NEW_TX', ({ accountID, data }) => {
+        const tx = data
         console.log(`new tx ${accountID} ${new Date()}`, tx)
         const contract = getMyContractsFromStorage(network, xPubKey).find(
           (contract) => !contract.confirmed && contract.txid === tx.txId,
@@ -104,7 +105,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const onNewUtxoListener = () => {
     if (marina) {
       console.debug('creating NEW_UTXO listener')
-      marina.on('NEW_UTXO', ({ utxo, accountID }) => {
+      marina.on('NEW_UTXO', ({ accountID, data }) => {
+        const utxo = data
         console.log(`new utxo ${accountID} ${new Date()}`, utxo)
       })
     }
@@ -112,7 +114,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   const onSpentUtxoListener = () => {
     if (marina) {
-      marina.on('SPENT_UTXO', ({ utxo, accountID }) => {
+      marina.on('SPENT_UTXO', ({ accountID, data }) => {
+        const utxo = data
         console.log(`new spent utxo ${accountID} ${new Date()}`, utxo)
         if (accountID === marinaFujiAccountID) {
           const contract = getMyContractsFromStorage(network, xPubKey).find(
