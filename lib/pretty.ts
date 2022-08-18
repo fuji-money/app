@@ -11,13 +11,16 @@ export const prettyNumber = (num = 0, min = 2, max = 8): string => {
 
 // format asset
 export const prettyAsset = (asset: Asset): string =>
-  `${prettyQuantity(asset)} ${asset.ticker}`
+  `${prettyQuantity(asset.quantity)} ${asset.ticker}`
 
 // format amount (amount is quantity x value)
 export const prettyAmount = (asset: Asset): string =>
   `US$ ${prettyNumber(fromSatoshis(asset.quantity) * asset.value)}`
 
 export const prettyFiat = (amount = 0): string => `US$ ${prettyNumber(amount)}`
+
+export const prettyPriceLevel = (price: number): string =>
+  `${prettyNumber(price)} USD`
 
 // show pretty ago time
 export const prettyAgo = (timestamp: number): string => {
@@ -51,7 +54,7 @@ export const prettyRatio = (ratio: number): number =>
 
 // show asset quantity in unities
 export const prettyQuantity = (
-  asset: Asset,
+  quantity = 0,
   min?: number,
   max?: number,
-): string => prettyNumber(fromSatoshis(asset.quantity), min, max)
+): string => prettyNumber(fromSatoshis(quantity), min, max)

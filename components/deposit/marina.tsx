@@ -4,10 +4,10 @@ import { fromSatoshis, openModal } from 'lib/utils'
 import MarinaModal from 'components/modals/marina'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
-import { signAndBroadcastTx } from 'lib/marina'
+import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
 import { addContractToStorage } from 'lib/storage'
 import { useContext, useState } from 'react'
-import { NetworkContext } from 'components/providers/network'
+import { WalletContext } from 'components/providers/wallet'
 
 interface MarinaProps {
   contract: Contract
@@ -20,7 +20,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
   const { ticker, value } = contract.collateral
   const [step, setStep] = useState(0)
   const quantity = topup || contract.collateral.quantity
-  const { network } = useContext(NetworkContext)
+  const { network } = useContext(WalletContext)
   return (
     <>
       <div className="is-flex">
@@ -36,9 +36,10 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
                 )
                 setStep(1)
                 contract.txid = await signAndBroadcastTx(partialTransaction)
-                contract.network = network
                 contract.borrowerPubKey = preparedTx.borrowerPublicKey
                 contract.contractParams = preparedTx.contractParams
+                contract.network = network
+                contract.xPubKey = await getXPubKey()
                 addContractToStorage(contract) // add to local storage TODO
                 setData(contract.txid)
                 setResult('success')

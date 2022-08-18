@@ -93,7 +93,7 @@ export const apiInvestments = (): Investment[] => [
 
 export const apiOffers = async (): Promise<Offer[]> => [
   {
-    id: '5530bdbb7c61227eac28429debef062c845f829522280612c5dd9f5e1a2082ee',
+    id: 'lbtcfusd',
     collateral: await findAssetByTicker('l-btc'),
     oracles: [oracles[0].id],
     payout: 0.25,

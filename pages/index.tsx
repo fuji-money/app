@@ -10,7 +10,6 @@ import Script from 'next/script'
 
 const Home: NextPage = () => {
   useEffect(() => {
-    console.log('useEffect')
     const checkAuth = async () => {
       try {
         const validUser = await postData('/api/login/check', document.cookie)

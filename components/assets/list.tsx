@@ -4,12 +4,12 @@ import { Asset } from 'lib/types'
 import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
-import { NetworkContext } from 'components/providers/network'
+import { WalletContext } from 'components/providers/wallet'
 
 const AssetsList = () => {
   const [assets, setAssets] = useState<Asset[]>()
   const [isLoading, setLoading] = useState(false)
-  const { network } = useContext(NetworkContext)
+  const { network } = useContext(WalletContext)
 
   useEffect(() => {
     const onlySynth = (asset: Asset) => asset.isSynthetic
