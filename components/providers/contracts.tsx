@@ -22,6 +22,7 @@ import { WalletContext } from './wallet'
 import { getTransactions, getFujiCoins } from 'lib/marina'
 import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
+import { marinaFujiAccountID } from 'lib/constants'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -85,27 +86,10 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       })
   }
 
-  const firstRender = useRef<NetworkString[]>([])
-
-  useEffect(() => {
-    if (network && xPubKey) {
-      // run only on first render for each network
-      if (!firstRender.current.includes(network)) {
-        fixMissingXPubKeyOnOldContracts()
-        checkUnconfirmedContracts()
-        checkLiquidatedContracts()
-        firstRender.current.push(network)
-      }
-    }
-  })
-
-  // update contracts
-  useEffect(() => {
-    if (connected && marina) {
-      updateContracts()
-      // on a new transaction received, check if it's a contract confirmation
-      const newTxId = marina.on('NEW_TX', (tx) => {
-        console.log('new tx', tx)
+  const onNewTxListener = () => {
+    if (marina) {
+      marina.on('NEW_TX', ({ tx, accountID }) => {
+        console.log(`new tx ${accountID} ${new Date()}`, tx)
         const contract = getMyContractsFromStorage(network, xPubKey).find(
           (contract) => !contract.confirmed && contract.txid === tx.txId,
         )
@@ -114,22 +98,56 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
           updateContracts()
         }
       })
-      // on a new spent utxo, check if it's a contract liquidation
-      const spentUtxoId = marina.on('SPENT_UTXO', (utxo) => {
-        console.log('new spent utxo', utxo)
-        const contract = getMyContractsFromStorage(network, xPubKey).find(
-          (contract) => contract.txid === utxo.txid && utxo.vout === 0,
-        )
-        if (contract) {
-          liquidateContract(contract)
-          updateContracts()
+    }
+  }
+
+  const onNewUtxoListener = () => {
+    if (marina) {
+      console.debug('creating NEW_UTXO listener')
+      marina.on('NEW_UTXO', ({ utxo, accountID }) => {
+        console.log(`new utxo ${accountID} ${new Date()}`, utxo)
+      })
+    }
+  }
+
+  const onSpentUtxoListener = () => {
+    if (marina) {
+      marina.on('SPENT_UTXO', ({ utxo, accountID }) => {
+        console.log(`new spent utxo ${accountID} ${new Date()}`, utxo)
+        if (accountID === marinaFujiAccountID) {
+          const contract = getMyContractsFromStorage(network, xPubKey).find(
+            (contract) => contract.txid === utxo.txid,
+          )
+          if (contract) {
+            console.log('liquidate contract', contract.txid)
+            // liquidateContract(contract)
+            updateContracts()
+          }
         }
       })
-      return () => {
-        marina.off(newTxId)
-        marina.off(spentUtxoId)
+    }
+  }
+
+  const firstRender = useRef<NetworkString[]>([])
+
+  useEffect(() => {
+    if (network && xPubKey) {
+      // run only on first render for each network
+      if (!firstRender.current.includes(network)) {
+        // checkLiquidatedContracts()
+        checkUnconfirmedContracts()
+        fixMissingXPubKeyOnOldContracts()
+        onNewTxListener()
+        // onNewUtxoListener()
+        onSpentUtxoListener()
+        firstRender.current.push(network)
       }
     }
+  })
+
+  // update contracts
+  useEffect(() => {
+    if (connected && marina) updateContracts()
   }, [connected, marina, network, xPubKey])
 
   return (

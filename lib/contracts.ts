@@ -94,7 +94,7 @@ export const getContractPriceLevel = (
 // get all contacts belonging to this xpub and network
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
-  console.log('getContracts')
+  console.log(`${new Date()} get contracts`)
   const network = await getNetwork()
   const xPubKey = await getXPubKey()
   const promises = getMyContractsFromStorage(network, xPubKey).map(
@@ -139,14 +139,14 @@ export function redeemContract(contract: Contract): void {
 
 // mark contract as confirmed
 export function confirmContract(contract: Contract): void {
-  console.log('confirming contract', contract.txid)
+  console.log(`${new Date()} confirming contract`, contract.txid)
   contract.confirmed = true
   updateContractOnStorage(contract)
 }
 
 // add contract to storage and create activity
 export function liquidateContract(contract: Contract): void {
-  console.log('liquidating contract', contract.txid)
+  console.log(`${new Date()} liquidating contract`, contract.txid)
   contract.confirmed = true
   contract.state = ContractState.Liquidated
   updateContractOnStorage(contract)
