@@ -1,4 +1,4 @@
-import { Contract, ContractState } from './types'
+import { Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
 import { toSatoshis } from './utils'
 import { getNetwork } from './marina'
@@ -68,13 +68,9 @@ export const getContractPayoutAmount = (
 }
 
 // get contract price level
-export const getContractPriceLevel = (
-  contract: Contract,
-  ratio: number,
-): number => {
-  const { collateral } = contract
-  if (!collateral.ratio) throw new Error('Collateral without minimum ratio')
+export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
+  if (!asset.ratio) throw new Error('Asset without minimum ratio')
   return Decimal.ceil(
-    Decimal.mul(collateral.value, collateral.ratio).div(ratio),
+    Decimal.mul(asset.value, asset.ratio).div(ratio),
   ).toNumber()
 }
