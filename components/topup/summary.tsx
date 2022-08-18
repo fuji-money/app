@@ -22,7 +22,7 @@ const Summary = ({ contract }: SummaryProps) => {
           <div className="column is-4 info-card">
             <p>Ratio</p>
             <p>{prettyRatio(ratio)}%</p>
-            <PrettyState state={state} />
+            <PrettyState contract={contract} />
           </div>
           <div className="column is-4 info-card">
             <p>Collateral</p>

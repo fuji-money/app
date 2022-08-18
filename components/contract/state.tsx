@@ -1,14 +1,16 @@
-import { ContractState } from 'lib/types'
+import { prettyPriceLevel } from 'lib/pretty'
+import { Contract } from 'lib/types'
 
 interface PrettyStateProps {
-  state: ContractState
+  contract: Contract
 }
 
-const PrettyState = ({ state }: PrettyStateProps) => {
+const PrettyState = ({ contract }: PrettyStateProps) => {
+  const priceLevel = prettyPriceLevel(contract.priceLevel)
   return (
-    <p className={`state ${state}`}>
+    <p className={`state ${contract.state}`}>
       <span>&bull;</span>
-      <span>{state}</span>
+      <span title={priceLevel}>{contract.state}</span>
       <style jsx>{`
         .state {
           border-radius: 16px;
