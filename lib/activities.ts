@@ -1,6 +1,10 @@
 import { getNetwork } from './marina'
 import { prettyAsset } from './pretty'
-import { addActivityToStorage, getActivitiesFromStorage, saveActivitiesToStorage } from './storage'
+import {
+  addActivityToStorage,
+  getActivitiesFromStorage,
+  saveActivitiesToStorage,
+} from './storage'
 import { Activity, ActivityType, Contract } from './types'
 
 export function addActivity(contract: Contract, type: ActivityType): void {
@@ -29,10 +33,7 @@ export async function getActivities(): Promise<Activity[]> {
   )
 }
 
-export function removeActivity(
-  contract: Contract,
-  type: ActivityType,
-): void {
+export function removeActivity(contract: Contract, type: ActivityType): void {
   const activities = getActivitiesFromStorage()
   const index = activities.findIndex(
     (activity: Activity) =>
