@@ -22,13 +22,13 @@ const Intro = ({ ticker, topup }: IntroProps) => {
   return <p>Create contract:</p>
 }
 
-interface MarinaModalProps {
+interface DepositModalProps {
   contract: Contract
   step: number
   topup: number | undefined
 }
 
-const MarinaModal = ({ contract, step, topup }: MarinaModalProps) => {
+const DepositModal = ({ contract, step, topup }: DepositModalProps) => {
   const { ticker } = contract.collateral
   const mainMessage = [
     'Preparing transaction...',
@@ -53,4 +53,4 @@ const MarinaModal = ({ contract, step, topup }: MarinaModalProps) => {
   )
 }
 
-export default MarinaModal
+export default DepositModal

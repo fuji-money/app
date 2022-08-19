@@ -1,7 +1,7 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { fromSatoshis, openModal } from 'lib/utils'
-import MarinaModal from 'components/modals/marina'
+import DepositModal from 'components/modals/deposit'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
@@ -77,7 +77,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
           </div>
         </div>
       </div>
-      <MarinaModal contract={contract} step={step} topup={topup} />
+      <DepositModal contract={contract} step={step} topup={topup} />
     </>
   )
 }
