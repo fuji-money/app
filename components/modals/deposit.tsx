@@ -39,7 +39,7 @@ const DepositModal = ({ contract, step, topup }: DepositModalProps) => {
     'Confirm this transaction in your Marina wallet',
   ][step]
   return (
-    <Modal id="marina-modal">
+    <Modal id="deposit-modal">
       {contract && (
         <>
           <Spinner />

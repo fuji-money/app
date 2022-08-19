@@ -99,7 +99,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const onNewTxListener = () => {
     if (marina) {
       marina.on('NEW_TX', ({ accountID, data }) => {
-        if (!data) return openModal('marina-modal') // old marina version
         if (accountID === marinaFujiAccountID) {
           const tx = data
           console.log(`new tx ${new Date()}`, tx)

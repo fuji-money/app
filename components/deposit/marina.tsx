@@ -30,7 +30,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
           <button
             className="button is-primary mt-2"
             onClick={async () => {
-              openModal('marina-modal')
+              openModal('deposit-modal')
               try {
                 const preparedTx = await prepareBorrowTx(contract)
                 const { partialTransaction } = await proposeBorrowContract(
