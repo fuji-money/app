@@ -8,7 +8,7 @@ import {
   addContractToStorage,
   getMyContractsFromStorage,
 } from './storage'
-import { addActivity } from './activities'
+import { addActivity, removeActivity } from './activities'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -139,16 +139,28 @@ export function redeemContract(contract: Contract): void {
 
 // mark contract as confirmed
 export function confirmContract(contract: Contract): void {
+  if (contract.confirmed) return
   console.log(`${new Date()} confirming contract`, contract.txid)
   contract.confirmed = true
   updateContractOnStorage(contract)
 }
 
-// add contract to storage and create activity
+// liquidate contract on storage and create activity
 export function liquidateContract(contract: Contract): void {
+  if (contract.state === ContractState.Liquidated) return
   console.log(`${new Date()} liquidating contract`, contract.txid)
   contract.confirmed = true
   contract.state = ContractState.Liquidated
   updateContractOnStorage(contract)
   addActivity(contract, ActivityType.Liquidated)
+}
+
+// reopen previously liquidated contract
+export function reopenContract(contract: Contract): void {
+  if (contract.state === ContractState.Liquidated) {
+    console.log(`${new Date()} reopening contract`, contract.txid)
+    contract.state = undefined
+    updateContractOnStorage(contract)
+    removeActivity(contract, ActivityType.Liquidated)
+  }
 }

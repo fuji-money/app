@@ -8,6 +8,7 @@ import { WalletProvider } from 'components/providers/wallet'
 import Auth from 'components/auth'
 import Banner from 'components/banner'
 import { ContractsProvider } from 'components/providers/contracts'
+import MarinaModal from 'components/modals/marina'
 
 interface LayoutProps {
   children: ReactNode
@@ -56,6 +57,7 @@ export default function Layout({ children }: LayoutProps) {
             </main>
             <Footer />
             <TradeModal />
+            <MarinaModal />
           </div>
         </ContractsProvider>
       </WalletProvider>
