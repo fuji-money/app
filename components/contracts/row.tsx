@@ -34,15 +34,17 @@ const ContractRow = ({
           </p>
           <PrettyState contract={contract} />
           {contract.txid && <ExplorerLink txid={contract.txid} />}
-          <RedeemButton
-            contract={contract}
-            setRedeem={setRedeem}
-            setAssetBalance={setAssetBalance}
-            setStep={setStep}
-            setData={setData}
-            setResult={setResult}
-          />
-          <TopupButton contract={contract} />
+          <p>
+            <RedeemButton
+              contract={contract}
+              setRedeem={setRedeem}
+              setAssetBalance={setAssetBalance}
+              setStep={setStep}
+              setData={setData}
+              setResult={setResult}
+            />
+            <TopupButton contract={contract} />
+          </p>
         </div>
       </div>
     </div>
