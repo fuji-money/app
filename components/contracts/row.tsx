@@ -27,25 +27,23 @@ const ContractRow = ({
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
-        <div className="column is-2">
-          <p className="has-text-weight-bold">
+        <div className="column is-12 is-flex is-justify-content-space-between">
+          <p className="my-auto has-text-weight-bold">
             {fromSatoshis(quantity)} {ticker}
           </p>
-        </div>
-        <div className="column is-2">
-          <PrettyState state={state} />
-        </div>
-        <div className="column is-8 has-text-right">
+          <PrettyState contract={contract} />
           {contract.txid && <ExplorerLink txid={contract.txid} />}
-          <RedeemButton
-            contract={contract}
-            setRedeem={setRedeem}
-            setAssetBalance={setAssetBalance}
-            setStep={setStep}
-            setData={setData}
-            setResult={setResult}
-          />
-          <TopupButton contract={contract} />
+          <p>
+            <RedeemButton
+              contract={contract}
+              setRedeem={setRedeem}
+              setAssetBalance={setAssetBalance}
+              setStep={setStep}
+              setData={setData}
+              setResult={setResult}
+            />
+            <TopupButton contract={contract} />
+          </p>
         </div>
       </div>
     </div>
