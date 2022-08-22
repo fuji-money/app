@@ -1,77 +1,66 @@
-import { fetchAsset } from './api'
-import { ActivityType, Contract, ContractState } from './types'
-import { addActivity } from './activities'
-import { getNetwork, getXPubKey } from './marina'
+import { NetworkString } from 'marina-provider'
+import { Activity, Contract } from './types'
 
-const localStorageKey = 'fujiContracts'
+// contracts
 
-const fixMissingXPubKeyOnOldContracts = (xPubKey: string) => {
-  let changed = false
-  const storedContracts = localStorage.getItem(localStorageKey)
-  if (!storedContracts) return
-  // fix missing xPubKey on old contracts and store on local storage
-  const contracts = JSON.parse(storedContracts).map((c: Contract) => {
-    if (!c.xPubKey) {
-      c.xPubKey = xPubKey
-      changed = true
-    }
-    return c
-  })
-  if (changed) localStorage.setItem(localStorageKey, JSON.stringify(contracts))
-}
+const localStorageContractsKey = 'fujiContracts'
 
-export async function getContractsFromStorage(): Promise<Contract[]> {
+export function getContractsFromStorage(): Contract[] {
   if (typeof window === 'undefined') return []
-  const network = (await getNetwork()) || 'testnet' // TODO
-  const xPubKey = (await getXPubKey()) || 'xPubKey' // TODO
-  fixMissingXPubKeyOnOldContracts(xPubKey) // TODO temporary hack
-  const storedContracts = localStorage.getItem(localStorageKey)
+  const storedContracts = localStorage.getItem(localStorageContractsKey)
   if (!storedContracts) return []
-  const contracts = JSON.parse(storedContracts)
-  const promises = contracts
-    .filter((contract: Contract) => contract.network === network)
-    .filter((contract: Contract) => contract.xPubKey === xPubKey)
-    .map(async (contract: Contract) => {
-      const collateral = await fetchAsset(contract.collateral.ticker)
-      const synthetic = await fetchAsset(contract.synthetic.ticker)
-      if (!collateral)
-        throw new Error(
-          `Contract with unknown collateral ${contract.collateral.ticker}`,
-        )
-      if (!synthetic)
-        throw new Error(
-          `Contract with unknown synthetic ${contract.synthetic.ticker}`,
-        )
-      contract.collateral = { ...collateral, ...contract.collateral }
-      contract.synthetic = { ...synthetic, ...contract.synthetic }
-      return contract
-    })
-  return Promise.all(promises)
+  return JSON.parse(storedContracts)
 }
 
-export async function getContractFromStorage(
-  txid: string,
-): Promise<Contract | undefined> {
-  const contracts = await getContractsFromStorage()
-  return contracts.find((c) => c.txid === txid)
+export function getMyContractsFromStorage(
+  network: NetworkString,
+  xPubKey: string,
+): Contract[] {
+  return getContractsFromStorage()
+    .filter((contract) => contract.network === network)
+    .filter((contract) => contract.xPubKey === xPubKey)
 }
 
-export async function addContractToStorage(contract: Contract): Promise<void> {
+export function saveContractsToStorage(contracts: Contract[]): void {
   if (typeof window === 'undefined') return
-  const contracts = await getContractsFromStorage()
+  localStorage.setItem(localStorageContractsKey, JSON.stringify(contracts))
+}
+
+export function addContractToStorage(contract: Contract): void {
+  if (typeof window === 'undefined') return
+  const contracts = getContractsFromStorage()
   contracts.push(contract)
-  localStorage.setItem(localStorageKey, JSON.stringify(contracts))
-  addActivity(contract, ActivityType.Creation)
+  saveContractsToStorage(contracts)
 }
 
-export async function redeemContractToStorage(
-  contract: Contract,
-): Promise<void> {
+export function updateContractOnStorage(contract: Contract): void {
   if (typeof window === 'undefined') return
-  const contracts = (await getContractsFromStorage()).map((c) => {
-    if (c.txid === contract.txid) c.state = ContractState.Redeemed
-    return c
-  })
-  localStorage.setItem(localStorageKey, JSON.stringify(contracts))
-  addActivity(contract, ActivityType.Redeemed)
+  saveContractsToStorage(
+    getContractsFromStorage().map((c) =>
+      c.txid === contract.txid ? contract : c,
+    ),
+  )
+}
+
+// activities
+
+const localStorageActivitiesKey = 'fujiActivities'
+
+export function saveActivitiesToStorage(activities: Activity[]): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(localStorageActivitiesKey, JSON.stringify(activities))
+}
+
+export function getActivitiesFromStorage(): Activity[] {
+  if (typeof window === 'undefined') return []
+  const storedActivities = localStorage.getItem(localStorageActivitiesKey)
+  if (!storedActivities) return []
+  return JSON.parse(storedActivities)
+}
+
+export function addActivityToStorage(activity: Activity): void {
+  if (typeof window === 'undefined') return
+  const activities = getActivitiesFromStorage()
+  activities.push(activity)
+  saveActivitiesToStorage(activities)
 }

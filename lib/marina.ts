@@ -6,6 +6,7 @@ import {
   Utxo,
   AddressInterface,
   NetworkString,
+  Transaction,
 } from 'marina-provider'
 import {
   defaultNetwork,
@@ -44,12 +45,29 @@ export async function getNetwork(): Promise<NetworkString> {
   return defaultNetwork
 }
 
-export async function getXPubKey(): Promise<string | undefined> {
+export async function getXPubKey(): Promise<string> {
   const marina = await getMarinaProvider()
   if (marina) {
     const info = await marina.getAccountInfo(marinaMainAccountID)
     return info.masterXPub
   }
+  return ''
+}
+
+export async function getCoins(accountID: string): Promise<Utxo[]> {
+  const marina = await getMarinaProvider()
+  if (!marina) return []
+  return await marina.getCoins([accountID])
+}
+
+export async function getFujiCoins(): Promise<Utxo[]> {
+  return await getCoins(marinaFujiAccountID)
+}
+
+export async function getTransactions(): Promise<Transaction[]> {
+  const marina = await getMarinaProvider()
+  if (!marina) return []
+  return await marina.getTransactions()
 }
 
 export async function signAndBroadcastTx(partialTransaction: any) {

@@ -6,30 +6,21 @@ import SomeError from 'components/layout/error'
 import { WalletContext } from 'components/providers/wallet'
 import ActivityRow from './row'
 import Spinner from 'components/spinner'
+import { ContractsContext } from 'components/providers/contracts'
 
 interface ActivitiesListProps {
   activityType: ActivityType
 }
 
 const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
-  const [activities, setActivities] = useState<Activity[]>()
-  const [isLoading, setLoading] = useState(false)
-
-  const { connected, network } = useContext(WalletContext)
-
-  useEffect(() => {
-    ;(async () => {
-      setLoading(true)
-      setActivities(await getActivities())
-      setLoading(false)
-    })()
-  }, [connected, network])
+  const { connected } = useContext(WalletContext)
+  const { activities, loading } = useContext(ContractsContext)
 
   if (!connected)
     return (
       <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
     )
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)

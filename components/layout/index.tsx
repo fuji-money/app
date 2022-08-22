@@ -7,6 +7,7 @@ import Breadcrumbs from 'components/breadcrumbs'
 import { WalletProvider } from 'components/providers/wallet'
 import Auth from 'components/auth'
 import Banner from 'components/banner'
+import { ContractsProvider } from 'components/providers/contracts'
 
 interface LayoutProps {
   children: ReactNode
@@ -42,19 +43,21 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <Auth>
       <WalletProvider>
-        <UseDesktopBanner />
-        <div className="is-hidden-touch">
-          <Banner />
-          <Navbar />
-          <main>
-            <div className="container">
-              <Breadcrumbs />
-            </div>
-            <div className="container">{children}</div>
-          </main>
-          <Footer />
-          <TradeModal />
-        </div>
+        <ContractsProvider>
+          <UseDesktopBanner />
+          <div className="is-hidden-touch">
+            <Banner />
+            <Navbar />
+            <main>
+              <div className="container">
+                <Breadcrumbs />
+              </div>
+              <div className="container">{children}</div>
+            </main>
+            <Footer />
+            <TradeModal />
+          </div>
+        </ContractsProvider>
       </WalletProvider>
     </Auth>
   )

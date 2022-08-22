@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { Contract } from 'lib/types'
-import { contractIsExpired } from 'lib/contracts'
+import { contractIsClosed } from 'lib/contracts'
 
 interface TopupButtonProps {
   contract: Contract
 }
 
 const TopupButton = ({ contract }: TopupButtonProps) => {
-  if (contractIsExpired(contract)) {
+  if (contractIsClosed(contract) || !contract.confirmed) {
     return (
       <button className="button ml-3" disabled>
         Topup (Coming soon)

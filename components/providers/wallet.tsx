@@ -1,5 +1,10 @@
 import { createContext, ReactNode, useEffect, useState } from 'react'
-import { getBalances, getMarinaProvider, getNetwork } from 'lib/marina'
+import {
+  getBalances,
+  getMarinaProvider,
+  getNetwork,
+  getXPubKey,
+} from 'lib/marina'
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
 
@@ -8,6 +13,7 @@ interface WalletContextProps {
   connected: boolean
   marina: MarinaProvider | undefined
   network: NetworkString
+  xPubKey: string
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -15,6 +21,7 @@ export const WalletContext = createContext<WalletContextProps>({
   connected: false,
   marina: undefined,
   network: defaultNetwork,
+  xPubKey: '',
 })
 
 interface WalletProviderProps {
@@ -25,15 +32,18 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [connected, setConnected] = useState(false)
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
+  const [xPubKey, setXPubKey] = useState('')
 
   const updateBalances = async () => setBalances(await getBalances())
+  const updateNetwork = async () => setNetwork(await getNetwork())
+  const updateXPubKey = async () => setXPubKey(await getXPubKey())
 
-  // update marina
+  // get marina provider
   useEffect(() => {
     getMarinaProvider().then((payload) => setMarina(payload))
   })
 
-  // update connected
+  // update connected state
   useEffect(() => {
     if (marina) {
       marina.isEnabled().then((payload) => setConnected(payload))
@@ -58,9 +68,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // update network and add event listener
   useEffect(() => {
     if (connected && marina) {
-      getNetwork().then((payload) => setNetwork(payload))
-      // add event listener
-      const id = marina.on('NETWORK', (payload) => setNetwork(payload))
+      updateNetwork()
+      const id = marina.on('NETWORK', () => updateNetwork())
       return () => marina.off(id)
     }
   }, [connected, marina])
@@ -69,14 +78,16 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   useEffect(() => {
     if (connected && marina) {
       updateBalances()
-      // add event listener
-      const id = marina.on('NEW_TX', (_) => updateBalances())
+      updateXPubKey()
+      const id = marina.on('SPENT_UTXO', () => updateBalances())
       return () => marina.off(id)
     }
   }, [connected, marina, network])
 
   return (
-    <WalletContext.Provider value={{ balances, connected, marina, network }}>
+    <WalletContext.Provider
+      value={{ balances, connected, marina, network, xPubKey }}
+    >
       {children}
     </WalletContext.Provider>
   )

@@ -1,5 +1,10 @@
 import { getNetwork } from './marina'
 import { prettyAsset } from './pretty'
+import {
+  addActivityToStorage,
+  getActivitiesFromStorage,
+  saveActivitiesToStorage,
+} from './storage'
 import { Activity, ActivityType, Contract } from './types'
 
 export function addActivity(contract: Contract, type: ActivityType): void {
@@ -18,17 +23,27 @@ export function addActivity(contract: Contract, type: ActivityType): void {
     txid,
     type,
   }
-  const activities: Activity[] = JSON.parse(
-    localStorage.getItem('fujiActivities') || '[]',
-  )
-  activities.push(activity)
-  localStorage.setItem('fujiActivities', JSON.stringify(activities))
+  addActivityToStorage(activity)
 }
 
 export async function getActivities(): Promise<Activity[]> {
-  if (typeof window === 'undefined') return []
   const network = await getNetwork()
-  return JSON.parse(localStorage.getItem('fujiActivities') || '[]').filter(
-    (activity: Activity) => activity.contract.network === network,
+  return getActivitiesFromStorage().filter(
+    (activity: Activity) => activity.network === network,
   )
+}
+
+export function removeActivity(contract: Contract, type: ActivityType): void {
+  const activities = getActivitiesFromStorage()
+  const index = activities.findIndex(
+    (activity: Activity) =>
+      activity.contract.txid === contract.txid && activity.type === type,
+  )
+  if (index !== -1) {
+    const newActivities = [
+      ...activities.slice(0, index),
+      ...activities.slice(index + 1),
+    ]
+    saveActivitiesToStorage(newActivities)
+  }
 }

@@ -1,10 +1,17 @@
-import { Asset, Contract, ContractState } from './types'
+import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { toSatoshis } from './utils'
-import { getNetwork } from './marina'
 import { minDustLimit } from './constants'
+import { fetchAsset } from './api'
+import { getNetwork, getXPubKey } from './marina'
+import {
+  updateContractOnStorage,
+  addContractToStorage,
+  getMyContractsFromStorage,
+} from './storage'
+import { addActivity, removeActivity } from './activities'
 
-export const contractIsExpired = (contract: Contract): boolean => {
+// check if a contract is redeemed or liquidated
+export const contractIsClosed = (contract: Contract): boolean => {
   if (!contract.state) return false
   return [ContractState.Redeemed, ContractState.Liquidated].includes(
     contract.state,
@@ -35,7 +42,12 @@ export const getRatioState = (
 
 // get contract state
 export const getContractState = (contract: Contract): ContractState => {
+  if (contract.state === ContractState.Liquidated)
+    return ContractState.Liquidated
+  if (contract.state === ContractState.Redeemed) return ContractState.Redeemed
+  if (!contract.confirmed) return ContractState.Unconfirmed
   if (!contract?.collateral?.ratio) return ContractState.Unknown
+  // possible states are safe, unsafe, critical or liquidated (based on ratio)
   const ratio = getContractRatio(contract)
   return getRatioState(ratio, contract.collateral.ratio)
 }
@@ -73,4 +85,78 @@ export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
   return Decimal.ceil(
     Decimal.mul(asset.value, asset.ratio).div(ratio),
   ).toNumber()
+}
+
+// get all contacts belonging to this xpub and network
+export async function getContracts(): Promise<Contract[]> {
+  if (typeof window === 'undefined') return []
+  console.log(`${new Date()} get contracts`)
+  const network = await getNetwork()
+  const xPubKey = await getXPubKey()
+  const promises = getMyContractsFromStorage(network, xPubKey).map(
+    async (contract: Contract) => {
+      const collateral = await fetchAsset(contract.collateral.ticker)
+      const synthetic = await fetchAsset(contract.synthetic.ticker)
+      if (!collateral)
+        throw new Error(
+          `Contract with unknown collateral ${contract.collateral.ticker}`,
+        )
+      if (!synthetic)
+        throw new Error(
+          `Contract with unknown synthetic ${contract.synthetic.ticker}`,
+        )
+      contract.collateral = { ...collateral, ...contract.collateral }
+      contract.synthetic = { ...synthetic, ...contract.synthetic }
+      contract.state = getContractState(contract)
+      return contract
+    },
+  )
+  return Promise.all(promises)
+}
+
+// get contract with txid
+export async function getContract(txid: string): Promise<Contract | undefined> {
+  const contracts = await getContracts()
+  return contracts.find((c) => c.txid === txid)
+}
+
+// add contract to storage and create activity
+export function createContract(contract: Contract): void {
+  addContractToStorage(contract)
+  addActivity(contract, ActivityType.Creation)
+}
+
+// redeem contract and create activity
+export function redeemContract(contract: Contract): void {
+  contract.state = ContractState.Redeemed
+  updateContractOnStorage(contract)
+  addActivity(contract, ActivityType.Redeemed)
+}
+
+// mark contract as confirmed
+export function confirmContract(contract: Contract): void {
+  if (contract.confirmed) return
+  console.log(`${new Date()} confirming contract`, contract.txid)
+  contract.confirmed = true
+  updateContractOnStorage(contract)
+}
+
+// liquidate contract on storage and create activity
+export function liquidateContract(contract: Contract): void {
+  if (contract.state === ContractState.Liquidated) return
+  console.log(`${new Date()} liquidating contract`, contract.txid)
+  contract.confirmed = true
+  contract.state = ContractState.Liquidated
+  updateContractOnStorage(contract)
+  addActivity(contract, ActivityType.Liquidated)
+}
+
+// reopen previously liquidated contract
+export function reopenContract(contract: Contract): void {
+  if (contract.state === ContractState.Liquidated) {
+    console.log(`${new Date()} reopening contract`, contract.txid)
+    contract.state = undefined
+    updateContractOnStorage(contract)
+    removeActivity(contract, ActivityType.Liquidated)
+  }
 }

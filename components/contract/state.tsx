@@ -40,7 +40,7 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
           line-height: 0.5rem;
           padding: 4px;
           margin: auto 0;
-          width: 5rem;
+          width: 6rem;
         }
         .state span {
           display: block;
@@ -72,6 +72,7 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
         }
         .state.closed,
         .state.liquidated,
+        .state.unconfirmed,
         .state.unknown {
           background-color: #eee;
           color: #000;
