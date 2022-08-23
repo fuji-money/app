@@ -24,6 +24,9 @@ import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { marinaFujiAccountID } from 'lib/constants'
 import { openModal } from 'lib/utils'
+import { fetchURL } from 'lib/fetch'
+import { checkOutspend, explorerURL, getTx } from 'lib/explorer'
+import { script } from 'liquidjs-lib'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -76,11 +79,28 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         (contract) =>
           contract.confirmed && contract.state !== ContractState.Redeemed,
       )
-      .map((contract) =>
+      .map(async (contract) =>
         hasCoin(contract.txid)
           ? reopenContract(contract)
           : liquidateContract(contract),
       )
+    getMyContractsFromStorage(network, xPubKey).map(async (contract) => {
+      const status = await checkOutspend(contract, network)
+      console.log(
+        contract.state,
+        contract.txid,
+        status,
+      )
+      if (status.spent) {
+        const { txid, vin } = status
+        const tx = await getTx(txid, network)
+        const witness = tx.vin[vin].witness[tx.vin[vin].witness.length - 1]
+        const scriptAssembly = script
+          .toASM(script.decompile(Buffer.from(witness, 'hex')) || [])
+          .split(' ');
+        console.log('scriptAssembly', scriptAssembly.length)
+      }
+    })
   }
 
   // temporary fix: fix missing xPubKey on old contracts and store on local storage
