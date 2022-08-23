@@ -3,6 +3,7 @@ import { WalletContext } from 'components/providers/wallet'
 import { createFujiAccount, fujiAccountMissing } from 'lib/marina'
 import { closeModal, openModal } from 'lib/utils'
 import AccountModal from 'components/modals/account'
+import WalletsModal from 'components/modals/wallets'
 
 const ConnectButton = () => {
   const { connected, marina } = useContext(WalletContext)
@@ -17,12 +18,18 @@ const ConnectButton = () => {
     if (connected) {
       await marina.disable()
     } else {
-      await marina.enable()
-      if (await fujiAccountMissing(marina)) {
-        openModal('account-modal')
-        await createFujiAccount(marina)
-        closeModal('account-modal')
-      }
+      openModal('wallets-modal')
+    }
+  }
+
+  const handleWalletChoice = async (name: string) => {
+    closeModal('wallets-modal')
+    if (!marina) return
+    await marina.enable()
+    if (await fujiAccountMissing(marina)) {
+      openModal('account-modal')
+      await createFujiAccount(marina)
+      closeModal('account-modal')
     }
   }
 
@@ -34,6 +41,7 @@ const ConnectButton = () => {
             {message}
           </button>
           <AccountModal />
+          <WalletsModal handleWalletChoice={handleWalletChoice} />
         </>
       )}
       {!marina && (
