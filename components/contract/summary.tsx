@@ -32,6 +32,12 @@ const Summary = ({ contract }: SummaryProps) => {
           {prettyRatio(getContractRatio(contract))}%
         </p>
       </div>
+
+      <div className="summary-line has-pink-border">
+        <p>Liquidation price</p>
+        <p className="is-gradient">{prettyNumber(contract.priceLevel)} USD</p>
+      </div>
+
       <style jsx>{`
         .summary-line {
           background-color: #fff;
