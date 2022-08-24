@@ -9,7 +9,6 @@ interface SummaryProps {
 
 const Summary = ({ contract }: SummaryProps) => {
   const ratio = getContractRatio(contract)
-  const state = getContractState(contract)
   return (
     <div className="has-pink-border">
       <div className="row py-4 px-6">
