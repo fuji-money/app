@@ -396,11 +396,12 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
 
 export function getFuncNameFromWitness(witness: string): string {
   const mapWitnessLengthToState: Record<number, string> = {}
-  synthAssetArtifact.functions.map(({ name, asm }) => { // 27: 'topup'
-    mapWitnessLengthToState[asm.length] = name          // 37: 'liquidate'
-  })                                                    // 47: 'redeem'
+  synthAssetArtifact.functions.map(({ name, asm }) => {
+    // 27: 'topup'
+    mapWitnessLengthToState[asm.length] = name // 37: 'liquidate'
+  }) // 47: 'redeem'
   const asm = script
     .toASM(script.decompile(Buffer.from(witness, 'hex')) || [])
-    .split(' ');
+    .split(' ')
   return mapWitnessLengthToState[asm.length] || 'unknown'
 }
