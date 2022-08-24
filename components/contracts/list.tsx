@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from 'react'
-import { contractIsClosed, getContracts } from 'lib/contracts'
+import { useContext, useState } from 'react'
+import { contractIsClosed } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import RedeemModal from 'components/modals/redeem'

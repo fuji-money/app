@@ -7,10 +7,13 @@ import {
   useState,
 } from 'react'
 import {
-  confirmContract,
   getContracts,
-  liquidateContract,
-  reopenContract,
+  markContractLiquidated,
+  markContractRedeemed,
+  markContractOpen,
+  markContractUnknown,
+  markContractUnconfirmed,
+  markContractConfirmed,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -19,27 +22,25 @@ import {
 } from 'lib/storage'
 import { Activity, Contract, ContractState } from 'lib/types'
 import { WalletContext } from './wallet'
-import { getTransactions, getFujiCoins } from 'lib/marina'
 import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
-import { marinaFujiAccountID } from 'lib/constants'
-import { openModal } from 'lib/utils'
-import { fetchURL } from 'lib/fetch'
-import { checkOutspend, explorerURL, getTx } from 'lib/explorer'
-import { script } from 'liquidjs-lib'
+import { checkOutspend, getTx } from 'lib/explorer'
+import { getFuncNameFromWitness } from 'lib/covenant'
+import { getFujiCoins } from 'lib/marina'
+import { toXpub } from 'ldk'
 
 interface ContractsContextProps {
   activities: Activity[]
   contracts: Contract[]
   loading: boolean
-  updateContracts: () => void
+  reloadContracts: () => void
 }
 
 export const ContractsContext = createContext<ContractsContextProps>({
   activities: [],
   contracts: [],
   loading: true,
-  updateContracts: () => {},
+  reloadContracts: () => {},
 })
 
 interface ContractsProviderProps {
@@ -53,89 +54,98 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
-  const updateContracts = async () => {
+  const reloadContracts = async (txt = 'unknown') => {
+    await checkContractsStatus()
     setContracts(await getContracts())
     setActivities(await getActivities())
     setLoading(false)
   }
 
-  // check for confirmed contracts while app was offline
-  const checkUnconfirmedContracts = async () => {
-    const transactions = await getTransactions()
-    const hasTx = (txid = '') => transactions.some((tx) => tx.txId === txid)
-    getMyContractsFromStorage(network, xPubKey)
-      .filter((contract) => !contract.confirmed && hasTx(contract.txid))
-      .map((contract) => confirmContract(contract))
-  }
-
-  // check for liquidated contracts while app was offline
-  // - if fuji has the coin <txid>:0, it means the contract is active
-  // - if no coin, and contract not redeemed, it should be liquidated
-  const checkLiquidatedContracts = async () => {
+  // check contract status
+  // for each contract in storage:
+  // - check for creation tx (to confirm)
+  // - check if unspend (for status)
+  const checkContractsStatus = async () => {
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
-    getMyContractsFromStorage(network, xPubKey)
-      .filter(
-        (contract) =>
-          contract.confirmed && contract.state !== ContractState.Redeemed,
-      )
-      .map(async (contract) =>
-        hasCoin(contract.txid)
-          ? reopenContract(contract)
-          : liquidateContract(contract),
-      )
-    getMyContractsFromStorage(network, xPubKey).map(async (contract) => {
-      const status = await checkOutspend(contract, network)
-      console.log(
-        contract.state,
-        contract.txid,
-        status,
-      )
-      if (status.spent) {
-        const { txid, vin } = status
-        const tx = await getTx(txid, network)
-        const witness = tx.vin[vin].witness[tx.vin[vin].witness.length - 1]
-        const scriptAssembly = script
-          .toASM(script.decompile(Buffer.from(witness, 'hex')) || [])
-          .split(' ');
-        console.log('scriptAssembly', scriptAssembly.length)
+    for (const contract of getMyContractsFromStorage(network, xPubKey)) {
+      if (!contract.txid) continue
+      // check if contract is confirmed
+      // if funding tx is not confirmed, we can skip this contract
+      const tx = await getTx(contract.txid, network)
+      if (!tx?.status?.confirmed) {
+        markContractUnconfirmed(contract)
+        continue
       }
-    })
+      markContractConfirmed(contract)
+      // check if contract is already spent
+      const status = await checkOutspend(contract, network)
+      if (status.spent) {
+        // contract already spent, let's find out why:
+        // we will look at the witness before the last one,
+        // and based on his fingerprint find out if it was:
+        // - liquidated (witness asm will have 37 items)
+        // - redeemed (witness asm will have 47 items)
+        // - topuped (witness asm will have 27 items)
+        const { txid, vin } = status
+        const spentTx = await getTx(txid, network)
+        const index = spentTx.vin[vin].witness.length - 2
+        const witness = spentTx.vin[vin].witness[index]
+        switch (getFuncNameFromWitness(witness)) {
+          case 'liquidate':
+            markContractLiquidated(contract, spentTx)
+            continue
+          case 'redeem':
+            markContractRedeemed(contract, spentTx)
+            continue
+          case 'topup':
+            markContractRedeemed(contract, spentTx)
+            continue
+          default:
+            markContractUnknown(contract)
+            continue
+        }
+      } else {
+        // contract not spent
+        // if we have coin it means contract is still open
+        if (hasCoin(contract.txid)) {
+          markContractOpen(contract)
+          continue
+        }
+        // if no coin, could be redeemed just now, or else is unknown
+        if (contract.state !== ContractState.Redeemed) {
+          markContractUnknown(contract)
+        }
+      }
+    }
   }
 
   // temporary fix: fix missing xPubKey on old contracts and store on local storage
+  // addendum: if Marina xPubKey starts with 'xpub' and contract xPubKey starts with
+  // 'zpub' (previous version of Marina), update contract xPubKey to 'xpub...'
   const fixMissingXPubKeyOnOldContracts = () => {
+    // on new Marina version, xPubKey starts with 'xpub' instead of 'zpub'
+    const shouldStartWithXpub = xPubKey.startsWith('xpub')
     getContractsFromStorage()
-      .filter((contract) => !contract.xPubKey && contract.network === network)
+      .filter((contract) => contract.network === network)
       .map((contract) => {
-        contract.xPubKey = xPubKey
-        updateContractOnStorage(contract)
-      })
-  }
-
-  // on the listener for new tx for fuji account check:
-  // - if it's a known contract, confirm it
-  // - if not, is possible to be a liquidation
-  const onNewTxListener = () => {
-    if (marina) {
-      marina.on('NEW_TX', ({ accountID, data }) => {
-        if (accountID === marinaFujiAccountID) {
-          const tx = data
-          console.log(`new tx ${new Date()}`, tx)
-          const contract = getMyContractsFromStorage(network, xPubKey).find(
-            (contract) => contract.txid === tx.txId,
-          )
-          if (contract && !contract.confirmed) {
-            confirmContract(contract)
-            return updateContracts()
-          }
-          if (!contract) {
-            checkLiquidatedContracts()
-            updateContracts()
+        if (!contract.xPubKey) {
+          contract.xPubKey = xPubKey
+          updateContractOnStorage(contract)
+        } else {
+          if (contract.xPubKey.startsWith('zpub') && shouldStartWithXpub) {
+            contract.xPubKey = toXpub(xPubKey) // converts 'zpub' to 'xpub'
+            updateContractOnStorage(contract)
           }
         }
       })
-    }
+  }
+
+  // on a SPENT_UTXO event reload contracts
+  // don't use NEW_TX, on reload Marina emits a NEW_TX for all TXs,
+  // which cause a lot of spam on the explorer (#tx * #contracts * 2 queries)
+  const onNewTxListener = () => {
+    if (marina) marina.on('SPENT_UTXO', async () => reloadContracts())
   }
 
   const firstRender = useRef<NetworkString[]>([])
@@ -144,8 +154,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
-        checkLiquidatedContracts()
-        checkUnconfirmedContracts()
         fixMissingXPubKeyOnOldContracts()
         onNewTxListener()
         firstRender.current.push(network)
@@ -155,12 +163,13 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // update contracts
   useEffect(() => {
-    if (connected && marina) updateContracts()
-  }, [connected, marina, network, xPubKey])
+    if (connected && marina) reloadContracts('use effect')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [network, xPubKey])
 
   return (
     <ContractsContext.Provider
-      value={{ activities, contracts, loading, updateContracts }}
+      value={{ activities, contracts, loading, reloadContracts }}
     >
       {children}
     </ContractsContext.Provider>
