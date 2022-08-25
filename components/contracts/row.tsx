@@ -23,7 +23,6 @@ const ContractRow = ({
   setResult,
 }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
-  const state = contract.state || ContractState.Unknown
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
