@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { calcAuthCookie } from 'lib/auth'
-import { fetchURL } from 'lib/fetch'
 
 const onViralLoops = async (uri: string, email: string): Promise<any> => {
   const apiToken = process.env.VIRAL_LOOP_SECRET_TOKEN || ''
@@ -19,7 +18,7 @@ const onViralLoops = async (uri: string, email: string): Promise<any> => {
 
   if (!res.ok) {
     const errorMessage = await res.text()
-    console.log(`${res.statusText}: ${errorMessage}`)
+    console.error(`${res.statusText}: ${errorMessage}`)
     return
   }
 
@@ -27,12 +26,26 @@ const onViralLoops = async (uri: string, email: string): Promise<any> => {
 }
 
 const getUserRank = async (email: string) => {
-  const publicToken = process.env.VIRAL_LOOP_PUBLIC_TOKEN
+  const apiToken = process.env.VIRAL_LOOP_SECRET_TOKEN || ''
   const url =
-    'https://app.viral-loops.com/api/v3/campaign/participant/order?' +
-    `publicToken=${publicToken}&` +
+    'https://app.viral-loops.com/api/v3/campaign/participant/rank?' +
     `email=${email}`
-  const user = await fetchURL(url)
+  const res = await fetch(url, {
+    headers: {
+      apiToken,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    method: 'GET',
+  })
+
+  if (!res.ok) {
+    const errorMessage = await res.text()
+    console.error(`${res.statusText}: ${errorMessage}`)
+    return
+  }
+
+  const user = await res.json()
   return user.rank
 }
 
@@ -51,6 +64,7 @@ export default async function handler(
   if (req.method !== 'POST' || !req.body) return res.status(405).end()
 
   const email = req.body
+  console.log(email)
   const vipList = JSON.parse(process.env.VIP_LIST || '[]')
 
   // on success, return cookie value to be set client side
@@ -67,6 +81,7 @@ export default async function handler(
   // if so, flag him and he will always be allowed to enter
   const maxRank = process.env.VIRAL_LOOP_MAX_RANK || -1
   const userRank = await getUserRank(email)
+  console.log(userRank)
   if (userRank <= maxRank) {
     await flagUser(email)
     return success()
