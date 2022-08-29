@@ -82,16 +82,16 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       const status = await checkOutspend(contract, network)
       if (status.spent) {
         // contract already spent, let's find out why:
-        // we will look at the witness before the last one,
+        // we will look at the leaf before the last one,
         // and based on his fingerprint find out if it was:
-        // - liquidated (witness asm will have 37 items)
-        // - redeemed (witness asm will have 47 items)
-        // - topuped (witness asm will have 27 items)
+        // - liquidated (leaf asm will have 37 items)
+        // - redeemed (leaf asm will have 47 items)
+        // - topuped (leaf asm will have 27 items)
         const { txid, vin } = status
         const spentTx = await getTx(txid, network)
         const index = spentTx.vin[vin].witness.length - 2
-        const witness = spentTx.vin[vin].witness[index]
-        switch (getFuncNameFromWitness(witness)) {
+        const leaf = spentTx.vin[vin].witness[index]
+        switch (getFuncNameFromWitness(leaf)) {
           case 'liquidate':
             markContractLiquidated(contract, spentTx)
             continue
