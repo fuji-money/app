@@ -12,6 +12,8 @@ import { WalletContext } from 'components/providers/wallet'
 import ConnectWalletNotification from './connectWallet'
 import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
+import { swapDepositAmountOutOfBounds } from 'lib/swaps'
+import OutOfBoundsNotification from './outOfBounds'
 
 interface NotificationsProps {
   contract: Contract
@@ -32,6 +34,7 @@ const Notifications = ({
   const [ratioUnsafe, setRatioUnsafe] = useState(false)
   const [belowDustLimit, setBelowDustLimit] = useState(false)
   const [collateralTooLow, setCollateralTooLow] = useState(false)
+  const [outOfBounds, setOutOfBounds] = useState(false)
 
   const { balances, connected } = useContext(WalletContext)
 
@@ -43,6 +46,7 @@ const Notifications = ({
       const balance = getAssetBalance(asset, balances)
       const payoutAmount = contract.payoutAmount || 0
       setNotEnoughFunds(connected && spendQuantity > balance)
+      setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
       setCollateralTooLow(
         spendQuantity < payoutAmount + feeAmount + minDustLimit,
       )
@@ -79,7 +83,8 @@ const Notifications = ({
       {belowDustLimit && <BelowDustLimitNotification />}
       {!connected && <ConnectWalletNotification />}
       {collateralTooLow && <LowCollateralAmountNotification />}
-      {notEnoughFunds && <NotEnoughFundsNotification />}
+      {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
+      {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
       {ratioTooLow && <RatioTooLowNotification />}
       {ratioUnsafe && <RatioUnsafeNotification />}
       <BorrowFeeNotification payout={payout} />

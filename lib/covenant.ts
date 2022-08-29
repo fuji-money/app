@@ -28,7 +28,7 @@ import {
 import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { getCollateralQuantity, getContractPayoutAmount } from './contracts'
+import { getContractPayoutAmount } from './contracts'
 
 interface PreparedBorrowTx {
   psbt: Psbt

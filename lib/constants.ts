@@ -25,5 +25,6 @@ export const alphaServerUrl =
 
 export const minDustLimit = 500
 export const feeAmount = 500
+export const swapFeeAmount = 300
 
 export const twitterMessage = `I'm using @fuji_money to borrow Fuji USD with #Bitcoin collateral.\n\n💸 No recurring interest\n🥷 No intermediaries\n🏃‍♀️ Redeem anytime\n\nCheck it out!\n\nhttps://fuji.money`

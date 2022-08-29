@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
 interface IconProps {
-  network: string
+  channel: string
 }
 
-const Icon = ({ network }: IconProps) => {
-  const alt = `${network} logo`
-  const src = `/images/networks/${network}.svg`
+const Icon = ({ channel }: IconProps) => {
+  const alt = `${channel} logo`
+  const src = `/images/networks/${channel}.svg`
   return (
     <span>
       <Image src={src} alt={alt} height={30} width={30} />
@@ -24,28 +24,28 @@ const Icon = ({ network }: IconProps) => {
 
 interface TitleProps {
   name: string
-  network: string
+  channel: string
   deposit: boolean
 }
 
-const Title = ({ name, network, deposit }: TitleProps) => {
+const Title = ({ name, channel, deposit }: TitleProps) => {
   const [title, setTitle] = useState(name)
 
   useEffect(() => {
     const _title = !deposit
       ? name
-      : !network
+      : !channel
       ? 'Select deposit method'
-      : network === 'lightning'
+      : channel === 'lightning'
       ? 'Deposit via Lightning'
       : 'Deposit via Liquid Network'
     setTitle(_title)
-  }, [name, network, deposit])
+  }, [name, channel, deposit])
 
   return (
     <h1>
       {title}
-      {network && <Icon network={network} />}
+      {channel && <Icon channel={channel} />}
     </h1>
   )
 }

@@ -11,14 +11,14 @@ interface MultiplyProps {
 
 const Multiply = ({ offer }: MultiplyProps) => {
   const [deposit, setDeposit] = useState(false)
-  const [network, setNetwork] = useState('')
+  const [channel, setChannel] = useState('')
   const [contract, setContract] = useState<Contract>(offer)
 
   const topup = 0
 
   return (
     <section>
-      <Title name="Multiply" network={network} deposit={deposit} />
+      <Title name="Multiply" channel={channel} deposit={deposit} />
       {!deposit && (
         <MultiplyForm
           contract={contract}
@@ -32,8 +32,8 @@ const Multiply = ({ offer }: MultiplyProps) => {
             <div className="column is-8">
               <Deposit
                 contract={contract}
-                network={network}
-                setNetwork={setNetwork}
+                channel={channel}
+                setChannel={setChannel}
                 topup={topup}
               />
             </div>
