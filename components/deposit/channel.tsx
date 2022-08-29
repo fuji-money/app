@@ -5,6 +5,7 @@ import {
   DEPOSIT_LIGHTNING_LIMITS,
   getClaimTransaction,
   getInvoiceExpireDate,
+  ReverseSwap,
   swapDepositAmountOutOfBounds,
 } from 'lib/swaps'
 import { prettyNumber } from 'lib/pretty'
@@ -15,6 +16,8 @@ import { fetchUtxos, Outpoint, Mnemonic } from 'ldk'
 import { closeModal, openModal, sleep } from 'lib/utils'
 import * as ecc from 'tiny-secp256k1'
 import { getAssetBalance } from 'lib/marina'
+import ECPairFactory from 'ecpair'
+import { randomBytes } from 'crypto'
 
 const explorerURL = 'https://blockstream.info/liquidtestnet/api' // TODO
 
@@ -54,7 +57,6 @@ const Channel = ({
   if (!marina) throw new Error('Missing marina provider')
 
   const setError = (text: string) => {
-    closeModal('swap-modal')
     console.log(text)
     setData(text)
     setResult('failure')
@@ -66,31 +68,34 @@ const Channel = ({
   // check if button for Lightning should be disabled
   const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
-  const LightningButtonDisabled = ticker !== 'L-BTC' || outOfBounds
+  const lightningButtonDisabled = ticker !== 'L-BTC' || outOfBounds
 
   // check if button for Liquid should be disabled
   const funds = getAssetBalance(contract.collateral, balances)
   const needed = contract.collateral.quantity || 0
-  const LiquidButtonDisabled = !(connected && funds > needed)
+  const liquidButtonDisabled = !(connected && funds > needed)
 
   const handleLightning = async () => {
     // create ephemeral account
-    const account = Mnemonic.Random(network, ecc)
+    const privateKey = randomBytes(32)
+    const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
     // create swap with Boltz.exchange
     const invoiceAmount = quantity + feeAmount + swapFeeAmount
-    const swap = await createReverseSubmarineSwap(
-      account,
+    const swap: ReverseSwap | undefined = await createReverseSubmarineSwap(
+      keyPair,
       network,
       invoiceAmount,
     )
     if (!swap) return setError('Error creating swap')
 
+    console.log('invoiceAmount', invoiceAmount)
+
     // this shows the QR code to the user
     setSwap(swap)
     setChannel('lightning')
 
-    const { invoice, lockupAddress, nextAddress, preimage, redeemScript } = swap
+    const { invoice, lockupAddress, preimage, redeemScript } = swap
 
     // wait for payment
     const utxos = await waitForPayment(invoice, lockupAddress)
@@ -98,17 +103,12 @@ const Channel = ({
     // payment was never made, and the invoice expired
     if (utxos.length === 0) return setError('Invoice has expired')
 
-    // payment made: by setting utxos, swap modal will open
-    openModal('swap-modal')
-    console.log('utxos', utxos)
-
-    // get claim transaction
+    // payment made: get claim transaction
     let claimTransaction
     try {
       claimTransaction = await getClaimTransaction(
-        account,
-        nextAddress,
         explorerURL,
+        keyPair,
         network,
         preimage,
         redeemScript,
@@ -136,7 +136,7 @@ const Channel = ({
         <div className="content mt-6">
           <button
             className="button is-primary"
-            disabled={LiquidButtonDisabled}
+            disabled={liquidButtonDisabled}
             onClick={() => setChannel('liquid')}
           >
             <Image
@@ -149,7 +149,7 @@ const Channel = ({
           </button>
           <button
             className="button is-primary"
-            disabled={LightningButtonDisabled}
+            disabled={lightningButtonDisabled}
             onClick={handleLightning}
           >
             <Image
@@ -161,12 +161,12 @@ const Channel = ({
             Lightning
           </button>
         </div>
-        {LiquidButtonDisabled && (
+        {liquidButtonDisabled && (
           <div>
             <p className="warning mx-auto mt-6">Not enough funds on Marina.</p>
           </div>
         )}
-        {LightningButtonDisabled && (
+        {lightningButtonDisabled && (
           <div>
             <p className="warning mx-auto mt-6">
               For lightning swaps, collateral amount must be between{' '}

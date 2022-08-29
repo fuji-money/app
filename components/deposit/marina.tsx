@@ -14,12 +14,18 @@ interface MarinaProps {
   contract: Contract
   setData: any
   setResult: any
+  setStep: any
   topup: number | undefined
 }
 
-const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
+const Marina = ({
+  contract,
+  setData,
+  setResult,
+  setStep,
+  topup,
+}: MarinaProps) => {
   const { ticker, value } = contract.collateral
-  const [step, setStep] = useState(0)
   const quantity = topup || contract.collateral.quantity
   const { network } = useContext(WalletContext)
   const { updateContracts } = useContext(ContractsContext)
@@ -32,7 +38,7 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
             onClick={async () => {
               openModal('deposit-modal')
               try {
-                const preparedTx = await prepareBorrowTx(contract)
+                const preparedTx = await prepareBorrowTx(contract, network)
                 const { partialTransaction } = await proposeBorrowContract(
                   preparedTx,
                 )
@@ -77,7 +83,6 @@ const Marina = ({ contract, setData, setResult, topup }: MarinaProps) => {
           </div>
         </div>
       </div>
-      <DepositModal contract={contract} step={step} topup={topup} />
     </>
   )
 }

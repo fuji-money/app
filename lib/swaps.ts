@@ -1,7 +1,7 @@
 import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
-import type { Outpoint, AddressInterface, NetworkString } from 'ldk'
-import { fetchTxHex, getNetwork, Mnemonic } from 'ldk'
+import type { Outpoint, NetworkString } from 'ldk'
+import { fetchTxHex, getNetwork } from 'ldk'
 import {
   address,
   AssetHash,
@@ -12,14 +12,15 @@ import {
   Psbt,
   witnessStackToScriptWitness,
   networks,
+  payments,
 } from 'liquidjs-lib'
 import { fromSatoshis } from 'lib/utils'
-import { feeAmount, swapFeeAmount } from './constants'
-import { MarinaProvider } from 'marina-provider'
+import { feeAmount, marinaFujiAccountID, swapFeeAmount } from './constants'
 import Boltz, { ReverseSubmarineSwapResponse } from './boltz'
 import { randomBytes } from 'crypto'
 import * as ecc from 'tiny-secp256k1'
-import ECPairFactory from 'ecpair'
+import type { ECPairInterface } from 'ecpair'
+import { getNextAddress } from './marina'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
@@ -77,7 +78,6 @@ export interface ReverseSwap {
   invoice: string
   invoiceAmount: number
   lockupAddress: string
-  nextAddress: AddressInterface
   preimage: Buffer
   redeemScript: string
 }
@@ -176,7 +176,7 @@ const validReverseSwapReedemScript = (
 
 // create reverse submarine swap
 export const createReverseSubmarineSwap = async (
-  account: Mnemonic,
+  keyPair: ECPairInterface,
   network: NetworkString,
   invoiceAmount: number,
 ): Promise<ReverseSwap | undefined> => {
@@ -188,15 +188,15 @@ export const createReverseSubmarineSwap = async (
   const preimageHash = crypto.sha256(preimage).toString('hex')
 
   // ephemeral keys
-  const nextAddress = await account.getNextAddress()
-  const claimPublicKey = nextAddress.publicKey!
+  const p = payments.p2pkh({ pubkey: keyPair.publicKey })
+  const claimPublicKey = p.pubkey!.toString('hex')
 
   // create reverse submarine swap
   const { redeemScript, lockupAddress, invoice }: ReverseSubmarineSwapResponse =
     await boltz.createReverseSubmarineSwap({
+      claimPublicKey,
       invoiceAmount,
       preimageHash,
-      claimPublicKey,
     })
 
   const reverseSwap = {
@@ -204,7 +204,6 @@ export const createReverseSubmarineSwap = async (
     invoice,
     invoiceAmount,
     lockupAddress,
-    nextAddress,
     preimage,
     redeemScript,
   }
@@ -212,9 +211,8 @@ export const createReverseSubmarineSwap = async (
 }
 
 export const getClaimTransaction = async (
-  account: Mnemonic,
-  nextAddress: AddressInterface,
   explorerURL: string,
+  keyPair: ECPairInterface,
   network: NetworkString,
   preimage: Buffer,
   redeemScript: string,
@@ -239,7 +237,10 @@ export const getClaimTransaction = async (
   const EMPTY_BUFFER = Buffer.alloc(0)
 
   const claimValue =
-    confidential.confidentialValueToSatoshi(prevout.value) - swapFeeAmount
+    confidential.confidentialValueToSatoshi(prevout.value) - feeAmount
+
+  const nextAddress = await getNextAddress()
+  if (!nextAddress) throw new Error('Unable to find nextAddress')
 
   // add our destination script
   tx.addOutput({
@@ -255,10 +256,12 @@ export const getClaimTransaction = async (
     nonce: EMPTY_BUFFER,
   })
 
+  console.log('claimValue', claimValue)
+  console.log('feeAmount', feeAmount)
+
   console.log('tx', tx.toBase64())
-  const signedPsbtBase64 = await account.signPset(tx.toBase64())
-  console.log('signedPsbtBase64', signedPsbtBase64)
-  const signedPsbt = Psbt.fromBase64(signedPsbtBase64)
+  const signedPsbt = tx.signInput(0, keyPair)
+  console.log('signedPsbt', signedPsbt.toBase64())
 
   signedPsbt.validateSignaturesOfAllInputs(Psbt.ECDSASigValidator(ecc))
 

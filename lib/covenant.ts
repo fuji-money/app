@@ -1,5 +1,5 @@
 import { Contract, UtxoWithBlindPrivKey } from './types'
-import { Utxo, AddressInterface } from 'marina-provider'
+import { Utxo, AddressInterface, NetworkString } from 'marina-provider'
 import {
   alphaServerUrl,
   feeAmount,
@@ -29,6 +29,7 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
+import { getNetwork } from 'liquidjs-lib/src/address'
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -41,6 +42,7 @@ interface PreparedBorrowTx {
 
 export async function prepareBorrowTx(
   contract: Contract,
+  networkString: NetworkString,
 ): Promise<PreparedBorrowTx> {
   console.log('prepareBorrowTx contract', contract)
 
@@ -78,7 +80,7 @@ export async function prepareBorrowTx(
 
   // get next and change addresses
   const timestamp = Date.now()
-  const network = networks.testnet // TODO
+  const network = getNetwork(networkString)
   const issuer = payments.p2wpkh({
     pubkey: Buffer.from(issuerPubKey, 'hex'),
     network: network,

@@ -139,3 +139,13 @@ export async function fujiAccountMissing(
   const accountIDs = await marina.getAccountsIDs()
   return !accountIDs.includes(marinaFujiAccountID)
 }
+
+export async function getNextAddress(accountID = marinaMainAccountID) {
+  const marina = await getMarinaProvider()
+  if (!marina) return
+  if (accountID === marinaMainAccountID) return await marina.getNextAddress()
+  await marina.useAccount(accountID)
+  const address = await marina.getNextAddress()
+  await marina.useAccount(marinaMainAccountID)
+  return address
+}
