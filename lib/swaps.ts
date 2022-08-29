@@ -77,7 +77,7 @@ export interface ReverseSwap {
   invoice: string
   invoiceAmount: number
   lockupAddress: string
-  nextAddress: any
+  nextAddress: AddressInterface
   preimage: Buffer
   redeemScript: string
 }
@@ -213,7 +213,7 @@ export const createReverseSubmarineSwap = async (
 
 export const getClaimTransaction = async (
   account: Mnemonic,
-  addr: AddressInterface,
+  nextAddress: AddressInterface,
   explorerURL: string,
   network: NetworkString,
   preimage: Buffer,
@@ -243,28 +243,22 @@ export const getClaimTransaction = async (
 
   // add our destination script
   tx.addOutput({
-    script: address.toOutputScript(addr.confidentialAddress),
+    script: address.toOutputScript(nextAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(claimValue),
     asset: LBTC,
     nonce: EMPTY_BUFFER,
   })
   tx.addOutput({
     script: EMPTY_BUFFER,
-    value: confidential.satoshiToConfidentialValue(swapFeeAmount),
+    value: confidential.satoshiToConfidentialValue(feeAmount),
     asset: LBTC,
     nonce: EMPTY_BUFFER,
   })
 
-  const privateKey = randomBytes(32)
-  const signingKeyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
-
-  tx.signInputAsync(0, signingKeyPair)
-
-  const signedTxBase64 = await account.signPset(tx.toBase64())
-  const signedPsbt = Psbt.fromBase64(signedTxBase64)
-
   console.log('tx', tx.toBase64())
-  console.log('signed', signedTxBase64)
+  const signedPsbtBase64 = await account.signPset(tx.toBase64())
+  console.log('signedPsbtBase64', signedPsbtBase64)
+  const signedPsbt = Psbt.fromBase64(signedPsbtBase64)
 
   signedPsbt.validateSignaturesOfAllInputs(Psbt.ECDSASigValidator(ecc))
 

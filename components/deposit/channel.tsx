@@ -5,31 +5,18 @@ import {
   DEPOSIT_LIGHTNING_LIMITS,
   getClaimTransaction,
   getInvoiceExpireDate,
-  ReverseSwap,
   swapDepositAmountOutOfBounds,
 } from 'lib/swaps'
 import { prettyNumber } from 'lib/pretty'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 import { feeAmount, swapFeeAmount } from 'lib/constants'
-import { NetworkString } from 'marina-provider'
 import { fetchUtxos, Outpoint, Mnemonic } from 'ldk'
 import { closeModal, openModal, sleep } from 'lib/utils'
 import * as ecc from 'tiny-secp256k1'
 import { getAssetBalance } from 'lib/marina'
 
 const explorerURL = 'https://blockstream.info/liquidtestnet/api' // TODO
-
-// create swap with enough satoshis to pay swap fee and resulting coin
-// to have enough satoshis to pay for collateral and borrow tx fee
-const createSwap = async (
-  account: Mnemonic,
-  network: NetworkString,
-  quantity: number,
-): Promise<ReverseSwap | undefined> => {
-  const invoiceAmount = quantity + feeAmount + swapFeeAmount
-  return await createReverseSubmarineSwap(account, network, invoiceAmount)
-}
 
 const waitForPayment = async (
   invoice: string,
@@ -81,6 +68,7 @@ const Channel = ({
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
   const LightningButtonDisabled = ticker !== 'L-BTC' || outOfBounds
 
+  // check if button for Liquid should be disabled
   const funds = getAssetBalance(contract.collateral, balances)
   const needed = contract.collateral.quantity || 0
   const LiquidButtonDisabled = !(connected && funds > needed)
@@ -88,10 +76,14 @@ const Channel = ({
   const handleLightning = async () => {
     // create ephemeral account
     const account = Mnemonic.Random(network, ecc)
-    console.log('account is able to sign', account.isAbleToSign())
 
     // create swap with Boltz.exchange
-    const swap = await createSwap(account, network, quantity)
+    const invoiceAmount = quantity + feeAmount + swapFeeAmount
+    const swap = await createReverseSubmarineSwap(
+      account,
+      network,
+      invoiceAmount,
+    )
     if (!swap) return setError('Error creating swap')
 
     // this shows the QR code to the user
