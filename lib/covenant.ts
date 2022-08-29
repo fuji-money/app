@@ -394,7 +394,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   return sentTransaction.txid
 }
 
-export function getFuncNameFromWitness(witness: string): string {
+export function getFuncNameFromScriptHexOfLeaf(witness: string): string {
   const mapWitnessLengthToState: Record<number, string> = {}
   synthAssetArtifact.functions.map(({ name, asm }) => {
     // 27: 'topup'

@@ -25,7 +25,7 @@ import { WalletContext } from './wallet'
 import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { checkOutspend, getTx } from 'lib/explorer'
-import { getFuncNameFromWitness } from 'lib/covenant'
+import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
 
@@ -91,7 +91,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         const spentTx = await getTx(txid, network)
         const index = spentTx.vin[vin].witness.length - 2
         const leaf = spentTx.vin[vin].witness[index]
-        switch (getFuncNameFromWitness(leaf)) {
+        switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
           case 'liquidate':
             markContractLiquidated(contract, spentTx)
             continue
