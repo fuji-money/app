@@ -5,19 +5,29 @@ import {
   getActivitiesFromStorage,
   saveActivitiesToStorage,
 } from './storage'
-import { Activity, ActivityType, Contract } from './types'
+import { Activity, ActivityType, Contract, ContractState } from './types'
 
-export function addActivity(contract: Contract, type: ActivityType): void {
+// add activity type for given contract to storage
+// removes all previous activities with this type to garantee uniqueness
+export function addActivity(
+  contract: Contract,
+  type: ActivityType,
+  createdAt: number,
+): void {
   if (typeof window === 'undefined') return
   if (!contract.txid) throw new Error('Contract with no txid')
+  if (!contract.network) throw new Error('Contract with no network')
+  // remove all previous activities with this type
+  removeActivities(contract, type)
+  // add new activity
   const txid = contract.txid
   const prefix = `Contract ${type.toLowerCase()} with success`
   const suffix = prettyAsset(contract.synthetic)
   const message = `${prefix} - ${suffix}`
-  const network = contract.network || 'testnet' // TODO
+  const network = contract.network
   const activity: Activity = {
     contract,
-    createdAt: Date.now(),
+    createdAt,
     message,
     network,
     txid,
@@ -26,6 +36,7 @@ export function addActivity(contract: Contract, type: ActivityType): void {
   addActivityToStorage(activity)
 }
 
+// get all activities on storage for this network
 export async function getActivities(): Promise<Activity[]> {
   const network = await getNetwork()
   return getActivitiesFromStorage().filter(
@@ -33,17 +44,13 @@ export async function getActivities(): Promise<Activity[]> {
   )
 }
 
-export function removeActivity(contract: Contract, type: ActivityType): void {
-  const activities = getActivitiesFromStorage()
-  const index = activities.findIndex(
-    (activity: Activity) =>
-      activity.contract.txid === contract.txid && activity.type === type,
+// removes all activities for this contract with this activity type
+// and updates storage
+export function removeActivities(contract: Contract, type: ActivityType): void {
+  if (!type) return
+  const { txid } = contract
+  const activities = getActivitiesFromStorage().filter(
+    (a: Activity) => !(a.contract.txid === txid && a.type === type),
   )
-  if (index !== -1) {
-    const newActivities = [
-      ...activities.slice(0, index),
-      ...activities.slice(index + 1),
-    ]
-    saveActivitiesToStorage(newActivities)
-  }
+  saveActivitiesToStorage(activities)
 }

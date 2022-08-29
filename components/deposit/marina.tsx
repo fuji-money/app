@@ -7,7 +7,7 @@ import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
 import { useContext, useState } from 'react'
 import { WalletContext } from 'components/providers/wallet'
-import { createContract } from 'lib/contracts'
+import { createNewContract } from 'lib/contracts'
 import { ContractsContext } from 'components/providers/contracts'
 
 interface MarinaProps {
@@ -28,7 +28,7 @@ const Marina = ({
   const { ticker, value } = contract.collateral
   const quantity = topup || contract.collateral.quantity
   const { network } = useContext(WalletContext)
-  const { updateContracts } = useContext(ContractsContext)
+  const { reloadContracts } = useContext(ContractsContext)
   return (
     <>
       <div className="is-flex">
@@ -49,8 +49,8 @@ const Marina = ({
                 contract.network = network
                 contract.confirmed = false
                 contract.xPubKey = await getXPubKey()
-                createContract(contract)
-                updateContracts()
+                createNewContract(contract)
+                reloadContracts()
                 setData(contract.txid)
                 setResult('success')
               } catch (error) {

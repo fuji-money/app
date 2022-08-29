@@ -41,13 +41,14 @@ export interface Asset {
 }
 
 export enum ContractState {
-  Safe = 'safe',
-  Unsafe = 'unsafe',
   Critical = 'critical',
   Liquidated = 'liquidated',
   Redeemed = 'closed',
-  Unknown = 'unknown',
+  Safe = 'safe',
+  Topup = 'topuped',
   Unconfirmed = 'unconfirmed',
+  Unknown = 'unknown',
+  Unsafe = 'unsafe',
 }
 
 export interface Contract {
