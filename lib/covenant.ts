@@ -9,7 +9,7 @@ import {
   minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
-import { numberToHexEncodedUint64LE } from './utils'
+import { debugMessage, numberToHexEncodedUint64LE } from './utils'
 import {
   networks,
   payments,
@@ -17,6 +17,7 @@ import {
   confidential,
   AssetHash,
   address,
+  script,
 } from 'liquidjs-lib'
 import { postData } from './fetch'
 import {
@@ -28,7 +29,7 @@ import {
 import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { getCollateralQuantity, getContractPayoutAmount } from './contracts'
+import { getContractPayoutAmount } from './contracts'
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -42,7 +43,7 @@ interface PreparedBorrowTx {
 export async function prepareBorrowTx(
   contract: Contract,
 ): Promise<PreparedBorrowTx> {
-  console.log('prepareBorrowTx contract', contract)
+  debugMessage('prepareBorrowTx contract', contract)
 
   // check for marina
   const marina = await getMarinaProvider()
@@ -73,8 +74,8 @@ export async function prepareBorrowTx(
     collateral.quantity,
   )
   if (collateralUtxos.length === 0) throw new Error('Not enough funds')
-  console.log('collateralAmount', collateral.quantity)
-  console.log('collateralUtxos', collateralUtxos)
+  debugMessage('collateralAmount', collateral.quantity)
+  debugMessage('collateralUtxos', collateralUtxos)
 
   // get next and change addresses
   const timestamp = Date.now()
@@ -97,21 +98,21 @@ export async function prepareBorrowTx(
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel), // if value is lower than this, then liquidate
     setupTimestamp: numberToHexEncodedUint64LE(timestamp),
   }
-  console.log('contractParams', contractParams)
+  debugMessage('contractParams', contractParams)
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress(contractParams)
   await marina.useAccount(marinaMainAccountID)
   const borrowerAddress = await marina.getNextAddress()
   const changeAddress = await marina.getNextChangeAddress()
-  console.log('covenantAddress', covenantAddress)
-  console.log('changeAddress', changeAddress)
+  debugMessage('covenantAddress', covenantAddress)
+  debugMessage('changeAddress', changeAddress)
 
   // build Psbt
   const psbt = new Psbt({ network })
   // add collateral inputs
   for (const utxo of collateralUtxos) {
-    console.log('utxo')
-    console.log(utxo.txid, utxo.vout, utxo.prevout)
+    debugMessage('utxo')
+    debugMessage(utxo.txid, utxo.vout, utxo.prevout)
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,
@@ -125,7 +126,7 @@ export async function prepareBorrowTx(
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   }
-  console.log('covenantOutput', covenantOutput)
+  debugMessage('covenantOutput', covenantOutput)
   psbt.addOutput(covenantOutput)
   // add change output
   const collateralUtxosAmount = collateralUtxos.reduce(
@@ -139,13 +140,13 @@ export async function prepareBorrowTx(
     asset: AssetHash.fromHex(collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   })
-  console.log('psbt', psbt)
+  debugMessage('psbt', psbt)
 
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
-  console.log('borrowerPublicKey', borrowerPublicKey)
+  debugMessage('borrowerPublicKey', borrowerPublicKey)
   return {
     psbt,
     contractParams,
@@ -225,13 +226,13 @@ export async function proposeBorrowContract({
     },
   }
 
-  console.log('body', body)
+  debugMessage('body', body)
   // post and return
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
 export async function prepareRedeemTx(contract: Contract, setStep: any) {
-  console.log('contract to redeem', contract)
+  debugMessage('contract to redeem', contract)
 
   // check for marina
   const marina = await getMarinaProvider()
@@ -279,7 +280,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     // timestamp
     numberToHexEncodedUint64LE(params.setupTimestamp),
   ]
-  console.log('constructorParams to ionio contract', constructorParams)
+  debugMessage('constructorParams to ionio contract', constructorParams)
   let ionioInstance = new IonioContract(
     synthAssetArtifact as Artifact,
     constructorParams,
@@ -300,7 +301,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
   ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
-  console.log('ionioInstance', ionioInstance)
+  debugMessage('ionioInstance', ionioInstance)
 
   // validate we have sufficient synthetic funds
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
@@ -310,8 +311,8 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     synthetic.quantity,
   )
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji assets')
-  console.log('synthetic.quantity', synthetic.quantity)
-  console.log('syntheticUtxos', syntheticUtxos)
+  debugMessage('synthetic.quantity', synthetic.quantity)
+  debugMessage('syntheticUtxos', syntheticUtxos)
 
   // calculate synthetic change amount
   const syntheticUtxosAmount = syntheticUtxos.reduce(
@@ -326,35 +327,35 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     network: network,
   })
 
-  console.log('input covenant', contract.collateral.quantity)
+  debugMessage('input covenant', contract.collateral.quantity)
   // get redeem transaction
   const marinaSigner = {
     signTransaction: async (base64: string) => {
-      console.log('marinaSigner marina', marina)
+      debugMessage('marinaSigner marina', marina)
       const signed = await marina.signTransaction(base64)
-      console.log('marinaSigner signed', signed)
+      debugMessage('marinaSigner signed', signed)
       return signed
     },
   }
   const tx = ionioInstance.functions.redeem(marinaSigner)
-  console.log('initial tx', tx)
+  debugMessage('initial tx', tx)
   // add synthetic inputs
   // are these inputs confidential? if so, we need to pass the unblindData field of the coin
   // https://github.com/ionio-lang/ionio/blob/master/packages/ionio/test/e2e/transferWithKey.test.ts#L54
   for (const utxo of syntheticUtxos) {
-    console.log('input synthetic utxo', utxo.value)
+    debugMessage('input synthetic utxo', utxo.value)
     const { txid, vout, prevout, unblindData } = utxo
     tx.withUtxo({ txid, vout, prevout, unblindData })
   }
   // burn synthetic
-  console.log('output op_return', synthetic.quantity)
+  debugMessage('output op_return', synthetic.quantity)
   tx.withOpReturn(synthetic.quantity, synthetic.id)
   // payout to issuer
-  console.log('output payout to issuer', payoutAmount)
+  debugMessage('output payout to issuer', payoutAmount)
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
   // get collateral back
   const collateralAddress = await marina.getNextAddress()
-  console.log(
+  debugMessage(
     'output collateral back',
     collateral.quantity - payoutAmount - feeAmount,
   )
@@ -367,7 +368,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
-    console.log('output synthetic change', syntheticChangeAmount)
+    debugMessage('output synthetic change', syntheticChangeAmount)
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
@@ -375,7 +376,7 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
     )
   }
   tx.withFeeOutput(feeAmount)
-  console.log('redeem tx', tx)
+  debugMessage('redeem tx', tx)
   setStep(1)
   const signed = await tx.unlock()
 
@@ -386,9 +387,21 @@ export async function prepareRedeemTx(contract: Contract, setStep: any) {
   }
 
   const rawHex = signed.psbt.extractTransaction().toHex()
-  console.log('rawHex', rawHex)
+  debugMessage('rawHex', rawHex)
   const sentTransaction = await marina.broadcastTransaction(rawHex)
-  console.log('txid', sentTransaction.txid)
-  console.log('signed tx', signed)
+  debugMessage('txid', sentTransaction.txid)
+  debugMessage('signed tx', signed)
   return sentTransaction.txid
+}
+
+export function getFuncNameFromScriptHexOfLeaf(witness: string): string {
+  const mapWitnessLengthToState: Record<number, string> = {}
+  synthAssetArtifact.functions.map(({ name, asm }) => {
+    // 27: 'topup'
+    mapWitnessLengthToState[asm.length] = name // 37: 'liquidate'
+  }) // 47: 'redeem'
+  const asm = script
+    .toASM(script.decompile(Buffer.from(witness, 'hex')) || [])
+    .split(' ')
+  return mapWitnessLengthToState[asm.length] || 'unknown'
 }

@@ -1,9 +1,9 @@
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
-import { contractIsClosed, redeemContract } from 'lib/contracts'
+import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
-import { Contract } from 'lib/types'
+import { Contract, ContractState } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
 import { useContext } from 'react'
 
@@ -25,7 +25,7 @@ const RedeemButton = ({
   setResult,
 }: RedeemButtonProps) => {
   const { balances } = useContext(WalletContext)
-  const { updateContracts } = useContext(ContractsContext)
+  const { reloadContracts } = useContext(ContractsContext)
 
   const handleClick = async () => {
     setAssetBalance(getAssetBalance(contract.synthetic, balances))
@@ -33,8 +33,8 @@ const RedeemButton = ({
     openModal('redeem-modal')
     try {
       const txid = await prepareRedeemTx(contract, setStep)
-      redeemContract(contract)
-      updateContracts()
+      markContractRedeemed(contract)
+      reloadContracts()
       setData(txid)
       setResult('success')
     } catch (error) {
@@ -44,11 +44,17 @@ const RedeemButton = ({
     closeModal('redeem-modal')
   }
 
+  const disabled =
+    !contract.confirmed ||
+    contract.state === ContractState.Liquidated ||
+    contract.state === ContractState.Redeemed ||
+    contract.state === ContractState.Unknown
+
   return (
     <button
       onClick={handleClick}
       className="button is-primary ml-3"
-      disabled={contractIsClosed(contract) || !contract.confirmed}
+      disabled={disabled}
     >
       Redeem
     </button>

@@ -31,3 +31,9 @@ export const openModal = (id: string): void => {
 export const closeModal = (id: string): void => {
   document.getElementById(id)?.classList.remove('is-active')
 }
+
+// set showDebug to true to see messages on console
+export const debugMessage = (...params: any[]) => {
+  const showDebug = true
+  if (showDebug) console.debug(...params)
+}
