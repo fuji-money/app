@@ -10,8 +10,8 @@ import { ContractsContext } from 'components/providers/contracts'
 
 interface ContractsListProps {
   showActive: boolean
-  setData: any
-  setResult: any
+  setData: (arg0: string) => void
+  setResult: (arg0: string) => void
 }
 
 const ContractsList = ({

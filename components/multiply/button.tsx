@@ -1,5 +1,5 @@
 interface MultiplyButtonProps {
-  setDeposit: any
+  setDeposit: (arg0: boolean) => void
 }
 
 const MultiplyButton = ({ setDeposit }: MultiplyButtonProps) => {

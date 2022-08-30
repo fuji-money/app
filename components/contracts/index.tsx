@@ -3,8 +3,8 @@ import ContractsHeader from './header'
 import ContractsList from './list'
 
 interface ContractsProps {
-  setData: any
-  setResult: any
+  setData: (arg0: string) => void
+  setResult: (arg0: string) => void
 }
 
 const Contracts = ({ setData, setResult }: ContractsProps) => {

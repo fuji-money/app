@@ -45,3 +45,11 @@ export const debugMessage = (...params: any[]) => {
   const showDebug = true
   if (showDebug) console.debug(...params)
 }
+
+export const extractError = (error: any): string => {
+  return error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+    ? error
+    : ''
+}

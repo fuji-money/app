@@ -29,7 +29,7 @@ const Icon = ({ filter, reset }: IconProps) => {
 
 interface OffersFilterProps {
   filter: string
-  setFilter: any
+  setFilter: (arg0: string) => void
 }
 
 const OffersFilter = ({ filter, setFilter }: OffersFilterProps) => {

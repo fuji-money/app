@@ -8,8 +8,8 @@ interface TopupFormProps {
   contract: Contract
   oracles: Oracle[]
   ratio: number
-  setContract: any
-  setRatio: any
+  setContract: (arg0: Contract) => void
+  setRatio: (arg0: number) => void
 }
 
 const TopupForm = ({

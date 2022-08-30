@@ -2,7 +2,7 @@ import { Asset } from 'lib/types'
 import Image from 'next/image'
 
 interface ExchangeHeroProps {
-  setTrade: any
+  setTrade: (arg0: string) => void
   synthetic: Asset
 }
 

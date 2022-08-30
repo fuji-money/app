@@ -4,7 +4,12 @@ import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
 
-const Success = ({ cleanUp, txid }: { cleanUp: any; txid: any }) => {
+interface SuccessProps {
+  cleanUp: () => void
+  txid: string
+}
+
+const Success = ({ cleanUp, txid }: SuccessProps) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -30,7 +35,12 @@ const Success = ({ cleanUp, txid }: { cleanUp: any; txid: any }) => {
   )
 }
 
-const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
+interface FailureProps {
+  cleanUp: () => void
+  error: string | unknown
+}
+
+const Failure = ({ cleanUp, error }: FailureProps) => {
   const handleClick = () => {
     cleanUp()
     window.location.reload()
@@ -57,10 +67,10 @@ const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
 }
 
 interface ResultProps {
-  data: any
+  data: string
   result: string
-  setData: any
-  setResult: any
+  setData: (arg0: string) => void
+  setResult: (arg0: string) => void
 }
 
 const Result = ({ data, result, setData, setResult }: ResultProps) => {

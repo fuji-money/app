@@ -3,7 +3,7 @@ import { Contract, Oracle } from 'lib/types'
 interface OraclesProps {
   contract: Contract
   oracles: Oracle[]
-  setContract: any
+  setContract: (arg0: Contract) => void
 }
 
 export default function Oracles({

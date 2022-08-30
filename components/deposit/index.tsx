@@ -10,13 +10,13 @@ import DepositModal from 'components/modals/deposit'
 interface DepositProps {
   contract: Contract
   channel: string
-  setChannel: any
+  setChannel: (arg0: string) => void
   topup: number
 }
 
 const Deposit = ({ contract, channel, setChannel, topup }: DepositProps) => {
   const [result, setResult] = useState('')
-  const [data, setData] = useState<any>()
+  const [data, setData] = useState<string>('')
   const [swap, setSwap] = useState<ReverseSwap>()
   const [step, setStep] = useState(0)
   const [paid, setPaid] = useState(false)

@@ -7,11 +7,11 @@ import { fromSatoshis } from 'lib/utils'
 
 interface ContractRowProps {
   contract: Contract
-  setAssetBalance: any
-  setRedeem: any
-  setStep: any
-  setData: any
-  setResult: any
+  setAssetBalance: (arg0: number) => void
+  setRedeem: (arg0: Contract) => void
+  setStep: (arg0: number) => void
+  setData: (arg0: string) => void
+  setResult: (arg0: string) => void
 }
 
 const ContractRow = ({

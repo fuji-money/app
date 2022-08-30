@@ -10,7 +10,7 @@ interface BorrowButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  setDeposit: any
+  setDeposit: (arg0: boolean) => void
 }
 
 const BorrowButton = ({

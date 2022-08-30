@@ -3,7 +3,7 @@ import { Asset } from 'lib/types'
 
 interface CollateralProps {
   asset: Asset
-  setQuantity: any
+  setQuantity: (arg0: number) => void
 }
 
 const Collateral = ({ asset, setQuantity }: CollateralProps) => {

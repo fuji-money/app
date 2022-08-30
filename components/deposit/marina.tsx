@@ -1,6 +1,6 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { closeModal, fromSatoshis, openModal } from 'lib/utils'
+import { closeModal, extractError, fromSatoshis, openModal } from 'lib/utils'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
@@ -11,9 +11,9 @@ import { ContractsContext } from 'components/providers/contracts'
 
 interface MarinaProps {
   contract: Contract
-  setData: any
-  setResult: any
-  setStep: any
+  setData: (arg0: string) => void
+  setResult: (arg0: string) => void
+  setStep: (arg0: number) => void
   topup: number | undefined
 }
 
@@ -53,7 +53,7 @@ const Marina = ({
                 setResult('success')
                 reloadContracts()
               } catch (error) {
-                setData(error instanceof Error ? error.message : error)
+                setData(extractError(error))
                 setResult('failure')
               }
               closeModal('deposit-modal')

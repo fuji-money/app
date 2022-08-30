@@ -44,12 +44,12 @@ const waitForPayment = async (
 
 interface ChannelProps {
   contract: Contract
-  setChannel: any
-  setData: any
-  setPaid: any
-  setResult: any
-  setStep: any
-  setSwap: any
+  setChannel: (arg0: string) => void
+  setData: (arg0: string) => void
+  setPaid: (arg0: boolean) => void
+  setResult: (arg0: string) => void
+  setStep: (arg0: number) => void
+  setSwap: (arg0: ReverseSwap) => void
 }
 
 const Channel = ({

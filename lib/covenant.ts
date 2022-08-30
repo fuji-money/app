@@ -1,10 +1,5 @@
 import { Contract, UtxoWithBlindPrivKey } from './types'
-import {
-  Utxo,
-  AddressInterface,
-  NetworkString,
-  MarinaProvider,
-} from 'marina-provider'
+import { Utxo, AddressInterface, NetworkString } from 'marina-provider'
 import {
   alphaServerUrl,
   feeAmount,
@@ -24,7 +19,6 @@ import {
   address,
   script,
   Transaction,
-  witnessStackToScriptWitness,
 } from 'liquidjs-lib'
 import { postData } from './fetch'
 import {
@@ -40,8 +34,6 @@ import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
 import { fetchTxHex, getNetwork } from 'ldk'
-
-import type { ECPairInterface } from 'ecpair'
 import { explorerURL } from './explorer'
 
 interface PreparedBorrowTx {
@@ -338,7 +330,10 @@ export async function proposeBorrowContract({
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
-export async function prepareRedeemTx(contract: Contract, setStep: any) {
+export async function prepareRedeemTx(
+  contract: Contract,
+  setStep: (arg0: number) => void,
+) {
   debugMessage('contract to redeem', contract)
 
   // check for marina
