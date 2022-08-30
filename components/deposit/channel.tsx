@@ -46,6 +46,7 @@ interface ChannelProps {
   contract: Contract
   setChannel: any
   setData: any
+  setPaid: any
   setResult: any
   setStep: any
   setSwap: any
@@ -55,6 +56,7 @@ const Channel = ({
   contract,
   setChannel,
   setData,
+  setPaid,
   setResult,
   setSwap,
 }: ChannelProps) => {
@@ -120,6 +122,9 @@ const Channel = ({
 
     // payment was never made, and the invoice expired
     if (utxos.length === 0) return setError('Invoice has expired')
+
+    // show user payment was received
+    setPaid(true)
 
     // payment made: prepare borrow transaction with claim utxo as input
     const preparedTx = await prepareBorrowTxWithClaimTx(

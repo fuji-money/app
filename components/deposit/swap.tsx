@@ -1,17 +1,17 @@
 import { Contract } from 'lib/types'
-import Image from 'next/image'
 import { prettyNumber } from 'lib/pretty'
 import { fromSatoshis, sleep } from 'lib/utils'
 import { ReverseSwap } from 'lib/swaps'
 import QRCode from 'components/qrcode'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface SwapProps {
   contract: Contract
+  paid: boolean
   swap: ReverseSwap
 }
 
-const Swap = ({ contract, swap }: SwapProps) => {
+const Swap = ({ contract, paid, swap }: SwapProps) => {
   const { invoice, invoiceAmount } = swap
   const { ticker, value } = contract.collateral
   const [buttonText, setButtonText] = useState('Copy')
@@ -28,15 +28,17 @@ const Swap = ({ contract, swap }: SwapProps) => {
 
   return (
     <>
-      <div className="is-flex is-justify-content-space-between">
-        <p>
-          <QRCode text={invoice} />
-        </p>
-        <div className="is-flex is-flex-direction-column is-justify-content-center">
+      <div className="columns">
+        <div className="column is-6">
+          <QRCode text={invoice} paid={paid} />
+        </div>
+        <div className="column is-6">
           <h2 className="has-text-weight-bold is-size-4 mb-4">
-            Deposit by Scaning this QR
+            {paid ? 'Payment received' : 'Deposit by Scaning this QR'}
           </h2>
-          <div>
+          {paid ? (
+            <p>Waiting for Fuji approval</p>
+          ) : (
             <div className="has-pink-border info-card px-5 py-4">
               <p className="amount">Amount to deposit</p>
               <p className="quantity">
@@ -46,12 +48,12 @@ const Swap = ({ contract, swap }: SwapProps) => {
                 US$ {prettyNumber(fromSatoshis(invoiceAmount) * value, 0, 2)}
               </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
       <p className="invoice is-size-7 mt-6 is-overflow-anywhere">{invoice}</p>
       <p className="has-text-centered mt-4">
-        <button onClick={handleCopy} className="button is-primary">
+        <button onClick={handleCopy} className="button" disabled={paid}>
           {buttonText}
         </button>
       </p>

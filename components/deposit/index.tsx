@@ -19,6 +19,7 @@ const Deposit = ({ contract, channel, setChannel, topup }: DepositProps) => {
   const [data, setData] = useState<any>()
   const [swap, setSwap] = useState<ReverseSwap>()
   const [step, setStep] = useState(0)
+  const [paid, setPaid] = useState(false)
   const lightning = !result && swap
   const liquid = !result && channel === 'liquid'
 
@@ -30,12 +31,13 @@ const Deposit = ({ contract, channel, setChannel, topup }: DepositProps) => {
             contract={contract}
             setChannel={setChannel}
             setData={setData}
+            setPaid={setPaid}
             setResult={setResult}
             setStep={setStep}
             setSwap={setSwap}
           />
         )}
-        {lightning && <Swap contract={contract} swap={swap} />}
+        {lightning && <Swap contract={contract} paid={paid} swap={swap} />}
         {liquid && (
           <Marina
             contract={contract}

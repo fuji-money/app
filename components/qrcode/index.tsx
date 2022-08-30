@@ -1,8 +1,14 @@
 import React from 'react'
 import { useQRCode } from 'next-qrcode'
 
-function QRCode({ text }: { text: string }) {
+interface QRCodeProps {
+  text: string
+  paid: boolean
+}
+
+function QRCode({ text, paid }: QRCodeProps) {
   const { Canvas } = useQRCode()
+  const color = paid ? '#eee' : '#000'
 
   return (
     <Canvas
@@ -15,7 +21,7 @@ function QRCode({ text }: { text: string }) {
         scale: 4,
         width: 300,
         color: {
-          dark: '#000',
+          dark: color,
           light: '#FFF',
         },
       }}
