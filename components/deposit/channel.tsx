@@ -9,10 +9,10 @@ import {
 } from 'lib/swaps'
 import { prettyNumber } from 'lib/pretty'
 import { WalletContext } from 'components/providers/wallet'
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { feeAmount, swapFeeAmount } from 'lib/constants'
-import { fetchUtxos, Outpoint, Mnemonic } from 'ldk'
-import { debugMessage, openModal, sleep } from 'lib/utils'
+import { fetchUtxos, Outpoint } from 'ldk'
+import { debugMessage, sleep } from 'lib/utils'
 import * as ecc from 'tiny-secp256k1'
 import { broadcastTx, getAssetBalance, getXPubKey } from 'lib/marina'
 import ECPairFactory from 'ecpair'
@@ -59,8 +59,30 @@ const Channel = ({
 }: ChannelProps) => {
   const { connected, balances, marina, network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
+  const [liquidButtonDisabled, setLiquidButtonDisabled] = useState(false)
+  const [lightningButtonDisabled, setLightningButtonDisabled] = useState(false)
 
   if (!marina) throw new Error('Missing marina provider')
+
+  const ticker = contract.collateral.ticker
+  const quantity = contract.collateral.quantity || 0
+  const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
+  const outOfBounds = swapDepositAmountOutOfBounds(quantity)
+  const enoughFunds =
+    connected &&
+    getAssetBalance(contract.collateral, balances) -
+      (contract.collateral.quantity || 0) >
+      0
+
+  useEffect(() => {
+    // check if button for Lightning should be disabled
+    setLightningButtonDisabled(ticker !== 'L-BTC' || outOfBounds)
+  }, [outOfBounds, ticker])
+
+  useEffect(() => {
+    // check if button for Liquid should be disabled
+    setLiquidButtonDisabled(!enoughFunds)
+  }, [enoughFunds])
 
   const setError = (text: string) => {
     debugMessage(text)
@@ -68,20 +90,10 @@ const Channel = ({
     setResult('failure')
   }
 
-  const ticker = contract.collateral.ticker
-  const quantity = contract.collateral.quantity || 0
-
-  // check if button for Lightning should be disabled
-  const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
-  const outOfBounds = swapDepositAmountOutOfBounds(quantity)
-  const lightningButtonDisabled = ticker !== 'L-BTC' || outOfBounds
-
-  // check if button for Liquid should be disabled
-  const funds = getAssetBalance(contract.collateral, balances)
-  const needed = contract.collateral.quantity || 0
-  const liquidButtonDisabled = !(connected && funds > needed)
-
   const handleLightning = async () => {
+    // disable Lightning button
+    setLightningButtonDisabled(true)
+
     // create ephemeral account
     const privateKey = randomBytes(32)
     const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
@@ -185,12 +197,12 @@ const Channel = ({
             Lightning
           </button>
         </div>
-        {liquidButtonDisabled && (
+        {!enoughFunds && (
           <div>
             <p className="warning mx-auto mt-6">Not enough funds on Marina.</p>
           </div>
         )}
-        {lightningButtonDisabled && (
+        {outOfBounds && (
           <div>
             <p className="warning mx-auto mt-6">
               For lightning swaps, collateral amount must be between{' '}
