@@ -1,9 +1,10 @@
 import { Contract } from 'lib/types'
 import Image from 'next/image'
 import { prettyNumber } from 'lib/pretty'
-import { fromSatoshis } from 'lib/utils'
+import { fromSatoshis, sleep } from 'lib/utils'
 import { ReverseSwap } from 'lib/swaps'
 import QRCode from 'components/qrcode'
+import { useState } from 'react'
 
 interface SwapProps {
   contract: Contract
@@ -13,6 +14,17 @@ interface SwapProps {
 const Swap = ({ contract, swap }: SwapProps) => {
   const { invoice, invoiceAmount } = swap
   const { ticker, value } = contract.collateral
+  const [buttonText, setButtonText] = useState('Copy')
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(invoice).then(
+      () => {
+        setButtonText('Copied')
+        sleep(5000).then(() => setButtonText('Copy'))
+      },
+      (err) => console.error('Could not copy text: ', err),
+    )
+  }
 
   return (
     <>
@@ -38,6 +50,11 @@ const Swap = ({ contract, swap }: SwapProps) => {
         </div>
       </div>
       <p className="invoice is-size-7 mt-6 is-overflow-anywhere">{invoice}</p>
+      <p className="has-text-centered mt-4">
+        <button onClick={handleCopy} className="button is-primary">
+          {buttonText}
+        </button>
+      </p>
     </>
   )
 }
