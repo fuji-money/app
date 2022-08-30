@@ -1,27 +1,12 @@
 import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
-import type { Outpoint, NetworkString } from 'ldk'
-import { fetchTxHex, getNetwork } from 'ldk'
-import {
-  address,
-  AssetHash,
-  confidential,
-  crypto,
-  script,
-  Transaction,
-  Psbt,
-  witnessStackToScriptWitness,
-  networks,
-  payments,
-} from 'liquidjs-lib'
+import type { NetworkString } from 'ldk'
+import { address, crypto, script, networks, payments } from 'liquidjs-lib'
 import { fromSatoshis } from 'lib/utils'
-import { feeAmount, marinaFujiAccountID, swapFeeAmount } from './constants'
+import { feeAmount, swapFeeAmount } from './constants'
 import Boltz, { ReverseSubmarineSwapResponse } from './boltz'
 import { randomBytes } from 'crypto'
-import * as ecc from 'tiny-secp256k1'
 import type { ECPairInterface } from 'ecpair'
-import { getNextAddress } from './marina'
-import { explorerURL } from './explorer'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
