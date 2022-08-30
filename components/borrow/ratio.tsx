@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { prettyAmount, prettyPriceLevel, prettyRatio } from 'lib/pretty'
+import { prettyPriceLevel, prettyRatio } from 'lib/pretty'
 import { Asset } from 'lib/types'
 import { getContractPriceLevel, getRatioState } from 'lib/contracts'
 
