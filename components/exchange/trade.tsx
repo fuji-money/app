@@ -4,7 +4,7 @@ import Image from 'next/image'
 import ReviewOrderButton from './button'
 
 interface ExchangeTradeProps {
-  setTrade: (arg0: string) => void
+  setTrade: (arg0: TradeTypes) => void
   synthetic: Asset
   trade: TradeTypes
 }

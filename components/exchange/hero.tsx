@@ -1,13 +1,13 @@
-import { Asset } from 'lib/types'
+import { Asset, TradeTypes } from 'lib/types'
 import Image from 'next/image'
 
 interface ExchangeHeroProps {
-  setTrade: (arg0: string) => void
+  setTrade: (arg0: TradeTypes) => void
   synthetic: Asset
 }
 
 const ExchangeHero = ({ setTrade, synthetic }: ExchangeHeroProps) => {
-  const label = (icon: string, text: string) => (
+  const label = (icon: string, text: TradeTypes) => (
     <p className="is-after" onClick={() => setTrade(text)}>
       <span className="image-container">
         <Image
@@ -38,9 +38,9 @@ const ExchangeHero = ({ setTrade, synthetic }: ExchangeHeroProps) => {
         </div>
       </div>
       <div className="level">
-        {label('plus', 'Buy')}
-        {label('less', 'Sell')}
-        {label('invoice', 'Statement')}
+        {label('plus', TradeTypes.Buy)}
+        {label('less', TradeTypes.Sell)}
+        {label('invoice', TradeTypes.Statement)}
       </div>
     </div>
   )
