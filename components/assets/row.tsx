@@ -1,11 +1,10 @@
-import { prettyAmount, prettyNumber, prettyQuantity } from 'lib/pretty'
+import { prettyAmount, prettyQuantity } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
 import TradeButton from 'components/buttons/trade'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
-import { getAssetBalance } from 'lib/marina'
 
 interface AssetRowProps {
   asset: Asset
