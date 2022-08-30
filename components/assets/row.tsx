@@ -5,6 +5,7 @@ import FilterButton from 'components/buttons/filter'
 import TradeButton from 'components/buttons/trade'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
+import { getAssetBalance } from 'lib/marina'
 
 interface AssetRowProps {
   asset: Asset
@@ -12,6 +13,7 @@ interface AssetRowProps {
 
 const AssetRow = ({ asset }: AssetRowProps) => {
   const { balances } = useContext(WalletContext)
+  const balance = getAssetBalance(asset, balances)
   return (
     <div
       className={`is-box has-pink-border row ${
@@ -26,13 +28,13 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           <div className="is-purple my-auto">
             <p className="is-size-6 mb-0">{asset.name}</p>
             <p className="is-size-6 mb-0 has-text-weight-bold">
-              {prettyQuantity(asset.quantity)} {asset.ticker}
+              {prettyQuantity(balance)} {asset.ticker}
             </p>
           </div>
         </div>
         <div className="column is-3">
           <p className="has-text-weight-bold is-gradient">
-            {prettyAmount(asset)}
+            {prettyAmount(asset, balance)}
           </p>
         </div>
         <div className="column is-6 has-text-right">

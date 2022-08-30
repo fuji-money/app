@@ -14,8 +14,10 @@ export const prettyAsset = (asset: Asset): string =>
   `${prettyQuantity(asset.quantity)} ${asset.ticker}`
 
 // format amount (amount is quantity x value)
-export const prettyAmount = (asset: Asset): string =>
-  `US$ ${prettyNumber(fromSatoshis(asset.quantity) * asset.value)}`
+export const prettyAmount = (asset: Asset, balance?: number): string => {
+  const amount = fromSatoshis(balance || asset.quantity)
+  return `US$ ${prettyNumber(amount * asset.value)}`
+}
 
 export const prettyPriceLevel = (price = 0): string =>
   `${prettyNumber(price)} USD`
