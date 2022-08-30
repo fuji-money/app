@@ -21,12 +21,13 @@ import { prepareBorrowTxWithClaimTx, proposeBorrowContract } from 'lib/covenant'
 import { createNewContract } from 'lib/contracts'
 import { ContractsContext } from 'components/providers/contracts'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
-
-const explorerURL = 'https://blockstream.info/liquidtestnet/api' // TODO
+import { explorerURL } from 'lib/explorer'
+import { NetworkString } from 'marina-provider'
 
 const waitForPayment = async (
   invoice: string,
   address: string,
+  network: NetworkString,
 ): Promise<Outpoint[]> => {
   // check invoice expiration
   const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
@@ -34,7 +35,7 @@ const waitForPayment = async (
   // wait for user to pay, check for utxos
   let utxos: Outpoint[] = []
   while (utxos.length === 0 && Date.now() <= invoiceExpireDate) {
-    utxos = await fetchUtxos(address, explorerURL)
+    utxos = await fetchUtxos(address, explorerURL(network))
     debugMessage('searching for claim tx:', new Date())
     await sleep(5000) // sleep for 5 seconds
   }
@@ -115,7 +116,7 @@ const Channel = ({
     const { invoice, lockupAddress, preimage, redeemScript } = swap
 
     // wait for payment
-    const utxos = await waitForPayment(invoice, lockupAddress)
+    const utxos = await waitForPayment(invoice, lockupAddress, network)
 
     // payment was never made, and the invoice expired
     if (utxos.length === 0) return setError('Invoice has expired')
@@ -123,7 +124,6 @@ const Channel = ({
     // payment made: prepare borrow transaction with claim utxo as input
     const preparedTx = await prepareBorrowTxWithClaimTx(
       contract,
-      explorerURL,
       network,
       redeemScript,
       utxos,

@@ -21,6 +21,7 @@ import { randomBytes } from 'crypto'
 import * as ecc from 'tiny-secp256k1'
 import type { ECPairInterface } from 'ecpair'
 import { getNextAddress } from './marina'
+import { explorerURL } from './explorer'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
@@ -211,7 +212,6 @@ export const createReverseSubmarineSwap = async (
 }
 
 export const getClaimTransaction = async (
-  explorerURL: string,
   keyPair: ECPairInterface,
   network: NetworkString,
   preimage: Buffer,
@@ -220,7 +220,7 @@ export const getClaimTransaction = async (
 ): Promise<Transaction> => {
   // utxo has arrived, prepare claim transaction
   const [utxo] = utxos
-  const hex = await fetchTxHex(utxo.txid, explorerURL)
+  const hex = await fetchTxHex(utxo.txid, explorerURL(network))
   const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
   const psbt = new Psbt({ network: getNetwork(network) })

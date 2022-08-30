@@ -152,7 +152,7 @@ export async function fujiAccountMissing(
 
 export async function getNextAddress(accountID = marinaMainAccountID) {
   const marina = await getMarinaProvider()
-  if (!marina) return
+  if (!marina) throw new Error('No Marina provider found')
   if (accountID === marinaMainAccountID) return await marina.getNextAddress()
   await marina.useAccount(accountID)
   const address = await marina.getNextAddress()
@@ -162,7 +162,7 @@ export async function getNextAddress(accountID = marinaMainAccountID) {
 
 export async function getNextChangeAddress(accountID = marinaMainAccountID) {
   const marina = await getMarinaProvider()
-  if (!marina) return
+  if (!marina) throw new Error('No Marina provider found')
   if (accountID === marinaMainAccountID)
     return await marina.getNextChangeAddress()
   await marina.useAccount(accountID)

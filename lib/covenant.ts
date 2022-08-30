@@ -42,6 +42,7 @@ import { getContractPayoutAmount } from './contracts'
 import { fetchTxHex, getNetwork } from 'ldk'
 
 import type { ECPairInterface } from 'ecpair'
+import { explorerURL } from './explorer'
 
 interface PreparedBorrowTx {
   psbt: Psbt
@@ -100,7 +101,6 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
 
 export async function prepareBorrowTxWithClaimTx(
   contract: Contract,
-  explorerURL: string,
   network: NetworkString,
   redeemScript: string,
   utxos: any,
@@ -124,7 +124,7 @@ export async function prepareBorrowTxWithClaimTx(
     throw new Error('Invalid contract: no contract priceLevel')
 
   const [utxo] = utxos
-  const hex = await fetchTxHex(utxo.txid, explorerURL)
+  const hex = await fetchTxHex(utxo.txid, explorerURL(network))
   const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
   const psbt = new Psbt({ network: getNetwork(network) })
@@ -148,7 +148,7 @@ export async function prepareBorrowTxWithClaimTx(
   const collateralAmount = confidential.confidentialValueToSatoshi(
     prevout.value,
   )
-  const changeAddress = await marina.getNextChangeAddress()
+  const changeAddress = await getNextChangeAddress()
   const changeAmount = collateralAmount - collateral.quantity - feeAmount
   if (changeAmount > 0) {
     psbt.addOutput({
@@ -232,7 +232,7 @@ export async function prepareBorrowTx(
   psbt.addOutput(covenantOutput)
 
   // add change output
-  const changeAddress = await marina.getNextChangeAddress()
+  const changeAddress = await getNextChangeAddress()
   const collateralUtxosAmount = collateralUtxos.reduce(
     (value, utxo) => value + (utxo.value || 0),
     0,
@@ -250,7 +250,7 @@ export async function prepareBorrowTx(
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
-  const borrowerAddress = await marina.getNextAddress()
+  const borrowerAddress = await getNextAddress()
   debugMessage('borrowerPublicKey', borrowerPublicKey)
 
   return {
