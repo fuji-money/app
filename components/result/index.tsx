@@ -3,13 +3,13 @@ import Image from 'next/image'
 import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
+import { closeAllModals } from 'lib/utils'
 
 interface SuccessProps {
-  cleanUp: () => void
   txid: string
 }
 
-const Success = ({ cleanUp, txid }: SuccessProps) => {
+const Success = ({ txid }: SuccessProps) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -26,7 +26,10 @@ const Success = ({ cleanUp, txid }: SuccessProps) => {
       <TwitterLink message={twitterMessage} />
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">
-          <a className="button is-primary is-cta" onClick={cleanUp}>
+          <a
+            className="button is-primary is-cta"
+            onClick={() => closeAllModals()}
+          >
             Back to dashboard
           </a>
         </Link>
@@ -36,15 +39,12 @@ const Success = ({ cleanUp, txid }: SuccessProps) => {
 }
 
 interface FailureProps {
-  cleanUp: () => void
   error: string | unknown
 }
 
-const Failure = ({ cleanUp, error }: FailureProps) => {
-  const handleClick = () => {
-    cleanUp()
-    window.location.reload()
-  }
+const Failure = ({ error }: FailureProps) => {
+  const handleClick = () => window.location.reload()
+
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -69,17 +69,11 @@ const Failure = ({ cleanUp, error }: FailureProps) => {
 interface ResultProps {
   data: string
   result: string
-  setData: (arg0: string) => void
-  setResult: (arg0: string) => void
 }
 
-const Result = ({ data, result, setData, setResult }: ResultProps) => {
-  const cleanUp = () => {
-    setData('')
-    setResult('')
-  }
-  if (result === 'success') return <Success cleanUp={cleanUp} txid={data} />
-  if (result === 'failure') return <Failure cleanUp={cleanUp} error={data} />
+const Result = ({ data, result }: ResultProps) => {
+  if (result === 'success') return <Success txid={data} />
+  if (result === 'failure') return <Failure error={data} />
   return <></>
 }
 

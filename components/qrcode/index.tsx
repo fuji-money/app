@@ -3,12 +3,10 @@ import { useQRCode } from 'next-qrcode'
 
 interface QRCodeProps {
   text: string
-  paid: boolean
 }
 
-function QRCode({ text, paid }: QRCodeProps) {
+function QRCode({ text }: QRCodeProps) {
   const { Canvas } = useQRCode()
-  const color = paid ? '#eee' : '#000'
 
   return (
     <Canvas
@@ -21,7 +19,7 @@ function QRCode({ text, paid }: QRCodeProps) {
         scale: 4,
         width: 300,
         color: {
-          dark: color,
+          dark: '#000',
           light: '#FFF',
         },
       }}

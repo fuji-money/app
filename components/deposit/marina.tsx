@@ -4,86 +4,76 @@ import { closeModal, extractError, fromSatoshis, openModal } from 'lib/utils'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { createNewContract } from 'lib/contracts'
 import { ContractsContext } from 'components/providers/contracts'
+import Summary from 'components/contract/summary'
+import MarinaDepositModal from 'components/modals/marinaDeposit'
 
 interface MarinaProps {
   contract: Contract
-  setData: (arg0: string) => void
-  setResult: (arg0: string) => void
-  setStep: (arg0: number) => void
-  topup: number | undefined
 }
 
-const Marina = ({
-  contract,
-  setData,
-  setResult,
-  setStep,
-  topup,
-}: MarinaProps) => {
-  const { ticker, value } = contract.collateral
-  const quantity = topup || contract.collateral.quantity
+const Marina = ({ contract }: MarinaProps) => {
   const { network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
+  const [data, setData] = useState('')
+  const [result, setResult] = useState('')
+  const [step, setStep] = useState(0)
+
+  const handleMarina = async () => {
+    openModal('marina-deposit-modal')
+    try {
+      // prepare borrow transaction with claim utxo as input
+      const preparedTx = await prepareBorrowTx(contract, network)
+
+      // propose contract to alpha factory
+      const { partialTransaction } = await proposeBorrowContract(preparedTx)
+
+      // show user (via modal) that contract proposal was accepted
+      setStep(1)
+
+      // add additional fields to contract and save to storage
+      contract.txid = await signAndBroadcastTx(partialTransaction)
+      contract.borrowerPubKey = preparedTx.borrowerPublicKey
+      contract.contractParams = preparedTx.contractParams
+      contract.network = network
+      contract.confirmed = false
+      contract.xPubKey = await getXPubKey()
+      createNewContract(contract)
+
+      // show success
+      setData(contract.txid)
+      setResult('success')
+      reloadContracts()
+    } catch (error) {
+      setData(extractError(error))
+      setResult('failure')
+    }
+  }
+
   return (
-    <>
-      <div className="is-flex">
-        <div className="pt-6 mt-5 mr-6">
-          <button
-            className="button is-primary mt-2"
-            onClick={async () => {
-              openModal('deposit-modal')
-              try {
-                const preparedTx = await prepareBorrowTx(contract, network)
-                const { partialTransaction } = await proposeBorrowContract(
-                  preparedTx,
-                )
-                setStep(1)
-                contract.txid = await signAndBroadcastTx(partialTransaction)
-                contract.borrowerPubKey = preparedTx.borrowerPublicKey
-                contract.contractParams = preparedTx.contractParams
-                contract.network = network
-                contract.confirmed = false
-                contract.xPubKey = await getXPubKey()
-                createNewContract(contract)
-                setData(contract.txid)
-                setResult('success')
-                reloadContracts()
-              } catch (error) {
-                setData(extractError(error))
-                setResult('failure')
-              }
-              closeModal('deposit-modal')
-            }}
-          >
-            <Image
-              src="/images/marina.svg"
-              alt="marina logo"
-              width={20}
-              height={20}
-            />
-            <span className="ml-2">Deposit with Marina</span>
-          </button>
-        </div>
-        <div className="is-flex is-flex-direction-column is-justify-content-center">
-          <h2 className="has-text-weight-bold is-size-4 mb-4">
-            Deposit with Marina Wallet
-          </h2>
-          <div>
-            <div className="has-pink-border info-card px-5 py-4">
-              <p>Amount to deposit</p>
-              <p>
-                {prettyNumber(fromSatoshis(quantity))} {ticker}
-              </p>
-              <p>US$ {prettyNumber((fromSatoshis(quantity) || 0) * value)}</p>
-            </div>
-          </div>
-        </div>
+    <div className="columns">
+      <div className="column is-6 pt-6">
+        <button className="button is-primary mt-4" onClick={handleMarina}>
+          <Image
+            src="/images/marina.svg"
+            alt="marina logo"
+            width={20}
+            height={20}
+          />
+          <span className="ml-2">Deposit with Marina</span>
+        </button>
       </div>
-    </>
+      <div className="column is-6">
+        <h2 className="has-text-weight-bold has-text-centered is-size-4 mb-4">
+          Deposit with Wallet
+        </h2>
+        <Summary contract={contract} />
+      </div>
+      <MarinaDepositModal data={data} result={result} step={step} />
+    </div>
   )
 }
 

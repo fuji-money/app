@@ -4,7 +4,7 @@ import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
 import { Contract, ContractState } from 'lib/types'
-import { closeModal, extractError, openModal } from 'lib/utils'
+import { closeModal, debugMessage, extractError, openModal } from 'lib/utils'
 import { useContext } from 'react'
 
 interface RedeemButtonProps {
@@ -34,14 +34,14 @@ const RedeemButton = ({
     try {
       const txid = await prepareRedeemTx(contract, setStep)
       markContractRedeemed(contract)
-      reloadContracts()
       setData(txid)
       setResult('success')
+      reloadContracts()
     } catch (error) {
+      debugMessage(extractError(error))
       setData(extractError(error))
       setResult('failure')
     }
-    closeModal('redeem-modal')
   }
 
   const disabled =

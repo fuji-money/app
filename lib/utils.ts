@@ -32,6 +32,14 @@ export const closeModal = (id: string): void => {
   document.getElementById(id)?.classList.remove('is-active')
 }
 
+// close modal
+export const closeAllModals = (): void => {
+  const modals = document.querySelectorAll('.modal')
+  for (const el of Array.from(modals)) {
+    el.classList.remove('is-active')
+  }
+}
+
 export async function sleep(miliseconds: number) {
   await Promise.resolve(
     new Promise((resolve) => {

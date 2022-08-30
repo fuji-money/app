@@ -2,14 +2,23 @@ import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
+import Result from 'components/result'
 
 interface RedeemModalProps {
+  balance: number
   contract: Contract | undefined
-  assetBalance: number
+  data: string
+  result: string
   step: number
 }
 
-const RedeemModal = ({ contract, assetBalance, step }: RedeemModalProps) => {
+const RedeemModal = ({
+  balance,
+  contract,
+  data,
+  result,
+  step,
+}: RedeemModalProps) => {
   // messages to show on different steps of the process
   const mainMessage = [
     'Preparing the transaction...',
@@ -23,21 +32,23 @@ const RedeemModal = ({ contract, assetBalance, step }: RedeemModalProps) => {
   // decision variables
   const ticker = contract?.synthetic.ticker
   const neededAmount = contract?.synthetic.quantity
-  const hasFunds = contract && neededAmount && assetBalance >= neededAmount
-  const noFunds = contract && neededAmount && assetBalance < neededAmount
+  const hasFunds = neededAmount && balance >= neededAmount
 
   return (
     <Modal id={'redeem-modal'}>
-      {hasFunds && (
+      {result && <Result data={data} result={result} />}
+      {!result && hasFunds && (
         <>
           <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
           <p>Redeem contract:</p>
-          <Summary contract={contract} />
+          <div className="mx-auto">
+            <Summary contract={contract} />
+          </div>
           <p className="confirm">{secondaryMessage}</p>
         </>
       )}
-      {noFunds && (
+      {!result && !hasFunds && (
         <>
           <h3 className="mt-4">Insufficient funds to redeem contract</h3>
           <p>
@@ -49,7 +60,7 @@ const RedeemModal = ({ contract, assetBalance, step }: RedeemModalProps) => {
           <p>
             Your balance is{' '}
             <strong>
-              {assetBalance} {ticker}
+              {balance} {ticker}
             </strong>
           </p>
         </>

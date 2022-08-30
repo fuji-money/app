@@ -9,50 +9,57 @@ interface SummaryProps {
 
 const Summary = ({ contract }: SummaryProps) => {
   return (
-    <>
-      <div className="summary-line has-pink-border">
-        <p>Borrow</p>
-        <p className="is-gradient">
-          {prettyNumber(fromSatoshis(contract.synthetic.quantity))}{' '}
-          {contract.synthetic.ticker}
-        </p>
-      </div>
-
-      <div className="summary-line has-pink-border">
-        <p>Collateral</p>
-        <p className="is-gradient">
-          {prettyNumber(fromSatoshis(contract.collateral.quantity))}{' '}
-          {contract.collateral.ticker}
-        </p>
-      </div>
-
-      <div className="summary-line has-pink-border">
-        <p>Ratio</p>
-        <p className="is-gradient">
-          {prettyRatio(getContractRatio(contract))}%
-        </p>
-      </div>
-
-      <div className="summary-line has-pink-border">
-        <p>Liquidation price</p>
-        <p className="is-gradient">{prettyNumber(contract.priceLevel)} USD</p>
-      </div>
-
+    <table className="has-text-weight-bold mx-auto">
+      <tbody>
+        <tr>
+          <td>Borrow</td>
+          <td>{prettyNumber(fromSatoshis(contract.synthetic.quantity))}</td>
+          <td>{contract.synthetic.ticker}</td>
+        </tr>
+        <tr>
+          <td>Collateral</td>
+          <td>{prettyNumber(fromSatoshis(contract.collateral.quantity))}</td>
+          <td>{contract.collateral.ticker}</td>
+        </tr>
+        <tr>
+          <td>Ratio</td>
+          <td>{prettyRatio(getContractRatio(contract))}</td>
+          <td>%</td>
+        </tr>
+        <tr>
+          <td>Liquidation price</td>
+          <td>{prettyNumber(contract.priceLevel)}</td>
+          <td>USD</td>
+        </tr>
+      </tbody>
       <style jsx>{`
-        .summary-line {
-          background-color: #fff;
-          display: flex;
-          font-weight: 700;
-          justify-content: space-between;
-          padding: 0.7rem 3rem;
-          max-width: 400px;
-          margin: 2px auto;
+        table,
+        tr {
+          background-color: white;
+          border: 1px solid #f18c95;
+          text-align: left;
         }
-        .summary-line p {
-          margin: 0;
+        td {
+          padding: 0.6rem 0.2rem;
+        }
+        td:first-child {
+          padding-left: 1rem;
+        }
+        td:nth-child(2) {
+          text-align: right;
+        }
+        td:nth-child(2),
+        td:nth-child(3) {
+          background-image: linear-gradient(90deg, #63159b, #ff80ab);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        td:nth-child(3) {
+          padding-right: 1rem;
         }
       `}</style>
-    </>
+    </table>
   )
 }
 
