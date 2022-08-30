@@ -3,7 +3,6 @@ import { Contract } from 'lib/types'
 import {
   createReverseSubmarineSwap,
   DEPOSIT_LIGHTNING_LIMITS,
-  getClaimTransaction,
   getInvoiceExpireDate,
   ReverseSwap,
   swapDepositAmountOutOfBounds,
@@ -13,11 +12,15 @@ import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 import { feeAmount, swapFeeAmount } from 'lib/constants'
 import { fetchUtxos, Outpoint, Mnemonic } from 'ldk'
-import { closeModal, openModal, sleep } from 'lib/utils'
+import { debugMessage, openModal, sleep } from 'lib/utils'
 import * as ecc from 'tiny-secp256k1'
-import { getAssetBalance } from 'lib/marina'
+import { broadcastTx, getAssetBalance, getXPubKey } from 'lib/marina'
 import ECPairFactory from 'ecpair'
 import { randomBytes } from 'crypto'
+import { prepareBorrowTxWithClaimTx, proposeBorrowContract } from 'lib/covenant'
+import { createNewContract } from 'lib/contracts'
+import { ContractsContext } from 'components/providers/contracts'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 
 const explorerURL = 'https://blockstream.info/liquidtestnet/api' // TODO
 
@@ -32,7 +35,7 @@ const waitForPayment = async (
   let utxos: Outpoint[] = []
   while (utxos.length === 0 && Date.now() <= invoiceExpireDate) {
     utxos = await fetchUtxos(address, explorerURL)
-    console.log('searching for claim tx:', new Date())
+    debugMessage('searching for claim tx:', new Date())
     await sleep(5000) // sleep for 5 seconds
   }
   return utxos
@@ -43,6 +46,7 @@ interface ChannelProps {
   setChannel: any
   setData: any
   setResult: any
+  setStep: any
   setSwap: any
 }
 
@@ -54,10 +58,12 @@ const Channel = ({
   setSwap,
 }: ChannelProps) => {
   const { connected, balances, marina, network } = useContext(WalletContext)
+  const { reloadContracts } = useContext(ContractsContext)
+
   if (!marina) throw new Error('Missing marina provider')
 
   const setError = (text: string) => {
-    console.log(text)
+    debugMessage(text)
     setData(text)
     setResult('failure')
   }
@@ -81,7 +87,7 @@ const Channel = ({
     const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
     // create swap with Boltz.exchange
-    const invoiceAmount = quantity + feeAmount + swapFeeAmount
+    const invoiceAmount = quantity + feeAmount + swapFeeAmount + swapFeeAmount
     const swap: ReverseSwap | undefined = await createReverseSubmarineSwap(
       keyPair,
       network,
@@ -89,12 +95,11 @@ const Channel = ({
     )
     if (!swap) return setError('Error creating swap')
 
-    console.log('invoiceAmount', invoiceAmount)
-
     // this shows the QR code to the user
     setSwap(swap)
     setChannel('lightning')
 
+    // deconstruct swap
     const { invoice, lockupAddress, preimage, redeemScript } = swap
 
     // wait for payment
@@ -103,28 +108,47 @@ const Channel = ({
     // payment was never made, and the invoice expired
     if (utxos.length === 0) return setError('Invoice has expired')
 
-    // payment made: get claim transaction
-    let claimTransaction
-    try {
-      claimTransaction = await getClaimTransaction(
-        explorerURL,
-        keyPair,
-        network,
-        preimage,
-        redeemScript,
-        utxos,
-      )
-    } catch (err: any) {
-      return setError(`error getting claim transaction: ${err}`)
-    }
+    // payment made: prepare borrow transaction with claim utxo as input
+    const preparedTx = await prepareBorrowTxWithClaimTx(
+      contract,
+      explorerURL,
+      network,
+      redeemScript,
+      utxos,
+    )
 
-    // broadcast claim transaction
-    try {
-      const txid = await marina.broadcastTransaction(claimTransaction.toHex())
-      console.log('new coin', txid)
-    } catch (err: any) {
-      return setError(`error broadcasting claim transaction: ${err}`)
-    }
+    // propose contract to alpha factory
+    const { partialTransaction } = await proposeBorrowContract(preparedTx)
+
+    // sign and finalize input[0]
+    const psbt = Psbt.fromBase64(partialTransaction)
+    psbt.signInput(0, keyPair)
+    psbt.finalizeInput(0, (_, input) => {
+      return {
+        finalScriptSig: undefined,
+        finalScriptWitness: witnessStackToScriptWitness([
+          input.partialSig![0].signature,
+          preimage,
+          Buffer.from(redeemScript, 'hex'),
+        ]),
+      }
+    })
+
+    // broadcast transaction
+    contract.txid = await broadcastTx(psbt.toBase64())
+
+    // add additional fields to contract and save to storage
+    contract.borrowerPubKey = preparedTx.borrowerPublicKey
+    contract.contractParams = preparedTx.contractParams
+    contract.network = network
+    contract.confirmed = false
+    contract.xPubKey = await getXPubKey()
+    createNewContract(contract)
+
+    // show success
+    setData(contract.txid)
+    setResult('success')
+    reloadContracts()
   }
 
   return (

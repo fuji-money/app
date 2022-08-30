@@ -70,7 +70,7 @@ export async function getTransactions(): Promise<Transaction[]> {
   return await marina.getTransactions()
 }
 
-export async function signAndBroadcastTx(partialTransaction: any) {
+export async function signAndBroadcastTx(partialTransaction: string) {
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -80,11 +80,21 @@ export async function signAndBroadcastTx(partialTransaction: any) {
   const signedPtx = await marina.signTransaction(ptx.toBase64())
   const finalPtx = Psbt.fromBase64(signedPtx)
   finalPtx.finalizeAllInputs()
-  console.log('finalPtx', finalPtx)
   const rawHex = finalPtx.extractTransaction().toHex()
-  console.log('rawHex', rawHex)
   const sentTransaction = await marina.broadcastTransaction(rawHex)
-  console.log('txid', sentTransaction.txid)
+  return sentTransaction.txid
+}
+
+export async function broadcastTx(partialTransaction: string) {
+  // check for marina
+  const marina = await getMarinaProvider()
+  if (!marina) throw new Error('Please install Marina')
+
+  // broadcast transaction
+  const finalPtx = Psbt.fromBase64(partialTransaction)
+  finalPtx.finalizeAllInputs()
+  const rawHex = finalPtx.extractTransaction().toHex()
+  const sentTransaction = await marina.broadcastTransaction(rawHex)
   return sentTransaction.txid
 }
 
@@ -146,6 +156,17 @@ export async function getNextAddress(accountID = marinaMainAccountID) {
   if (accountID === marinaMainAccountID) return await marina.getNextAddress()
   await marina.useAccount(accountID)
   const address = await marina.getNextAddress()
+  await marina.useAccount(marinaMainAccountID)
+  return address
+}
+
+export async function getNextChangeAddress(accountID = marinaMainAccountID) {
+  const marina = await getMarinaProvider()
+  if (!marina) return
+  if (accountID === marinaMainAccountID)
+    return await marina.getNextChangeAddress()
+  await marina.useAccount(accountID)
+  const address = await marina.getNextChangeAddress()
   await marina.useAccount(marinaMainAccountID)
   return address
 }

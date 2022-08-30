@@ -223,10 +223,10 @@ export const getClaimTransaction = async (
   const hex = await fetchTxHex(utxo.txid, explorerURL)
   const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
-  const tx = new Psbt({ network: getNetwork(network) })
+  const psbt = new Psbt({ network: getNetwork(network) })
 
   // add the lockup utxo of Boltz
-  tx.addInput({
+  psbt.addInput({
     hash: utxo.txid,
     index: utxo.vout,
     witnessUtxo: prevout,
@@ -243,30 +243,23 @@ export const getClaimTransaction = async (
   if (!nextAddress) throw new Error('Unable to find nextAddress')
 
   // add our destination script
-  tx.addOutput({
+  psbt.addOutput({
     script: address.toOutputScript(nextAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(claimValue),
     asset: LBTC,
     nonce: EMPTY_BUFFER,
   })
-  tx.addOutput({
+  psbt.addOutput({
     script: EMPTY_BUFFER,
     value: confidential.satoshiToConfidentialValue(feeAmount),
     asset: LBTC,
     nonce: EMPTY_BUFFER,
   })
 
-  console.log('claimValue', claimValue)
-  console.log('feeAmount', feeAmount)
+  psbt.signInput(0, keyPair)
+  psbt.validateSignaturesOfAllInputs(Psbt.ECDSASigValidator(ecc))
 
-  console.log('tx', tx.toBase64())
-  const signedPsbt = tx.signInput(0, keyPair)
-  console.log('signedPsbt', signedPsbt.toBase64())
-
-  signedPsbt.validateSignaturesOfAllInputs(Psbt.ECDSASigValidator(ecc))
-
-  signedPsbt.finalizeInput(0, (_, input) => {
-    console.log('input is', input)
+  psbt.finalizeInput(0, (_, input) => {
     return {
       finalScriptSig: undefined,
       finalScriptWitness: witnessStackToScriptWitness([
@@ -277,6 +270,6 @@ export const getClaimTransaction = async (
     }
   })
 
-  const txHex = signedPsbt.extractTransaction().toHex()
+  const txHex = psbt.extractTransaction().toHex()
   return Transaction.fromHex(txHex)
 }

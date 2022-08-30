@@ -31,6 +31,7 @@ const Deposit = ({ contract, channel, setChannel, topup }: DepositProps) => {
             setChannel={setChannel}
             setData={setData}
             setResult={setResult}
+            setStep={setStep}
             setSwap={setSwap}
           />
         )}

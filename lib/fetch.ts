@@ -1,6 +1,6 @@
 export async function fetchURL(url: string) {
   const res = await fetch(url)
-  return await res.json()
+  if (res.ok) return await res.json()
 }
 
 export async function postData(url: string, data = {}) {

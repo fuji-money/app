@@ -64,7 +64,6 @@ export default async function handler(
   if (req.method !== 'POST' || !req.body) return res.status(405).end()
 
   const email = req.body
-  console.log(email)
   const vipList = JSON.parse(process.env.VIP_LIST || '[]')
 
   // on success, return cookie value to be set client side
@@ -81,7 +80,6 @@ export default async function handler(
   // if so, flag him and he will always be allowed to enter
   const maxRank = process.env.VIRAL_LOOP_MAX_RANK || -1
   const userRank = await getUserRank(email)
-  console.log(userRank)
   if (userRank <= maxRank) {
     await flagUser(email)
     return success()

@@ -1,11 +1,10 @@
 import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { fromSatoshis, openModal } from 'lib/utils'
-import DepositModal from 'components/modals/deposit'
+import { closeModal, fromSatoshis, openModal } from 'lib/utils'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
-import { useContext, useState } from 'react'
+import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { createNewContract } from 'lib/contracts'
 import { ContractsContext } from 'components/providers/contracts'
@@ -50,13 +49,14 @@ const Marina = ({
                 contract.confirmed = false
                 contract.xPubKey = await getXPubKey()
                 createNewContract(contract)
-                reloadContracts()
                 setData(contract.txid)
                 setResult('success')
+                reloadContracts()
               } catch (error) {
                 setData(error instanceof Error ? error.message : error)
                 setResult('failure')
               }
+              closeModal('deposit-modal')
             }}
           >
             <Image
