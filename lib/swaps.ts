@@ -62,7 +62,6 @@ export const isValidSubmarineSwap = (
 export interface ReverseSwap {
   claimPublicKey: string
   invoice: string
-  invoiceAmount: number
   lockupAddress: string
   preimage: Buffer
   redeemScript: string
@@ -164,7 +163,7 @@ const validReverseSwapReedemScript = (
 export const createReverseSubmarineSwap = async (
   keyPair: ECPairInterface,
   network: NetworkString,
-  invoiceAmount: number,
+  onchainAmount: number,
 ): Promise<ReverseSwap | undefined> => {
   // boltz object
   const boltz = new Boltz(network)
@@ -181,14 +180,13 @@ export const createReverseSubmarineSwap = async (
   const { redeemScript, lockupAddress, invoice }: ReverseSubmarineSwapResponse =
     await boltz.createReverseSubmarineSwap({
       claimPublicKey,
-      invoiceAmount,
+      onchainAmount,
       preimageHash,
     })
 
   const reverseSwap = {
     claimPublicKey,
     invoice,
-    invoiceAmount,
     lockupAddress,
     preimage,
     redeemScript,

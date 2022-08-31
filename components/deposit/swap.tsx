@@ -19,7 +19,7 @@ import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
 import Image from 'next/image'
 import Summary from 'components/contract/summary'
-import { feeAmount, swapFeeAmount } from 'lib/constants'
+import { feeAmount } from 'lib/constants'
 import LightningDepositModal from 'components/modals/lightningDeposit'
 import { ContractsContext } from 'components/providers/contracts'
 
@@ -70,13 +70,13 @@ const Swap = ({ contract }: SwapProps) => {
 
       // give enough satoshis to pay for all fees expected, so that we
       // can use the returning coin as a solo input for the borrow tx
-      const invoiceAmount = quantity + feeAmount + 2 * swapFeeAmount
+      const onchainAmount = quantity + feeAmount
 
       // create swap with Boltz.exchange
       const boltzSwap = await createReverseSubmarineSwap(
         keyPair,
         network,
-        invoiceAmount,
+        onchainAmount,
       )
       if (!boltzSwap) throw new Error('Error creating swap')
 

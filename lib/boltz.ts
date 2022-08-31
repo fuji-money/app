@@ -19,7 +19,7 @@ export type SubmarineSwapRequest = {
 
 export type ReverseSubmarineSwapRequest = {
   preimageHash: string
-  invoiceAmount: number
+  onchainAmount: number
   claimPublicKey: string
 }
 
