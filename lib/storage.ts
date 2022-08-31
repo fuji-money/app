@@ -3,7 +3,7 @@ import { Activity, Contract } from './types'
 
 // contracts
 
-const localStorageContractsKey = 'fujiContracts'
+export const localStorageContractsKey = 'fujiContracts'
 
 export function getContractsFromStorage(): Contract[] {
   if (typeof window === 'undefined') return []

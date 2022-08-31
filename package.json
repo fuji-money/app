@@ -16,6 +16,7 @@
     "bulma": "^0.9.3",
     "cookies": "^0.8.0",
     "decimal.js": "^10.3.1",
+    "file-saver": "^2.0.5",
     "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support",
     "marina-provider": "^1.7.1",
     "next": "^12.2.2",
@@ -27,6 +28,7 @@
     "swr": "^1.2.2"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.5",
     "@types/node": "17.0.23",
     "@types/react": "17.0.43",
     "@types/react-dom": "17.0.14",
