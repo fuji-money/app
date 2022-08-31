@@ -5,12 +5,14 @@ import Modal from './modal'
 interface MarinaDepositModalProps {
   data: string
   result: string
+  reset: () => void
   step: number
 }
 
 const MarinaDepositModal = ({
   data,
   result,
+  reset,
   step,
 }: MarinaDepositModalProps) => {
   const mainMessage = [
@@ -22,8 +24,8 @@ const MarinaDepositModal = ({
     'Confirm this transaction in your Marina wallet',
   ][step]
   return (
-    <Modal id="marina-deposit-modal">
-      {result && <Result data={data} result={result} />}
+    <Modal id="marina-deposit-modal" reset={reset}>
+      {result && <Result data={data} result={result} reset={reset} />}
       {!result && (
         <>
           <Spinner />

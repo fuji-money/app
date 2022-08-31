@@ -10,6 +10,7 @@ interface LightningDepositModalProps {
   invoice: string
   paid: boolean
   result: string
+  reset: () => void
 }
 
 const LightningDepositModal = ({
@@ -17,6 +18,7 @@ const LightningDepositModal = ({
   invoice,
   paid,
   result,
+  reset,
 }: LightningDepositModalProps) => {
   const [buttonText, setButtonText] = useState('Copy')
 
@@ -36,8 +38,8 @@ const LightningDepositModal = ({
     : 'Waiting for payment'
 
   return (
-    <Modal id="lightning-deposit-modal">
-      {result && <Result data={data} result={result} />}
+    <Modal id="lightning-deposit-modal" reset={reset}>
+      {result && <Result data={data} result={result} reset={reset} />}
       {!result && (
         <>
           <h3 className="mt-4">{mainMessage}</h3>

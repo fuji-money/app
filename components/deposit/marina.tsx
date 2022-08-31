@@ -22,6 +22,11 @@ const Marina = ({ contract }: MarinaProps) => {
   const [result, setResult] = useState('')
   const [step, setStep] = useState(0)
 
+  const reset = () => {
+    setData('')
+    setResult('')
+  }
+
   const handleMarina = async () => {
     openModal('marina-deposit-modal')
     try {
@@ -72,7 +77,12 @@ const Marina = ({ contract }: MarinaProps) => {
         </h2>
         <Summary contract={contract} />
       </div>
-      <MarinaDepositModal data={data} result={result} step={step} />
+      <MarinaDepositModal
+        data={data}
+        result={result}
+        reset={reset}
+        step={step}
+      />
     </div>
   )
 }

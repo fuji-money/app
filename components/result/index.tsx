@@ -7,9 +7,14 @@ import { closeAllModals } from 'lib/utils'
 
 interface SuccessProps {
   txid: string
+  reset: () => void
 }
 
-const Success = ({ txid }: SuccessProps) => {
+const Success = ({ reset, txid }: SuccessProps) => {
+  const handleClick = () => {
+    closeAllModals()
+    reset()
+  }
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -26,10 +31,7 @@ const Success = ({ txid }: SuccessProps) => {
       <TwitterLink message={twitterMessage} />
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">
-          <a
-            className="button is-primary is-cta"
-            onClick={() => closeAllModals()}
-          >
+          <a className="button is-primary is-cta" onClick={handleClick}>
             Back to dashboard
           </a>
         </Link>
@@ -40,10 +42,14 @@ const Success = ({ txid }: SuccessProps) => {
 
 interface FailureProps {
   error: string | unknown
+  reset: () => void
 }
 
-const Failure = ({ error }: FailureProps) => {
-  const handleClick = () => window.location.reload()
+const Failure = ({ error, reset }: FailureProps) => {
+  const handleClick = () => {
+    reset()
+    window.location.reload()
+  }
 
   return (
     <div className="has-text-centered mx-6">
@@ -69,11 +75,12 @@ const Failure = ({ error }: FailureProps) => {
 interface ResultProps {
   data: string
   result: string
+  reset: () => void
 }
 
-const Result = ({ data, result }: ResultProps) => {
-  if (result === 'success') return <Success txid={data} />
-  if (result === 'failure') return <Failure error={data} />
+const Result = ({ data, result, reset }: ResultProps) => {
+  if (result === 'success') return <Success reset={reset} txid={data} />
+  if (result === 'failure') return <Failure reset={reset} error={data} />
   return <></>
 }
 

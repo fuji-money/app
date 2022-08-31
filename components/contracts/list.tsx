@@ -13,14 +13,19 @@ interface ContractsListProps {
 }
 
 const ContractsList = ({ showActive }: ContractsListProps) => {
+  const { connected } = useContext(WalletContext)
+  const { contracts, loading } = useContext(ContractsContext)
+
   const [redeem, setReedem] = useState<Contract>()
   const [assetBalance, setAssetBalance] = useState(0)
   const [step, setStep] = useState(0)
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
 
-  const { connected } = useContext(WalletContext)
-  const { contracts, loading } = useContext(ContractsContext)
+  const reset = () => {
+    setData('')
+    setResult('')
+  }
 
   if (!connected)
     return (
@@ -42,6 +47,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
         contract={redeem}
         data={data}
         result={result}
+        reset={reset}
         step={step}
       />
       {filteredContracts &&

@@ -8,6 +8,7 @@ interface RedeemModalProps {
   balance: number
   contract: Contract | undefined
   data: string
+  reset: () => void
   result: string
   step: number
 }
@@ -17,6 +18,7 @@ const RedeemModal = ({
   contract,
   data,
   result,
+  reset,
   step,
 }: RedeemModalProps) => {
   // messages to show on different steps of the process
@@ -35,8 +37,8 @@ const RedeemModal = ({
   const hasFunds = neededAmount && balance >= neededAmount
 
   return (
-    <Modal id={'redeem-modal'}>
-      {result && <Result data={data} result={result} />}
+    <Modal id={'redeem-modal'} reset={reset}>
+      {result && <Result data={data} reset={reset} result={result} />}
       {!result && hasFunds && (
         <>
           <Spinner />

@@ -54,6 +54,11 @@ const Swap = ({ contract }: SwapProps) => {
   const [result, setResult] = useState('')
   const quantity = contract.collateral.quantity || 0
 
+  const reset = () => {
+    setData('')
+    setResult('')
+  }
+
   const handleLightning = async () => {
     try {
       // open modal
@@ -73,7 +78,6 @@ const Swap = ({ contract }: SwapProps) => {
         network,
         invoiceAmount,
       )
-      console.log('boltzSwap', boltzSwap)
       if (!boltzSwap) throw new Error('Error creating swap')
 
       // deconstruct swap
@@ -178,6 +182,7 @@ const Swap = ({ contract }: SwapProps) => {
         invoice={invoice}
         paid={paid}
         result={result}
+        reset={reset}
       />
     </div>
   )

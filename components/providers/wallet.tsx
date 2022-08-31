@@ -76,8 +76,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // update balances and add event listener
   useEffect(() => {
+    updateBalances()
     if (connected && marina) {
-      updateBalances()
       updateXPubKey()
       const id = marina.on('SPENT_UTXO', () => updateBalances())
       return () => marina.off(id)

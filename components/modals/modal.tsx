@@ -10,9 +10,14 @@ const closeModals = () => {
 interface ModalProps {
   children: ReactNode
   id: string
+  reset?: () => void
 }
 
-const Modal = ({ children, id }: ModalProps) => {
+const Modal = ({ children, id, reset }: ModalProps) => {
+  const handleClick = () => {
+    if (reset) reset()
+    closeModals()
+  }
   return (
     <div className="modal" id={id}>
       <div onClick={closeModals} className="modal-background" />
@@ -22,7 +27,7 @@ const Modal = ({ children, id }: ModalProps) => {
         </div>
       </div>
       <button
-        onClick={closeModals}
+        onClick={handleClick}
         className="modal-close is-large"
         aria-label="close"
       />
