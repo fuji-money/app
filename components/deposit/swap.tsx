@@ -157,17 +157,30 @@ const Swap = ({ contract }: SwapProps) => {
         </p>
         <p>
           <button className="button is-primary mt-4" disabled>
+            <Image
+              src="/images/companies/strike.svg"
+              alt="strike logo"
+              width={20}
+              height={20}
+            />
             <span className="ml-2">Pay with Strike</span>
           </button>
         </p>
         <p>
           <button className="button is-primary mt-4" disabled>
+            <Image
+              src="/images/companies/bitfinex.svg"
+              alt="bitfinex logo"
+              width={20}
+              height={20}
+            />
             <span className="ml-2">Pay with Bitfinex Pay</span>
           </button>
         </p>
         <style jsx>{`
           .button {
-            width: 100%;
+            justify-content: flex-start;
+            width: 90%;
           }
         `}</style>
       </div>

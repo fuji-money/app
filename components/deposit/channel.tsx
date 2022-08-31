@@ -14,6 +14,7 @@ interface ChannelButtonProps {
   enabled: boolean
   setChannel: (arg0: string) => void
 }
+
 const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
   return (
     <button
@@ -64,10 +65,10 @@ const Channel = ({ contract, setChannel }: ChannelProps) => {
 
   return (
     <div className="has-text-centered">
-      <h2 className="has-text-weight-bold is-size-4 mb-4">
+      <h2 className="has-text-weight-bold is-size-4 mb-5">
         Choose how to deposit {ticker}
       </h2>
-      <div className="content mt-6">
+      <div className="content">
         <ChannelButton
           name="liquid"
           enabled={liquidButtonEnabled}
@@ -80,10 +81,10 @@ const Channel = ({ contract, setChannel }: ChannelProps) => {
         />
       </div>
       {!enoughFunds && (
-        <p className="warning mx-auto mt-6">Not enough funds on Marina.</p>
+        <p className="warning mx-auto mt-5">Not enough funds on Marina.</p>
       )}
       {outOfBounds && (
-        <p className="warning mx-auto mt-6">
+        <p className="warning mx-auto mt-5">
           For lightning swaps, collateral amount must be between{' '}
           {prettyNumber(minimal, 0)} and {prettyNumber(maximal, 0)} satoshis.
         </p>

@@ -20,7 +20,7 @@ const Deposit = ({ contract, channel, setChannel, topup }: DepositProps) => {
 
   return (
     <>
-      <div className="is-box has-pink-border py-6 px-6">
+      <div className="is-box has-pink-border p-6">
         {!channel && <Channel contract={contract} setChannel={setChannel} />}
         {lightning && <Swap contract={contract} />}
         {liquid && <Marina contract={contract} />}
