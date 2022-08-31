@@ -145,7 +145,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // don't use NEW_TX, on reload Marina emits a NEW_TX for all TXs,
   // which cause a lot of spam on the explorer (#tx * #contracts * 2 queries)
   const onNewTxListener = () => {
-    if (marina) marina.on('SPENT_UTXO', async () => reloadContracts())
+    if (connected && marina)
+      marina.on('SPENT_UTXO', async () => reloadContracts())
   }
 
   const firstRender = useRef<NetworkString[]>([])
@@ -164,7 +165,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // update contracts
   useEffect(() => {
     if (connected && marina) reloadContracts()
-  }, [connected, marina, network, xPubKey, reloadContracts])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, marina, network, xPubKey])
 
   return (
     <ContractsContext.Provider
