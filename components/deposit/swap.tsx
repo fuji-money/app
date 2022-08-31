@@ -143,9 +143,9 @@ const Swap = ({ contract }: SwapProps) => {
 
   return (
     <div className="columns">
-      <div className="column is-6 pt-6">
+      <div className="column is-6">
         <p>
-          <button className="button is-primary mt-4" onClick={handleLightning}>
+          <button className="button is-primary" onClick={handleLightning}>
             <Image
               src="/images/networks/lightning.svg"
               alt="lightning logo"
@@ -172,9 +172,6 @@ const Swap = ({ contract }: SwapProps) => {
         `}</style>
       </div>
       <div className="column is-6">
-        <h2 className="has-text-weight-bold has-text-centered is-size-4 mb-4">
-          Deposit with Lightning
-        </h2>
         <Summary contract={contract} />
       </div>
       <LightningDepositModal

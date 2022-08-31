@@ -60,8 +60,8 @@ const Marina = ({ contract }: MarinaProps) => {
 
   return (
     <div className="columns">
-      <div className="column is-6 pt-6">
-        <button className="button is-primary mt-4" onClick={handleMarina}>
+      <div className="column is-6">
+        <button className="button is-primary" onClick={handleMarina}>
           <Image
             src="/images/marina.svg"
             alt="marina logo"
@@ -72,9 +72,6 @@ const Marina = ({ contract }: MarinaProps) => {
         </button>
       </div>
       <div className="column is-6">
-        <h2 className="has-text-weight-bold has-text-centered is-size-4 mb-4">
-          Deposit with Wallet
-        </h2>
         <Summary contract={contract} />
       </div>
       <MarinaDepositModal
