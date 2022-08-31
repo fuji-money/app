@@ -164,8 +164,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // update contracts
   useEffect(() => {
     if (connected && marina) reloadContracts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network, xPubKey])
+  }, [connected, marina, network, xPubKey, reloadContracts])
 
   return (
     <ContractsContext.Provider
