@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { openModal } from 'lib/utils'
 import ConnectButton from 'components/buttons/connect'
+import Settings from 'components/settings'
 
 export default function Navbar() {
   return (
@@ -34,9 +35,10 @@ export default function Navbar() {
               <a className="is-block my-auto ml-5">Borrow</a>
             </Link>
             <Link href="/multiply">
-              <a className="is-block my-auto ml-5 mr-long">Multiply</a>
+              <a className="is-block my-auto ml-5 mr-6">Multiply</a>
             </Link>
             <ConnectButton />
+            <Settings />
           </div>
           <style jsx>{`
             a {
