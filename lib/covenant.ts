@@ -39,7 +39,7 @@ import { explorerURL } from './explorer'
 interface PreparedBorrowTx {
   psbt: Psbt
   contractParams: any
-  changeAddress: AddressInterface
+  changeAddress?: AddressInterface
   borrowerAddress: AddressInterface
   borrowerPublicKey: string
   collateralUtxos: UtxoWithBlindPrivKey[]
@@ -136,21 +136,6 @@ export async function prepareBorrowTxWithClaimTx(
   // add covenant in position 0
   psbt.addOutput(covenantOutput)
 
-  // add change output
-  const collateralAmount = confidential.confidentialValueToSatoshi(
-    prevout.value,
-  )
-  const changeAddress = await getNextChangeAddress()
-  const changeAmount = collateralAmount - collateral.quantity - feeAmount
-  if (changeAmount > 0) {
-    psbt.addOutput({
-      script: address.toOutputScript(changeAddress.confidentialAddress),
-      value: confidential.satoshiToConfidentialValue(changeAmount),
-      asset: AssetHash.fromHex(collateral.id, false).bytes,
-      nonce: Buffer.alloc(0),
-    })
-  }
-
   debugMessage('psbt', psbt)
 
   // these values have different type when speaking with server
@@ -162,7 +147,6 @@ export async function prepareBorrowTxWithClaimTx(
   return {
     psbt,
     contractParams,
-    changeAddress,
     borrowerAddress,
     borrowerPublicKey,
     collateralUtxos: utxos,
@@ -224,18 +208,22 @@ export async function prepareBorrowTx(
   psbt.addOutput(covenantOutput)
 
   // add change output
-  const changeAddress = await getNextChangeAddress()
+  let changeAddress
   const collateralUtxosAmount = collateralUtxos.reduce(
     (value, utxo) => value + (utxo.value || 0),
     0,
   )
   const changeAmount = collateralUtxosAmount - collateral.quantity - feeAmount
-  psbt.addOutput({
-    script: address.toOutputScript(changeAddress.confidentialAddress),
-    value: confidential.satoshiToConfidentialValue(changeAmount),
-    asset: AssetHash.fromHex(collateral.id, false).bytes,
-    nonce: Buffer.alloc(0),
-  })
+  if (changeAmount > 0) {
+    changeAddress = await getNextChangeAddress()
+    psbt.addOutput({
+      script: address.toOutputScript(changeAddress.confidentialAddress),
+      value: confidential.satoshiToConfidentialValue(changeAmount),
+      asset: AssetHash.fromHex(collateral.id, false).bytes,
+      nonce: Buffer.alloc(0),
+    })
+  }
+
   debugMessage('psbt', psbt)
 
   // these values have different type when speaking with server
@@ -294,6 +282,14 @@ export async function proposeBorrowContract({
 
   if (!borrowerAddress.publicKey) return
 
+  const blindingPubKeyForCollateralChange = changeAddress
+    ? {
+        1: address
+          .fromConfidential(changeAddress.confidentialAddress!)
+          .blindingKey.toString('hex'),
+      }
+    : {}
+
   // build post body
   const body = {
     partialTransaction: psbt.toBase64(),
@@ -318,11 +314,7 @@ export async function proposeBorrowContract({
       setupTimestamp,
     },
     blindingPrivKeyOfCollateralInputs,
-    blindingPubKeyForCollateralChange: {
-      1: address
-        .fromConfidential(changeAddress.confidentialAddress!)
-        .blindingKey.toString('hex'),
-    },
+    blindingPubKeyForCollateralChange,
   }
 
   debugMessage('body', body)
