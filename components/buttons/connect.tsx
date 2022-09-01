@@ -37,7 +37,7 @@ const ConnectButton = () => {
     <>
       {marina && (
         <>
-          <button onClick={toggle} className="button is-primary my-auto mr-6">
+          <button onClick={toggle} className="button is-primary my-auto mr-5">
             {message}
           </button>
           <AccountModal />

@@ -35,7 +35,7 @@ export default function Navbar() {
               <a className="is-block my-auto ml-5">Borrow</a>
             </Link>
             <Link href="/multiply">
-              <a className="is-block my-auto ml-5 mr-6">Multiply</a>
+              <a className="is-block my-auto ml-5 mr-5">Multiply</a>
             </Link>
             <ConnectButton />
             <Settings />
