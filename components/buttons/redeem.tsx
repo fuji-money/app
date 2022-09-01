@@ -47,8 +47,7 @@ const RedeemButton = ({
   const disabled =
     !contract.confirmed ||
     contract.state === ContractState.Liquidated ||
-    contract.state === ContractState.Redeemed ||
-    contract.state === ContractState.Unknown
+    contract.state === ContractState.Redeemed
 
   return (
     <button
