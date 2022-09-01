@@ -28,6 +28,16 @@ import { checkOutspend, getTx } from 'lib/explorer'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1'
+
+function computeOldXPpub(
+  xpub: string
+): string {
+  const bip32 = BIP32Factory(ecc);
+  const decoded = bip32.fromBase58(xpub);
+  return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58();
+}
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -120,22 +130,30 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
-  // temporary fix: fix missing xPubKey on old contracts and store on local storage
-  // addendum: if Marina xPubKey starts with 'xpub' and contract xPubKey starts with
-  // 'zpub' (previous version of Marina), update contract xPubKey to 'xpub...'
+  // temporary fix:
+  // 1. fix missing xPubKey on old contracts and store on local storage
+  // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
+  // 3. update xPubKey to neutered xPubKey
   const fixMissingXPubKeyOnOldContracts = () => {
+    // get non neutered xPubKey
+    const oldXPubKey = computeOldXPpub(xPubKey)
     // on new Marina version, xPubKey starts with 'xpub' instead of 'zpub'
     const shouldStartWithXpub = xPubKey.startsWith('xpub')
     getContractsFromStorage()
       .filter((contract) => contract.network === network)
       .map((contract) => {
         if (!contract.xPubKey) {
-          contract.xPubKey = xPubKey
+          contract.xPubKey = xPubKey // point 1
           updateContractOnStorage(contract)
         } else {
           if (contract.xPubKey.startsWith('zpub') && shouldStartWithXpub) {
-            contract.xPubKey = toXpub(xPubKey) // converts 'zpub' to 'xpub'
+            contract.xPubKey = toXpub(xPubKey) // point 2
             updateContractOnStorage(contract)
+          } else {
+            if (contract.xPubKey === oldXPubKey) {
+              contract.xPubKey = xPubKey // point 3
+              updateContractOnStorage(contract)
+            }
           }
         }
       })
