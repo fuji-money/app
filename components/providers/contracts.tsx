@@ -147,7 +147,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
           updateContractOnStorage(contract)
         } else {
           if (contract.xPubKey.startsWith('zpub') && shouldStartWithXpub) {
-            contract.xPubKey = toXpub(xPubKey) // point 2
+            contract.xPubKey = toXpub(contract.xPubKey) // point 2
             updateContractOnStorage(contract)
           } else {
             if (contract.xPubKey === oldXPubKey) {
