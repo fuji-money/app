@@ -31,7 +31,7 @@ import { toXpub } from 'ldk'
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1'
 
-function computeOldXPpub(
+function computeOldXPub(
   xpub: string
 ): string {
   const bip32 = BIP32Factory(ecc);
@@ -136,7 +136,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // 3. update xPubKey to neutered xPubKey
   const fixMissingXPubKeyOnOldContracts = () => {
     // get non neutered xPubKey
-    const oldXPubKey = computeOldXPpub(xPubKey)
+    const oldXPubKey = computeOldXPub(xPubKey)
     // on new Marina version, xPubKey starts with 'xpub' instead of 'zpub'
     const shouldStartWithXpub = xPubKey.startsWith('xpub')
     getContractsFromStorage()
