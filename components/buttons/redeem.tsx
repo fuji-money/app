@@ -24,7 +24,7 @@ const RedeemButton = ({
   setData,
   setResult,
 }: RedeemButtonProps) => {
-  const { balances } = useContext(WalletContext)
+  const { balances, network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const handleClick = async () => {
@@ -32,12 +32,13 @@ const RedeemButton = ({
     setRedeem(contract)
     openModal('redeem-modal')
     try {
-      const txid = await prepareRedeemTx(contract, setStep)
+      const txid = await prepareRedeemTx(contract, network, setStep)
       markContractRedeemed(contract)
       setData(txid)
       setResult('success')
       reloadContracts()
     } catch (error) {
+      console.log('error catched', error)
       debugMessage(extractError(error))
       setData(extractError(error))
       setResult('failure')
