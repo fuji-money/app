@@ -20,7 +20,7 @@ const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
     <button
       className="button is-primary"
       disabled={!enabled}
-      onClick={() => setChannel(name)}
+      onClick={() => setChannel(name.toLowerCase())}
     >
       <Image
         src={`/images/networks/${name}.svg`}
@@ -28,13 +28,12 @@ const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
         height={20}
         width={20}
       />
-      {name}
+      <span className="ml-2">{name}</span>
       <style jsx>{`
         button {
           margin: auto 1rem;
         }
         img {
-          margin-right: 1rem;
           max-height: 1.42rem;
         }
       `}</style>
@@ -70,12 +69,12 @@ const Channel = ({ contract, setChannel }: ChannelProps) => {
       </h2>
       <div className="content">
         <ChannelButton
-          name="liquid"
+          name="Liquid"
           enabled={liquidButtonEnabled}
           setChannel={setChannel}
         />
         <ChannelButton
-          name="lightning"
+          name="Lightning"
           enabled={lightningButtonEnabled}
           setChannel={setChannel}
         />
