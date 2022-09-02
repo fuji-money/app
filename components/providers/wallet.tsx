@@ -13,6 +13,7 @@ interface WalletContextProps {
   connected: boolean
   marina: MarinaProvider | undefined
   network: NetworkString
+  setConnected: (arg0: boolean) => void
   xPubKey: string
 }
 
@@ -21,6 +22,7 @@ export const WalletContext = createContext<WalletContextProps>({
   connected: false,
   marina: undefined,
   network: defaultNetwork,
+  setConnected: () => {},
   xPubKey: '',
 })
 
@@ -55,19 +57,18 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // add event listeners for enable and disable (aka connected)
   useEffect(() => {
     if (marina) {
-      const onDisabledId = marina.on('DISABLED', (p) => {
-        console.log('DISABLED', p)
-        setConnected(false)
+      const onDisabledId = marina.on('DISABLED', ({ data }) => {
+        if (data.network === network) setConnected(false)
       })
-      const onEnabledId = marina.on('ENABLED', (p) => {
-        console.log('ENABLED', p)
-        setConnected(true)
+      const onEnabledId = marina.on('ENABLED', ({ data }) => {
+        if (data.network === network) setConnected(true)
       })
       return () => {
         marina.off(onDisabledId)
         marina.off(onEnabledId)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [marina])
 
   // update network and add event listener
@@ -91,7 +92,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   return (
     <WalletContext.Provider
-      value={{ balances, connected, marina, network, xPubKey }}
+      value={{ balances, connected, marina, network, setConnected, xPubKey }}
     >
       {children}
     </WalletContext.Provider>
