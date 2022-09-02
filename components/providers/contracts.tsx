@@ -65,10 +65,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
-    await checkContractsStatus()
-    setContracts(await getContracts())
-    setActivities(await getActivities())
-    setLoading(false)
+    if (connected) {
+      await checkContractsStatus()
+      setContracts(await getContracts())
+      setActivities(await getActivities())
+      setLoading(false)
+    }
   }
 
   // check contract status
@@ -170,7 +172,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    if (network && xPubKey) {
+    if (connected && network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
         fixMissingXPubKeyOnOldContracts()
@@ -178,7 +180,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         firstRender.current.push(network)
       }
     }
-  })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, network])
 
   // update contracts
   useEffect(() => {

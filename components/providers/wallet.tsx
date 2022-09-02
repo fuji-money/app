@@ -55,15 +55,20 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // add event listeners for enable and disable (aka connected)
   useEffect(() => {
     if (marina) {
-      if (connected) {
-        const id = marina.on('DISABLED', () => setConnected(false))
-        return () => marina.off(id)
-      } else {
-        const id = marina.on('ENABLED', () => setConnected(true))
-        return () => marina.off(id)
+      const onDisabledId = marina.on('DISABLED', (p) => {
+        console.log('DISABLED',p)
+        setConnected(false)
+      })
+      const onEnabledId = marina.on('ENABLED', (p) => {
+        console.log('ENABLED', p)
+        setConnected(true)
+      })
+      return () => {
+        marina.off(onDisabledId)
+        marina.off(onEnabledId)
       }
     }
-  }, [connected, marina])
+  }, [marina])
 
   // update network and add event listener
   useEffect(() => {
