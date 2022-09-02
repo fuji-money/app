@@ -16,14 +16,15 @@ interface ChannelButtonProps {
 }
 
 const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
+  const channelId = name.toLowerCase()
   return (
     <button
       className="button is-primary"
       disabled={!enabled}
-      onClick={() => setChannel(name.toLowerCase())}
+      onClick={() => setChannel(channelId)}
     >
       <Image
-        src={`/images/networks/${name}.svg`}
+        src={`/images/networks/${channelId}.svg`}
         alt={`${name} network logo`}
         height={20}
         width={20}
