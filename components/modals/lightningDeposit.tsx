@@ -1,9 +1,9 @@
 import Modal from './modal'
-import { ReverseSwap } from 'lib/swaps'
 import { sleep } from 'lib/utils'
 import QRCode from 'components/qrcode'
 import { useState } from 'react'
 import Result from 'components/result'
+import Spinner from 'components/spinner'
 
 interface LightningDepositModalProps {
   data: string
@@ -42,6 +42,7 @@ const LightningDepositModal = ({
       {result && <Result data={data} result={result} reset={reset} />}
       {!result && (
         <>
+          <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
           {!paid && invoice && <QRCode text={invoice} />}
           <p className="confirm">{secondaryMessage}</p>
