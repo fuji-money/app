@@ -70,6 +70,12 @@ const Marina = ({ contract }: MarinaProps) => {
           />
           <span className="ml-2">Deposit with Marina</span>
         </button>
+        <style jsx>{`
+          .button {
+            justify-content: flex-start;
+            width: 90%;
+          }
+        `}</style>
       </div>
       <div className="column is-6">
         <Summary contract={contract} />
