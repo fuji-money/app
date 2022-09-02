@@ -56,7 +56,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   useEffect(() => {
     if (marina) {
       const onDisabledId = marina.on('DISABLED', (p) => {
-        console.log('DISABLED',p)
+        console.log('DISABLED', p)
         setConnected(false)
       })
       const onEnabledId = marina.on('ENABLED', (p) => {

@@ -28,15 +28,13 @@ import { checkOutspend, getTx } from 'lib/explorer'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
-import BIP32Factory from 'bip32';
+import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 
-function computeOldXPub(
-  xpub: string
-): string {
-  const bip32 = BIP32Factory(ecc);
-  const decoded = bip32.fromBase58(xpub);
-  return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58();
+function computeOldXPub(xpub: string): string {
+  const bip32 = BIP32Factory(ecc)
+  const decoded = bip32.fromBase58(xpub)
+  return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
 }
 
 interface ContractsContextProps {
@@ -180,7 +178,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         firstRender.current.push(network)
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected, network])
 
   // update contracts
