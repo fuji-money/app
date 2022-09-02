@@ -10,6 +10,7 @@ import {
 } from 'marina-provider'
 import {
   defaultNetwork,
+  feeAmount,
   marinaFujiAccountID,
   marinaMainAccountID,
 } from 'lib/constants'
@@ -125,7 +126,7 @@ export function selectCoinsWithBlindPrivKey(
       utxo.blindPrivKey = blindPrivKey
       selectedUtxos.push(utxo)
       totalValue += utxo.value
-      if (totalValue >= minAmount) {
+      if (totalValue >= minAmount + feeAmount) {
         return selectedUtxos
       }
     }
