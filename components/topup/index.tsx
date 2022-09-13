@@ -58,6 +58,7 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
                 contract={contract}
                 channel={channel}
                 setChannel={setChannel}
+                setDeposit={setDeposit}
                 topup={topup}
               />
             )}

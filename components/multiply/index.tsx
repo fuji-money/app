@@ -34,6 +34,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
                 contract={contract}
                 channel={channel}
                 setChannel={setChannel}
+                setDeposit={setDeposit}
                 topup={topup}
               />
             </div>
