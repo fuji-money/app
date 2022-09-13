@@ -46,11 +46,6 @@ interface FailureProps {
 }
 
 const Failure = ({ error, reset }: FailureProps) => {
-  const handleClick = () => {
-    reset()
-    window.location.reload()
-  }
-
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -64,7 +59,7 @@ const Failure = ({ error, reset }: FailureProps) => {
       <h2 className="mt-4">Something went wrong</h2>
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
-        <button className="button is-cta" onClick={handleClick}>
+        <button className="button is-cta" onClick={reset}>
           Try again
         </button>
       </p>

@@ -1,10 +1,6 @@
 import { Contract } from 'lib/types'
 import { debugMessage, extractError, openModal, sleep } from 'lib/utils'
-import {
-  createReverseSubmarineSwap,
-  getInvoiceExpireDate,
-  ReverseSwap,
-} from 'lib/swaps'
+import { createReverseSubmarineSwap, getInvoiceExpireDate } from 'lib/swaps'
 import { useContext, useState } from 'react'
 import { randomBytes } from 'crypto'
 import ECPairFactory from 'ecpair'
@@ -43,9 +39,10 @@ const waitForPayment = async (
 
 interface SwapProps {
   contract: Contract
+  reset: () => void
 }
 
-const Swap = ({ contract }: SwapProps) => {
+const Swap = ({ contract, reset }: SwapProps) => {
   const { network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
   const [paid, setPaid] = useState(false)
@@ -54,9 +51,10 @@ const Swap = ({ contract }: SwapProps) => {
   const [result, setResult] = useState('')
   const quantity = contract.collateral.quantity || 0
 
-  const reset = () => {
+  const resetLightningDeposit = () => {
     setData('')
     setResult('')
+    reset()
   }
 
   const handleLightning = async () => {
@@ -192,7 +190,7 @@ const Swap = ({ contract }: SwapProps) => {
         invoice={invoice}
         paid={paid}
         result={result}
-        reset={reset}
+        reset={resetLightningDeposit}
       />
     </div>
   )

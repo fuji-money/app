@@ -59,6 +59,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
                 contract={contract}
                 channel={channel}
                 setChannel={setChannel}
+                setDeposit={setDeposit}
                 topup={topup}
               />
             )}

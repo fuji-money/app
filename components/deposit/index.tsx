@@ -1,29 +1,37 @@
-import { useState } from 'react'
 import { Contract } from 'lib/types'
 import Swap from './swap'
-import Result from 'components/result'
 import Marina from './marina'
-import { ReverseSwap } from 'lib/swaps'
 import Channel from './channel'
-import MarinaDepositModal from 'components/modals/marinaDeposit'
 
 interface DepositProps {
   contract: Contract
   channel: string
   setChannel: (arg0: string) => void
+  setDeposit: (arg0: boolean) => void
   topup: number
 }
 
-const Deposit = ({ contract, channel, setChannel, topup }: DepositProps) => {
+const Deposit = ({
+  contract,
+  channel,
+  setChannel,
+  setDeposit,
+  topup,
+}: DepositProps) => {
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'
+
+  const resetDeposit = () => {
+    setChannel('')
+    setDeposit(false)
+  }
 
   return (
     <>
       <div className="is-box has-pink-border p-6">
         {!channel && <Channel contract={contract} setChannel={setChannel} />}
-        {lightning && <Swap contract={contract} />}
-        {liquid && <Marina contract={contract} />}
+        {lightning && <Swap contract={contract} reset={resetDeposit} />}
+        {liquid && <Marina contract={contract} reset={resetDeposit} />}
       </div>
     </>
   )

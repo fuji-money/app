@@ -1,6 +1,5 @@
-import { prettyNumber } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { closeModal, extractError, fromSatoshis, openModal } from 'lib/utils'
+import { extractError, openModal } from 'lib/utils'
 import Image from 'next/image'
 import { prepareBorrowTx, proposeBorrowContract } from 'lib/covenant'
 import { getXPubKey, signAndBroadcastTx } from 'lib/marina'
@@ -13,18 +12,20 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 
 interface MarinaProps {
   contract: Contract
+  reset: () => void
 }
 
-const Marina = ({ contract }: MarinaProps) => {
+const Marina = ({ contract, reset }: MarinaProps) => {
   const { network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [step, setStep] = useState(0)
 
-  const reset = () => {
+  const resetMarinaDeposit = () => {
     setData('')
     setResult('')
+    reset()
   }
 
   const handleMarina = async () => {
@@ -83,7 +84,7 @@ const Marina = ({ contract }: MarinaProps) => {
       <MarinaDepositModal
         data={data}
         result={result}
-        reset={reset}
+        reset={resetMarinaDeposit}
         step={step}
       />
     </div>
