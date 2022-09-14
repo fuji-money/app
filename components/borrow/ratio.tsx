@@ -2,9 +2,9 @@ import { useEffect } from 'react'
 import { prettyPriceLevel, prettyRatio } from 'lib/pretty'
 import { Asset } from 'lib/types'
 import { getContractPriceLevel, getRatioState } from 'lib/contracts'
+import { maxBorrowRatio, minBorrowRatio } from 'lib/constants'
 
 const thumbWidth = 20
-const maxRatio = 400
 
 // update range bar colors
 const updateColors = (ratio: number) => {
@@ -22,7 +22,7 @@ const calcLeft = (ratio: number) => {
     const container = document.getElementById('range')
     if (container) {
       const startsOn = thumbWidth / 2
-      const eachRatio = (container.clientWidth - thumbWidth) / maxRatio
+      const eachRatio = (container.clientWidth - thumbWidth) / maxBorrowRatio
       return startsOn + ratio * eachRatio
     }
   }
@@ -61,7 +61,11 @@ interface RatioProps {
   setContractRatio: (ratio: number) => void
 }
 
-const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
+const Ratio = ({
+  collateral,
+  ratio = minBorrowRatio,
+  setContractRatio,
+}: RatioProps) => {
   const min = collateral.ratio || 0
   const safe = min + 50
   const state = getRatioState(ratio, min)
@@ -93,7 +97,7 @@ const Ratio = ({ collateral, ratio = 150, setContractRatio }: RatioProps) => {
             <input
               id="range"
               min="0"
-              max={maxRatio.toString()}
+              max={maxBorrowRatio.toString()}
               type="range"
               className={state}
               value={ratio}
