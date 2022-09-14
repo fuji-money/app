@@ -1,3 +1,5 @@
+export const minBorrowRatio = 150
+export const maxBorrowRatio = 400
 export const minMultiplyRatio = 130
 export const maxMultiplyRatio = 330
 
