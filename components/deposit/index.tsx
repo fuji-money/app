@@ -8,7 +8,6 @@ interface DepositProps {
   channel: string
   setChannel: (arg0: string) => void
   setDeposit: (arg0: boolean) => void
-  topup: number
 }
 
 const Deposit = ({
@@ -16,7 +15,6 @@ const Deposit = ({
   channel,
   setChannel,
   setDeposit,
-  topup,
 }: DepositProps) => {
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'

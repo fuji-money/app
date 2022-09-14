@@ -1,27 +1,29 @@
 import { Contract, Oracle } from 'lib/types'
 import { useState } from 'react'
-import { getCollateralQuantity, getContractRatio } from 'lib/contracts'
+import { getContractRatio } from 'lib/contracts'
 import TopupForm from './form'
 import Balance from 'components/balance'
 import TopupButton from './button'
 import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
+import TopupInfo from './info'
 
 interface TopupProps {
-  contract: Contract
+  oldContract: Contract
   oracles: Oracle[]
-  setContract: (arg0: Contract) => void
 }
 
-const Topup = ({ contract, oracles, setContract }: TopupProps) => {
+const Topup = ({ oldContract, oracles }: TopupProps) => {
+  const [newContract, setNewContract] = useState(oldContract)
   const [deposit, setDeposit] = useState(false)
   const [channel, setChannel] = useState('')
-  const [ratio, setRatio] = useState(getContractRatio(contract))
+  const [ratio, setRatio] = useState(getContractRatio(oldContract))
 
-  const minRatio = getContractRatio(contract)
-  const quantity = getCollateralQuantity(contract, ratio)
-  const topup = quantity - (contract.collateral.quantity || 0)
+  const minRatio = getContractRatio(oldContract)
+  const oldQuantity = oldContract.collateral.quantity || 0
+  const newQuantity = newContract.collateral.quantity || 0
+  const topup = newQuantity - oldQuantity
 
   return (
     <section>
@@ -32,20 +34,25 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
             {!deposit && (
               <>
                 <TopupForm
-                  contract={contract}
+                  newContract={newContract}
+                  oldContract={oldContract}
                   oracles={oracles}
                   ratio={ratio}
+                  setNewContract={setNewContract}
                   setRatio={setRatio}
-                  setContract={setContract}
+                />
+                <TopupInfo
+                  newContract={newContract}
+                  oldContract={oldContract}
                 />
                 <Notifications
-                  contract={contract}
+                  contract={newContract}
                   minRatio={minRatio}
                   ratio={ratio}
                   topup={topup}
                 />
                 <TopupButton
-                  oracles={contract.oracles}
+                  oracles={newContract.oracles}
                   minRatio={minRatio}
                   ratio={ratio}
                   setDeposit={setDeposit}
@@ -55,11 +62,10 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
             )}
             {deposit && (
               <Deposit
-                contract={contract}
+                contract={newContract}
                 channel={channel}
                 setChannel={setChannel}
                 setDeposit={setDeposit}
-                topup={topup}
               />
             )}
           </div>
