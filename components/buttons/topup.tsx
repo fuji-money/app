@@ -8,17 +8,11 @@ interface TopupButtonProps {
 
 const TopupButton = ({ contract }: TopupButtonProps) => {
   if (contractIsClosed(contract) || !contract.confirmed) {
-    return (
-      <button className="button ml-3" disabled>
-        Topup (Coming soon)
-      </button>
-    )
+    return <button className="button ml-3">Topup</button>
   }
   return (
     <Link passHref href={`/contracts/${contract.txid}/topup`}>
-      <button disabled className="button ml-3">
-        Topup (Coming soon)
-      </button>
+      <button className="button ml-3">Topup</button>
     </Link>
   )
 }
