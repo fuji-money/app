@@ -23,7 +23,6 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
   const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
 
-  console.log('rrrrratio', ratio)
   const topup = 0
 
   return (
