@@ -31,7 +31,7 @@ const Marina = ({ contract, reset }: MarinaProps) => {
   const handleMarina = async () => {
     openModal('marina-deposit-modal')
     try {
-      // prepare borrow transaction with claim utxo as input
+      // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(contract, network)
 
       // propose contract to alpha factory
