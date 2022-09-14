@@ -38,7 +38,6 @@ const RedeemButton = ({
       setResult('success')
       reloadContracts()
     } catch (error) {
-      console.log('error catched', error)
       debugMessage(extractError(error))
       setData(extractError(error))
       setResult('failure')

@@ -9,6 +9,7 @@ import Summary from './summary'
 import Oracles from 'components/oracles'
 
 interface TopupFormProps {
+  minRatio: number
   newContract: Contract
   oldContract: Contract
   oracles: Oracle[]
@@ -18,6 +19,7 @@ interface TopupFormProps {
 }
 
 const TopupForm = ({
+  minRatio,
   newContract,
   oldContract,
   oracles,
@@ -26,8 +28,8 @@ const TopupForm = ({
   setRatio,
 }: TopupFormProps) => {
   // change collateral quantity on new contract based on new ratio
-  const setContractRatio = (ratio: number) => {
-    setRatio(ratio)
+  const setContractRatio = (newRatio: number) => {
+    setRatio(newRatio > minRatio ? newRatio : minRatio)
     const quantity = getCollateralQuantity(newContract, ratio)
     const collateral = { ...newContract.collateral, quantity }
     const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
@@ -48,6 +50,7 @@ const TopupForm = ({
       </h3>
       <Ratio
         collateral={oldContract.collateral}
+        minRatio={minRatio}
         ratio={ratio}
         setContractRatio={setContractRatio}
       />

@@ -34,6 +34,7 @@ const Topup = ({ oldContract, oracles }: TopupProps) => {
             {!deposit && (
               <>
                 <TopupForm
+                  minRatio={minRatio}
                   newContract={newContract}
                   oldContract={oldContract}
                   oracles={oracles}

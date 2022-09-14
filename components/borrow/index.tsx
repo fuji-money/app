@@ -23,6 +23,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
   const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
 
+  console.log('rrrrratio', ratio)
   const topup = 0
 
   return (
@@ -35,6 +36,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
               <>
                 <BorrowForm
                   contract={contract}
+                  minRatio={minRatio}
                   oracles={oracles}
                   ratio={ratio}
                   setContract={setContract}
