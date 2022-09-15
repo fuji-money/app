@@ -4,11 +4,11 @@ import Balance from 'components/balance'
 import { useState } from 'react'
 import BorrowInfo from './info'
 import BorrowButton from './button'
-import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
 import { getContractPriceLevel } from 'lib/contracts'
 import { minBorrowRatio } from 'lib/constants'
+import BorrowDeposit from './deposit'
 
 interface BorrowProps {
   offer: Offer
@@ -57,7 +57,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
               </>
             )}
             {deposit && (
-              <Deposit
+              <BorrowDeposit
                 contract={contract}
                 channel={channel}
                 setChannel={setChannel}

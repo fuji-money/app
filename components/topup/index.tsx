@@ -4,10 +4,10 @@ import { getContractRatio } from 'lib/contracts'
 import TopupForm from './form'
 import Balance from 'components/balance'
 import TopupButton from './button'
-import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
 import TopupInfo from './info'
+import TopupDeposit from './deposit'
 
 interface TopupProps {
   oldContract: Contract
@@ -62,7 +62,7 @@ const Topup = ({ oldContract, oracles }: TopupProps) => {
               </>
             )}
             {deposit && (
-              <Deposit
+              <TopupDeposit
                 contract={newContract}
                 channel={channel}
                 setChannel={setChannel}
