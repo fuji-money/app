@@ -329,6 +329,10 @@ export async function prepareRedeemTx(
 ) {
   debugMessage('contract to redeem', contract)
 
+  console.log('network', network)
+  console.log('networks.testnet', networks.testnet)
+  console.log('getNetwork(network)', getNetwork(network))
+
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -432,6 +436,7 @@ export async function prepareRedeemTx(
     },
   }
   const tx = ionioInstance.functions.redeem(marinaSigner)
+  console.log('rx', tx)
   debugMessage('initial tx', tx)
   // add synthetic inputs
   // are these inputs confidential? if so, we need to pass the unblindData field of the coin
