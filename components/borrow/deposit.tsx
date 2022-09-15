@@ -59,6 +59,7 @@ const BorrowDeposit = ({
 
   const handleLightning = async () => {
     openModal('lightning-deposit-modal')
+
     // every 5 seconds, query explorer for payment
     const waitForPayment = async (
       invoice: string,
@@ -77,73 +78,84 @@ const BorrowDeposit = ({
       }
       return utxos
     }
-    // create ephemeral account
-    const privateKey = randomBytes(32)
-    const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
-    // give enough satoshis to pay for all fees expected, so that we
-    // can use the returning coin as a solo input for the borrow tx
-    if (!contract.collateral.quantity) return
-    const onchainAmount = contract.collateral.quantity + feeAmount
+    try {
+      // create ephemeral account
+      const privateKey = randomBytes(32)
+      const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
-    // create swap with Boltz.exchange
-    const boltzSwap = await createReverseSubmarineSwap(
-      keyPair,
-      network,
-      onchainAmount,
-    )
-    if (!boltzSwap) throw new Error('Error creating swap')
+      // give enough satoshis to pay for all fees expected, so that we
+      // can use the returning coin as a solo input for the borrow tx
+      if (!contract.collateral.quantity) return
+      const onchainAmount = contract.collateral.quantity + feeAmount
 
-    // deconstruct swap
-    const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
+      // create swap with Boltz.exchange
+      const boltzSwap = await createReverseSubmarineSwap(
+        keyPair,
+        network,
+        onchainAmount,
+      )
+      if (!boltzSwap) throw new Error('Error creating swap')
 
-    // show qr code to user
-    setInvoice(invoice)
+      // deconstruct swap
+      const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
 
-    // wait for payment
-    const utxos = await waitForPayment(invoice, lockupAddress, network)
+      // show qr code to user
+      setInvoice(invoice)
 
-    // payment was never made, and the invoice expired
-    if (utxos.length === 0) throw new Error('Invoice has expired')
+      // wait for payment
+      const utxos = await waitForPayment(invoice, lockupAddress, network)
 
-    // show user (via modal) that payment was received
-    setPaid(true)
+      // payment was never made, and the invoice expired
+      if (utxos.length === 0) throw new Error('Invoice has expired')
 
-    // prepare borrow transaction with claim utxo as input
-    const preparedTx = await prepareBorrowTxWithClaimTx(
-      contract,
-      network,
-      redeemScript,
-      utxos,
-    )
+      // show user (via modal) that payment was received
+      setPaid(true)
 
-    // propose contract to alpha factory
-    const { partialTransaction } = await proposeBorrowContract(preparedTx)
+      // prepare borrow transaction with claim utxo as input
+      const preparedTx = await prepareBorrowTxWithClaimTx(
+        contract,
+        network,
+        redeemScript,
+        utxos,
+      )
 
-    // sign and finalize input[0]
-    const psbt = Psbt.fromBase64(partialTransaction)
-    psbt.signInput(0, keyPair)
-    psbt.finalizeInput(0, (_, input) => {
-      return {
-        finalScriptSig: undefined,
-        finalScriptWitness: witnessStackToScriptWitness([
-          input.partialSig![0].signature,
-          preimage,
-          Buffer.from(redeemScript, 'hex'),
-        ]),
-      }
-    })
+      // propose contract to alpha factory
+      const { partialTransaction } = await proposeBorrowContract(preparedTx)
 
-    // broadcast transaction
-    contract.txid = await broadcastTx(psbt.toBase64())
+      // sign and finalize input[0]
+      const psbt = Psbt.fromBase64(partialTransaction)
+      psbt.signInput(0, keyPair)
+      psbt.finalizeInput(0, (_, input) => {
+        return {
+          finalScriptSig: undefined,
+          finalScriptWitness: witnessStackToScriptWitness([
+            input.partialSig![0].signature,
+            preimage,
+            Buffer.from(redeemScript, 'hex'),
+          ]),
+        }
+      })
 
-    // add additional fields to contract and save to storage
-    contract.borrowerPubKey = preparedTx.borrowerPublicKey
-    contract.contractParams = preparedTx.contractParams
-    contract.network = network
-    contract.confirmed = false
-    contract.xPubKey = await getXPubKey()
-    createNewContract(contract)
+      // broadcast transaction
+      contract.txid = await broadcastTx(psbt.toBase64())
+
+      // add additional fields to contract and save to storage
+      contract.borrowerPubKey = preparedTx.borrowerPublicKey
+      contract.contractParams = preparedTx.contractParams
+      contract.network = network
+      contract.confirmed = false
+      contract.xPubKey = await getXPubKey()
+      createNewContract(contract)
+
+      // show success
+      setData(contract.txid)
+      setResult('success')
+      reloadContracts()
+    } catch (error) {
+      setData(extractError(error))
+      setResult('failure')
+    }
   }
 
   const handleMarina = async () => {
