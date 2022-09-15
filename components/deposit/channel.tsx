@@ -61,7 +61,8 @@ const Channel = ({ contract, setChannel }: ChannelProps) => {
   const enoughFunds = balance > quantity
 
   const liquidButtonEnabled = enoughFunds
-  const lightningButtonEnabled = ticker === 'L-BTC' && !outOfBounds
+  // const lightningButtonEnabled = ticker === 'L-BTC' && !outOfBounds
+  const lightningButtonEnabled = false // TODO - revert when boltz instance ok
 
   return (
     <div className="has-text-centered">
