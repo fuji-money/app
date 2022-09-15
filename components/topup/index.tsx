@@ -11,12 +11,12 @@ import Notifications from 'components/notifications'
 interface TopupProps {
   contract: Contract
   oracles: Oracle[]
-  setContract: any
+  setContract: (arg0: Contract) => void
 }
 
 const Topup = ({ contract, oracles, setContract }: TopupProps) => {
   const [deposit, setDeposit] = useState(false)
-  const [network, setNetwork] = useState('')
+  const [channel, setChannel] = useState('')
   const [ratio, setRatio] = useState(getContractRatio(contract))
 
   const minRatio = getContractRatio(contract)
@@ -25,7 +25,7 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
 
   return (
     <section>
-      <Title name="Topup" network={network} deposit={deposit} />
+      <Title name="Topup" channel={channel} deposit={deposit} />
       <div className="row">
         <div className="columns">
           <div className="column is-8">
@@ -56,8 +56,9 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
             {deposit && (
               <Deposit
                 contract={contract}
-                network={network}
-                setNetwork={setNetwork}
+                channel={channel}
+                setChannel={setChannel}
+                setDeposit={setDeposit}
                 topup={topup}
               />
             )}

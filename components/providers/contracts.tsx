@@ -28,6 +28,14 @@ import { checkOutspend, getTx } from 'lib/explorer'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
+import BIP32Factory from 'bip32'
+import * as ecc from 'tiny-secp256k1'
+
+function computeOldXPub(xpub: string): string {
+  const bip32 = BIP32Factory(ecc)
+  const decoded = bip32.fromBase58(xpub)
+  return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
+}
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -54,11 +62,13 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
-  const reloadContracts = async (txt = 'unknown') => {
-    await checkContractsStatus()
-    setContracts(await getContracts())
-    setActivities(await getActivities())
-    setLoading(false)
+  const reloadContracts = async () => {
+    if (connected) {
+      await checkContractsStatus()
+      setContracts(await getContracts())
+      setActivities(await getActivities())
+      setLoading(false)
+    }
   }
 
   // check contract status
@@ -120,22 +130,30 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
-  // temporary fix: fix missing xPubKey on old contracts and store on local storage
-  // addendum: if Marina xPubKey starts with 'xpub' and contract xPubKey starts with
-  // 'zpub' (previous version of Marina), update contract xPubKey to 'xpub...'
+  // temporary fix:
+  // 1. fix missing xPubKey on old contracts and store on local storage
+  // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
+  // 3. update xPubKey to neutered xPubKey
   const fixMissingXPubKeyOnOldContracts = () => {
+    // get non neutered xPubKey
+    const oldXPubKey = computeOldXPub(xPubKey)
     // on new Marina version, xPubKey starts with 'xpub' instead of 'zpub'
     const shouldStartWithXpub = xPubKey.startsWith('xpub')
     getContractsFromStorage()
       .filter((contract) => contract.network === network)
       .map((contract) => {
         if (!contract.xPubKey) {
-          contract.xPubKey = xPubKey
+          contract.xPubKey = xPubKey // point 1
           updateContractOnStorage(contract)
         } else {
           if (contract.xPubKey.startsWith('zpub') && shouldStartWithXpub) {
-            contract.xPubKey = toXpub(xPubKey) // converts 'zpub' to 'xpub'
+            contract.xPubKey = toXpub(contract.xPubKey) // point 2
             updateContractOnStorage(contract)
+          } else {
+            if (contract.xPubKey === oldXPubKey) {
+              contract.xPubKey = xPubKey // point 3
+              updateContractOnStorage(contract)
+            }
           }
         }
       })
@@ -145,13 +163,14 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // don't use NEW_TX, on reload Marina emits a NEW_TX for all TXs,
   // which cause a lot of spam on the explorer (#tx * #contracts * 2 queries)
   const onNewTxListener = () => {
-    if (marina) marina.on('SPENT_UTXO', async () => reloadContracts())
+    if (connected && marina)
+      marina.on('SPENT_UTXO', async () => reloadContracts())
   }
 
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    if (network && xPubKey) {
+    if (connected && network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
         fixMissingXPubKeyOnOldContracts()
@@ -159,13 +178,14 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         firstRender.current.push(network)
       }
     }
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, network])
 
   // update contracts
   useEffect(() => {
-    if (connected && marina) reloadContracts('use effect')
+    if (connected && marina) reloadContracts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network, xPubKey])
+  }, [connected, marina, network, xPubKey])
 
   return (
     <ContractsContext.Provider

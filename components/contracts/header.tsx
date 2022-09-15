@@ -1,6 +1,6 @@
 interface ContractsHeaderProps {
   showActive: boolean
-  setShowActive: any
+  setShowActive: (arg0: boolean) => void
 }
 
 const ContractsHeader = ({

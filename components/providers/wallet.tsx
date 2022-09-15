@@ -13,6 +13,7 @@ interface WalletContextProps {
   connected: boolean
   marina: MarinaProvider | undefined
   network: NetworkString
+  setConnected: (arg0: boolean) => void
   xPubKey: string
 }
 
@@ -21,6 +22,7 @@ export const WalletContext = createContext<WalletContextProps>({
   connected: false,
   marina: undefined,
   network: defaultNetwork,
+  setConnected: () => {},
   xPubKey: '',
 })
 
@@ -55,15 +57,19 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // add event listeners for enable and disable (aka connected)
   useEffect(() => {
     if (marina) {
-      if (connected) {
-        const id = marina.on('DISABLED', () => setConnected(false))
-        return () => marina.off(id)
-      } else {
-        const id = marina.on('ENABLED', () => setConnected(true))
-        return () => marina.off(id)
+      const onDisabledId = marina.on('DISABLED', ({ data }) => {
+        if (data.network === network) setConnected(false)
+      })
+      const onEnabledId = marina.on('ENABLED', ({ data }) => {
+        if (data.network === network) setConnected(true)
+      })
+      return () => {
+        marina.off(onDisabledId)
+        marina.off(onEnabledId)
       }
     }
-  }, [connected, marina])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marina])
 
   // update network and add event listener
   useEffect(() => {
@@ -76,8 +82,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // update balances and add event listener
   useEffect(() => {
+    updateBalances()
     if (connected && marina) {
-      updateBalances()
       updateXPubKey()
       const id = marina.on('SPENT_UTXO', () => updateBalances())
       return () => marina.off(id)
@@ -86,7 +92,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   return (
     <WalletContext.Provider
-      value={{ balances, connected, marina, network, xPubKey }}
+      value={{ balances, connected, marina, network, setConnected, xPubKey }}
     >
       {children}
     </WalletContext.Provider>

@@ -10,21 +10,22 @@ import { ContractsContext } from 'components/providers/contracts'
 
 interface ContractsListProps {
   showActive: boolean
-  setData: any
-  setResult: any
 }
 
-const ContractsList = ({
-  showActive,
-  setData,
-  setResult,
-}: ContractsListProps) => {
+const ContractsList = ({ showActive }: ContractsListProps) => {
+  const { connected } = useContext(WalletContext)
+  const { contracts, loading } = useContext(ContractsContext)
+
   const [redeem, setReedem] = useState<Contract>()
   const [assetBalance, setAssetBalance] = useState(0)
   const [step, setStep] = useState(0)
+  const [data, setData] = useState('')
+  const [result, setResult] = useState('')
 
-  const { connected } = useContext(WalletContext)
-  const { contracts, loading } = useContext(ContractsContext)
+  const reset = () => {
+    setData('')
+    setResult('')
+  }
 
   if (!connected)
     return (
@@ -41,17 +42,24 @@ const ContractsList = ({
 
   return (
     <>
-      <RedeemModal contract={redeem} assetBalance={assetBalance} step={step} />
+      <RedeemModal
+        balance={assetBalance}
+        contract={redeem}
+        data={data}
+        result={result}
+        reset={reset}
+        step={step}
+      />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
           <ContractRow
             key={index}
             contract={contract}
-            setRedeem={setReedem}
             setAssetBalance={setAssetBalance}
-            setStep={setStep}
             setData={setData}
             setResult={setResult}
+            setRedeem={setReedem}
+            setStep={setStep}
           />
         ))}
     </>

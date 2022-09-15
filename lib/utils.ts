@@ -32,8 +32,33 @@ export const closeModal = (id: string): void => {
   document.getElementById(id)?.classList.remove('is-active')
 }
 
+// close modal
+export const closeAllModals = (): void => {
+  const modals = document.querySelectorAll('.modal')
+  for (const el of Array.from(modals)) {
+    el.classList.remove('is-active')
+  }
+}
+
+export async function sleep(miliseconds: number) {
+  await Promise.resolve(
+    new Promise((resolve) => {
+      setTimeout(resolve, miliseconds)
+    }),
+  )
+}
+
 // set showDebug to true to see messages on console
 export const debugMessage = (...params: any[]) => {
   const showDebug = true
+  console.log('params', params)
   if (showDebug) console.debug(...params)
+}
+
+export const extractError = (error: any): string => {
+  return error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+    ? error
+    : ''
 }

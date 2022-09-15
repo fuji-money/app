@@ -4,16 +4,16 @@ import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
 import { Contract, ContractState } from 'lib/types'
-import { closeModal, openModal } from 'lib/utils'
+import { closeModal, debugMessage, extractError, openModal } from 'lib/utils'
 import { useContext } from 'react'
 
 interface RedeemButtonProps {
   contract: Contract
-  setAssetBalance: any
-  setRedeem: any
-  setStep: any
-  setData: any
-  setResult: any
+  setAssetBalance: (arg0: number) => void
+  setRedeem: (arg0: Contract) => void
+  setStep: (arg0: number) => void
+  setData: (arg0: string) => void
+  setResult: (arg0: string) => void
 }
 
 const RedeemButton = ({
@@ -24,7 +24,7 @@ const RedeemButton = ({
   setData,
   setResult,
 }: RedeemButtonProps) => {
-  const { balances } = useContext(WalletContext)
+  const { balances, network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const handleClick = async () => {
@@ -32,16 +32,17 @@ const RedeemButton = ({
     setRedeem(contract)
     openModal('redeem-modal')
     try {
-      const txid = await prepareRedeemTx(contract, setStep)
+      const txid = await prepareRedeemTx(contract, network, setStep)
       markContractRedeemed(contract)
-      reloadContracts()
       setData(txid)
       setResult('success')
+      reloadContracts()
     } catch (error) {
-      setData(error instanceof Error ? error.message : error)
+      console.log('error catched', error)
+      debugMessage(extractError(error))
+      setData(extractError(error))
       setResult('failure')
     }
-    closeModal('redeem-modal')
   }
 
   const disabled =

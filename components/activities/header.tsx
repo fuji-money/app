@@ -1,7 +1,7 @@
 import { ActivityType } from 'lib/types'
 
 interface ActivitiesHeaderProps {
-  setActivityType: any
+  setActivityType: (arg0: ActivityType) => void
 }
 
 const ActivitiesHeader = ({ setActivityType }: ActivitiesHeaderProps) => {

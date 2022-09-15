@@ -8,6 +8,7 @@ import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
 import { getContractPriceLevel } from 'lib/contracts'
+import { minBorrowRatio } from 'lib/constants'
 
 interface BorrowProps {
   offer: Offer
@@ -16,9 +17,9 @@ interface BorrowProps {
 
 const Borrow = ({ offer, oracles }: BorrowProps) => {
   const [deposit, setDeposit] = useState(false)
-  const [network, setNetwork] = useState('')
+  const [channel, setChannel] = useState('')
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
-  const minRatio = offer.collateral.ratio || 150
+  const minRatio = offer.collateral.ratio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
   const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
 
@@ -26,7 +27,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
 
   return (
     <section>
-      <Title name="Borrow" network={network} deposit={deposit} />
+      <Title name="Borrow" channel={channel} deposit={deposit} />
       <div className="row">
         <div className="columns">
           <div className="column is-8">
@@ -57,8 +58,9 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
             {deposit && (
               <Deposit
                 contract={contract}
-                network={network}
-                setNetwork={setNetwork}
+                channel={channel}
+                setChannel={setChannel}
+                setDeposit={setDeposit}
                 topup={topup}
               />
             )}

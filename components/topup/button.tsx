@@ -5,7 +5,7 @@ interface TopupButtonProps {
   minRatio: number
   oracles: string[]
   ratio: number
-  setDeposit: any
+  setDeposit: (arg0: boolean) => void
   topup: number
 }
 

@@ -2,6 +2,7 @@ import { WalletContext } from 'components/providers/wallet'
 import { fetchAsset } from 'lib/api'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { getAssetBalance } from 'lib/marina'
+import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { Contract } from 'lib/types'
 import { useContext, useEffect, useState } from 'react'
 
@@ -9,7 +10,7 @@ interface BorrowButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  setDeposit: any
+  setDeposit: (arg0: boolean) => void
 }
 
 const BorrowButton = ({
@@ -25,7 +26,9 @@ const BorrowButton = ({
     fetchAsset(contract.collateral.ticker).then((asset) => {
       const funds = getAssetBalance(asset, balances)
       const needed = contract.collateral.quantity || 0
-      setEnoughFunds(connected && funds > needed)
+      const enoughFundsOnMarina = connected && funds > needed
+      const outOfBounds = swapDepositAmountOutOfBounds(needed)
+      setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
     })
   })
 

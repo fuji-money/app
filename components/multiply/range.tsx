@@ -17,7 +17,7 @@ interface RangeProps {
   minRatio: number
   maxRatio: number
   ratio: number
-  setRatio: any
+  setRatio: (arg0: number) => void
 }
 
 const Range = ({

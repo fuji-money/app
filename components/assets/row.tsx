@@ -1,4 +1,4 @@
-import { prettyAmount, prettyNumber, prettyQuantity } from 'lib/pretty'
+import { prettyAmount, prettyQuantity } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
@@ -13,6 +13,7 @@ interface AssetRowProps {
 
 const AssetRow = ({ asset }: AssetRowProps) => {
   const { balances } = useContext(WalletContext)
+  const balance = getAssetBalance(asset, balances)
   return (
     <div
       className={`is-box has-pink-border row ${
@@ -27,13 +28,13 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           <div className="is-purple my-auto">
             <p className="is-size-6 mb-0">{asset.name}</p>
             <p className="is-size-6 mb-0 has-text-weight-bold">
-              {prettyQuantity(getAssetBalance(asset, balances))} {asset.ticker}
+              {prettyQuantity(balance)} {asset.ticker}
             </p>
           </div>
         </div>
         <div className="column is-3">
           <p className="has-text-weight-bold is-gradient">
-            {prettyAmount(asset)}
+            {prettyAmount(asset, balance)}
           </p>
         </div>
         <div className="column is-6 has-text-right">

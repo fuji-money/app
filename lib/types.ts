@@ -55,7 +55,7 @@ export interface Contract {
   borrowerPubKey?: string
   collateral: Asset
   confirmed?: boolean
-  contractParams?: any // TODO
+  contractParams?: any
   createdAt?: number
   network?: string
   oracles: string[]

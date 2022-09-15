@@ -3,8 +3,18 @@ import Image from 'next/image'
 import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
+import { closeAllModals } from 'lib/utils'
 
-const Success = ({ cleanUp, txid }: { cleanUp: any; txid: any }) => {
+interface SuccessProps {
+  txid: string
+  reset: () => void
+}
+
+const Success = ({ reset, txid }: SuccessProps) => {
+  const handleClick = () => {
+    closeAllModals()
+    reset()
+  }
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -21,7 +31,7 @@ const Success = ({ cleanUp, txid }: { cleanUp: any; txid: any }) => {
       <TwitterLink message={twitterMessage} />
       <p className="has-text-centered mt-5">
         <Link href="/dashboard">
-          <a className="button is-primary is-cta" onClick={cleanUp}>
+          <a className="button is-primary is-cta" onClick={handleClick}>
             Back to dashboard
           </a>
         </Link>
@@ -30,7 +40,12 @@ const Success = ({ cleanUp, txid }: { cleanUp: any; txid: any }) => {
   )
 }
 
-const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
+interface FailureProps {
+  error: string | unknown
+  reset: () => void
+}
+
+const Failure = ({ error, reset }: FailureProps) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -44,10 +59,7 @@ const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
       <h2 className="mt-4">Something went wrong</h2>
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
-        <button
-          className="button is-cta"
-          onClick={() => window.location.reload()}
-        >
+        <button className="button is-cta" onClick={reset}>
           Try again
         </button>
       </p>
@@ -56,19 +68,14 @@ const Failure = ({ cleanUp, error }: { cleanUp: any; error: any }) => {
 }
 
 interface ResultProps {
-  data: any
+  data: string
   result: string
-  setData: any
-  setResult: any
+  reset: () => void
 }
 
-const Result = ({ data, result, setData, setResult }: ResultProps) => {
-  const cleanUp = () => {
-    setData('')
-    setResult('')
-  }
-  if (result === 'success') return <Success cleanUp={cleanUp} txid={data} />
-  if (result === 'failure') return <Failure cleanUp={cleanUp} error={data} />
+const Result = ({ data, result, reset }: ResultProps) => {
+  if (result === 'success') return <Success reset={reset} txid={data} />
+  if (result === 'failure') return <Failure reset={reset} error={data} />
   return <></>
 }
 

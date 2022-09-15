@@ -1,3 +1,5 @@
+export const minBorrowRatio = 150
+export const maxBorrowRatio = 400
 export const minMultiplyRatio = 130
 export const maxMultiplyRatio = 330
 
@@ -24,6 +26,7 @@ export const alphaServerUrl =
   process.env.NEXT_PUBLIC_FACTORY_URL || 'https://alpha-factory.fuji.money' // TODO - remove alternative url
 
 export const minDustLimit = 500
-export const feeAmount = 500
+export const feeAmount = 500 // fee for regular liquid tx
+export const swapFeeAmount = 500 // fee for Boltz
 
 export const twitterMessage = `I'm using @fuji_money to borrow Fuji USD with #Bitcoin collateral.\n\n💸 No recurring interest\n🥷 No intermediaries\n🏃‍♀️ Redeem anytime\n\nCheck it out!\n\nhttps://fuji.money`

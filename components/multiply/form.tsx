@@ -15,8 +15,8 @@ import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
 
 interface MultiplyFormProps {
   contract: Contract
-  setContract: any
-  setDeposit: any
+  setContract: (arg0: Contract) => void
+  setDeposit: (arg0: boolean) => void
 }
 
 const MultiplyForm = ({
@@ -52,17 +52,15 @@ const MultiplyForm = ({
       const expo = debt / lbtc.value + quantity
       const mult = quantity ? expo / quantity : 0
       const liqp = (lbtc.value / ratio) * minMultiplyRatio
+      contract.collateral.quantity = quantity
+      contract.synthetic.quantity = debt
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
       setLiquidationPrice(liqp)
-      setContract((c: Contract) => {
-        const collateral = { ...c.collateral, quantity }
-        const synthetic = { ...c.synthetic, quantity: debt }
-        return { ...c, collateral, synthetic }
-      })
+      setContract(contract)
     }
-  }, [lbtc, quantity, ratio, setContract])
+  }, [contract, lbtc, quantity, ratio, setContract])
 
   if (isLoading) return <Spinner />
   if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { Asset } from 'lib/types'
+import { fromSatoshis } from 'lib/utils'
 
 interface SyntheticProps {
   asset: Asset
@@ -27,9 +28,10 @@ const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
           <input
             className="input has-pink-background has-text-right"
             min="0"
+            onChange={setSyntheticQuantity}
             placeholder="0.00"
             type="number"
-            onChange={setSyntheticQuantity}
+            value={fromSatoshis(asset.quantity)}
           />
         </div>
       </div>

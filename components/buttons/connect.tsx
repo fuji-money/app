@@ -6,7 +6,7 @@ import AccountModal from 'components/modals/account'
 import WalletsModal from 'components/modals/wallets'
 
 const ConnectButton = () => {
-  const { connected, marina } = useContext(WalletContext)
+  const { connected, marina, setConnected } = useContext(WalletContext)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -17,6 +17,7 @@ const ConnectButton = () => {
     if (!marina) return
     if (connected) {
       await marina.disable()
+      setConnected(false)
     } else {
       openModal('wallets-modal')
     }
@@ -37,7 +38,7 @@ const ConnectButton = () => {
     <>
       {marina && (
         <>
-          <button onClick={toggle} className="button is-primary my-auto mr-6">
+          <button onClick={toggle} className="button is-primary my-auto mr-4">
             {message}
           </button>
           <AccountModal />
