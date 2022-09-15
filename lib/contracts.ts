@@ -212,3 +212,11 @@ export function markContractUnknown(contract: Contract): void {
   removeActivities(contract, ActivityType.Redeemed)
   removeActivities(contract, ActivityType.Topup)
 }
+
+// mark contract as topup
+export function markContractTopup(contract: Contract): void {
+  if (contract.state === ContractState.Topup) return
+  contract.state = ContractState.Topup
+  updateContractOnStorage(contract)
+  addActivity(contract, ActivityType.Topup, Date.now())
+}

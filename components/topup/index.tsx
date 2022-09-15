@@ -63,8 +63,9 @@ const Topup = ({ oldContract, oracles }: TopupProps) => {
             )}
             {deposit && (
               <TopupDeposit
-                contract={newContract}
                 channel={channel}
+                newContract={newContract}
+                oldContract={oldContract}
                 setChannel={setChannel}
                 setDeposit={setDeposit}
               />

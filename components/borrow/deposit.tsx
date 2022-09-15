@@ -163,6 +163,7 @@ const BorrowDeposit = ({
     try {
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(contract, network)
+      if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory
       const { partialTransaction } = await proposeBorrowContract(preparedTx)
