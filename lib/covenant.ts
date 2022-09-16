@@ -619,7 +619,6 @@ export async function prepareTopupTx(
   contractParams.priceLevel = newContract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   const borrowerAddress = await getNextAddress()
-  const changeAddress = collateralChangeAddress // TODO - verify this
 
   return {
     borrowerAddress,
