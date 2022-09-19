@@ -8,13 +8,10 @@ import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
 import { createNewContract, markContractTopup } from 'lib/contracts'
-import {
-  prepareTopupTx,
-  proposeBorrowContract,
-  proposeTopupContract,
-} from 'lib/covenant'
+import { prepareTopupTx, proposeTopupContract } from 'lib/covenant'
 import { signAndBroadcastTx, getXPubKey } from 'lib/marina'
 import { openModal, extractError } from 'lib/utils'
+import { Psbt, Transaction, witnessStackToScriptWitness } from 'liquidjs-lib'
 
 interface TopupDepositProps {
   channel: string
@@ -31,7 +28,7 @@ const TopupDeposit = ({
   setChannel,
   setDeposit,
 }: TopupDepositProps) => {
-  const { network } = useContext(WalletContext)
+  const { marina, network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')
@@ -51,8 +48,10 @@ const TopupDeposit = ({
   const handleLightning = () => {} // TODO
 
   const handleMarina = async () => {
+    if (!marina) return
     openModal('marina-deposit-modal')
     try {
+      if (!oldContract.txid) throw new Error('Old contract without txid')
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(newContract, oldContract, network)
       if (!preparedTx) throw new Error('Unable to prepare Tx')
@@ -64,8 +63,46 @@ const TopupDeposit = ({
       // show user (via modal) that contract proposal was accepted
       setStep(1)
 
+      // user now must sign transaction on marina
+      const base64 = await marina.signTransaction(partialTransaction)
+      const ptx = Psbt.fromBase64(base64)
+
+      // finalize covenant input
+      const covenantInputIndex = 0
+      const { tapScriptSig } = ptx.data.inputs[covenantInputIndex]
+
+      let witnessStack: Buffer[] = []
+
+      if (tapScriptSig && tapScriptSig.length > 0) {
+        for (const s of tapScriptSig) {
+          witnessStack.push(s.signature)
+        }
+      }
+
+      ptx.finalizeInput(covenantInputIndex, (_, input) => {
+        return {
+          finalScriptSig: undefined,
+          finalScriptWitness: witnessStackToScriptWitness([
+            ...witnessStack,
+            input.tapLeafScript![0].script,
+            input.tapLeafScript![0].controlBlock,
+          ]),
+        }
+      })
+
+      // finalize the other inputs
+      for (let index = 1; index < ptx.data.inputs.length; index++) {
+        ptx.finalizeInput(index)
+      }
+
+      // broadcast transaction
+      const rawHex = ptx.extractTransaction().toHex()
+      const sentTransaction = await marina.broadcastTransaction(rawHex)
+
       // add additional fields to contract and save to storage
-      newContract.txid = await signAndBroadcastTx(partialTransaction)
+      const covenantOutputIndex = 1
+      newContract.txid = sentTransaction.txid
+      newContract.vout = covenantOutputIndex
       newContract.borrowerPubKey = preparedTx.borrowerPublicKey
       newContract.contractParams = preparedTx.contractParams
       newContract.network = network

@@ -19,7 +19,7 @@ const TopupButton = ({
   const { connected } = useContext(WalletContext)
 
   const enabled =
-    connected && topup > 0 && ratio >= minRatio && oracles.length > 0
+    connected && topup > 0 && ratio > minRatio && oracles.length > 0
 
   return (
     <div className="has-text-centered">

@@ -30,11 +30,6 @@ const TopupForm = ({
   // change collateral quantity on new contract based on new ratio
   const setContractRatio = (newRatio: number) => {
     setRatio(newRatio > minRatio ? newRatio : minRatio)
-    const quantity = getCollateralQuantity(newContract, ratio)
-    const collateral = { ...newContract.collateral, quantity }
-    const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
-    const payoutAmount = getContractPayoutAmount(newContract, quantity)
-    setNewContract({ ...newContract, collateral, priceLevel, payoutAmount })
   }
 
   return (

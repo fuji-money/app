@@ -36,7 +36,7 @@ import { fetchTxHex, getNetwork } from 'ldk'
 import { explorerURL } from './explorer'
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
-  // fee amount will be taken from covenant
+  // get payout amount
   const payoutAmount =
     contract.payoutAmount || getContractPayoutAmount(contract) // TODO
   // get ionio instance
@@ -119,7 +119,7 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
 
 interface PreparedBorrowTx {
   borrowerAddress: AddressInterface
-  borrowerPublicKey: StringConstructor
+  borrowerPublicKey: string
   changeAddress?: AddressInterface
   collateralUtxos: UtxoWithBlindPrivKey[]
   contractParams: any
@@ -218,16 +218,12 @@ export async function prepareBorrowTx(
     collateral.quantity,
   )
   if (collateralUtxos.length === 0) throw new Error('Not enough funds')
-  debugMessage('collateralAmount', collateral.quantity)
-  debugMessage('collateralUtxos', collateralUtxos)
 
   // build Psbt
   const psbt = new Psbt({ network: getNetwork(network) })
 
   // add collateral inputs
   for (const utxo of collateralUtxos) {
-    debugMessage('utxo')
-    debugMessage(utxo.txid, utxo.vout, utxo.prevout)
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,
@@ -259,14 +255,11 @@ export async function prepareBorrowTx(
     })
   }
 
-  debugMessage('psbt', psbt)
-
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   const borrowerAddress = await getNextAddress()
-  debugMessage('borrowerPublicKey', borrowerPublicKey)
 
   return {
     borrowerAddress,
@@ -357,7 +350,7 @@ export async function proposeBorrowContract({
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
-export async function prepareRedeemTx(
+export async function makeRedeemTx(
   contract: Contract,
   network: NetworkString,
   setStep: (arg0: number) => void,
@@ -387,14 +380,14 @@ export async function prepareRedeemTx(
   let ionioInstance = getIonioInstance(contract, network)
 
   // find coin for this contract
-  const coins = await marina.getCoins([marinaFujiAccountID])
-  // TODO stores the vout in storage. Now we assume is ALWAYS 0
-  const coinToRedeem = coins.find(
-    (c) => c.txid === contract.txid && c.vout === 0,
+  const fujiCoins = await marina.getCoins([marinaFujiAccountID])
+  const coinToRedeem = fujiCoins.find(
+    (c) => c.txid === contract.txid && c.vout === contract.vout,
   )
   if (!coinToRedeem)
     throw new Error(
-      'Contract cannot be found in the connected wallet. Wait for confirmations or try to reload the wallet and try again.',
+      'Contract cannot be found in the connected wallet.' +
+        'Wait for confirmations or try to reload the wallet and try again.',
     )
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
@@ -407,7 +400,7 @@ export async function prepareRedeemTx(
     synthetic.id,
     synthetic.quantity,
   )
-  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji assets')
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
   // calculate synthetic change amount
   const syntheticUtxosAmount = syntheticUtxos.reduce(
@@ -431,11 +424,8 @@ export async function prepareRedeemTx(
   const tx = ionioInstance.functions.redeem(marinaSigner)
 
   // add synthetic inputs
-  // are these inputs confidential? if so, we need to pass the unblindData field of the coin
-  // https://github.com/ionio-lang/ionio/blob/master/packages/ionio/test/e2e/transferWithKey.test.ts#L54
   for (const utxo of syntheticUtxos) {
-    const { txid, vout, prevout, unblindData } = utxo
-    tx.withUtxo({ txid, vout, prevout, unblindData })
+    tx.withUtxo(utxo)
   }
 
   // burn synthetic
@@ -456,7 +446,6 @@ export async function prepareRedeemTx(
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
-    debugMessage('output synthetic change', syntheticChangeAmount)
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
@@ -477,6 +466,7 @@ export async function prepareRedeemTx(
     signed.psbt.finalizeInput(index)
   }
 
+  // extract and broadcast transaction
   const rawHex = signed.psbt.extractTransaction().toHex()
   const sentTransaction = await marina.broadcastTransaction(rawHex)
   return sentTransaction.txid
@@ -485,6 +475,7 @@ export async function prepareRedeemTx(
 interface PreparedTopupTx {
   borrowerAddress: AddressInterface
   borrowerPublicKey: string
+  coinToTopup: Utxo
   contractParams: any
   collateralChangeAddress?: AddressInterface
   collateralUtxos: UtxoWithBlindPrivKey[]
@@ -512,16 +503,20 @@ export async function prepareTopupTx(
     throw new Error('Invalid new contract: no synthetic quantity')
   if (!newContract.priceLevel)
     throw new Error('Invalid new contract: no contract priceLevel')
+  if (!oldContract.txid) throw new Error('Invalid old contract: no txid')
   if (!oldContract.collateral.quantity)
     throw new Error('Invalid old contract: no collateral quantity')
   if (!oldContract.synthetic.quantity)
     throw new Error('Invalid old contract: no synthetic quantity')
 
-  // topup amount to deposit
+  // burn amount, and topup amount to deposit
+  const burnAmount = oldContract.synthetic.quantity
+  const burnAsset = oldContract.synthetic.id
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
 
   // validate we have necessary utxos
+  console.log('start collateral utxos')
   const collateralUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
@@ -530,21 +525,38 @@ export async function prepareTopupTx(
   )
   if (collateralUtxos.length === 0) throw new Error('Not enough funds')
 
-  // validate we have sufficient synthetic funds
+  // validate we have sufficient synthetic funds to burn
+  console.log('start synthetic utxos')
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
-    oldContract.synthetic.id,
-    oldContract.synthetic.quantity,
+    burnAsset,
+    burnAmount,
   )
-  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji assets')
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
-  // get covenant params
-  const { contractParams, covenantOutput, covenantAddress, timestamp } =
+  // get new covenant params
+  console.log('get covenant output')
+  const { contractParams, covenantAddress, timestamp } =
     await getCovenantOutput(newContract, network)
 
+  // find coin for this contract
+  console.log('finding covenants')
+  const coins = await marina.getCoins([marinaFujiAccountID])
+  const coinToTopup = coins.find(
+    (c) => c.txid === oldContract.txid && c.vout === oldContract.vout,
+  )
+  if (!coinToTopup)
+    throw new Error(
+      'Contract cannot be found in the connected wallet. ' +
+        'Wait for confirmations or try to reload the wallet and try again.',
+    )
+
+  const { txid, vout, prevout, unblindData } = coinToTopup
+
   // get ionio instance
-  let ionioInstance = getIonioInstance(newContract, network)
+  let ionioInstance = getIonioInstance(oldContract, network)
+  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
 
   // signatures needed for topup
   const marinaSigner = {
@@ -557,29 +569,32 @@ export async function prepareTopupTx(
     signTransaction: (p: string) => Promise.resolve(p),
   }
 
+  // this will add old covenant output as first input on tx
   const tx = ionioInstance.functions.topup(skipSignature, marinaSigner)
-
-  // add synthetic inputs
-  for (const utxo of syntheticUtxos) {
-    tx.withUtxo(utxo)
-  }
 
   // add collateral inputs
   for (const utxo of collateralUtxos) {
     tx.withUtxo(utxo)
   }
 
+  // add synthetic inputs
+  for (const utxo of syntheticUtxos) {
+    tx.withUtxo(utxo)
+  }
+
   // burn fuji
-  tx.withOpReturn(oldContract.synthetic.quantity, oldContract.synthetic.id)
+  tx.withOpReturn(burnAmount, burnAsset)
 
   // new covenant output
+  // the covenant must be always unconf!
   tx.withRecipient(
-    covenantAddress.confidentialAddress,
+    address.fromConfidential(covenantAddress.confidentialAddress!)
+      .unconfidentialAddress,
     newContract.collateral.quantity,
     newContract.collateral.id,
   )
 
-  // add collateral change output
+  // add collateral change output if needed
   let collateralChangeAddress
   const collateralUtxosAmount = collateralUtxos.reduce(
     (value, utxo) => value + (utxo.value || 0),
@@ -595,14 +610,13 @@ export async function prepareTopupTx(
     )
   }
 
-  // add collateral change output
+  // add synthetic change output if needed
   let syntheticChangeAddress
   const syntheticUtxosAmount = syntheticUtxos.reduce(
     (value, utxo) => value + (utxo.value || 0),
     0,
   )
-  const syntheticChangeAmount =
-    syntheticUtxosAmount - oldContract.synthetic.quantity
+  const syntheticChangeAmount = syntheticUtxosAmount - burnAmount
   if (syntheticChangeAmount > 0) {
     syntheticChangeAddress = await getNextChangeAddress()
     tx.withRecipient(
@@ -611,8 +625,6 @@ export async function prepareTopupTx(
       newContract.synthetic.id,
     )
   }
-
-  debugMessage('tx', tx)
 
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
@@ -623,10 +635,12 @@ export async function prepareTopupTx(
   return {
     borrowerAddress,
     borrowerPublicKey,
+    coinToTopup,
     contractParams,
     collateralChangeAddress,
     collateralUtxos,
     psbt: tx.psbt,
+    syntheticChangeAddress,
     syntheticUtxos,
   }
 }
@@ -634,6 +648,7 @@ export async function prepareTopupTx(
 export async function proposeTopupContract({
   borrowerAddress,
   borrowerPublicKey,
+  coinToTopup,
   contractParams,
   collateralChangeAddress,
   collateralUtxos,
@@ -666,18 +681,19 @@ export async function proposeTopupContract({
   collateralUtxos.forEach((utxo, idx) => {
     if (utxoIsConfidential(utxo)) {
       if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
-      blindingPrivKeyOfCollateralInputs[idx] = utxo.blindPrivKey
+      blindingPrivKeyOfCollateralInputs[idx + 1] = utxo.blindPrivKey
     }
   })
 
   // get blinding priv key for each confidential collateral utxo
   // if utxo is not confidential, we MUST NOT pass the blind priv key
-  const blindingPrivKeyOfSyntheticInputs: Record<number, string> = {}
+  const blindingPrivKeyOfSynthInputs: Record<number, string> = {}
 
   syntheticUtxos.forEach((utxo, idx) => {
     if (utxoIsConfidential(utxo)) {
       if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
-      blindingPrivKeyOfSyntheticInputs[idx] = utxo.blindPrivKey
+      blindingPrivKeyOfSynthInputs[idx + 1 + collateralUtxos.length] =
+        utxo.blindPrivKey
     }
   })
 
@@ -686,19 +702,25 @@ export async function proposeTopupContract({
   // get blinding pub key for collateral change if any
   const blindingPubKeyForCollateralChange = collateralChangeAddress
     ? {
-        1: address
+        2: address
           .fromConfidential(collateralChangeAddress.confidentialAddress!)
           .blindingKey.toString('hex'),
       }
     : {}
 
   // get blinding pub key for synthetic change if any
-  const blindingPubKeyForSyntheticChange = syntheticChangeAddress
-    ? {
-        1: address
-          .fromConfidential(syntheticChangeAddress.confidentialAddress!)
-          .blindingKey.toString('hex'),
-      }
+  const blindingPubKeyForSynthChange = syntheticChangeAddress
+    ? collateralChangeAddress
+      ? {
+          3: address
+            .fromConfidential(syntheticChangeAddress.confidentialAddress!)
+            .blindingKey.toString('hex'),
+        }
+      : {
+          2: address
+            .fromConfidential(syntheticChangeAddress.confidentialAddress!)
+            .blindingKey.toString('hex'),
+        }
     : {}
 
   // build post body
@@ -711,8 +733,8 @@ export async function proposeTopupContract({
     },
     blindingPrivKeyOfCollateralInputs,
     blindingPubKeyForCollateralChange,
-    blindingPrivKeyOfSyntheticInputs,
-    blindingPubKeyForSyntheticChange,
+    blindingPrivKeyOfSynthInputs,
+    blindingPubKeyForSynthChange,
     borrowerAddress: borrowerAddress.confidentialAddress,
     contractParams: {
       borrowAsset,
@@ -730,9 +752,9 @@ export async function proposeTopupContract({
     partialTransaction: psbt.toBase64(),
   }
 
-  debugMessage('body', body)
   // post and return
-  return postData(`${alphaServerUrl}/contracts`, body)
+  const { txid, vout } = coinToTopup
+  return postData(`${alphaServerUrl}/contracts/${txid}:${vout}/topup`, body)
 }
 
 export function getFuncNameFromScriptHexOfLeaf(witness: string): string {

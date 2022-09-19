@@ -65,6 +65,7 @@ export interface Contract {
   state?: ContractState
   synthetic: Asset
   txid?: string
+  vout?: number
   xPubKey?: string
 }
 

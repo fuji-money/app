@@ -134,6 +134,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // 1. fix missing xPubKey on old contracts and store on local storage
   // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
   // 3. update xPubKey to neutered xPubKey
+  // 4. add vout to contract
   const fixMissingXPubKeyOnOldContracts = () => {
     // get non neutered xPubKey
     const oldXPubKey = computeOldXPub(xPubKey)
@@ -142,6 +143,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     getContractsFromStorage()
       .filter((contract) => contract.network === network)
       .map((contract) => {
+        console.log('contract .... ', contract)
         if (!contract.xPubKey) {
           contract.xPubKey = xPubKey // point 1
           updateContractOnStorage(contract)
@@ -155,6 +157,10 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
               updateContractOnStorage(contract)
             }
           }
+        }
+        if (typeof contract.vout == 'undefined') {
+          contract.vout = 0
+          updateContractOnStorage(contract)
         }
       })
   }
@@ -170,6 +176,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
+    console.log('useEffect', connected, xPubKey, network, xPubKey)
     if (connected && network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
@@ -179,7 +186,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, network])
+  }, [xPubKey])
 
   // update contracts
   useEffect(() => {

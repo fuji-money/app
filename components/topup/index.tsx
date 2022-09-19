@@ -1,6 +1,11 @@
 import { Contract, Oracle } from 'lib/types'
-import { useState } from 'react'
-import { getContractRatio } from 'lib/contracts'
+import { useEffect, useState } from 'react'
+import {
+  getCollateralQuantity,
+  getContractPayoutAmount,
+  getContractPriceLevel,
+  getContractRatio,
+} from 'lib/contracts'
 import TopupForm from './form'
 import Balance from 'components/balance'
 import TopupButton from './button'
@@ -19,6 +24,15 @@ const Topup = ({ oldContract, oracles }: TopupProps) => {
   const [deposit, setDeposit] = useState(false)
   const [channel, setChannel] = useState('')
   const [ratio, setRatio] = useState(getContractRatio(oldContract))
+
+  useEffect(() => {
+    const quantity = getCollateralQuantity(newContract, ratio)
+    const collateral = { ...newContract.collateral, quantity }
+    const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
+    const payoutAmount = getContractPayoutAmount(newContract, quantity)
+    setNewContract({ ...newContract, collateral, priceLevel, payoutAmount })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ratio])
 
   const minRatio = getContractRatio(oldContract)
   const oldQuantity = oldContract.collateral.quantity || 0

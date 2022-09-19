@@ -172,7 +172,9 @@ const BorrowDeposit = ({
       setStep(1)
 
       // add additional fields to contract and save to storage
+      const covenantOutputIndex = 0
       contract.txid = await signAndBroadcastTx(partialTransaction)
+      contract.vout = covenantOutputIndex
       contract.borrowerPubKey = preparedTx.borrowerPublicKey
       contract.contractParams = preparedTx.contractParams
       contract.network = network

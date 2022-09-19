@@ -1,7 +1,7 @@
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { markContractRedeemed } from 'lib/contracts'
-import { prepareRedeemTx } from 'lib/covenant'
+import { makeRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
 import { Contract, ContractState } from 'lib/types'
 import { closeModal, debugMessage, extractError, openModal } from 'lib/utils'
@@ -32,7 +32,7 @@ const RedeemButton = ({
     setRedeem(contract)
     openModal('redeem-modal')
     try {
-      const txid = await prepareRedeemTx(contract, network, setStep)
+      const txid = await makeRedeemTx(contract, network, setStep)
       markContractRedeemed(contract)
       setData(txid)
       setResult('success')
