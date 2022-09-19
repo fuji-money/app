@@ -4,7 +4,7 @@ import { markContractRedeemed } from 'lib/contracts'
 import { makeRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
 import { Contract, ContractState } from 'lib/types'
-import { closeModal, debugMessage, extractError, openModal } from 'lib/utils'
+import { extractError, openModal } from 'lib/utils'
 import { useContext } from 'react'
 
 interface RedeemButtonProps {
@@ -38,7 +38,7 @@ const RedeemButton = ({
       setResult('success')
       reloadContracts()
     } catch (error) {
-      debugMessage(extractError(error))
+      console.debug(extractError(error))
       setData(extractError(error))
       setResult('failure')
     }

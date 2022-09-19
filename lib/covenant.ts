@@ -9,7 +9,7 @@ import {
   minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
-import { debugMessage, numberToHexEncodedUint64LE } from './utils'
+import { numberToHexEncodedUint64LE } from './utils'
 import {
   payments,
   Psbt,
@@ -97,13 +97,11 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHexEncodedUint64LE(timestamp),
   }
-  debugMessage('contractParams', contractParams)
 
   // get needed addresses
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress(contractParams)
   await marina.useAccount(marinaMainAccountID)
-  debugMessage('covenantAddress', covenantAddress)
 
   // set covenant output
   const amount = contract.collateral.quantity || 0
@@ -132,8 +130,6 @@ export async function prepareBorrowTxWithClaimTx(
   redeemScript: string,
   utxos: any,
 ): Promise<PreparedBorrowTx> {
-  debugMessage('prepareBorrowTxWithClaimTx contract', contract)
-
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -171,14 +167,11 @@ export async function prepareBorrowTxWithClaimTx(
   // add covenant in position 0
   psbt.addOutput(covenantOutput)
 
-  debugMessage('psbt', psbt)
-
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   const borrowerAddress = await marina.getNextAddress()
-  debugMessage('borrowerPublicKey', borrowerPublicKey)
   return {
     psbt,
     contractParams,
@@ -192,8 +185,6 @@ export async function prepareBorrowTx(
   contract: Contract,
   network: NetworkString,
 ): Promise<PreparedBorrowTx> {
-  debugMessage('prepareBorrowTx contract', contract)
-
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -217,7 +208,8 @@ export async function prepareBorrowTx(
     collateral.id,
     collateral.quantity,
   )
-  if (collateralUtxos.length === 0) throw new Error('Not enough funds')
+  if (collateralUtxos.length === 0)
+    throw new Error('Not enough collateral funds')
 
   // build Psbt
   const psbt = new Psbt({ network: getNetwork(network) })
@@ -301,7 +293,6 @@ export async function proposeBorrowContract({
     u.prevout.rangeProof != null && u.prevout.rangeProof.length > 0
 
   collateralUtxos.forEach((utxo, idx) => {
-    debugMessage('proposeBorrowContract utxo', utxo)
     if (utxoIsConfidential(utxo)) {
       if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
       blindingPrivKeyOfCollateralInputs[idx] = utxo.blindPrivKey
@@ -345,7 +336,6 @@ export async function proposeBorrowContract({
     partialTransaction: psbt.toBase64(),
   }
 
-  debugMessage('body', body)
   // post and return
   return postData(`${alphaServerUrl}/contracts`, body)
 }
@@ -516,17 +506,16 @@ export async function prepareTopupTx(
     newContract.collateral.quantity - oldContract.collateral.quantity
 
   // validate we have necessary utxos
-  console.log('start collateral utxos')
   const collateralUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
     newContract.collateral.id,
     topupAmount,
   )
-  if (collateralUtxos.length === 0) throw new Error('Not enough funds')
+  if (collateralUtxos.length === 0)
+    throw new Error('Not enough collateral funds')
 
   // validate we have sufficient synthetic funds to burn
-  console.log('start synthetic utxos')
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
@@ -536,12 +525,10 @@ export async function prepareTopupTx(
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
   // get new covenant params
-  console.log('get covenant output')
   const { contractParams, covenantAddress, timestamp } =
     await getCovenantOutput(newContract, network)
 
   // find coin for this contract
-  console.log('finding covenants')
   const coins = await marina.getCoins([marinaFujiAccountID])
   const coinToTopup = coins.find(
     (c) => c.txid === oldContract.txid && c.vout === oldContract.vout,

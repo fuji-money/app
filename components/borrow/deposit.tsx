@@ -17,7 +17,7 @@ import ECPairFactory from 'ecpair'
 import { NetworkString } from 'marina-provider'
 import { fetchUtxos, Outpoint } from 'ldk'
 import { explorerURL } from 'lib/explorer'
-import { debugMessage, extractError, openModal, sleep } from 'lib/utils'
+import { extractError, openModal, sleep } from 'lib/utils'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
@@ -73,7 +73,6 @@ const BorrowDeposit = ({
       let utxos: Outpoint[] = []
       while (utxos.length === 0 && Date.now() <= invoiceExpireDate) {
         utxos = await fetchUtxos(address, explorerURL(network))
-        debugMessage('searching for claim tx:', new Date())
         await sleep(5000) // sleep for 5 seconds
       }
       return utxos

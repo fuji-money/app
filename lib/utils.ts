@@ -48,13 +48,6 @@ export async function sleep(miliseconds: number) {
   )
 }
 
-// set showDebug to true to see messages on console
-export const debugMessage = (...params: any[]) => {
-  const showDebug = true
-  console.log('params', params)
-  if (showDebug) console.debug(...params)
-}
-
 export const extractError = (error: any): string => {
   return error instanceof Error
     ? error.message
