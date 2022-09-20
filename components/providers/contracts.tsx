@@ -79,6 +79,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
+      console.log('contract.txid', contract.txid)
       if (!contract.txid) continue
       // check if contract is confirmed
       // if funding tx is not confirmed, we can skip this contract
@@ -90,6 +91,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       markContractConfirmed(contract)
       // check if contract is already spent
       const status = await checkOutspend(contract, network)
+      console.log('    spent?', status.spent)
       if (status.spent) {
         // contract already spent, let's find out why:
         // we will look at the leaf before the last one,
@@ -101,6 +103,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         const spentTx = await getTx(txid, network)
         const index = spentTx.vin[vin].witness.length - 2
         const leaf = spentTx.vin[vin].witness[index]
+        console.log('   funcName', getFuncNameFromScriptHexOfLeaf(leaf))
         switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
           case 'liquidate':
             markContractLiquidated(contract, spentTx)
@@ -143,7 +146,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     getContractsFromStorage()
       .filter((contract) => contract.network === network)
       .map((contract) => {
-        console.log('contract .... ', contract)
         if (!contract.xPubKey) {
           contract.xPubKey = xPubKey // point 1
           updateContractOnStorage(contract)
@@ -176,7 +178,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    console.log('useEffect', connected, xPubKey, network, xPubKey)
     if (connected && network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {

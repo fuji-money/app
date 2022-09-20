@@ -9,6 +9,8 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
+import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
+import { NetworkString } from 'marina-provider'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -219,4 +221,18 @@ export function markContractTopup(contract: Contract): void {
   contract.state = ContractState.Topup
   updateContractOnStorage(contract)
   addActivity(contract, ActivityType.Topup, Date.now())
+}
+
+// add additional fields to contract and save to storage
+export async function saveContractToStorage(
+  contract: Contract,
+  network: NetworkString,
+  preparedTx: PreparedBorrowTx | PreparedTopupTx,
+): Promise<void> {
+  contract.borrowerPubKey = preparedTx.borrowerPublicKey
+  contract.contractParams = preparedTx.contractParams
+  contract.network = network
+  contract.confirmed = false
+  contract.xPubKey = await getXPubKey()
+  createNewContract(contract)
 }

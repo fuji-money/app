@@ -4,10 +4,12 @@ import Marina from 'components/deposit/marina'
 import Channel from 'components/deposit/channel'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
-import { createNewContract } from 'lib/contracts'
+import { createNewContract, saveContractToStorage } from 'lib/contracts'
 import {
   prepareBorrowTx,
   prepareBorrowTxWithClaimTx,
+  PreparedBorrowTx,
+  PreparedTopupTx,
   proposeBorrowContract,
 } from 'lib/covenant'
 import { broadcastTx, getXPubKey, signAndBroadcastTx } from 'lib/marina'
@@ -50,14 +52,14 @@ const BorrowDeposit = ({
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'
 
-  const resetDeposit = () => {
+  const resetDeposit = (): void => {
     setChannel('')
     setDeposit(false)
     setData('')
     setResult('')
   }
 
-  const handleLightning = async () => {
+  const handleLightning = async (): Promise<void> => {
     openModal('lightning-deposit-modal')
 
     // every 5 seconds, query explorer for payment
@@ -139,13 +141,11 @@ const BorrowDeposit = ({
       // broadcast transaction
       contract.txid = await broadcastTx(psbt.toBase64())
 
+      // add vout to contract
+      contract.vout = 0
+
       // add additional fields to contract and save to storage
-      contract.borrowerPubKey = preparedTx.borrowerPublicKey
-      contract.contractParams = preparedTx.contractParams
-      contract.network = network
-      contract.confirmed = false
-      contract.xPubKey = await getXPubKey()
-      createNewContract(contract)
+      await saveContractToStorage(contract, network, preparedTx)
 
       // show success
       setData(contract.txid)
@@ -157,7 +157,7 @@ const BorrowDeposit = ({
     }
   }
 
-  const handleMarina = async () => {
+  const handleMarina = async (): Promise<void> => {
     openModal('marina-deposit-modal')
     try {
       // prepare borrow transaction
@@ -170,16 +170,14 @@ const BorrowDeposit = ({
       // show user (via modal) that contract proposal was accepted
       setStep(1)
 
-      // add additional fields to contract and save to storage
-      const covenantOutputIndex = 0
+      // sign and broadcast transaction
       contract.txid = await signAndBroadcastTx(partialTransaction)
-      contract.vout = covenantOutputIndex
-      contract.borrowerPubKey = preparedTx.borrowerPublicKey
-      contract.contractParams = preparedTx.contractParams
-      contract.network = network
-      contract.confirmed = false
-      contract.xPubKey = await getXPubKey()
-      createNewContract(contract)
+
+      // add vout to contract
+      contract.vout = 0
+
+      // add additional fields to contract and save to storage
+      await saveContractToStorage(contract, network, preparedTx)
 
       // show success
       setData(contract.txid)

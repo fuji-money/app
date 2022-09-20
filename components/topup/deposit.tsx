@@ -7,7 +7,11 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
-import { createNewContract, markContractTopup } from 'lib/contracts'
+import {
+  createNewContract,
+  markContractTopup,
+  saveContractToStorage,
+} from 'lib/contracts'
 import { prepareTopupTx, proposeTopupContract } from 'lib/covenant'
 import { signAndBroadcastTx, getXPubKey } from 'lib/marina'
 import { openModal, extractError } from 'lib/utils'
@@ -97,18 +101,15 @@ const TopupDeposit = ({
 
       // broadcast transaction
       const rawHex = ptx.extractTransaction().toHex()
-      const sentTransaction = await marina.broadcastTransaction(rawHex)
+      newContract.txid = (await marina.broadcastTransaction(rawHex)).txid
+
+      // add vout to contract
+      newContract.vout = 1
 
       // add additional fields to contract and save to storage
-      const covenantOutputIndex = 1
-      newContract.txid = sentTransaction.txid
-      newContract.vout = covenantOutputIndex
-      newContract.borrowerPubKey = preparedTx.borrowerPublicKey
-      newContract.contractParams = preparedTx.contractParams
-      newContract.network = network
-      newContract.confirmed = false
-      newContract.xPubKey = await getXPubKey()
-      createNewContract(newContract)
+      await saveContractToStorage(newContract, network, preparedTx)
+
+      // mark old contract as topup
       markContractTopup(oldContract)
 
       // show success

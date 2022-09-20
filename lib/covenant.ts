@@ -115,7 +115,8 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
   return { contractParams, covenantOutput, covenantAddress, timestamp }
 }
 
-interface PreparedBorrowTx {
+// borrow
+export interface PreparedBorrowTx {
   borrowerAddress: AddressInterface
   borrowerPublicKey: string
   changeAddress?: AddressInterface
@@ -340,6 +341,8 @@ export async function proposeBorrowContract({
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
+// redeem
+
 export async function makeRedeemTx(
   contract: Contract,
   network: NetworkString,
@@ -462,7 +465,9 @@ export async function makeRedeemTx(
   return sentTransaction.txid
 }
 
-interface PreparedTopupTx {
+// topup
+
+export interface PreparedTopupTx {
   borrowerAddress: AddressInterface
   borrowerPublicKey: string
   coinToTopup: Utxo

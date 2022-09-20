@@ -17,10 +17,10 @@ export const checkOutspend = async (
   contract: Contract,
   network: NetworkString,
 ) => {
-  if (!contract.txid) return
-  return await fetchURL(
-    `${explorerURL(network)}/tx/${contract.txid}/outspend/0`,
-  )
+  const { txid, vout } = contract
+  if (!txid || typeof vout === 'undefined') return
+  const url = `${explorerURL(network)}/tx/${txid}/outspend/${vout}`
+  return await fetchURL(url)
 }
 
 export const getTx = async (txid: string, network: NetworkString) =>
