@@ -207,7 +207,7 @@ export async function prepareBorrowTx(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
     collateral.id,
-    collateral.quantity,
+    collateral.quantity + feeAmount,
   )
   if (collateralUtxos.length === 0)
     throw new Error('Not enough collateral funds')
@@ -515,7 +515,7 @@ export async function prepareTopupTx(
     await marina.getCoins([marinaMainAccountID]),
     await marina.getAddresses([marinaMainAccountID]),
     newContract.collateral.id,
-    topupAmount,
+    topupAmount + feeAmount,
   )
   if (collateralUtxos.length === 0)
     throw new Error('Not enough collateral funds')
