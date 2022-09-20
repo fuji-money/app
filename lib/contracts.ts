@@ -15,9 +15,11 @@ import { NetworkString } from 'marina-provider'
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
   if (!contract.state) return false
-  return [ContractState.Redeemed, ContractState.Liquidated].includes(
-    contract.state,
-  )
+  return [
+    ContractState.Redeemed,
+    ContractState.Liquidated,
+    ContractState.Topup,
+  ].includes(contract.state)
 }
 
 // get contract ratio

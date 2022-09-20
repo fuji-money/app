@@ -73,6 +73,7 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
         .state.closed,
         .state.liquidated,
         .state.unconfirmed,
+        .state.topuped,
         .state.unknown {
           background-color: #eee;
           color: #000;
