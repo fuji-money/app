@@ -179,7 +179,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, network])
+  }, [connected, network, xPubKey])
 
   // update contracts
   useEffect(() => {
