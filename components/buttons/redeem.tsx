@@ -1,7 +1,8 @@
+import { ModalStages } from 'components/modals/modal'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { markContractRedeemed } from 'lib/contracts'
-import { makeRedeemTx } from 'lib/covenant'
+import { prepareRedeemTx } from 'lib/covenant'
 import { getAssetBalance } from 'lib/marina'
 import { Contract, ContractState } from 'lib/types'
 import { extractError, openModal } from 'lib/utils'
@@ -10,29 +11,45 @@ import { useContext } from 'react'
 interface RedeemButtonProps {
   contract: Contract
   setAssetBalance: (arg0: number) => void
-  setRedeem: (arg0: Contract) => void
-  setStep: (arg0: number) => void
   setData: (arg0: string) => void
+  setRedeem: (arg0: Contract) => void
   setResult: (arg0: string) => void
+  setStage: (arg0: string[]) => void
 }
 
 const RedeemButton = ({
   contract,
   setAssetBalance,
-  setRedeem,
-  setStep,
   setData,
+  setRedeem,
   setResult,
+  setStage,
 }: RedeemButtonProps) => {
-  const { balances, network } = useContext(WalletContext)
+  const { balances, marina, network } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const handleClick = async () => {
+    if (!marina) return
     setAssetBalance(getAssetBalance(contract.synthetic, balances))
     setRedeem(contract)
     openModal('redeem-modal')
     try {
-      const txid = await makeRedeemTx(contract, network, setStep)
+      const tx = await prepareRedeemTx(contract, network, setStage)
+      setStage(ModalStages.NeedsConfirmation)
+      const signed = await tx.unlock()
+
+      setStage(ModalStages.NeedsFinishing)
+
+      // finalize the fuji asset input
+      // we skip utxo in position 0 since is finalized already by the redeem function
+      for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
+        signed.psbt.finalizeInput(index)
+      }
+
+      // extract and broadcast transaction
+      const rawHex = signed.psbt.extractTransaction().toHex()
+      const txid = (await marina.broadcastTransaction(rawHex)).txid
+
       markContractRedeemed(contract)
       setData(txid)
       setResult('success')

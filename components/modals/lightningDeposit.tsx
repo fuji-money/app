@@ -8,17 +8,17 @@ import Spinner from 'components/spinner'
 interface LightningDepositModalProps {
   data: string
   invoice: string
-  paid: boolean
   result: string
   reset: () => void
+  stage: string[]
 }
 
 const LightningDepositModal = ({
   data,
   invoice,
-  paid,
   result,
   reset,
+  stage,
 }: LightningDepositModalProps) => {
   const [buttonText, setButtonText] = useState('Copy')
 
@@ -32,10 +32,7 @@ const LightningDepositModal = ({
     )
   }
 
-  const mainMessage = paid ? 'Payment received' : 'Deposit by scaning this QR'
-  const secondaryMessage = paid
-    ? 'Waiting for Fuji approval'
-    : 'Waiting for payment'
+  const [mainMessage, secondaryMessage] = stage
 
   return (
     <Modal id="lightning-deposit-modal" reset={reset}>
@@ -44,9 +41,9 @@ const LightningDepositModal = ({
         <>
           <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
-          {!paid && invoice && <QRCode text={invoice} />}
+          {invoice && <QRCode text={invoice} />}
           <p className="confirm">{secondaryMessage}</p>
-          {!paid && invoice && (
+          {invoice && (
             <p className="has-text-centered mt-4">
               <button onClick={handleCopy} className="button">
                 {buttonText}

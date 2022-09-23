@@ -45,18 +45,20 @@ const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
 interface ChannelProps {
   contract: Contract
   setChannel: (arg0: string) => void
+  amount?: number
 }
 
-const Channel = ({ contract, setChannel }: ChannelProps) => {
+const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
   const { balances, marina } = useContext(WalletContext)
 
   if (!marina) throw new Error('Missing marina provider')
 
   const ticker = contract.collateral.ticker
-  const quantity = contract.collateral.quantity || 0
+  const quantity = amount || contract.collateral.quantity || 0
   const balance = getAssetBalance(contract.collateral, balances)
 
   const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
+
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
   const enoughFunds = balance > quantity
 

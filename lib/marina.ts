@@ -16,6 +16,7 @@ import {
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
 import { Psbt, address } from 'liquidjs-lib'
+import { sleep } from './utils'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
@@ -95,8 +96,15 @@ export async function broadcastTx(partialTransaction: string) {
   const finalPtx = Psbt.fromBase64(partialTransaction)
   finalPtx.finalizeAllInputs()
   const rawHex = finalPtx.extractTransaction().toHex()
-  const sentTransaction = await marina.broadcastTransaction(rawHex)
-  return sentTransaction.txid
+  console.log('rawHex', rawHex)
+  // sometimes testnet explorer returns 502 but after curl works,
+  // so let's try to broadcast again case there's an error
+  try {
+    return (await marina.broadcastTransaction(rawHex)).txid
+  } catch (_) {
+    await sleep(1000)
+    return (await marina.broadcastTransaction(rawHex)).txid
+  }
 }
 
 export function selectCoinsWithBlindPrivKey(

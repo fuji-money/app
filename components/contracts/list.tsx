@@ -7,6 +7,7 @@ import { WalletContext } from 'components/providers/wallet'
 import ContractRow from './row'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
+import { ModalStages } from 'components/modals/modal'
 
 interface ContractsListProps {
   showActive: boolean
@@ -16,11 +17,11 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const { connected } = useContext(WalletContext)
   const { contracts, loading } = useContext(ContractsContext)
 
-  const [redeem, setReedem] = useState<Contract>()
   const [assetBalance, setAssetBalance] = useState(0)
-  const [step, setStep] = useState(0)
   const [data, setData] = useState('')
+  const [redeem, setReedem] = useState<Contract>()
   const [result, setResult] = useState('')
+  const [stage, setStage] = useState(ModalStages.NeedsCoins)
 
   const reset = () => {
     setData('')
@@ -48,7 +49,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
         data={data}
         result={result}
         reset={reset}
-        step={step}
+        stage={stage}
       />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
@@ -59,7 +60,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
             setData={setData}
             setResult={setResult}
             setRedeem={setReedem}
-            setStep={setStep}
+            setStage={setStage}
           />
         ))}
     </>

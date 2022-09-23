@@ -7,6 +7,7 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
+import { ModalStages } from 'components/modals/modal'
 
 interface MultiplyDepositProps {
   contract: Contract
@@ -26,7 +27,7 @@ const MultiplyDeposit = ({
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
-  const [step, setStep] = useState(0)
+  const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [paid, setPaid] = useState(false)
   const [invoice, setInvoice] = useState('')
 
@@ -52,14 +53,14 @@ const MultiplyDeposit = ({
         data={data}
         result={result}
         reset={resetDeposit}
-        step={step}
+        stage={stage}
       />
       <LightningDepositModal
         data={data}
         invoice={invoice}
-        paid={paid}
         result={result}
         reset={resetDeposit}
+        stage={stage}
       />
     </>
   )

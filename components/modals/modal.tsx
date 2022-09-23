@@ -7,6 +7,18 @@ const closeModals = () => {
   })
 }
 
+export const ModalStages = {
+  NeedsCoins: ['Selecting coins', 'Selecting coins needed for transaction'],
+  NeedsConfirmation: [
+    'Approve transaction',
+    'Accept and unlock this transaction in your Marina wallet',
+  ],
+  NeedsFinishing: ['Finishing', 'Broadcasting transaction'],
+  NeedsFujiApproval: ['Preparing transaction', 'Waiting for Fuji approval'],
+  NeedsInvoice: ['Making swap', 'Waiting for invoice'],
+  NeedsPayment: ['Deposit by scaning this QR', 'Waiting for payment'],
+}
+
 interface ModalProps {
   children: ReactNode
   id: string

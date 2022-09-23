@@ -12,7 +12,6 @@ import {
   markContractRedeemed,
   markContractOpen,
   markContractUnknown,
-  markContractUnconfirmed,
   markContractConfirmed,
   markContractTopup,
 } from 'lib/contracts'
@@ -82,14 +81,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
       if (!contract.txid) continue
-      // check if contract is confirmed
-      // if funding tx is not confirmed, we can skip this contract
-      const tx = await getTx(contract.txid, network)
-      if (!tx?.status?.confirmed) {
-        markContractUnconfirmed(contract)
-        continue
+      if (!contract.confirmed) {
+        // if funding tx is not confirmed, we can skip this contract
+        const tx = await getTx(contract.txid, network)
+        if (!tx?.status?.confirmed) continue
+        markContractConfirmed(contract)
       }
-      markContractConfirmed(contract)
       // check if contract is already spent
       const status = await checkOutspend(contract, network)
       if (!status) continue
@@ -172,10 +169,25 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   }
 
   // on a NEW_TX event for fuji account, reload contracts
-  const onNewTxListener = () => {
+  // this approach brings a heavy load on the explorer,
+  // since on reload Marina emits all Tx for each account,
+  // so if Fuji account has many Tx it will hammer the explorer.
+  // the alternative would be to use SPENT_UTXO, but borrow contracts
+  // funded with Lightning swap does not use any UTXO, so marina never
+  // emits that event on those types of contracts
+  const setMarinaListener = () => {
     if (connected && marina) {
       marina.on('NEW_TX', async (payload) => {
-        if (payload?.accountID === marinaFujiAccountID) reloadContracts()
+        console.log('NEW_TX', payload.accountID)
+        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+      })
+      marina.on('SPENT_UTXO', async (payload) => {
+        console.log('SPENT_UTXO', payload.accountID)
+        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+      })
+      marina.on('NEW_UTXO', async (payload) => {
+        console.log('NEW_UTXO', payload.accountID)
+        if (payload.accountID === marinaFujiAccountID) reloadContracts()
       })
     }
   }
@@ -187,7 +199,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
         fixMissingXPubKeyOnOldContracts()
-        onNewTxListener()
+        setMarinaListener()
         firstRender.current.push(network)
       }
     }

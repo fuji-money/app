@@ -4,28 +4,24 @@ import Marina from 'components/deposit/marina'
 import Channel from 'components/deposit/channel'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
-import { createNewContract, saveContractToStorage } from 'lib/contracts'
+import { saveContractToStorage } from 'lib/contracts'
 import {
   prepareBorrowTx,
   prepareBorrowTxWithClaimTx,
-  PreparedBorrowTx,
-  PreparedTopupTx,
   proposeBorrowContract,
 } from 'lib/covenant'
-import { broadcastTx, getXPubKey, signAndBroadcastTx } from 'lib/marina'
-import { createReverseSubmarineSwap, getInvoiceExpireDate } from 'lib/swaps'
+import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
+import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
-import { NetworkString } from 'marina-provider'
-import { fetchUtxos, Outpoint } from 'ldk'
-import { explorerURL } from 'lib/explorer'
-import { extractError, openModal, sleep } from 'lib/utils'
+import { extractError, openModal } from 'lib/utils'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import LightningDepositModal from 'components/modals/lightningDeposit'
 import { ContractsContext } from 'components/providers/contracts'
+import { ModalStages } from 'components/modals/modal'
 
 interface BorrowDepositProps {
   contract: Contract
@@ -44,10 +40,9 @@ const BorrowDeposit = ({
   const { reloadContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')
-  const [result, setResult] = useState('')
-  const [step, setStep] = useState(0)
-  const [paid, setPaid] = useState(false)
   const [invoice, setInvoice] = useState('')
+  const [result, setResult] = useState('')
+  const [stage, setStage] = useState(ModalStages.NeedsInvoice)
 
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'
@@ -61,25 +56,7 @@ const BorrowDeposit = ({
 
   const handleLightning = async (): Promise<void> => {
     openModal('lightning-deposit-modal')
-
-    // every 5 seconds, query explorer for payment
-    const waitForPayment = async (
-      invoice: string,
-      address: string,
-      network: NetworkString,
-    ): Promise<Outpoint[]> => {
-      // check invoice expiration
-      const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
-
-      // wait for user to pay, check for utxos
-      let utxos: Outpoint[] = []
-      while (utxos.length === 0 && Date.now() <= invoiceExpireDate) {
-        utxos = await fetchUtxos(address, explorerURL(network))
-        await sleep(5000) // sleep for 5 seconds
-      }
-      return utxos
-    }
-
+    setStage(ModalStages.NeedsInvoice)
     try {
       // create ephemeral account
       const privateKey = randomBytes(32)
@@ -92,7 +69,7 @@ const BorrowDeposit = ({
 
       // create swap with Boltz.exchange
       const boltzSwap = await createReverseSubmarineSwap(
-        keyPair,
+        keyPair.publicKey,
         network,
         onchainAmount,
       )
@@ -103,15 +80,21 @@ const BorrowDeposit = ({
 
       // show qr code to user
       setInvoice(invoice)
+      setStage(ModalStages.NeedsPayment)
 
       // wait for payment
-      const utxos = await waitForPayment(invoice, lockupAddress, network)
+      const utxos = await waitForLightningPayment(
+        invoice,
+        lockupAddress,
+        network,
+      )
 
       // payment was never made, and the invoice expired
       if (utxos.length === 0) throw new Error('Invoice has expired')
 
       // show user (via modal) that payment was received
-      setPaid(true)
+      setInvoice('')
+      setStage(ModalStages.NeedsFujiApproval)
 
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
@@ -138,6 +121,8 @@ const BorrowDeposit = ({
         }
       })
 
+      setStage(ModalStages.NeedsFinishing)
+
       // broadcast transaction
       contract.txid = await broadcastTx(psbt.toBase64())
 
@@ -159,19 +144,21 @@ const BorrowDeposit = ({
 
   const handleMarina = async (): Promise<void> => {
     openModal('marina-deposit-modal')
+    setStage(ModalStages.NeedsCoins)
     try {
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(contract, network)
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory
+      setStage(ModalStages.NeedsFujiApproval)
       const { partialTransaction } = await proposeBorrowContract(preparedTx)
 
-      // show user (via modal) that contract proposal was accepted
-      setStep(1)
-
       // sign and broadcast transaction
+      setStage(ModalStages.NeedsConfirmation)
       contract.txid = await signAndBroadcastTx(partialTransaction)
+
+      setStage(ModalStages.NeedsFinishing)
 
       // add vout to contract
       contract.vout = 0
@@ -200,14 +187,14 @@ const BorrowDeposit = ({
         data={data}
         result={result}
         reset={resetDeposit}
-        step={step}
+        stage={stage}
       />
       <LightningDepositModal
         data={data}
         invoice={invoice}
-        paid={paid}
         result={result}
         reset={resetDeposit}
+        stage={stage}
       />
     </>
   )

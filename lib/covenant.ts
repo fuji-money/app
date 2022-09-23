@@ -19,7 +19,7 @@ import {
   script,
   Transaction,
 } from 'liquidjs-lib'
-import { postData } from './fetch'
+import { fetchHex, postData } from './fetch'
 import {
   createFujiAccount,
   fujiAccountMissing,
@@ -32,8 +32,7 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
-import { fetchTxHex, getNetwork } from 'ldk'
-import { explorerURL } from './explorer'
+import { getNetwork } from 'ldk'
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
   // get payout amount
@@ -148,7 +147,7 @@ export async function prepareBorrowTxWithClaimTx(
     throw new Error('Invalid contract: no contract priceLevel')
 
   const [utxo] = utxos
-  const hex = await fetchTxHex(utxo.txid, explorerURL(network))
+  const hex = await fetchHex(utxo.txid, network)
   const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
   const psbt = new Psbt({ network: getNetwork(network) })
@@ -343,10 +342,10 @@ export async function proposeBorrowContract({
 
 // redeem
 
-export async function makeRedeemTx(
+export async function prepareRedeemTx(
   contract: Contract,
   network: NetworkString,
-  setStep: (arg0: number) => void,
+  setStage: (arg0: string[]) => void,
 ) {
   // check for marina
   const marina = await getMarinaProvider()
@@ -450,19 +449,7 @@ export async function makeRedeemTx(
   tx.withFeeOutput(feeAmount)
 
   // change info on modal, now waiting for user to sign
-  setStep(1)
-  const signed = await tx.unlock()
-
-  // finalize the fuji asset input
-  // we skip utxo in position 0 since is finalized already by the redeem function
-  for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
-    signed.psbt.finalizeInput(index)
-  }
-
-  // extract and broadcast transaction
-  const rawHex = signed.psbt.extractTransaction().toHex()
-  const sentTransaction = await marina.broadcastTransaction(rawHex)
-  return sentTransaction.txid
+  return tx
 }
 
 // topup
@@ -483,6 +470,7 @@ export async function prepareTopupTx(
   newContract: Contract,
   oldContract: Contract,
   network: NetworkString,
+  collateralUtxos: any,
 ): Promise<PreparedTopupTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -509,16 +497,6 @@ export async function prepareTopupTx(
   const burnAsset = oldContract.synthetic.id
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
-
-  // validate we have necessary utxos
-  const collateralUtxos = selectCoinsWithBlindPrivKey(
-    await marina.getCoins([marinaMainAccountID]),
-    await marina.getAddresses([marinaMainAccountID]),
-    newContract.collateral.id,
-    topupAmount + feeAmount,
-  )
-  if (collateralUtxos.length === 0)
-    throw new Error('Not enough collateral funds')
 
   // validate we have sufficient synthetic funds to burn
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
@@ -566,7 +544,18 @@ export async function prepareTopupTx(
 
   // add collateral inputs
   for (const utxo of collateralUtxos) {
-    tx.withUtxo(utxo)
+    if (utxo.redeemScript) {
+      // utxo from lightning
+      tx.psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        witnessUtxo: utxo.prevout,
+        witnessScript: Buffer.from(utxo.redeemScript, 'hex'),
+      })
+    } else {
+      // utxo from marina getCoins
+      tx.withUtxo(utxo)
+    }
   }
 
   // add synthetic inputs
@@ -579,6 +568,7 @@ export async function prepareTopupTx(
 
   // new covenant output
   // the covenant must be always unconf!
+
   tx.withRecipient(
     address.fromConfidential(covenantAddress.confidentialAddress!)
       .unconfidentialAddress,
@@ -589,7 +579,7 @@ export async function prepareTopupTx(
   // add collateral change output if needed
   let collateralChangeAddress
   const collateralUtxosAmount = collateralUtxos.reduce(
-    (value, utxo) => value + (utxo.value || 0),
+    (value: number, utxo: any) => value + (utxo.value || 0),
     0,
   )
   const collateralChangeAmount = collateralUtxosAmount - topupAmount - feeAmount
@@ -622,7 +612,7 @@ export async function prepareTopupTx(
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = newContract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
-  const borrowerAddress = await getNextAddress()
+  const borrowerAddress = await marina.getNextAddress()
 
   return {
     borrowerAddress,
@@ -689,7 +679,7 @@ export async function proposeTopupContract({
     }
   })
 
-  if (!borrowerAddress.publicKey) return
+  if (!borrowerAddress?.publicKey) return
 
   // get blinding pub key for collateral change if any
   const blindingPubKeyForCollateralChange = collateralChangeAddress
