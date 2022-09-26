@@ -104,7 +104,7 @@ const TopupDeposit = ({
       if (!boltzSwap) throw new Error('Error creating swap')
 
       // deconstruct swap
-      const { invoice, lockupAddress, preimage, redeemScript } = await boltzSwap
+      const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
 
       // show qr code to user
       setInvoice(invoice)
@@ -152,8 +152,10 @@ const TopupDeposit = ({
       const base64 = await marina.signTransaction(aux.toBase64())
       const ptx = Psbt.fromBase64(base64)
 
+      // tell user we are now on the final stage of the process
       setStage(ModalStages.NeedsFinishing)
 
+      // finalize covenant input
       finalizeCovenantInput(ptx)
 
       // finalize input[1] - collateral via claim transaction
@@ -212,21 +214,22 @@ const TopupDeposit = ({
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
+      // inform user we are proposing contract to fuji and waiting approval
       setStage(ModalStages.NeedsFujiApproval)
 
       // propose contract to alpha factory
       const { partialTransaction } = await proposeTopupContract(preparedTx)
       if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
-      // show user (via modal) that contract proposal was accepted
-      setStage(ModalStages.NeedsConfirmation)
-
       // user now must sign transaction on marina
+      setStage(ModalStages.NeedsConfirmation)
       const base64 = await marina.signTransaction(partialTransaction)
       const ptx = Psbt.fromBase64(base64)
 
+      // tell user we are now on the final stage of the process
       setStage(ModalStages.NeedsFinishing)
 
+      // finalize covenant input
       finalizeCovenantInput(ptx)
 
       // finalize the other inputs
@@ -238,8 +241,10 @@ const TopupDeposit = ({
       const rawHex = ptx.extractTransaction().toHex()
       newContract.txid = (await marina.broadcastTransaction(rawHex)).txid
       newContract.vout = 1
+
       // add additional fields to contract and save to storage
       await saveContractToStorage(newContract, network, preparedTx)
+
       // mark old contract as topup
       markContractTopup(oldContract)
 
