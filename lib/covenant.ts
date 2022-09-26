@@ -173,11 +173,11 @@ export async function prepareBorrowTxWithClaimTx(
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   const borrowerAddress = await marina.getNextAddress()
   return {
-    psbt,
-    contractParams,
     borrowerAddress,
     borrowerPublicKey,
     collateralUtxos: utxos,
+    contractParams,
+    psbt,
   }
 }
 
