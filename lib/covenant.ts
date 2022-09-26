@@ -343,6 +343,7 @@ export async function proposeBorrowContract({
 // redeem
 
 export async function prepareRedeemTx(
+  address: string,
   contract: Contract,
   network: NetworkString,
   setStage: (arg0: string[]) => void,
@@ -427,10 +428,8 @@ export async function prepareRedeemTx(
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
   // get collateral back
-  const collateralAddress = await marina.getNextAddress()
   tx.withRecipient(
-    // address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
-    collateralAddress.confidentialAddress,
+    address,
     collateral.quantity - payoutAmount - feeAmount,
     collateral.id,
   )

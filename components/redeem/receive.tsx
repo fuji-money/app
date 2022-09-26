@@ -61,7 +61,8 @@ const RedeemReceive = ({
     openModal('redeem-modal')
     setStage(ModalStages.NeedsCoins)
     try {
-      const tx = await prepareRedeemTx(contract, network, setStage)
+      const address = (await marina.getNextAddress()).confidentialAddress
+      const tx = await prepareRedeemTx(address, contract, network, setStage)
       setStage(ModalStages.NeedsConfirmation)
       const signed = await tx.unlock()
 
