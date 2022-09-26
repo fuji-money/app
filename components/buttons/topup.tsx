@@ -11,13 +11,15 @@ const TopupButton = ({ contract }: TopupButtonProps) => {
   if (contractIsClosed(contract) || !contract.confirmed) {
     return (
       <button disabled className={cN}>
-        Topup
+        Topup (Coming Soon)
       </button>
     )
   }
   return (
     <Link passHref href={`/contracts/${contract.txid}/topup`}>
-      <button className={cN}>Topup</button>
+      <button disabled className={cN}>
+        Topup (Coming Soon)
+      </button>
     </Link>
   )
 }
