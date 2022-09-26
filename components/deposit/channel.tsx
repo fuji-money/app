@@ -86,10 +86,15 @@ const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
         <p className="warning mx-auto mt-5">Not enough funds on Marina.</p>
       )}
       {outOfBounds && (
-        <p className="warning mx-auto mt-5">
-          For lightning swaps, collateral amount must be between{' '}
-          {prettyNumber(minimal, 0)} and {prettyNumber(maximal, 0)} satoshis.
-        </p>
+        <>
+          <p className="warning mx-auto mt-6">
+            For lightning swaps, collateral amount must be between{' '}
+            {prettyNumber(minimal, 0)} and {prettyNumber(maximal, 0)} satoshis.
+          </p>
+          <p className="warning mx-auto mt-3">
+            Current amount: <strong>{quantity}</strong>
+          </p>
+        </>
       )}
       <style jsx>{`
         h2 {
