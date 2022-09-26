@@ -1,4 +1,3 @@
-import React from 'react'
 import { useQRCode } from 'next-qrcode'
 
 interface QRCodeProps {

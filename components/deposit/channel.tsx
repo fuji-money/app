@@ -1,14 +1,10 @@
 import Image from 'next/image'
 import { Contract } from 'lib/types'
-import {
-  DEPOSIT_LIGHTNING_LIMITS,
-  swapDepositAmountOutOfBounds,
-} from 'lib/swaps'
-import { prettyNumber } from 'lib/pretty'
+import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 import { getAssetBalance } from 'lib/marina'
-import { fromSatoshis } from 'lib/utils'
+import OutOfBoundsMessage from 'components/messages/outOfBounds'
 
 interface ChannelButtonProps {
   name: string
@@ -54,11 +50,10 @@ const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
 
   if (!marina) throw new Error('Missing marina provider')
 
-  const ticker = contract.collateral.ticker
-  const quantity = amount || contract.collateral.quantity || 0
-  const balance = getAssetBalance(contract.collateral, balances)
-
-  const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
+  const { collateral } = contract
+  const ticker = collateral.ticker
+  const quantity = amount || collateral.quantity || 0
+  const balance = getAssetBalance(collateral, balances)
 
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
   const enoughFunds = balance > quantity
@@ -86,19 +81,7 @@ const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
       {!enoughFunds && (
         <p className="warning mx-auto mt-5">Not enough funds on Marina.</p>
       )}
-      {outOfBounds && (
-        <>
-          <p className="warning mx-auto mt-6">
-            For lightning swaps, collateral amount must be between{' '}
-            {prettyNumber(fromSatoshis(minimal), 8)} and{' '}
-            {prettyNumber(fromSatoshis(maximal), 8)}
-          </p>
-          <p className="warning mx-auto mt-3">
-            Current amount:{' '}
-            <strong>{prettyNumber(fromSatoshis(quantity), 8)}</strong>
-          </p>
-        </>
-      )}
+      {outOfBounds && <OutOfBoundsMessage amount={quantity} />}
       <style jsx>{`
         h2 {
           font-size: 1.5rem;

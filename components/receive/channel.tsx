@@ -1,13 +1,9 @@
 import Image from 'next/image'
 import { Contract } from 'lib/types'
-import {
-  DEPOSIT_LIGHTNING_LIMITS,
-  swapDepositAmountOutOfBounds,
-} from 'lib/swaps'
-import { prettyNumber } from 'lib/pretty'
+import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
-import { getAssetBalance } from 'lib/marina'
+import OutOfBounds from 'components/messages/outOfBounds'
 
 interface ChannelButtonProps {
   name: string
@@ -52,10 +48,9 @@ const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
   const { marina } = useContext(WalletContext)
   if (!marina) throw new Error('Missing marina provider')
 
-  const ticker = contract.collateral.ticker
-  const quantity = amount || contract.collateral.quantity || 0
-
-  const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
+  const { collateral } = contract
+  const ticker = collateral.ticker
+  const quantity = amount || collateral.quantity || 0
 
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
   const lightningButtonEnabled = ticker === 'L-BTC' && !outOfBounds
@@ -73,26 +68,7 @@ const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
           setChannel={setChannel}
         />
       </div>
-      {outOfBounds && (
-        <>
-          <p className="warning mx-auto mt-6">
-            For lightning swaps, amount must be between{' '}
-            {prettyNumber(minimal, 0)} and {prettyNumber(maximal, 0)} satoshis.
-          </p>
-          <p className="warning mx-auto mt-3">
-            Current amount: <strong>{quantity}</strong>
-          </p>
-        </>
-      )}
-      <style jsx>{`
-        h2 {
-          font-size: 1.5rem;
-          font-weight: 700;
-        }
-        p.warning {
-          max-width: 350px;
-        }
-      `}</style>
+      {outOfBounds && <OutOfBounds amount={quantity} />}
     </div>
   )
 }
