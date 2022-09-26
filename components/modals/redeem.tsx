@@ -3,10 +3,12 @@ import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
 import Result from 'components/result'
+import { useContext } from 'react'
+import { WalletContext } from 'components/providers/wallet'
+import { getAssetBalance } from 'lib/marina'
 
 interface RedeemModalProps {
-  balance: number
-  contract: Contract | undefined
+  contract: Contract
   data: string
   reset: () => void
   result: string
@@ -14,19 +16,24 @@ interface RedeemModalProps {
 }
 
 const RedeemModal = ({
-  balance,
   contract,
   data,
   result,
   reset,
   stage,
 }: RedeemModalProps) => {
+  const { balances } = useContext(WalletContext)
+
+  if (!contract) return <></>
+
   // messages to show on different steps of the process
   const [mainMessage, secondaryMessage] = stage
 
   // decision variables
-  const ticker = contract?.synthetic.ticker
-  const neededAmount = contract?.synthetic.quantity
+  const { synthetic } = contract
+  const balance = getAssetBalance(synthetic, balances)
+  const ticker = synthetic.ticker
+  const neededAmount = synthetic.quantity
   const hasFunds = neededAmount && balance >= neededAmount
 
   return (
