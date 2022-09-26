@@ -8,6 +8,7 @@ import { prettyNumber } from 'lib/pretty'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 import { getAssetBalance } from 'lib/marina'
+import { fromSatoshis } from 'lib/utils'
 
 interface ChannelButtonProps {
   name: string
@@ -89,10 +90,12 @@ const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
         <>
           <p className="warning mx-auto mt-6">
             For lightning swaps, collateral amount must be between{' '}
-            {prettyNumber(minimal, 0)} and {prettyNumber(maximal, 0)} satoshis.
+            {prettyNumber(fromSatoshis(minimal), 8)} and{' '}
+            {prettyNumber(fromSatoshis(maximal), 8)}
           </p>
           <p className="warning mx-auto mt-3">
-            Current amount: <strong>{quantity}</strong>
+            Current amount:{' '}
+            <strong>{prettyNumber(fromSatoshis(quantity), 8)}</strong>
           </p>
         </>
       )}
