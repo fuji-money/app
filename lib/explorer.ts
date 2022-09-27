@@ -1,6 +1,7 @@
 import { NetworkString } from 'marina-provider'
 import { fetchURL } from './fetch'
 import { Contract } from './types'
+import { sleep } from './utils'
 
 export const explorerURL = (network: NetworkString) => {
   switch (network) {
@@ -17,11 +18,21 @@ export const checkOutspend = async (
   contract: Contract,
   network: NetworkString,
 ) => {
-  if (!contract.txid) return
-  return await fetchURL(
-    `${explorerURL(network)}/tx/${contract.txid}/outspend/0`,
-  )
+  const { txid, vout } = contract
+  if (!txid || typeof vout === 'undefined') return
+  const url = `${explorerURL(network)}/tx/${txid}/outspend/${vout}`
+  return await fetchURL(url)
 }
 
-export const getTx = async (txid: string, network: NetworkString) =>
-  await fetchURL(`${explorerURL(network)}/tx/${txid}`)
+// get tx from explorer
+// sometimes explorer still doesn't have the tx available, because
+// is too fresh, so we retry a few moments later
+export const getTx = async (txid: string, network: NetworkString) => {
+  const url = `${explorerURL(network)}/tx/${txid}`
+  try {
+    return await fetchURL(url)
+  } catch (_) {
+    await sleep(1000) // wait one second
+    return await fetchURL(url)
+  }
+}

@@ -10,7 +10,7 @@ interface RedeemModalProps {
   data: string
   reset: () => void
   result: string
-  step: number
+  stage: string[]
 }
 
 const RedeemModal = ({
@@ -19,17 +19,10 @@ const RedeemModal = ({
   data,
   result,
   reset,
-  step,
+  stage,
 }: RedeemModalProps) => {
   // messages to show on different steps of the process
-  const mainMessage = [
-    'Preparing the transaction...',
-    'Waiting for confirmation...',
-  ][step]
-  const secondaryMessage = [
-    'Looking for coins in your wallet...',
-    'Confirm this transaction in your Marina wallet',
-  ][step]
+  const [mainMessage, secondaryMessage] = stage
 
   // decision variables
   const ticker = contract?.synthetic.ticker

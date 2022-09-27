@@ -6,23 +6,16 @@ interface MarinaDepositModalProps {
   data: string
   result: string
   reset: () => void
-  step: number
+  stage: string[]
 }
 
 const MarinaDepositModal = ({
   data,
   result,
   reset,
-  step,
+  stage,
 }: MarinaDepositModalProps) => {
-  const mainMessage = [
-    'Preparing transaction...',
-    'Waiting for confirmation...',
-  ][step]
-  const secondaryMessage = [
-    'Waiting for Fuji approval',
-    'Confirm this transaction in your Marina wallet',
-  ][step]
+  const [mainMessage, secondaryMessage] = stage
   return (
     <Modal id="marina-deposit-modal" reset={reset}>
       {result && <Result data={data} result={result} reset={reset} />}

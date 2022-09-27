@@ -12,6 +12,7 @@ import { toSatoshis } from 'lib/utils'
 
 interface BorrowFormProps {
   contract: Contract
+  minRatio: number
   oracles: Oracle[]
   ratio: number
   setContract: (arg0: Contract) => void
@@ -20,6 +21,7 @@ interface BorrowFormProps {
 
 const BorrowForm = ({
   contract,
+  minRatio,
   oracles,
   ratio,
   setContract,
@@ -36,11 +38,12 @@ const BorrowForm = ({
     setContract({ ...contract, collateral, synthetic, payoutAmount })
   }
 
-  const setContractRatio = (ratio: number) => {
-    setRatio(ratio)
-    const quantity = getCollateralQuantity(contract, ratio)
+  const setContractRatio = (newRatio: number) => {
+    newRatio = newRatio > minRatio ? newRatio : minRatio
+    setRatio(newRatio)
+    const quantity = getCollateralQuantity(contract, newRatio)
     const collateral = { ...contract.collateral, quantity }
-    const priceLevel = getContractPriceLevel(contract.collateral, ratio)
+    const priceLevel = getContractPriceLevel(contract.collateral, newRatio)
     const payoutAmount = getContractPayoutAmount(contract, quantity)
     setContract({ ...contract, collateral, priceLevel, payoutAmount })
   }

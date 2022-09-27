@@ -2,11 +2,12 @@ import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
 import type { NetworkString } from 'ldk'
 import { address, crypto, script, networks, payments } from 'liquidjs-lib'
-import { fromSatoshis } from 'lib/utils'
+import { fromSatoshis, sleep } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
 import Boltz, { ReverseSubmarineSwapResponse } from './boltz'
 import { randomBytes } from 'crypto'
-import type { ECPairInterface } from 'ecpair'
+import { explorerURL } from './explorer'
+import { fetchUtxos, Outpoint } from 'ldk'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
@@ -18,9 +19,6 @@ export const DEPOSIT_LIGHTNING_LIMITS = {
 export const swapDepositAmountOutOfBounds = (quantity = 0) =>
   quantity > DEPOSIT_LIGHTNING_LIMITS.maximal ||
   quantity < DEPOSIT_LIGHTNING_LIMITS.minimal
-
-const lbtcAssetByNetwork = (net: NetworkString): string =>
-  networks[net].assetHash
 
 // Submarine swaps
 
@@ -161,7 +159,7 @@ const validReverseSwapReedemScript = (
 
 // create reverse submarine swap
 export const createReverseSubmarineSwap = async (
-  keyPair: ECPairInterface,
+  publicKey: Buffer,
   network: NetworkString,
   onchainAmount: number,
 ): Promise<ReverseSwap | undefined> => {
@@ -173,7 +171,7 @@ export const createReverseSubmarineSwap = async (
   const preimageHash = crypto.sha256(preimage).toString('hex')
 
   // ephemeral keys
-  const p = payments.p2pkh({ pubkey: keyPair.publicKey })
+  const p = payments.p2pkh({ pubkey: publicKey })
   const claimPublicKey = p.pubkey!.toString('hex')
 
   // create reverse submarine swap
@@ -192,4 +190,26 @@ export const createReverseSubmarineSwap = async (
     redeemScript,
   }
   if (isValidReverseSubmarineSwap(reverseSwap)) return reverseSwap
+}
+
+// every 5 seconds, query explorer for payment
+export const waitForLightningPayment = async (
+  invoice: string,
+  address: string,
+  network: NetworkString,
+): Promise<Outpoint[]> => {
+  // check invoice expiration
+  const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
+
+  // wait for user to pay, check for utxos
+  let utxos: Outpoint[] = []
+  while (utxos.length === 0 && Date.now() <= invoiceExpireDate) {
+    console.log('waiting for payment')
+    try {
+      utxos = await fetchUtxos(address, explorerURL(network))
+    } catch (_) {}
+    await sleep(5000) // sleep for 5 seconds
+  }
+  console.log('paid', utxos)
+  return utxos
 }

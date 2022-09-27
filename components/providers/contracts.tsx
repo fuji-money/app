@@ -12,8 +12,8 @@ import {
   markContractRedeemed,
   markContractOpen,
   markContractUnknown,
-  markContractUnconfirmed,
   markContractConfirmed,
+  markContractTopup,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -30,6 +30,7 @@ import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
+import { marinaFujiAccountID } from 'lib/constants'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -80,16 +81,15 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
       if (!contract.txid) continue
-      // check if contract is confirmed
-      // if funding tx is not confirmed, we can skip this contract
-      const tx = await getTx(contract.txid, network)
-      if (!tx?.status?.confirmed) {
-        markContractUnconfirmed(contract)
-        continue
+      if (!contract.confirmed) {
+        // if funding tx is not confirmed, we can skip this contract
+        const tx = await getTx(contract.txid, network)
+        if (!tx?.status?.confirmed) continue
+        markContractConfirmed(contract)
       }
-      markContractConfirmed(contract)
       // check if contract is already spent
       const status = await checkOutspend(contract, network)
+      if (!status) continue
       if (status.spent) {
         // contract already spent, let's find out why:
         // we will look at the leaf before the last one,
@@ -99,6 +99,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         // - topuped (leaf asm will have 27 items)
         const { txid, vin } = status
         const spentTx = await getTx(txid, network)
+        if (!spentTx) continue
         const index = spentTx.vin[vin].witness.length - 2
         const leaf = spentTx.vin[vin].witness[index]
         switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
@@ -109,7 +110,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
             markContractRedeemed(contract, spentTx)
             continue
           case 'topup':
-            markContractRedeemed(contract, spentTx)
+            markContractTopup(contract)
             continue
           default:
             markContractUnknown(contract)
@@ -122,8 +123,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
           markContractOpen(contract)
           continue
         }
-        // if no coin, could be redeemed just now, or else is unknown
-        if (contract.state !== ContractState.Redeemed) {
+        // if no coin, could be redeemed or topuped just now, or else is unknown
+        if (
+          contract.state !== ContractState.Redeemed &&
+          contract.state !== ContractState.Topup
+        ) {
           markContractUnknown(contract)
         }
       }
@@ -134,6 +138,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // 1. fix missing xPubKey on old contracts and store on local storage
   // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
   // 3. update xPubKey to neutered xPubKey
+  // 4. add vout to contract
   const fixMissingXPubKeyOnOldContracts = () => {
     // get non neutered xPubKey
     const oldXPubKey = computeOldXPub(xPubKey)
@@ -156,15 +161,35 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
             }
           }
         }
+        if (typeof contract.vout == 'undefined') {
+          contract.vout = 0
+          updateContractOnStorage(contract)
+        }
       })
   }
 
-  // on a SPENT_UTXO event reload contracts
-  // don't use NEW_TX, on reload Marina emits a NEW_TX for all TXs,
-  // which cause a lot of spam on the explorer (#tx * #contracts * 2 queries)
-  const onNewTxListener = () => {
-    if (connected && marina)
-      marina.on('SPENT_UTXO', async () => reloadContracts())
+  // on a NEW_TX event for fuji account, reload contracts
+  // this approach brings a heavy load on the explorer,
+  // since on reload Marina emits all Tx for each account,
+  // so if Fuji account has many Tx it will hammer the explorer.
+  // the alternative would be to use SPENT_UTXO, but borrow contracts
+  // funded with Lightning swap does not use any UTXO, so marina never
+  // emits that event on those types of contracts
+  const setMarinaListener = () => {
+    if (connected && marina) {
+      marina.on('NEW_TX', async (payload) => {
+        console.log('NEW_TX', payload.accountID)
+        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+      })
+      marina.on('SPENT_UTXO', async (payload) => {
+        console.log('SPENT_UTXO', payload.accountID)
+        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+      })
+      marina.on('NEW_UTXO', async (payload) => {
+        console.log('NEW_UTXO', payload.accountID)
+        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+      })
+    }
   }
 
   const firstRender = useRef<NetworkString[]>([])
@@ -174,12 +199,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
         fixMissingXPubKeyOnOldContracts()
-        onNewTxListener()
+        setMarinaListener()
         firstRender.current.push(network)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, network, xPubKey])
+  }, [xPubKey])
 
   // update contracts
   useEffect(() => {

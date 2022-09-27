@@ -9,13 +9,17 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
+import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
+import { NetworkString } from 'marina-provider'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
   if (!contract.state) return false
-  return [ContractState.Redeemed, ContractState.Liquidated].includes(
-    contract.state,
-  )
+  return [
+    ContractState.Redeemed,
+    ContractState.Liquidated,
+    ContractState.Topup,
+  ].includes(contract.state)
 }
 
 // get contract ratio
@@ -33,9 +37,14 @@ export const getContractRatio = (contract: Contract): number => {
 export const getRatioState = (
   ratio: number,
   minRatio: number,
+  safeRatio?: number,
 ): ContractState => {
-  if (ratio >= minRatio + 50) return ContractState.Safe
-  if (ratio >= minRatio + 25) return ContractState.Unsafe
+  safeRatio ||= minRatio + 50
+  // first half between min and safe is considered critical
+  // second half between min and safe is considered unsafe
+  const unsafe = (safeRatio - minRatio) / 2 + minRatio
+  if (ratio >= safeRatio) return ContractState.Safe
+  if (ratio >= unsafe) return ContractState.Unsafe
   if (ratio >= minRatio) return ContractState.Critical
   return ContractState.Liquidated
 }
@@ -206,4 +215,26 @@ export function markContractUnknown(contract: Contract): void {
   removeActivities(contract, ActivityType.Liquidated)
   removeActivities(contract, ActivityType.Redeemed)
   removeActivities(contract, ActivityType.Topup)
+}
+
+// mark contract as topup
+export function markContractTopup(contract: Contract): void {
+  if (contract.state === ContractState.Topup) return
+  contract.state = ContractState.Topup
+  updateContractOnStorage(contract)
+  addActivity(contract, ActivityType.Topup, Date.now())
+}
+
+// add additional fields to contract and save to storage
+export async function saveContractToStorage(
+  contract: Contract,
+  network: NetworkString,
+  preparedTx: PreparedBorrowTx | PreparedTopupTx,
+): Promise<void> {
+  contract.borrowerPubKey = preparedTx.borrowerPublicKey
+  contract.contractParams = preparedTx.contractParams
+  contract.network = network
+  contract.confirmed = false
+  contract.xPubKey = await getXPubKey()
+  createNewContract(contract)
 }

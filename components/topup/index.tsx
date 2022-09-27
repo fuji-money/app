@@ -1,27 +1,43 @@
 import { Contract, Oracle } from 'lib/types'
-import { useState } from 'react'
-import { getCollateralQuantity, getContractRatio } from 'lib/contracts'
+import { useEffect, useState } from 'react'
+import {
+  getCollateralQuantity,
+  getContractPayoutAmount,
+  getContractPriceLevel,
+  getContractRatio,
+} from 'lib/contracts'
 import TopupForm from './form'
 import Balance from 'components/balance'
 import TopupButton from './button'
-import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
 import Notifications from 'components/notifications'
+import TopupInfo from './info'
+import TopupDeposit from './deposit'
 
 interface TopupProps {
-  contract: Contract
+  oldContract: Contract
   oracles: Oracle[]
-  setContract: (arg0: Contract) => void
 }
 
-const Topup = ({ contract, oracles, setContract }: TopupProps) => {
+const Topup = ({ oldContract, oracles }: TopupProps) => {
+  const [newContract, setNewContract] = useState(oldContract)
   const [deposit, setDeposit] = useState(false)
   const [channel, setChannel] = useState('')
-  const [ratio, setRatio] = useState(getContractRatio(contract))
+  const [ratio, setRatio] = useState(getContractRatio(oldContract))
 
-  const minRatio = getContractRatio(contract)
-  const quantity = getCollateralQuantity(contract, ratio)
-  const topup = quantity - (contract.collateral.quantity || 0)
+  useEffect(() => {
+    const quantity = getCollateralQuantity(newContract, ratio)
+    const collateral = { ...newContract.collateral, quantity }
+    const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
+    const payoutAmount = getContractPayoutAmount(newContract, quantity)
+    setNewContract({ ...newContract, collateral, priceLevel, payoutAmount })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ratio])
+
+  const minRatio = getContractRatio(oldContract)
+  const oldQuantity = oldContract.collateral.quantity || 0
+  const newQuantity = newContract.collateral.quantity || 0
+  const topup = newQuantity - oldQuantity
 
   return (
     <section>
@@ -32,20 +48,26 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
             {!deposit && (
               <>
                 <TopupForm
-                  contract={contract}
+                  minRatio={minRatio}
+                  newContract={newContract}
+                  oldContract={oldContract}
                   oracles={oracles}
                   ratio={ratio}
+                  setNewContract={setNewContract}
                   setRatio={setRatio}
-                  setContract={setContract}
+                />
+                <TopupInfo
+                  newContract={newContract}
+                  oldContract={oldContract}
                 />
                 <Notifications
-                  contract={contract}
+                  contract={newContract}
                   minRatio={minRatio}
                   ratio={ratio}
                   topup={topup}
                 />
                 <TopupButton
-                  oracles={contract.oracles}
+                  oracles={newContract.oracles}
                   minRatio={minRatio}
                   ratio={ratio}
                   setDeposit={setDeposit}
@@ -54,12 +76,12 @@ const Topup = ({ contract, oracles, setContract }: TopupProps) => {
               </>
             )}
             {deposit && (
-              <Deposit
-                contract={contract}
+              <TopupDeposit
                 channel={channel}
+                newContract={newContract}
+                oldContract={oldContract}
                 setChannel={setChannel}
                 setDeposit={setDeposit}
-                topup={topup}
               />
             )}
           </div>

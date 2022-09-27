@@ -44,12 +44,9 @@ const Notifications = ({
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
       const balance = getAssetBalance(asset, balances)
-      const payoutAmount = contract.payoutAmount || 0
       setNotEnoughFunds(connected && spendQuantity > balance)
       setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
-      setCollateralTooLow(
-        spendQuantity < payoutAmount + feeAmount + minDustLimit,
-      )
+      setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
     })
   }, [
     balances,

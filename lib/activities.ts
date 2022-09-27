@@ -1,4 +1,4 @@
-import { getNetwork } from './marina'
+import { getNetwork, getXPubKey } from './marina'
 import { prettyAsset } from './pretty'
 import {
   addActivityToStorage,
@@ -39,8 +39,10 @@ export function addActivity(
 // get all activities on storage for this network
 export async function getActivities(): Promise<Activity[]> {
   const network = await getNetwork()
+  const xPubKey = await getXPubKey()
   return getActivitiesFromStorage().filter(
-    (activity: Activity) => activity.network === network,
+    (activity: Activity) =>
+      activity.network === network && activity.contract.xPubKey === xPubKey,
   )
 }
 

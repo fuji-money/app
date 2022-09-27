@@ -35,10 +35,11 @@ const updateLabels = (min: number, safe: number) => {
     // don't run server side
     const _min = document.getElementById('min')
     const _safe = document.getElementById('safe')
-    if (!_min || !_safe) return
+    if (!_min) return
     let left = calcLeft(min) - _min.offsetWidth / 2
     _min.style.left = `${left}px`
-    if (safe >= min + 40) {
+    if (!_safe) return
+    if (safe) {
       _safe.style.left = `${left}px`
     } else {
       _safe.style.visibility = 'hidden'
@@ -57,18 +58,21 @@ const updatePriceLevel = (ratio: number) => {
 
 interface RatioProps {
   collateral: Asset
+  minRatio?: number
   ratio?: number
   setContractRatio: (ratio: number) => void
 }
 
 const Ratio = ({
   collateral,
+  minRatio,
   ratio = minBorrowRatio,
   setContractRatio,
 }: RatioProps) => {
-  const min = collateral.ratio || 0
-  const safe = min + 50
-  const state = getRatioState(ratio, min)
+  const min = minRatio || collateral.ratio || 0
+  const safe = minRatio ? 0 : min + 50
+  const showSafe = safe > 0
+  const state = getRatioState(ratio, min, safe)
   const priceLevel = getContractPriceLevel(collateral, ratio)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -87,9 +91,11 @@ const Ratio = ({
         <span onClick={() => setContractRatio(min)} id="min">
           min: {prettyRatio(min)}%
         </span>
-        <span onClick={() => setContractRatio(safe)} id="safe">
-          safe: {prettyRatio(safe)}%
-        </span>
+        {showSafe && (
+          <span onClick={() => setContractRatio(safe)} id="safe">
+            safe: {prettyRatio(safe)}%
+          </span>
+        )}
       </p>
       <div className="level mb-0">
         <div className="level-left">

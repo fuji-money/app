@@ -9,9 +9,8 @@ import {
   minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
-import { debugMessage, numberToHexEncodedUint64LE } from './utils'
+import { numberToHexEncodedUint64LE } from './utils'
 import {
-  networks,
   payments,
   Psbt,
   confidential,
@@ -20,7 +19,7 @@ import {
   script,
   Transaction,
 } from 'liquidjs-lib'
-import { postData } from './fetch'
+import { fetchHex, postData } from './fetch'
 import {
   createFujiAccount,
   fujiAccountMissing,
@@ -33,16 +32,43 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
-import { fetchTxHex, getNetwork } from 'ldk'
-import { explorerURL } from './explorer'
+import { getNetwork } from 'ldk'
 
-interface PreparedBorrowTx {
-  psbt: Psbt
-  contractParams: any
-  changeAddress?: AddressInterface
-  borrowerAddress: AddressInterface
-  borrowerPublicKey: string
-  collateralUtxos: UtxoWithBlindPrivKey[]
+const getIonioInstance = (contract: Contract, network: NetworkString) => {
+  // get payout amount
+  const payoutAmount =
+    contract.payoutAmount || getContractPayoutAmount(contract) // TODO
+  // get ionio instance
+  const params = contract.contractParams
+  const constructorParams = [
+    // borrow asset
+    params.borrowAsset,
+    // collateral asset
+    params.collateralAsset,
+    // borrow amount
+    params.borrowAmount,
+    // payout on redeem amount for issuer
+    payoutAmount,
+    // borrower public key
+    contract.borrowerPubKey,
+    // oracle public key
+    params.oraclePk,
+    // issuer public key
+    params.issuerPk,
+    // issuer output
+    params.issuerScriptProgram, // segwit program
+    // price level
+    numberToHexEncodedUint64LE(params.priceLevel),
+    // timestamp
+    numberToHexEncodedUint64LE(params.setupTimestamp),
+  ]
+
+  return new IonioContract(
+    synthAssetArtifact as Artifact,
+    constructorParams,
+    getNetwork(network),
+    ecc,
+  )
 }
 
 async function getCovenantOutput(contract: Contract, network: NetworkString) {
@@ -70,25 +96,32 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
     priceLevel: numberToHexEncodedUint64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHexEncodedUint64LE(timestamp),
   }
-  debugMessage('contractParams', contractParams)
 
   // get needed addresses
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress(contractParams)
   await marina.useAccount(marinaMainAccountID)
-  debugMessage('covenantAddress', covenantAddress)
 
   // set covenant output
+  const amount = contract.collateral.quantity || 0
   const covenantOutput = {
     script: address.toOutputScript(covenantAddress.confidentialAddress),
-    value: confidential.satoshiToConfidentialValue(
-      contract.collateral.quantity || 0,
-    ),
+    value: confidential.satoshiToConfidentialValue(amount),
     asset: AssetHash.fromHex(contract.collateral.id, false).bytes,
     nonce: Buffer.alloc(0),
   }
 
   return { contractParams, covenantOutput, covenantAddress, timestamp }
+}
+
+// borrow
+export interface PreparedBorrowTx {
+  borrowerAddress: AddressInterface
+  borrowerPublicKey: string
+  changeAddress?: AddressInterface
+  collateralUtxos: UtxoWithBlindPrivKey[]
+  contractParams: any
+  psbt: Psbt
 }
 
 export async function prepareBorrowTxWithClaimTx(
@@ -97,8 +130,6 @@ export async function prepareBorrowTxWithClaimTx(
   redeemScript: string,
   utxos: any,
 ): Promise<PreparedBorrowTx> {
-  debugMessage('prepareBorrowTxWithClaimTx contract', contract)
-
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -116,7 +147,7 @@ export async function prepareBorrowTxWithClaimTx(
     throw new Error('Invalid contract: no contract priceLevel')
 
   const [utxo] = utxos
-  const hex = await fetchTxHex(utxo.txid, explorerURL(network))
+  const hex = await fetchHex(utxo.txid, network)
   const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
   const psbt = new Psbt({ network: getNetwork(network) })
@@ -136,20 +167,17 @@ export async function prepareBorrowTxWithClaimTx(
   // add covenant in position 0
   psbt.addOutput(covenantOutput)
 
-  debugMessage('psbt', psbt)
-
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   const borrowerAddress = await marina.getNextAddress()
-  debugMessage('borrowerPublicKey', borrowerPublicKey)
   return {
-    psbt,
-    contractParams,
     borrowerAddress,
     borrowerPublicKey,
     collateralUtxos: utxos,
+    contractParams,
+    psbt,
   }
 }
 
@@ -157,8 +185,6 @@ export async function prepareBorrowTx(
   contract: Contract,
   network: NetworkString,
 ): Promise<PreparedBorrowTx> {
-  debugMessage('prepareBorrowTx contract', contract)
-
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -182,17 +208,14 @@ export async function prepareBorrowTx(
     collateral.id,
     collateral.quantity + feeAmount,
   )
-  if (collateralUtxos.length === 0) throw new Error('Not enough funds')
-  debugMessage('collateralAmount', collateral.quantity)
-  debugMessage('collateralUtxos', collateralUtxos)
+  if (collateralUtxos.length === 0)
+    throw new Error('Not enough collateral funds')
 
   // build Psbt
   const psbt = new Psbt({ network: getNetwork(network) })
 
   // add collateral inputs
   for (const utxo of collateralUtxos) {
-    debugMessage('utxo')
-    debugMessage(utxo.txid, utxo.vout, utxo.prevout)
     psbt.addInput({
       hash: utxo.txid,
       index: utxo.vout,
@@ -224,32 +247,29 @@ export async function prepareBorrowTx(
     })
   }
 
-  debugMessage('psbt', psbt)
-
   // these values have different type when speaking with server
   contractParams.setupTimestamp = timestamp.toString()
   contractParams.priceLevel = contract.priceLevel.toString()
   const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
   const borrowerAddress = await getNextAddress()
-  debugMessage('borrowerPublicKey', borrowerPublicKey)
 
   return {
-    psbt,
-    contractParams,
-    changeAddress,
     borrowerAddress,
     borrowerPublicKey,
+    changeAddress,
     collateralUtxos,
+    contractParams,
+    psbt,
   }
 }
 
 export async function proposeBorrowContract({
-  psbt,
-  contractParams,
-  changeAddress,
   borrowerAddress,
   borrowerPublicKey,
+  changeAddress,
   collateralUtxos,
+  contractParams,
+  psbt,
 }: PreparedBorrowTx) {
   // deconstruct contractParams
   const {
@@ -273,7 +293,6 @@ export async function proposeBorrowContract({
     u.prevout.rangeProof != null && u.prevout.rangeProof.length > 0
 
   collateralUtxos.forEach((utxo, idx) => {
-    debugMessage('proposeBorrowContract utxo', utxo)
     if (utxoIsConfidential(utxo)) {
       if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
       blindingPrivKeyOfCollateralInputs[idx] = utxo.blindPrivKey
@@ -292,14 +311,15 @@ export async function proposeBorrowContract({
 
   // build post body
   const body = {
-    partialTransaction: psbt.toBase64(),
-    borrowerAddress: borrowerAddress.confidentialAddress,
     // anything is fine for now as attestation
     attestation: {
       message: '',
       messageHash: '',
       signature: '',
     },
+    blindingPrivKeyOfCollateralInputs,
+    blindingPubKeyForCollateralChange,
+    borrowerAddress: borrowerAddress.confidentialAddress,
     contractParams: {
       borrowAsset,
       borrowAmount,
@@ -313,26 +333,20 @@ export async function proposeBorrowContract({
       priceLevel,
       setupTimestamp,
     },
-    blindingPrivKeyOfCollateralInputs,
-    blindingPubKeyForCollateralChange,
+    partialTransaction: psbt.toBase64(),
   }
 
-  debugMessage('body', body)
   // post and return
   return postData(`${alphaServerUrl}/contracts`, body)
 }
 
+// redeem
+
 export async function prepareRedeemTx(
   contract: Contract,
   network: NetworkString,
-  setStep: (arg0: number) => void,
+  setStage: (arg0: string[]) => void,
 ) {
-  debugMessage('contract to redeem', contract)
-
-  console.log('network', network)
-  console.log('networks.testnet', networks.testnet)
-  console.log('getNetwork(network)', getNetwork(network))
-
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
@@ -355,51 +369,21 @@ export async function prepareRedeemTx(
     contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
   // get ionio instance
-  const params = contract.contractParams
-  const constructorParams = [
-    // borrow asset
-    params.borrowAsset,
-    // collateral asset
-    params.collateralAsset,
-    // borrow amount
-    params.borrowAmount,
-    // payout on redeem amount for issuer
-    payoutAmount,
-    // borrower public key
-    contract.borrowerPubKey,
-    // oracle public key
-    params.oraclePk,
-    // issuer public key
-    params.issuerPk,
-    // issuer output
-    params.issuerScriptProgram, // segwit program
-    // price level
-    numberToHexEncodedUint64LE(params.priceLevel),
-    // timestamp
-    numberToHexEncodedUint64LE(params.setupTimestamp),
-  ]
-  debugMessage('constructorParams to ionio contract', constructorParams)
-  let ionioInstance = new IonioContract(
-    synthAssetArtifact as Artifact,
-    constructorParams,
-    getNetwork(network),
-    ecc,
-  )
+  let ionioInstance = getIonioInstance(contract, network)
 
   // find coin for this contract
-  const coins = await marina.getCoins([marinaFujiAccountID])
-  // TODO stores the vout in storage. Now we assume is ALWAYS 0
-  const coinToRedeem = coins.find(
-    (c) => c.txid === contract.txid && c.vout === 0,
+  const fujiCoins = await marina.getCoins([marinaFujiAccountID])
+  const coinToRedeem = fujiCoins.find(
+    (c) => c.txid === contract.txid && c.vout === contract.vout,
   )
   if (!coinToRedeem)
     throw new Error(
-      'Contract cannot be found in the connected wallet. Wait for confirmations or try to reload the wallet and try again.',
+      'Contract cannot be found in the connected wallet.' +
+        'Wait for confirmations or try to reload the wallet and try again.',
     )
 
   const { txid, vout, prevout, unblindData } = coinToRedeem
   ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
-  debugMessage('ionioInstance', ionioInstance)
 
   // validate we have sufficient synthetic funds
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
@@ -408,9 +392,7 @@ export async function prepareRedeemTx(
     synthetic.id,
     synthetic.quantity,
   )
-  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji assets')
-  debugMessage('synthetic.quantity', synthetic.quantity)
-  debugMessage('syntheticUtxos', syntheticUtxos)
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
   // calculate synthetic change amount
   const syntheticUtxosAmount = syntheticUtxos.reduce(
@@ -425,72 +407,336 @@ export async function prepareRedeemTx(
     network: getNetwork(network),
   })
 
-  debugMessage('input covenant', contract.collateral.quantity)
   // get redeem transaction
   const marinaSigner = {
     signTransaction: async (base64: string) => {
-      debugMessage('marinaSigner marina', marina)
-      const signed = await marina.signTransaction(base64)
-      debugMessage('marinaSigner signed', signed)
-      return signed
+      return await marina.signTransaction(base64)
     },
   }
   const tx = ionioInstance.functions.redeem(marinaSigner)
-  console.log('rx', tx)
-  debugMessage('initial tx', tx)
+
   // add synthetic inputs
-  // are these inputs confidential? if so, we need to pass the unblindData field of the coin
-  // https://github.com/ionio-lang/ionio/blob/master/packages/ionio/test/e2e/transferWithKey.test.ts#L54
   for (const utxo of syntheticUtxos) {
-    debugMessage('input synthetic utxo', utxo.value)
-    const { txid, vout, prevout, unblindData } = utxo
-    tx.withUtxo({ txid, vout, prevout, unblindData })
+    tx.withUtxo(utxo)
   }
+
   // burn synthetic
-  debugMessage('output op_return', synthetic.quantity)
   tx.withOpReturn(synthetic.quantity, synthetic.id)
+
   // payout to issuer
-  debugMessage('output payout to issuer', payoutAmount)
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
+
   // get collateral back
   const collateralAddress = await marina.getNextAddress()
-  debugMessage(
-    'output collateral back',
-    collateral.quantity - payoutAmount - feeAmount,
-  )
   tx.withRecipient(
     // address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
     collateralAddress.confidentialAddress,
     collateral.quantity - payoutAmount - feeAmount,
     collateral.id,
   )
+
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
-    debugMessage('output synthetic change', syntheticChangeAmount)
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
       synthetic.id,
     )
   }
-  tx.withFeeOutput(feeAmount)
-  debugMessage('redeem tx', tx)
-  setStep(1)
-  const signed = await tx.unlock()
 
-  // finalize the fuji asset input
-  // we skip utxo in position 0 since is finalized already by the redeem function
-  for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
-    signed.psbt.finalizeInput(index)
+  // pay fees
+  tx.withFeeOutput(feeAmount)
+
+  // change info on modal, now waiting for user to sign
+  return tx
+}
+
+// topup
+
+export interface PreparedTopupTx {
+  borrowerAddress: AddressInterface
+  borrowerPublicKey: string
+  coinToTopup: Utxo
+  contractParams: any
+  collateralChangeAddress?: AddressInterface
+  collateralUtxos: UtxoWithBlindPrivKey[]
+  psbt: Psbt
+  syntheticChangeAddress?: AddressInterface
+  syntheticUtxos: UtxoWithBlindPrivKey[]
+}
+
+export async function prepareTopupTx(
+  newContract: Contract,
+  oldContract: Contract,
+  network: NetworkString,
+  collateralUtxos: any,
+): Promise<PreparedTopupTx> {
+  // check for marina
+  const marina = await getMarinaProvider()
+  if (!marina) throw new Error('Please install Marina')
+
+  // check for marina account, create if doesn't exists
+  if (await fujiAccountMissing(marina)) await createFujiAccount(marina)
+
+  // validate contracts
+  if (!newContract.collateral.quantity)
+    throw new Error('Invalid new contract: no collateral quantity')
+  if (!newContract.synthetic.quantity)
+    throw new Error('Invalid new contract: no synthetic quantity')
+  if (!newContract.priceLevel)
+    throw new Error('Invalid new contract: no contract priceLevel')
+  if (!oldContract.txid) throw new Error('Invalid old contract: no txid')
+  if (!oldContract.collateral.quantity)
+    throw new Error('Invalid old contract: no collateral quantity')
+  if (!oldContract.synthetic.quantity)
+    throw new Error('Invalid old contract: no synthetic quantity')
+
+  // burn amount, and topup amount to deposit
+  const burnAmount = oldContract.synthetic.quantity
+  const burnAsset = oldContract.synthetic.id
+  const topupAmount =
+    newContract.collateral.quantity - oldContract.collateral.quantity
+
+  // validate we have sufficient synthetic funds to burn
+  const syntheticUtxos = selectCoinsWithBlindPrivKey(
+    await marina.getCoins([marinaMainAccountID]),
+    await marina.getAddresses([marinaMainAccountID]),
+    burnAsset,
+    burnAmount,
+  )
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
+
+  // get new covenant params
+  const { contractParams, covenantAddress, timestamp } =
+    await getCovenantOutput(newContract, network)
+
+  // find coin for this contract
+  const coins = await marina.getCoins([marinaFujiAccountID])
+  const coinToTopup = coins.find(
+    (c) => c.txid === oldContract.txid && c.vout === oldContract.vout,
+  )
+  if (!coinToTopup)
+    throw new Error(
+      'Contract cannot be found in the connected wallet. ' +
+        'Wait for confirmations or try to reload the wallet and try again.',
+    )
+
+  const { txid, vout, prevout, unblindData } = coinToTopup
+
+  // get ionio instance
+  let ionioInstance = getIonioInstance(oldContract, network)
+  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
+
+  // signatures needed for topup
+  const marinaSigner = {
+    signTransaction: async (base64: string) => {
+      const signed = await marina.signTransaction(base64)
+      return signed
+    },
+  }
+  const skipSignature = {
+    signTransaction: (p: string) => Promise.resolve(p),
   }
 
-  const rawHex = signed.psbt.extractTransaction().toHex()
-  debugMessage('rawHex', rawHex)
-  const sentTransaction = await marina.broadcastTransaction(rawHex)
-  debugMessage('txid', sentTransaction.txid)
-  debugMessage('signed tx', signed)
-  return sentTransaction.txid
+  // this will add old covenant output as first input on tx
+  const tx = ionioInstance.functions.topup(skipSignature, marinaSigner)
+
+  // add collateral inputs
+  for (const utxo of collateralUtxos) {
+    if (utxo.redeemScript) {
+      // utxo from lightning
+      tx.psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        witnessUtxo: utxo.prevout,
+        witnessScript: Buffer.from(utxo.redeemScript, 'hex'),
+      })
+    } else {
+      // utxo from marina getCoins
+      tx.withUtxo(utxo)
+    }
+  }
+
+  // add synthetic inputs
+  for (const utxo of syntheticUtxos) {
+    tx.withUtxo(utxo)
+  }
+
+  // burn fuji
+  tx.withOpReturn(burnAmount, burnAsset)
+
+  // new covenant output
+  // the covenant must be always unconf!
+
+  tx.withRecipient(
+    address.fromConfidential(covenantAddress.confidentialAddress!)
+      .unconfidentialAddress,
+    newContract.collateral.quantity,
+    newContract.collateral.id,
+  )
+
+  // add collateral change output if needed
+  let collateralChangeAddress
+  const collateralUtxosAmount = collateralUtxos.reduce(
+    (value: number, utxo: any) => value + (utxo.value || 0),
+    0,
+  )
+  const collateralChangeAmount = collateralUtxosAmount - topupAmount - feeAmount
+  if (collateralChangeAmount > 0) {
+    collateralChangeAddress = await getNextChangeAddress()
+    tx.withRecipient(
+      collateralChangeAddress.confidentialAddress,
+      collateralChangeAmount,
+      newContract.collateral.id,
+    )
+  }
+
+  // add synthetic change output if needed
+  let syntheticChangeAddress
+  const syntheticUtxosAmount = syntheticUtxos.reduce(
+    (value, utxo) => value + (utxo.value || 0),
+    0,
+  )
+  const syntheticChangeAmount = syntheticUtxosAmount - burnAmount
+  if (syntheticChangeAmount > 0) {
+    syntheticChangeAddress = await getNextChangeAddress()
+    tx.withRecipient(
+      syntheticChangeAddress.confidentialAddress,
+      syntheticChangeAmount,
+      newContract.synthetic.id,
+    )
+  }
+
+  // these values have different type when speaking with server
+  contractParams.setupTimestamp = timestamp.toString()
+  contractParams.priceLevel = newContract.priceLevel.toString()
+  const borrowerPublicKey = (covenantAddress as any).constructorParams.fuji
+  const borrowerAddress = await marina.getNextAddress()
+
+  return {
+    borrowerAddress,
+    borrowerPublicKey,
+    coinToTopup,
+    contractParams,
+    collateralChangeAddress,
+    collateralUtxos,
+    psbt: tx.psbt,
+    syntheticChangeAddress,
+    syntheticUtxos,
+  }
+}
+
+export async function proposeTopupContract({
+  borrowerAddress,
+  borrowerPublicKey,
+  coinToTopup,
+  contractParams,
+  collateralChangeAddress,
+  collateralUtxos,
+  psbt,
+  syntheticChangeAddress,
+  syntheticUtxos,
+}: PreparedTopupTx) {
+  // deconstruct contractParams
+  const {
+    borrowAsset,
+    borrowAmount,
+    collateralAsset,
+    collateralAmount,
+    payoutAmount,
+    oraclePk,
+    issuerPk,
+    issuerScriptProgram,
+    priceLevel,
+    setupTimestamp,
+  } = contractParams
+
+  // util to find if a utxo is confidential
+  const utxoIsConfidential = (u: Utxo) =>
+    u.prevout.rangeProof != null && u.prevout.rangeProof.length > 0
+
+  // get blinding priv key for each confidential collateral utxo
+  // if utxo is not confidential, we MUST NOT pass the blind priv key
+  const blindingPrivKeyOfCollateralInputs: Record<number, string> = {}
+
+  collateralUtxos.forEach((utxo, idx) => {
+    if (utxoIsConfidential(utxo)) {
+      if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
+      blindingPrivKeyOfCollateralInputs[idx + 1] = utxo.blindPrivKey
+    }
+  })
+
+  // get blinding priv key for each confidential collateral utxo
+  // if utxo is not confidential, we MUST NOT pass the blind priv key
+  const blindingPrivKeyOfSynthInputs: Record<number, string> = {}
+
+  syntheticUtxos.forEach((utxo, idx) => {
+    if (utxoIsConfidential(utxo)) {
+      if (!utxo.blindPrivKey) throw new Error('Utxo without blindPrivKey')
+      blindingPrivKeyOfSynthInputs[idx + 1 + collateralUtxos.length] =
+        utxo.blindPrivKey
+    }
+  })
+
+  if (!borrowerAddress?.publicKey) return
+
+  // get blinding pub key for collateral change if any
+  const blindingPubKeyForCollateralChange = collateralChangeAddress
+    ? {
+        2: address
+          .fromConfidential(collateralChangeAddress.confidentialAddress!)
+          .blindingKey.toString('hex'),
+      }
+    : {}
+
+  // get blinding pub key for synthetic change if any
+  const blindingPubKeyForSynthChange = syntheticChangeAddress
+    ? collateralChangeAddress
+      ? {
+          3: address
+            .fromConfidential(syntheticChangeAddress.confidentialAddress!)
+            .blindingKey.toString('hex'),
+        }
+      : {
+          2: address
+            .fromConfidential(syntheticChangeAddress.confidentialAddress!)
+            .blindingKey.toString('hex'),
+        }
+    : {}
+
+  // build post body
+  const body = {
+    // anything is fine for now as attestation
+    attestation: {
+      message: '',
+      messageHash: '',
+      signature: '',
+    },
+    blindingPrivKeyOfCollateralInputs,
+    blindingPubKeyForCollateralChange,
+    blindingPrivKeyOfSynthInputs,
+    blindingPubKeyForSynthChange,
+    borrowerAddress: borrowerAddress.confidentialAddress,
+    contractParams: {
+      borrowAsset,
+      borrowAmount,
+      collateralAsset,
+      collateralAmount,
+      payoutAmount,
+      issuerPublicKey: issuerPk,
+      issuerScriptProgram,
+      oraclePublicKey: oraclePk,
+      borrowerPublicKey,
+      priceLevel,
+      setupTimestamp,
+    },
+    partialTransaction: psbt.toBase64(),
+  }
+
+  // post and return
+  const { txid, vout } = coinToTopup
+  return postData(`${alphaServerUrl}/contracts/${txid}:${vout}/topup`, body)
 }
 
 export function getFuncNameFromScriptHexOfLeaf(witness: string): string {

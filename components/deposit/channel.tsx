@@ -8,6 +8,7 @@ import { prettyNumber } from 'lib/pretty'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 import { getAssetBalance } from 'lib/marina'
+import { fromSatoshis } from 'lib/utils'
 
 interface ChannelButtonProps {
   name: string
@@ -45,24 +46,25 @@ const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
 interface ChannelProps {
   contract: Contract
   setChannel: (arg0: string) => void
+  amount?: number
 }
 
-const Channel = ({ contract, setChannel }: ChannelProps) => {
+const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
   const { balances, marina } = useContext(WalletContext)
 
   if (!marina) throw new Error('Missing marina provider')
 
   const ticker = contract.collateral.ticker
-  const quantity = contract.collateral.quantity || 0
+  const quantity = amount || contract.collateral.quantity || 0
   const balance = getAssetBalance(contract.collateral, balances)
 
   const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
+
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
   const enoughFunds = balance > quantity
 
   const liquidButtonEnabled = enoughFunds
-  // const lightningButtonEnabled = ticker === 'L-BTC' && !outOfBounds
-  const lightningButtonEnabled = false // TODO - revert when boltz instance ok
+  const lightningButtonEnabled = ticker === 'L-BTC' && !outOfBounds
 
   return (
     <div className="has-text-centered">
@@ -85,10 +87,17 @@ const Channel = ({ contract, setChannel }: ChannelProps) => {
         <p className="warning mx-auto mt-5">Not enough funds on Marina.</p>
       )}
       {outOfBounds && (
-        <p className="warning mx-auto mt-5">
-          For lightning swaps, collateral amount must be between{' '}
-          {prettyNumber(minimal, 0)} and {prettyNumber(maximal, 0)} satoshis.
-        </p>
+        <>
+          <p className="warning mx-auto mt-6">
+            For lightning swaps, collateral amount must be between{' '}
+            {prettyNumber(fromSatoshis(minimal), 8)} and{' '}
+            {prettyNumber(fromSatoshis(maximal), 8)}
+          </p>
+          <p className="warning mx-auto mt-3">
+            Current amount:{' '}
+            <strong>{prettyNumber(fromSatoshis(quantity), 8)}</strong>
+          </p>
+        </>
       )}
       <style jsx>{`
         h2 {

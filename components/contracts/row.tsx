@@ -1,4 +1,4 @@
-import { Contract, ContractState } from 'lib/types'
+import { Contract } from 'lib/types'
 import RedeemButton from 'components/buttons/redeem'
 import TopupButton from 'components/buttons/topup'
 import PrettyState from 'components/contract/state'
@@ -11,7 +11,7 @@ interface ContractRowProps {
   setData: (arg0: string) => void
   setResult: (arg0: string) => void
   setRedeem: (arg0: Contract) => void
-  setStep: (arg0: number) => void
+  setStage: (arg0: string[]) => void
 }
 
 const ContractRow = ({
@@ -20,7 +20,7 @@ const ContractRow = ({
   setData,
   setResult,
   setRedeem,
-  setStep,
+  setStage,
 }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
   return (
@@ -40,7 +40,7 @@ const ContractRow = ({
             contract={contract}
             setRedeem={setRedeem}
             setAssetBalance={setAssetBalance}
-            setStep={setStep}
+            setStage={setStage}
             setData={setData}
             setResult={setResult}
           />

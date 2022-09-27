@@ -3,13 +3,17 @@ import { prettyNumber, prettyQuantity } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
 
-interface BorrowInfoProps {
-  contract: Contract
+interface TopupInfoProps {
+  newContract: Contract
+  oldContract: Contract
 }
 
-const BorrowInfo = ({ contract }: BorrowInfoProps) => {
-  const { collateral, priceLevel, synthetic } = contract
-  const payoutAmount = getContractPayoutAmount(contract)
+const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
+  const { collateral, synthetic } = oldContract
+  const newPriceLevel = newContract.priceLevel
+  const oldPriceLevel = oldContract.priceLevel
+  const newPayoutAmount = getContractPayoutAmount(newContract)
+  const oldPayoutAmount = getContractPayoutAmount(oldContract)
   return (
     <div className="is-box has-pink-border">
       <div className="level">
@@ -31,12 +35,18 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
                 {prettyQuantity(synthetic.quantity)} {synthetic.ticker}
               </p>
               <p>{prettyNumber(collateral.value, 2)} USD</p>
-              <p>{prettyNumber(priceLevel)} USD</p>
               <p>
-                {prettyQuantity(collateral.quantity, 8)} {collateral.ticker}
+                {prettyNumber(oldPriceLevel)} &rarr;{' '}
+                {prettyNumber(newPriceLevel)} USD
               </p>
               <p>
-                {prettyNumber(fromSatoshis(payoutAmount), 8)}{' '}
+                {prettyQuantity(oldContract.collateral.quantity, 8)} &rarr;{' '}
+                {prettyQuantity(newContract.collateral.quantity, 8)}{' '}
+                {collateral.ticker}
+              </p>
+              <p>
+                {prettyNumber(fromSatoshis(oldPayoutAmount), 8)} &rarr;{' '}
+                {prettyNumber(fromSatoshis(newPayoutAmount), 8)}{' '}
                 {collateral.ticker}
               </p>
             </div>
@@ -47,4 +57,4 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
   )
 }
 
-export default BorrowInfo
+export default TopupInfo

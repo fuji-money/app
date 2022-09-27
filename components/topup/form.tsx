@@ -1,27 +1,36 @@
 import { Contract, Oracle } from 'lib/types'
-import { getCollateralQuantity } from 'lib/contracts'
+import {
+  getCollateralQuantity,
+  getContractPayoutAmount,
+  getContractPriceLevel,
+} from 'lib/contracts'
 import Ratio from 'components/borrow/ratio'
 import Summary from './summary'
 import Oracles from 'components/oracles'
 
 interface TopupFormProps {
-  contract: Contract
+  minRatio: number
+  newContract: Contract
+  oldContract: Contract
   oracles: Oracle[]
   ratio: number
-  setContract: (arg0: Contract) => void
+  setNewContract: (arg0: Contract) => void
   setRatio: (arg0: number) => void
 }
 
 const TopupForm = ({
-  contract,
+  minRatio,
+  newContract,
+  oldContract,
   oracles,
   ratio,
-  setContract,
+  setNewContract,
   setRatio,
 }: TopupFormProps) => {
-  const quantity = getCollateralQuantity(contract, ratio)
-  const collateral = { ...contract.collateral, quantity }
-  const future = { ...contract, collateral }
+  // change collateral quantity on new contract based on new ratio
+  const setContractRatio = (newRatio: number) => {
+    setRatio(newRatio > minRatio ? newRatio : minRatio)
+  }
 
   return (
     <div className="is-box has-pink-border">
@@ -29,21 +38,22 @@ const TopupForm = ({
         <span className="stepper">1</span>
         Your present contract
       </h3>
-      <Summary contract={contract} />
+      <Summary contract={oldContract} />
       <h3 className="mt-6">
         <span className="stepper">2</span>
         Set your new collateral ratio
       </h3>
       <Ratio
-        collateral={contract.collateral}
+        collateral={oldContract.collateral}
+        minRatio={minRatio}
         ratio={ratio}
-        setContractRatio={setRatio}
+        setContractRatio={setContractRatio}
       />
       <h3 className="mt-6">
         <span className="stepper">3</span>
         Confirm new values
       </h3>
-      <Summary contract={future} />
+      <Summary contract={newContract} />
       <h3 className="mt-6">
         <span className="stepper">4</span>
         Select oracle providers
@@ -52,9 +62,9 @@ const TopupForm = ({
         Gravida sed gravida in rhoncus enim. Nullam vitae at.
       </p>
       <Oracles
-        contract={contract}
+        contract={newContract}
         oracles={oracles}
-        setContract={setContract}
+        setContract={setNewContract}
       />
     </div>
   )

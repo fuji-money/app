@@ -1,8 +1,8 @@
 import Balance from 'components/balance'
-import Deposit from 'components/deposit'
 import Title from 'components/deposit/title'
-import type { Asset, Contract, Offer } from 'lib/types'
-import { useEffect, useState } from 'react'
+import type { Contract, Offer } from 'lib/types'
+import { useState } from 'react'
+import MultiplyDeposit from './deposit'
 import MultiplyForm from './form'
 
 interface MultiplyProps {
@@ -13,8 +13,6 @@ const Multiply = ({ offer }: MultiplyProps) => {
   const [deposit, setDeposit] = useState(false)
   const [channel, setChannel] = useState('')
   const [contract, setContract] = useState<Contract>(offer)
-
-  const topup = 0
 
   return (
     <section>
@@ -30,12 +28,11 @@ const Multiply = ({ offer }: MultiplyProps) => {
         <div className="row">
           <div className="columns">
             <div className="column is-8">
-              <Deposit
+              <MultiplyDeposit
                 contract={contract}
                 channel={channel}
                 setChannel={setChannel}
                 setDeposit={setDeposit}
-                topup={topup}
               />
             </div>
             <div className="column is-4">
