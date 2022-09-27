@@ -11,6 +11,7 @@ import { openModal, extractError, closeModal } from 'lib/utils'
 import { ModalStages } from 'components/modals/modal'
 import RedeemModal from 'components/modals/redeem'
 import InvoiceModal from 'components/modals/invoice'
+import { createReverseSubmarineSwap, createSubmarineSwap } from 'lib/swaps'
 
 interface RedeemReceiveProps {
   channel: string
@@ -46,14 +47,58 @@ const RedeemReceive = ({
     setChannel('')
   }
 
+  const handleRedeem = async (address: string) => {
+    if (!marina) return
+
+    // select coins and prepare redeem transaction
+    setStage(ModalStages.NeedsCoins)
+    const tx = await prepareRedeemTx(address, contract, network, setStage)
+
+    // ask user to sign transaction
+    setStage(ModalStages.NeedsConfirmation)
+    const signed = await tx.unlock()
+
+    // inform user transaction is finishing
+    setStage(ModalStages.NeedsFinishing)
+
+    // finalize the fuji asset input
+    // we skip utxo in position 0 since is finalized already by the redeem function
+    for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
+      signed.psbt.finalizeInput(index)
+    }
+
+    // extract and broadcast transaction
+    const rawHex = signed.psbt.extractTransaction().toHex()
+    const txid = (await marina.broadcastTransaction(rawHex)).txid
+
+    markContractRedeemed(contract)
+    setData(txid)
+    setResult('success')
+    reloadContracts()
+  }
+
   const handleLightning = async (invoice = ''): Promise<void> => {
     if (!marina) return
     if (!invoice) return openModal('invoice-modal')
     closeModal('invoice-modal')
     openModal('redeem-modal')
-    setStage(ModalStages.NeedsCoins)
     try {
+      setStage(ModalStages.NeedsAddress)
+      const refundPublicKey = (await marina.getNextAddress()).publicKey!
+      // create swap with Boltz.exchange
+      const boltzSwap = await createSubmarineSwap(
+        invoice,
+        network,
+        refundPublicKey,
+      )
+      if (!boltzSwap) throw new Error('Error creating swap')
+      const { address, expectedAmount, redeemScript } = boltzSwap
+      console.log('address', address)
+      console.log('expectedAmount', expectedAmount)
+      console.log('redeemScript', redeemScript)
+      handleRedeem(address)
     } catch (error) {
+      console.debug(extractError(error))
       setData(extractError(error))
       setResult('failure')
     }
@@ -62,34 +107,11 @@ const RedeemReceive = ({
   const handleMarina = async (): Promise<void> => {
     if (!marina) return
     openModal('redeem-modal')
-    setStage(ModalStages.NeedsCoins)
     try {
       // generate address to receive collateral back,
-      // select coins and prepare redeem transaction
       const address = (await marina.getNextAddress()).confidentialAddress
-      const tx = await prepareRedeemTx(address, contract, network, setStage)
-
-      // ask user to sign transaction
-      setStage(ModalStages.NeedsConfirmation)
-      const signed = await tx.unlock()
-
-      // inform user transaction is finishing
-      setStage(ModalStages.NeedsFinishing)
-
-      // finalize the fuji asset input
-      // we skip utxo in position 0 since is finalized already by the redeem function
-      for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
-        signed.psbt.finalizeInput(index)
-      }
-
-      // extract and broadcast transaction
-      const rawHex = signed.psbt.extractTransaction().toHex()
-      const txid = (await marina.broadcastTransaction(rawHex)).txid
-
-      markContractRedeemed(contract)
-      setData(txid)
-      setResult('success')
-      reloadContracts()
+      // proceed with redeem
+      handleRedeem(address)
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))

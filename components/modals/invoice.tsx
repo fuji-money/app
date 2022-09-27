@@ -1,5 +1,9 @@
-import { getInvoiceExpireDate, getInvoiceValue } from 'lib/swaps'
-import { toSatoshis } from 'lib/utils'
+import {
+  getInvoiceExpireDate,
+  getInvoiceValue,
+  submarineSwapBoltzFees,
+} from 'lib/swaps'
+import { fromSatoshis, toSatoshis } from 'lib/utils'
 import { useState } from 'react'
 import Modal from './modal'
 
@@ -12,38 +16,37 @@ const InvoiceModal = ({ amount, handler }: InvoiceModalProps) => {
   const [valid, setValid] = useState(false)
   const [warning, setWarning] = useState('')
 
+  const newAmount = amount - submarineSwapBoltzFees(amount)
+
   const getInvoice = (): string =>
     (document.getElementById('invoice') as HTMLInputElement).value
 
   const validateInvoice = (): void => {
-    const invoice = getInvoice()
-    if (!invoice) {
-      setWarning('')
-      return setValid(false)
+    const invalidWithWarning = (msg: string) => {
+      setWarning(msg)
+      setValid(false)
     }
+    const invoice = getInvoice()
+    if (!invoice) return invalidWithWarning('')
+    // needs a try catch because a invalid invoice throws when decoding
     try {
-      if (toSatoshis(getInvoiceValue(invoice)) !== amount) {
-        setWarning('Invalid amount on invoice')
-        return setValid(false)
+      if (toSatoshis(getInvoiceValue(invoice)) !== newAmount) {
+        return invalidWithWarning('Invalid amount on invoice')
       }
       if (getInvoiceExpireDate(invoice) < Date.now()) {
-        setWarning('Invalid expire date on invoice')
-        return setValid(false)
+        return invalidWithWarning('Invalid expire date on invoice')
       }
     } catch (_) {
-      setWarning('Invalid invoice')
-      return setValid(false)
+      return invalidWithWarning('Invalid invoice')
     }
     setWarning('')
     setValid(true)
   }
 
-  const handleClick = (): void => handler(getInvoice())
-
   return (
     <Modal id={'invoice-modal'}>
       <h3 className="mt-4">Enter BOLT11 Lightning Invoice</h3>
-      <p>Amount: {amount}</p>
+      <p>Amount: {fromSatoshis(newAmount, 8)}</p>
       <textarea
         id="invoice"
         className="textarea"
@@ -54,7 +57,7 @@ const InvoiceModal = ({ amount, handler }: InvoiceModalProps) => {
       <button
         className="button is-primary"
         disabled={!valid}
-        onClick={handleClick}
+        onClick={() => handler(getInvoice())}
       >
         Reedem
       </button>

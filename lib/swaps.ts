@@ -4,7 +4,10 @@ import type { NetworkString } from 'ldk'
 import { address, crypto, script, networks, payments } from 'liquidjs-lib'
 import { fromSatoshis, sleep } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
-import Boltz, { ReverseSubmarineSwapResponse } from './boltz'
+import Boltz, {
+  ReverseSubmarineSwapResponse,
+  SubmarineSwapResponse,
+} from './boltz'
 import { randomBytes } from 'crypto'
 import { explorerURL } from './explorer'
 import { fetchUtxos, Outpoint } from 'ldk'
@@ -16,11 +19,22 @@ export const DEPOSIT_LIGHTNING_LIMITS = {
   minimal: DEFAULT_LIGHTNING_LIMITS.minimal - feeAmount - swapFeeAmount,
 }
 
-export const swapDepositAmountOutOfBounds = (quantity = 0) =>
-  quantity > DEPOSIT_LIGHTNING_LIMITS.maximal ||
-  quantity < DEPOSIT_LIGHTNING_LIMITS.minimal
+// check if amount is out of bounds for lightning swap
+export const swapDepositAmountOutOfBounds = (amount = 0) =>
+  amount > DEPOSIT_LIGHTNING_LIMITS.maximal ||
+  amount < DEPOSIT_LIGHTNING_LIMITS.minimal
+
+// calculate boltz fees for a given amount
+export const submarineSwapBoltzFees = (amount = 0) =>
+  Math.ceil(amount * 0.005) + 400
 
 // Submarine swaps
+
+export interface SubmarineSwap {
+  address: string
+  expectedAmount: number
+  redeemScript: string
+}
 
 // validates redeem script is in expected template
 const validSwapReedemScript = (
@@ -50,10 +64,36 @@ const validSwapReedemScript = (
   return scriptAssembly.join() === expectedScript.join()
 }
 
-export const isValidSubmarineSwap = (
-  redeemScript: string,
+export const isValidSubmarineSwap = ({
+  address,
+  expectedAmount,
+  redeemScript,
+}: SubmarineSwap): boolean => validSwapReedemScript(redeemScript, address)
+
+// create reverse submarine swap
+export const createSubmarineSwap = async (
+  invoice: string,
+  network: NetworkString,
   refundPublicKey: string,
-): boolean => validSwapReedemScript(redeemScript, refundPublicKey)
+) => {
+  // boltz object
+  const boltz = new Boltz(network)
+
+  // create reverse submarine swap
+  const { expectedAmount, address, redeemScript }: SubmarineSwapResponse =
+    await boltz.createSubmarineSwap({
+      invoice,
+      refundPublicKey,
+    })
+
+  const submarineSwap = {
+    address,
+    expectedAmount,
+    redeemScript,
+  }
+  return submarineSwap // TODO
+  if (isValidSubmarineSwap(submarineSwap)) return submarineSwap
+}
 
 // Reverse submarine swaps
 
@@ -170,7 +210,7 @@ export const createReverseSubmarineSwap = async (
   const preimage = randomBytes(32)
   const preimageHash = crypto.sha256(preimage).toString('hex')
 
-  // ephemeral keys
+  // claim public key
   const p = payments.p2pkh({ pubkey: publicKey })
   const claimPublicKey = p.pubkey!.toString('hex')
 

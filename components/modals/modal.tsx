@@ -8,6 +8,7 @@ const closeModals = () => {
 }
 
 export const ModalStages = {
+  NeedsAddress: ['Making swap', 'Waiting for address'],
   NeedsCoins: ['Selecting coins', 'Selecting coins needed for transaction'],
   NeedsConfirmation: [
     'Approve transaction',
