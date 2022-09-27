@@ -6,6 +6,7 @@ import { WalletContext } from 'components/providers/wallet'
 import ContractRow from './row'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
+import { ModalStages } from 'components/modals/modal'
 
 interface ContractsListProps {
   showActive: boolean
