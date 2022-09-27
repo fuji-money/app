@@ -12,7 +12,7 @@ const Swap = ({ contract, handler }: SwapProps) => {
     <div className="columns">
       <div className="column is-6">
         <p>
-          <button className="button is-primary" onClick={handler}>
+          <button className="button is-primary" onClick={() => handler()}>
             <Image
               src="/images/networks/lightning.svg"
               alt="lightning logo"

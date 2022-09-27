@@ -210,6 +210,5 @@ export const waitForLightningPayment = async (
     } catch (_) {}
     await sleep(5000) // sleep for 5 seconds
   }
-  console.log('paid', utxos)
   return utxos
 }

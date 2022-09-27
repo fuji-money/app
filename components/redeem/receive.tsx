@@ -7,9 +7,10 @@ import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
 import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
-import { openModal, extractError } from 'lib/utils'
+import { openModal, extractError, closeModal } from 'lib/utils'
 import { ModalStages } from 'components/modals/modal'
 import RedeemModal from 'components/modals/redeem'
+import InvoiceModal from 'components/modals/invoice'
 
 interface RedeemReceiveProps {
   channel: string
@@ -32,23 +33,25 @@ const RedeemReceive = ({
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'
 
-  const { txid, collateral } = contract
+  const { txid, collateral, synthetic } = contract
 
   // validate contracts
   if (!txid) throw new Error('Contract without txid')
   if (!collateral.quantity)
     throw new Error('Contract without collateral quantity')
-  if (!collateral.quantity)
-    throw new Error('Contract without collateral quantity')
+  if (!synthetic.quantity)
+    throw new Error('Contract without synthetic quantity')
 
   const reset = () => {
     setChannel('')
   }
 
-  const handleLightning = async (): Promise<void> => {
+  const handleLightning = async (invoice = ''): Promise<void> => {
     if (!marina) return
+    if (!invoice) return openModal('invoice-modal')
+    closeModal('invoice-modal')
     openModal('redeem-modal')
-    setStage(ModalStages.NeedsInvoice)
+    setStage(ModalStages.NeedsCoins)
     try {
     } catch (error) {
       setData(extractError(error))
@@ -56,16 +59,21 @@ const RedeemReceive = ({
     }
   }
 
-  const handleMarina = async () => {
+  const handleMarina = async (): Promise<void> => {
     if (!marina) return
     openModal('redeem-modal')
     setStage(ModalStages.NeedsCoins)
     try {
+      // generate address to receive collateral back,
+      // select coins and prepare redeem transaction
       const address = (await marina.getNextAddress()).confidentialAddress
       const tx = await prepareRedeemTx(address, contract, network, setStage)
+
+      // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
       const signed = await tx.unlock()
 
+      // inform user transaction is finishing
       setStage(ModalStages.NeedsFinishing)
 
       // finalize the fuji asset input
@@ -103,6 +111,7 @@ const RedeemReceive = ({
         reset={reset}
         stage={stage}
       />
+      <InvoiceModal amount={collateral.quantity} handler={handleLightning} />
     </>
   )
 }
