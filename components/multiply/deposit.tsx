@@ -50,12 +50,14 @@ const MultiplyDeposit = ({
         {liquid && <Marina contract={contract} handler={handleMarina} />}
       </div>
       <MarinaDepositModal
+        contract={contract}
         data={data}
         result={result}
         reset={resetDeposit}
         stage={stage}
       />
       <LightningDepositModal
+        contract={contract}
         data={data}
         invoice={invoice}
         result={result}

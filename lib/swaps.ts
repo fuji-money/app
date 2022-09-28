@@ -11,6 +11,7 @@ import Boltz, {
 import { randomBytes } from 'crypto'
 import { explorerURL } from './explorer'
 import { fetchUtxos, Outpoint } from 'ldk'
+import Decimal from 'decimal.js'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
@@ -25,8 +26,15 @@ export const swapDepositAmountOutOfBounds = (amount = 0) =>
   amount < DEPOSIT_LIGHTNING_LIMITS.minimal
 
 // calculate boltz fees for a given amount
-export const submarineSwapBoltzFees = (amount = 0) =>
-  Math.ceil(amount * 0.005) + 400
+export const submarineSwapBoltzFees = (amount = 0) => {
+  const minersFee = 340
+  const percentage = 1.005
+  const invoiceAmount = new Decimal(amount)
+    .minus(minersFee)
+    .div(percentage)
+    .toNumber()
+  return Decimal.ceil(amount - invoiceAmount).toNumber()
+}
 
 // Submarine swaps
 

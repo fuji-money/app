@@ -1,8 +1,11 @@
+import Summary from 'components/contract/summary'
 import Result from 'components/result'
 import Spinner from 'components/spinner'
+import { Contract } from 'lib/types'
 import Modal from './modal'
 
 interface MarinaDepositModalProps {
+  contract: Contract
   data: string
   result: string
   reset: () => void
@@ -10,6 +13,7 @@ interface MarinaDepositModalProps {
 }
 
 const MarinaDepositModal = ({
+  contract,
   data,
   result,
   reset,
@@ -23,6 +27,10 @@ const MarinaDepositModal = ({
         <>
           <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
+          <p>Deposit to contract:</p>
+          <div className="mx-auto">
+            <Summary contract={contract} />
+          </div>
           <p className="confirm">{secondaryMessage}</p>
         </>
       )}

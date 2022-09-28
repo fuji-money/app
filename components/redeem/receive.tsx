@@ -12,6 +12,7 @@ import { ModalStages } from 'components/modals/modal'
 import RedeemModal from 'components/modals/redeem'
 import InvoiceModal from 'components/modals/invoice'
 import { createReverseSubmarineSwap, createSubmarineSwap } from 'lib/swaps'
+import exp from 'constants'
 
 interface RedeemReceiveProps {
   channel: string
@@ -34,20 +35,23 @@ const RedeemReceive = ({
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'
 
-  const { txid, collateral, synthetic } = contract
+  const { txid, collateral, synthetic, payoutAmount } = contract
 
   // validate contracts
   if (!txid) throw new Error('Contract without txid')
+  if (!payoutAmount) throw new Error('Contract without payoutAmount')
   if (!collateral.quantity)
     throw new Error('Contract without collateral quantity')
   if (!synthetic.quantity)
     throw new Error('Contract without synthetic quantity')
 
+  const amount = collateral.quantity - payoutAmount
+
   const reset = () => {
     setChannel('')
   }
 
-  const handleRedeem = async (address: string) => {
+  const proceedWithRedeem = async (address: string) => {
     if (!marina) return
 
     // select coins and prepare redeem transaction
@@ -56,6 +60,7 @@ const RedeemReceive = ({
 
     // ask user to sign transaction
     setStage(ModalStages.NeedsConfirmation)
+    console.log('tx', tx.psbt.data)
     const signed = await tx.unlock()
 
     // inform user transaction is finishing
@@ -93,10 +98,12 @@ const RedeemReceive = ({
       )
       if (!boltzSwap) throw new Error('Error creating swap')
       const { address, expectedAmount, redeemScript } = boltzSwap
+      if (expectedAmount > amount)
+        throw new Error('Expected amount higher then collateral amount')
       console.log('address', address)
       console.log('expectedAmount', expectedAmount)
       console.log('redeemScript', redeemScript)
-      handleRedeem(address)
+      proceedWithRedeem(address)
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))
@@ -111,7 +118,7 @@ const RedeemReceive = ({
       // generate address to receive collateral back,
       const address = (await marina.getNextAddress()).confidentialAddress
       // proceed with redeem
-      handleRedeem(address)
+      proceedWithRedeem(address)
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))
@@ -133,7 +140,7 @@ const RedeemReceive = ({
         reset={reset}
         stage={stage}
       />
-      <InvoiceModal amount={collateral.quantity} handler={handleLightning} />
+      <InvoiceModal contract={contract} handler={handleLightning} />
     </>
   )
 }

@@ -4,8 +4,11 @@ import QRCode from 'components/qrcode'
 import { useState } from 'react'
 import Result from 'components/result'
 import Spinner from 'components/spinner'
+import { Contract } from 'lib/types'
+import Summary from 'components/contract/summary'
 
 interface LightningDepositModalProps {
+  contract: Contract
   data: string
   invoice: string
   result: string
@@ -14,6 +17,7 @@ interface LightningDepositModalProps {
 }
 
 const LightningDepositModal = ({
+  contract,
   data,
   invoice,
   result,
@@ -42,6 +46,14 @@ const LightningDepositModal = ({
           <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
           {invoice && <QRCode text={invoice} />}
+          {!invoice && (
+            <>
+              <p>Deposit to contract:</p>
+              <div className="mx-auto">
+                <Summary contract={contract} />
+              </div>
+            </>
+          )}
           <p className="confirm">{secondaryMessage}</p>
           {invoice && (
             <p className="has-text-centered mt-4">

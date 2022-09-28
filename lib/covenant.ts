@@ -365,7 +365,7 @@ export async function prepareRedeemTx(
   if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
-  // fee amount will be taken from covenant
+  // payout amount will be taken from covenant
   const payoutAmount =
     contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
@@ -382,9 +382,6 @@ export async function prepareRedeemTx(
       'Contract cannot be found in the connected wallet.' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
-
-  const { txid, vout, prevout, unblindData } = coinToRedeem
-  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
 
   // validate we have sufficient synthetic funds
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
@@ -408,16 +405,21 @@ export async function prepareRedeemTx(
     network: getNetwork(network),
   })
 
-  // get redeem transaction
+  // marina signer for ionio redeem function
   const marinaSigner = {
     signTransaction: async (base64: string) => {
       return await marina.signTransaction(base64)
     },
   }
+
+  // prepapre ionio instance and tx
+  const { txid, vout, prevout, unblindData } = coinToRedeem
+  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
   const tx = ionioInstance.functions.redeem(marinaSigner)
 
   // add synthetic inputs
   for (const utxo of syntheticUtxos) {
+    console.log('adding synthetic utxo', utxo)
     tx.withUtxo(utxo)
   }
 
@@ -425,9 +427,11 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // payout to issuer
+  console.log('adding payout to issuer')
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
-  // get collateral back
+  // get collateral back or sent to boltz case is a submarine swap
+  console.log('adding collateral return')
   tx.withRecipient(
     address,
     collateral.quantity - payoutAmount - feeAmount,
@@ -437,6 +441,7 @@ export async function prepareRedeemTx(
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
+    console.log('adding synthetic change')
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,

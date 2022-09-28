@@ -134,7 +134,7 @@ export function selectCoinsWithBlindPrivKey(
       utxo.blindPrivKey = blindPrivKey
       selectedUtxos.push(utxo)
       totalValue += utxo.value
-      if (totalValue >= minAmount) {
+      if (totalValue > minAmount) {
         return selectedUtxos
       }
     }

@@ -272,12 +272,14 @@ const TopupDeposit = ({
         {liquid && <Marina contract={newContract} handler={handleMarina} />}
       </div>
       <MarinaDepositModal
+        contract={newContract}
         data={data}
         result={result}
         reset={resetDeposit}
         stage={stage}
       />
       <LightningDepositModal
+        contract={newContract}
         data={data}
         invoice={invoice}
         result={result}
