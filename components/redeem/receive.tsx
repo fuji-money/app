@@ -51,12 +51,12 @@ const RedeemReceive = ({
     setChannel('')
   }
 
-  const proceedWithRedeem = async (address: string) => {
+  const proceedWithRedeem = async (swapAddress?: string) => {
     if (!marina) return
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
-    const tx = await prepareRedeemTx(address, contract, network, setStage)
+    const tx = await prepareRedeemTx(contract, network, swapAddress)
 
     // ask user to sign transaction
     setStage(ModalStages.NeedsConfirmation)
@@ -115,10 +115,8 @@ const RedeemReceive = ({
     if (!marina) return
     openModal('redeem-modal')
     try {
-      // generate address to receive collateral back,
-      const address = (await marina.getNextAddress()).confidentialAddress
       // proceed with redeem
-      proceedWithRedeem(address)
+      proceedWithRedeem()
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))

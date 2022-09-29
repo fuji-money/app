@@ -25,6 +25,16 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
 
   const topup = 0
 
+  // in the case user clicks back while on channel selection
+  // or in provider selection, brings him back to borrow form
+  const onBack = () => {
+    window.removeEventListener('popstate', onBack)
+    setDeposit(false)
+  }
+  // only add event listener when deposit is defined,
+  // to prevent polution of event listeners
+  if (deposit) window.addEventListener('popstate', onBack)
+
   return (
     <section>
       <Title name="Borrow" channel={channel} deposit={deposit} />

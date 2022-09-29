@@ -32,6 +32,11 @@ const BorrowButton = ({
     })
   })
 
+  const handleClick = () => {
+    history.pushState({}, '')
+    setDeposit(true)
+  }
+
   const enabled =
     connected &&
     enoughFunds &&
@@ -54,7 +59,7 @@ const BorrowButton = ({
       <button
         className="button is-primary is-cta"
         disabled={!enabled}
-        onClick={() => setDeposit(true)}
+        onClick={handleClick}
       >
         Proceed to deposit
       </button>

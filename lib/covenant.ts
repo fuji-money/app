@@ -12,7 +12,6 @@ import {
 import { numberToHexEncodedUint64LE } from './utils'
 import {
   payments,
-  Psbt,
   confidential,
   AssetHash,
   address,
@@ -32,7 +31,8 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
-import { getNetwork } from 'ldk'
+import { getNetwork, Psbt } from 'ldk'
+import { randomBytes } from 'crypto'
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
   // get payout amount
@@ -343,10 +343,9 @@ export async function proposeBorrowContract({
 // redeem
 
 export async function prepareRedeemTx(
-  address: string,
   contract: Contract,
   network: NetworkString,
-  setStage: (arg0: string[]) => void,
+  swapAddress?: string,
 ) {
   // check for marina
   const marina = await getMarinaProvider()
@@ -364,6 +363,9 @@ export async function prepareRedeemTx(
     throw new Error('Invalid contract: no contract payoutAmount')
   if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
+
+  const address =
+    swapAddress || (await marina.getNextAddress()).confidentialAddress
 
   // payout amount will be taken from covenant
   const payoutAmount =
@@ -438,6 +440,9 @@ export async function prepareRedeemTx(
     collateral.id,
   )
 
+  const aux = (await marina.getNextChangeAddress()).confidentialAddress
+  console.log('confidentialAddress length', aux.length)
+
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
@@ -447,6 +452,14 @@ export async function prepareRedeemTx(
       syntheticChangeAmount,
       synthetic.id,
     )
+  } else if (swapAddress) {
+    // in a redeem, some inputs (if not all) are confidential.
+    // in the case of a redeem to lightning, if we don't have any change
+    // all outputs will be unconfidential, which would break the protocol.
+    // by adding a confidential op_return with value 0 fixes it.
+    console.log('adding confidential op_return')
+    const blindingKey = randomBytes(33).toString('hex')
+    tx.withOpReturn(0, collateral.id, [], blindingKey)
   }
 
   // pay fees

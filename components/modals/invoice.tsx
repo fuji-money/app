@@ -92,7 +92,7 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
         id="invoice"
         className="textarea"
         onChange={validateInvoice}
-        placeholder="paste invoice here"
+        placeholder="Paste invoice here"
       ></textarea>
       <p>&nbsp; {warning} &nbsp;</p>
       <button
