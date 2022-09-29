@@ -21,6 +21,7 @@ const BorrowButton = ({
 }: BorrowButtonProps) => {
   const { balances, connected } = useContext(WalletContext)
   const [enoughFunds, setEnoughFunds] = useState(false)
+  const { collateral, oracles, payoutAmount, synthetic } = contract
 
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
@@ -40,19 +41,18 @@ const BorrowButton = ({
   const enabled =
     connected &&
     enoughFunds &&
-    contract.collateral.quantity &&
-    contract.collateral.quantity > 0 &&
-    contract.collateral.value > 0 &&
+    collateral.quantity &&
+    collateral.quantity > 0 &&
+    collateral.value > 0 &&
     ratio >= minRatio &&
-    contract.synthetic.quantity &&
-    contract.synthetic.quantity > 0 &&
-    contract.synthetic.value > 0 &&
-    contract.oracles &&
-    contract.oracles.length > 0 &&
-    contract.payoutAmount &&
-    contract.payoutAmount >= minDustLimit &&
-    contract.collateral.quantity >
-      contract.payoutAmount + feeAmount + minDustLimit
+    synthetic.quantity &&
+    synthetic.quantity > 0 &&
+    synthetic.value > 0 &&
+    oracles &&
+    oracles.length > 0 &&
+    payoutAmount &&
+    payoutAmount >= minDustLimit &&
+    collateral.quantity > payoutAmount + feeAmount + minDustLimit
 
   return (
     <div className="has-text-centered">
