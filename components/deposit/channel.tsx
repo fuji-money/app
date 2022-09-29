@@ -40,12 +40,12 @@ const ChannelButton = ({ name, enabled, setChannel }: ChannelButtonProps) => {
 }
 
 interface ChannelProps {
+  amount?: number
   contract: Contract
   setChannel: (arg0: string) => void
-  amount?: number
 }
 
-const Channel = ({ contract, setChannel, amount }: ChannelProps) => {
+const Channel = ({ amount, contract, setChannel }: ChannelProps) => {
   const { balances, marina } = useContext(WalletContext)
 
   if (!marina) throw new Error('Missing marina provider')

@@ -11,8 +11,7 @@ import { openModal, extractError, closeModal } from 'lib/utils'
 import { ModalStages } from 'components/modals/modal'
 import RedeemModal from 'components/modals/redeem'
 import InvoiceModal from 'components/modals/invoice'
-import { createReverseSubmarineSwap, createSubmarineSwap } from 'lib/swaps'
-import exp from 'constants'
+import { createSubmarineSwap } from 'lib/swaps'
 
 interface RedeemReceiveProps {
   channel: string

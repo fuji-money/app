@@ -263,9 +263,9 @@ const TopupDeposit = ({
       <div className="is-box has-pink-border p-6">
         {!channel && (
           <Channel
+            amount={topupAmount}
             contract={newContract}
             setChannel={setChannel}
-            amount={topupAmount}
           />
         )}
         {lightning && <Swap contract={newContract} handler={handleLightning} />}

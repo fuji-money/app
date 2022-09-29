@@ -441,7 +441,6 @@ export async function prepareRedeemTx(
   )
 
   const aux = (await marina.getNextChangeAddress()).confidentialAddress
-  console.log('confidentialAddress length', aux.length)
 
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {

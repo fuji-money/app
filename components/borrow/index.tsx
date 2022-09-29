@@ -16,24 +16,14 @@ interface BorrowProps {
 }
 
 const Borrow = ({ offer, oracles }: BorrowProps) => {
-  const [deposit, setDeposit] = useState(false)
   const [channel, setChannel] = useState('')
+  const [deposit, setDeposit] = useState(false)
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
   const minRatio = offer.collateral.ratio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
   const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
 
   const topup = 0
-
-  // in the case user clicks back while on channel selection
-  // or in provider selection, brings him back to borrow form
-  const onBack = () => {
-    window.removeEventListener('popstate', onBack)
-    setDeposit(false)
-  }
-  // only add event listener when deposit is defined,
-  // to prevent polution of event listeners
-  if (deposit) window.addEventListener('popstate', onBack)
 
   return (
     <section>
