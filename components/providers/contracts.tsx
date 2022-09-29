@@ -61,6 +61,9 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const [loading, setLoading] = useState(true)
   const { connected, marina, network, xPubKey } = useContext(WalletContext)
 
+  // save first time app was run
+  const firstRun = useRef(Date.now())
+
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
@@ -176,18 +179,23 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // funded with Lightning swap does not use any UTXO, so marina never
   // emits that event on those types of contracts
   const setMarinaListener = () => {
-    if (connected && marina) {
+    // try to avoid first burst of NEW_TX sent by marina
+    const goForReload = (payload: any) =>
+      payload.accountID === marinaFujiAccountID &&
+      Date.now() - firstRun.current > 60000
+    // add event listeners
+    if (connected && marina && xPubKey) {
       marina.on('NEW_TX', async (payload) => {
         console.log('NEW_TX', payload.accountID)
-        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+        if (goForReload(payload)) reloadContracts()
       })
       marina.on('SPENT_UTXO', async (payload) => {
         console.log('SPENT_UTXO', payload.accountID)
-        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+        if (goForReload(payload)) reloadContracts()
       })
       marina.on('NEW_UTXO', async (payload) => {
         console.log('NEW_UTXO', payload.accountID)
-        if (payload.accountID === marinaFujiAccountID) reloadContracts()
+        if (goForReload(payload)) reloadContracts()
       })
     }
   }
@@ -200,17 +208,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!firstRender.current.includes(network)) {
         fixMissingXPubKeyOnOldContracts()
         setMarinaListener()
+        reloadContracts()
         firstRender.current.push(network)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xPubKey])
-
-  // update contracts
-  useEffect(() => {
-    if (connected && marina) reloadContracts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, marina, network, xPubKey])
 
   return (
     <ContractsContext.Provider
