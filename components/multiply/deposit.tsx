@@ -1,6 +1,6 @@
 import { Contract, Tasks } from 'lib/types'
 import Channel from 'components/channel'
-import LightningDepositModal from 'components/modals/lightningDeposit'
+import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
@@ -69,7 +69,7 @@ const MultiplyDeposit = ({
         retry={() => {}}
         stage={stage}
       />
-      <LightningDepositModal
+      <InvoiceDepositModal
         contract={contract}
         data={data}
         invoice={invoice}

@@ -7,7 +7,7 @@ import Spinner from 'components/spinner'
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
 
-interface LightningDepositModalProps {
+interface InvoiceDepositModalProps {
   contract: Contract
   data: string
   invoice: string
@@ -17,7 +17,7 @@ interface LightningDepositModalProps {
   stage: string[]
 }
 
-const LightningDepositModal = ({
+const InvoiceDepositModal = ({
   contract,
   data,
   invoice,
@@ -25,7 +25,7 @@ const LightningDepositModal = ({
   reset,
   retry,
   stage,
-}: LightningDepositModalProps) => {
+}: InvoiceDepositModalProps) => {
   const [buttonText, setButtonText] = useState('Copy')
 
   const handleCopy = () => {
@@ -41,7 +41,7 @@ const LightningDepositModal = ({
   const [mainMessage, secondaryMessage] = stage
 
   return (
-    <Modal id="lightning-deposit-modal" reset={reset}>
+    <Modal id="invoice-deposit-modal" reset={reset}>
       {result && (
         <Result data={data} result={result} reset={reset} retry={retry} />
       )}
@@ -72,4 +72,4 @@ const LightningDepositModal = ({
   )
 }
 
-export default LightningDepositModal
+export default InvoiceDepositModal

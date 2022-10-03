@@ -28,7 +28,7 @@ import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
-import LightningDepositModal from 'components/modals/lightningDeposit'
+import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 
 const BorrowTicker: NextPage = () => {
   const { network } = useContext(WalletContext)
@@ -46,7 +46,7 @@ const BorrowTicker: NextPage = () => {
   const { params } = router.query
 
   const handleInvoice = async (): Promise<void> => {
-    openModal('lightning-deposit-modal')
+    openModal('invoice-deposit-modal')
     setStage(ModalStages.NeedsInvoice)
     try {
       // create ephemeral account
@@ -228,7 +228,7 @@ const BorrowTicker: NextPage = () => {
                 handleInvoice={handleInvoice}
                 task={Tasks.Borrow}
               />
-              <LightningDepositModal
+              <InvoiceDepositModal
                 contract={newContract}
                 data={data}
                 invoice={invoice}

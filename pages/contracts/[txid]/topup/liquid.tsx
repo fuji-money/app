@@ -6,13 +6,17 @@ import { ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
 import { marinaMainAccountID, feeAmount } from 'lib/constants'
 import { saveContractToStorage, markContractTopup } from 'lib/contracts'
-import { prepareTopupTx, proposeTopupContract } from 'lib/covenant'
+import {
+  finalizeTopupCovenantInput,
+  prepareTopupTx,
+  proposeTopupContract,
+} from 'lib/covenant'
 import { selectCoinsWithBlindPrivKey } from 'lib/marina'
 import { openModal, extractError, retry } from 'lib/utils'
-import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome, Tasks } from 'lib/types'
+import { Psbt } from 'ldk'
 
 const ContractTaskLiquid: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
@@ -35,27 +39,6 @@ const ContractTaskLiquid: NextPage = () => {
 
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
-
-  const finalizeCovenantInput = (ptx: Psbt) => {
-    const covenantInputIndex = 0
-    const { tapScriptSig } = ptx.data.inputs[covenantInputIndex]
-    let witnessStack: Buffer[] = []
-    if (tapScriptSig && tapScriptSig.length > 0) {
-      for (const s of tapScriptSig) {
-        witnessStack.push(s.signature)
-      }
-    }
-    ptx.finalizeInput(covenantInputIndex, (_, input) => {
-      return {
-        finalScriptSig: undefined,
-        finalScriptWitness: witnessStackToScriptWitness([
-          ...witnessStack,
-          input.tapLeafScript![0].script,
-          input.tapLeafScript![0].controlBlock,
-        ]),
-      }
-    })
-  }
 
   const handleMarina = async () => {
     if (!marina) return
@@ -97,7 +80,7 @@ const ContractTaskLiquid: NextPage = () => {
       setStage(ModalStages.NeedsFinishing)
 
       // finalize covenant input
-      finalizeCovenantInput(ptx)
+      finalizeTopupCovenantInput(ptx)
 
       // finalize the other inputs
       for (let index = 1; index < ptx.data.inputs.length; index++) {

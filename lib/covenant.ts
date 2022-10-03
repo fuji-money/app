@@ -17,6 +17,7 @@ import {
   address,
   script,
   Transaction,
+  witnessStackToScriptWitness,
 } from 'liquidjs-lib'
 import { fetchHex, postData } from './fetch'
 import {
@@ -754,6 +755,29 @@ export async function proposeTopupContract({
   const { txid, vout } = coinToTopup
   return postData(`${alphaServerUrl}/contracts/${txid}:${vout}/topup`, body)
 }
+
+export const finalizeTopupCovenantInput = (ptx: Psbt) => {
+  const covenantInputIndex = 0
+  const { tapScriptSig } = ptx.data.inputs[covenantInputIndex]
+  let witnessStack: Buffer[] = []
+  if (tapScriptSig && tapScriptSig.length > 0) {
+    for (const s of tapScriptSig) {
+      witnessStack.push(s.signature)
+    }
+  }
+  ptx.finalizeInput(covenantInputIndex, (_, input) => {
+    return {
+      finalScriptSig: undefined,
+      finalScriptWitness: witnessStackToScriptWitness([
+        ...witnessStack,
+        input.tapLeafScript![0].script,
+        input.tapLeafScript![0].controlBlock,
+      ]),
+    }
+  })
+}
+
+// other
 
 export function getFuncNameFromScriptHexOfLeaf(witness: string): string {
   const mapWitnessLengthToState: Record<number, string> = {}
