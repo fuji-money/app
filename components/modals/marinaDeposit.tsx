@@ -8,6 +8,7 @@ interface MarinaDepositModalProps {
   contract: Contract
   data: string
   result: string
+  retry: () => void
   reset: () => void
   stage: string[]
 }
@@ -16,13 +17,16 @@ const MarinaDepositModal = ({
   contract,
   data,
   result,
+  retry,
   reset,
   stage,
 }: MarinaDepositModalProps) => {
   const [mainMessage, secondaryMessage] = stage
   return (
     <Modal id="marina-deposit-modal" reset={reset}>
-      {result && <Result data={data} result={result} reset={reset} />}
+      {result && (
+        <Result data={data} result={result} retry={retry} reset={reset} />
+      )}
       {!result && (
         <>
           <Spinner />

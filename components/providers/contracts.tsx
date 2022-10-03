@@ -20,7 +20,7 @@ import {
   getMyContractsFromStorage,
   updateContractOnStorage,
 } from 'lib/storage'
-import { Activity, Contract, ContractState } from 'lib/types'
+import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
 import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
@@ -31,6 +31,7 @@ import { toXpub } from 'ldk'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
+import { fetchOracles } from 'lib/api'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -42,14 +43,26 @@ interface ContractsContextProps {
   activities: Activity[]
   contracts: Contract[]
   loading: boolean
+  newContract: Contract | undefined
+  oldContract: Contract | undefined
+  oracles: Oracle[]
   reloadContracts: () => void
+  resetContracts: () => void
+  setNewContract: (arg0: Contract) => void
+  setOldContract: (arg0: Contract) => void
 }
 
 export const ContractsContext = createContext<ContractsContextProps>({
   activities: [],
   contracts: [],
   loading: true,
+  newContract: undefined,
+  oldContract: undefined,
+  oracles: [],
   reloadContracts: () => {},
+  resetContracts: () => {},
+  setNewContract: () => {},
+  setOldContract: () => {},
 })
 
 interface ContractsProviderProps {
@@ -59,10 +72,19 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
+  const [newContract, setNewContract] = useState<Contract>()
+  const [oldContract, setOldContract] = useState<Contract>()
+  const [oracles, setOracles] = useState<Oracle[]>([])
   const { connected, marina, network, xPubKey } = useContext(WalletContext)
 
   // save first time app was run
   const firstRun = useRef(Date.now())
+
+  const resetContracts = () => {
+    console.info('reset contracts')
+    setNewContract(undefined)
+    setOldContract(undefined)
+  }
 
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
@@ -209,6 +231,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         fixMissingXPubKeyOnOldContracts()
         setMarinaListener()
         reloadContracts()
+        fetchOracles().then((data) => setOracles(data))
         firstRender.current.push(network)
       }
     }
@@ -217,7 +240,18 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   return (
     <ContractsContext.Provider
-      value={{ activities, contracts, loading, reloadContracts }}
+      value={{
+        activities,
+        contracts,
+        loading,
+        newContract,
+        oldContract,
+        oracles,
+        reloadContracts,
+        resetContracts,
+        setNewContract,
+        setOldContract,
+      }}
     >
       {children}
     </ContractsContext.Provider>

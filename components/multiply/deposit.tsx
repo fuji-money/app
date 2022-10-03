@@ -1,13 +1,13 @@
-import { Contract } from 'lib/types'
-import Swap from 'components/deposit/swap'
-import Marina from 'components/deposit/marina'
-import Channel from 'components/deposit/channel'
+import { Contract, Tasks } from 'lib/types'
+import Channel from 'components/channel'
 import LightningDepositModal from 'components/modals/lightningDeposit'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
 import { ModalStages } from 'components/modals/modal'
+import EnablersLightning from 'components/enablers/lightning'
+import EnablersLiquid from 'components/enablers/liquid'
 
 interface MultiplyDepositProps {
   contract: Contract
@@ -45,15 +45,28 @@ const MultiplyDeposit = ({
   return (
     <>
       <div className="is-box has-pink-border p-6">
-        {!channel && <Channel contract={contract} setChannel={setChannel} />}
-        {lightning && <Swap contract={contract} handler={handleLightning} />}
-        {liquid && <Marina contract={contract} handler={handleMarina} />}
+        {!channel && <Channel contract={contract} task={Tasks.Multiply} />}
+        {lightning && (
+          <EnablersLightning
+            contract={contract}
+            handleInvoice={handleLightning}
+            task={Tasks.Multiply}
+          />
+        )}
+        {liquid && (
+          <EnablersLiquid
+            contract={contract}
+            handleMarina={handleMarina}
+            task={Tasks.Multiply}
+          />
+        )}
       </div>
       <MarinaDepositModal
         contract={contract}
         data={data}
         result={result}
         reset={resetDeposit}
+        retry={() => {}}
         stage={stage}
       />
       <LightningDepositModal
@@ -62,6 +75,7 @@ const MultiplyDeposit = ({
         invoice={invoice}
         result={result}
         reset={resetDeposit}
+        retry={() => {}}
         stage={stage}
       />
     </>

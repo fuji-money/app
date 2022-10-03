@@ -1,24 +1,21 @@
+import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { fetchAsset } from 'lib/api'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { Contract } from 'lib/types'
+import Router from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 
 interface BorrowButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  setDeposit: (arg0: boolean) => void
 }
 
-const BorrowButton = ({
-  contract,
-  minRatio,
-  ratio,
-  setDeposit,
-}: BorrowButtonProps) => {
+const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
+  const { setNewContract } = useContext(ContractsContext)
   const { balances, connected } = useContext(WalletContext)
   const [enoughFunds, setEnoughFunds] = useState(false)
   const { collateral, oracles, payoutAmount, synthetic } = contract
@@ -32,6 +29,11 @@ const BorrowButton = ({
       setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
     })
   })
+
+  const handleClick = () => {
+    setNewContract(contract)
+    Router.push(`${Router.router?.asPath}/channel`)
+  }
 
   const enabled =
     connected &&
@@ -54,7 +56,7 @@ const BorrowButton = ({
       <button
         className="button is-primary is-cta"
         disabled={!enabled}
-        onClick={() => setDeposit(true)}
+        onClick={handleClick}
       >
         Proceed to deposit
       </button>

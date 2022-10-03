@@ -1,7 +1,7 @@
 import { Contract } from 'lib/types'
 import Swap from 'components/deposit/swap'
 import Marina from 'components/deposit/marina'
-import Channel from 'components/deposit/channel'
+import Channel from 'components/channel'
 import LightningDepositModal from 'components/modals/lightningDeposit'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { ContractsContext } from 'components/providers/contracts'
@@ -182,11 +182,11 @@ const TopupDeposit = ({
 
       // show success
       setData(newContract.txid)
-      setResult('success')
+      setResult(Outcome.Success)
       reloadContracts()
     } catch (error) {
       setData(extractError(error))
-      setResult('failure')
+      setResult(Outcome.Failure)
     }
   }
 
@@ -250,11 +250,11 @@ const TopupDeposit = ({
 
       // show success
       setData(newContract.txid)
-      setResult('success')
+      setResult(Outcome.Success)
       reloadContracts()
     } catch (error) {
       setData(extractError(error))
-      setResult('failure')
+      setResult(Outcome.Failure)
     }
   }
 

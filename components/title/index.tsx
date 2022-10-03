@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
 interface IconProps {
@@ -23,25 +22,11 @@ const Icon = ({ channel }: IconProps) => {
 }
 
 interface TitleProps {
-  name: string
-  channel: string
-  deposit: boolean
+  channel?: string
+  title: string
 }
 
-const Title = ({ name, channel, deposit }: TitleProps) => {
-  const [title, setTitle] = useState(name)
-
-  useEffect(() => {
-    const _title = !deposit
-      ? name
-      : !channel
-      ? 'Select receive method'
-      : channel === 'lightning'
-      ? 'Receive via Lightning'
-      : 'Receive via Liquid Network'
-    setTitle(_title)
-  }, [name, channel, deposit])
-
+const Title = ({ channel, title }: TitleProps) => {
   return (
     <h1>
       {title}

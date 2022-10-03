@@ -107,3 +107,22 @@ export enum TradeTypes {
 export type UtxoWithBlindPrivKey = Utxo & {
   blindPrivKey?: string
 }
+
+export enum Outcome {
+  Success = 'success',
+  Failure = 'failure',
+}
+
+export enum Tasks {
+  Borrow = 'borrow',
+  Multiply = 'multiply',
+  Redeem = 'redeem',
+  Topup = 'topup',
+}
+
+export const LightningEnabledTasks: Record<string, boolean> = {
+  [Tasks.Borrow]: true,
+  [Tasks.Multiply]: false,
+  [Tasks.Redeem]: true,
+  [Tasks.Topup]: true,
+}

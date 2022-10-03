@@ -4,6 +4,7 @@ import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
 import { closeAllModals } from 'lib/utils'
+import { Outcome } from 'lib/types'
 
 interface SuccessProps {
   txid: string
@@ -42,10 +43,10 @@ const Success = ({ reset, txid }: SuccessProps) => {
 
 interface FailureProps {
   error: string | unknown
-  reset: () => void
+  retry: () => void
 }
 
-const Failure = ({ error, reset }: FailureProps) => {
+const Failure = ({ error, retry }: FailureProps) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -59,7 +60,7 @@ const Failure = ({ error, reset }: FailureProps) => {
       <h2 className="mt-4">Something went wrong</h2>
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
-        <button className="button is-cta" onClick={reset}>
+        <button className="button is-cta" onClick={retry}>
           Try again
         </button>
       </p>
@@ -70,12 +71,13 @@ const Failure = ({ error, reset }: FailureProps) => {
 interface ResultProps {
   data: string
   result: string
+  retry: () => void
   reset: () => void
 }
 
-const Result = ({ data, result, reset }: ResultProps) => {
-  if (result === 'success') return <Success reset={reset} txid={data} />
-  if (result === 'failure') return <Failure reset={reset} error={data} />
+const Result = ({ data, result, retry, reset }: ResultProps) => {
+  if (result === Outcome.Success) return <Success reset={reset} txid={data} />
+  if (result === Outcome.Failure) return <Failure retry={retry} error={data} />
   return <></>
 }
 

@@ -1,5 +1,5 @@
 import Balance from 'components/balance'
-import Title from 'components/deposit/title'
+import Title from 'components/title'
 import type { Contract, Offer } from 'lib/types'
 import { useState } from 'react'
 import MultiplyDeposit from './deposit'
@@ -16,7 +16,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
 
   return (
     <section>
-      <Title name="Multiply" channel={channel} deposit={deposit} />
+      <Title title="Multiply" />
       {!deposit && (
         <MultiplyForm
           contract={contract}

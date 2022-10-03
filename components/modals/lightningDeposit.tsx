@@ -13,6 +13,7 @@ interface LightningDepositModalProps {
   invoice: string
   result: string
   reset: () => void
+  retry: () => void
   stage: string[]
 }
 
@@ -22,6 +23,7 @@ const LightningDepositModal = ({
   invoice,
   result,
   reset,
+  retry,
   stage,
 }: LightningDepositModalProps) => {
   const [buttonText, setButtonText] = useState('Copy')
@@ -40,7 +42,9 @@ const LightningDepositModal = ({
 
   return (
     <Modal id="lightning-deposit-modal" reset={reset}>
-      {result && <Result data={data} result={result} reset={reset} />}
+      {result && (
+        <Result data={data} result={result} reset={reset} retry={retry} />
+      )}
       {!result && (
         <>
           <Spinner />

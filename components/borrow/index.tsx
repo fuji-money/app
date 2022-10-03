@@ -4,11 +4,10 @@ import Balance from 'components/balance'
 import { useState } from 'react'
 import BorrowInfo from './info'
 import BorrowButton from './button'
-import Title from 'components/deposit/title'
+import Title from 'components/title'
 import Notifications from 'components/notifications'
 import { getContractPriceLevel } from 'lib/contracts'
 import { minBorrowRatio } from 'lib/constants'
-import BorrowDeposit from './deposit'
 
 interface BorrowProps {
   offer: Offer
@@ -16,8 +15,6 @@ interface BorrowProps {
 }
 
 const Borrow = ({ offer, oracles }: BorrowProps) => {
-  const [channel, setChannel] = useState('')
-  const [deposit, setDeposit] = useState(false)
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
   const minRatio = offer.collateral.ratio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
@@ -27,43 +24,32 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
 
   return (
     <section>
-      <Title name="Borrow" channel={channel} deposit={deposit} />
+      <Title title="Borrow" />
       <div className="row">
         <div className="columns">
           <div className="column is-8">
-            {!deposit && (
-              <>
-                <BorrowForm
-                  contract={contract}
-                  minRatio={minRatio}
-                  oracles={oracles}
-                  ratio={ratio}
-                  setContract={setContract}
-                  setRatio={setRatio}
-                />
-                <BorrowInfo contract={contract} />
-                <Notifications
-                  contract={contract}
-                  minRatio={minRatio}
-                  ratio={ratio}
-                  topup={topup}
-                />
-                <BorrowButton
-                  contract={contract}
-                  minRatio={minRatio}
-                  ratio={ratio}
-                  setDeposit={setDeposit}
-                />
-              </>
-            )}
-            {deposit && (
-              <BorrowDeposit
+            <>
+              <BorrowForm
                 contract={contract}
-                channel={channel}
-                setChannel={setChannel}
-                setDeposit={setDeposit}
+                minRatio={minRatio}
+                oracles={oracles}
+                ratio={ratio}
+                setContract={setContract}
+                setRatio={setRatio}
               />
-            )}
+              <BorrowInfo contract={contract} />
+              <Notifications
+                contract={contract}
+                minRatio={minRatio}
+                ratio={ratio}
+                topup={topup}
+              />
+              <BorrowButton
+                contract={contract}
+                minRatio={minRatio}
+                ratio={ratio}
+              />
+            </>
           </div>
           <div className="column is-4">
             <Balance />

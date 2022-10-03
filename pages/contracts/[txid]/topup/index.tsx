@@ -1,33 +1,39 @@
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
-import Redeem from 'components/redeem'
-import { Contract } from 'lib/types'
 import Spinner from 'components/spinner'
 import { getContract } from 'lib/contracts'
+import Topup from 'components/topup'
+import { Contract } from 'lib/types'
+import { ContractsContext } from 'components/providers/contracts'
 
-const ContractRedeem: NextPage = () => {
+const ContractTopup: NextPage = () => {
   const [contract, setContract] = useState<Contract>()
-  const [isLoading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const { setNewContract, setOldContract } = useContext(ContractsContext)
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      setLoading(true)
       getContract(txid).then((contract) => {
         if (contract) setContract(contract)
         setLoading(false)
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!contract) return <SomeError>Contract not found</SomeError>
 
-  return <Redeem contract={contract} />
+  setNewContract(contract)
+  setOldContract(contract)
+
+  return <Topup />
 }
 
-export default ContractRedeem
+export default ContractTopup

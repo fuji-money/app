@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js'
 import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
+import { Tasks } from './types'
 
 // number to string
 export function numberToHexEncodedUint64LE(n: number): string {
@@ -54,4 +55,17 @@ export const extractError = (error: any): string => {
     : typeof error === 'string'
     ? error
     : ''
+}
+
+export const operationFromTask = (task: string): string => {
+  switch (task) {
+    case Tasks.Borrow:
+      return 'deposit'
+    case Tasks.Redeem:
+      return 'receive'
+    case Tasks.Topup:
+      return 'deposit'
+    default:
+      return 'unknown'
+  }
 }
