@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Balance from 'components/balance'
 import Title from 'components/title'
+import ComingSoon from 'components/messages/comingSoon'
 
 interface ChannelButtonProps {
   name: string
@@ -28,20 +29,19 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
   const ticker = collateral.ticker
   const quantity = amount || collateral.quantity
 
-  const outOfBounds = swapDepositAmountOutOfBounds(quantity)
-  console.log('ticker', ticker)
-  console.log('outofboubds', outOfBounds)
-  console.log('LightningEnabledTasks[task]', LightningEnabledTasks[task])
-  console.log('task', task)
-  console.log('LightningEnabledTasks', LightningEnabledTasks)
-  const lightningEnabled =
-    ticker === 'L-BTC' && !outOfBounds && LightningEnabledTasks[task]
+  const lightningOutOfBounds =
+    LightningEnabledTasks[task] && swapDepositAmountOutOfBounds(quantity)
+  const lightningButtonEnabled =
+    LightningEnabledTasks[task] && ticker === 'L-BTC' && !lightningOutOfBounds
 
   const ChannelButton = ({ name, enabled = true }: ChannelButtonProps) => {
     const channelId = name.toLowerCase()
+    // change .../channel with .../<liquid|lightning>
     const router = useRouter()
+    const path = router.asPath.split('/')
+    path[path.length - 1] = channelId
     return (
-      <Link passHref href={`${router.asPath}/${channelId}`}>
+      <Link passHref href={`${path.join('/')}`}>
         <button className="button is-primary" disabled={!enabled}>
           <Image
             src={`/images/networks/${channelId}.svg`}
@@ -75,9 +75,13 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
               </h2>
               <div className="content">
                 <ChannelButton name="Liquid" />
-                <ChannelButton name="Lightning" enabled={lightningEnabled} />
+                <ChannelButton
+                  name="Lightning"
+                  enabled={lightningButtonEnabled}
+                />
               </div>
-              {outOfBounds && <OutOfBounds amount={quantity} />}
+              {!LightningEnabledTasks[task] && <ComingSoon />}
+              {lightningOutOfBounds && <OutOfBounds amount={quantity} />}
             </div>
           </div>
           <div className="column is-4">

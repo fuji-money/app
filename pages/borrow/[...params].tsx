@@ -204,16 +204,13 @@ const BorrowTicker: NextPage = () => {
       if (!offer) return <SomeError>Offer not found</SomeError>
       return <Borrow offer={offer} oracles={oracles} />
     case 3:
-      // /borrow/fUSD/L-BTC/channel => show channel selector
-      if (params[2] !== 'channel') return <SomeError>Invalid URL</SomeError>
       if (!newContract) return <SomeError>Contract not found</SomeError>
-      return <Channel contract={newContract} task={Tasks.Borrow} />
-    case 4:
-      // /borrow/fUSD/L-BTC/liquid => show list of liquid enablers
-      // /borrow/fUSD/L-BTC/lightning => show list of lightning enablers
-      switch (params[3]) {
+      switch (params[2]) {
+        // /borrow/fUSD/L-BTC/method => show list of available payment methods
+        case 'method':
+          return <Channel contract={newContract} task={Tasks.Borrow} />
         case 'liquid':
-          if (!newContract) return <SomeError>Contract not found</SomeError>
+          // /borrow/fUSD/L-BTC/liquid => show list of liquid enablers
           return (
             <>
               <EnablersLiquid
@@ -232,7 +229,6 @@ const BorrowTicker: NextPage = () => {
             </>
           )
         case 'lightning':
-          if (!newContract) return <SomeError>Contract not found</SomeError>
           return (
             <>
               <EnablersLightning

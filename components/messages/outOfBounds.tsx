@@ -2,11 +2,11 @@ import { prettyNumber } from 'lib/pretty'
 import { DEPOSIT_LIGHTNING_LIMITS } from 'lib/swaps'
 import { fromSatoshis } from 'lib/utils'
 
-interface QRCodeProps {
+interface OutOfBoundsMessageProps {
   amount: number
 }
 
-function OutOfBoundsMessage({ amount }: QRCodeProps) {
+function OutOfBoundsMessage({ amount }: OutOfBoundsMessageProps) {
   const { maximal, minimal } = DEPOSIT_LIGHTNING_LIMITS
 
   return (

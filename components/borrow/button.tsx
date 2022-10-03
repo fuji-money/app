@@ -32,7 +32,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
 
   const handleClick = () => {
     setNewContract(contract)
-    Router.push(`${Router.router?.asPath}/channel`)
+    Router.push(`${Router.router?.asPath}/method`)
   }
 
   const enabled =

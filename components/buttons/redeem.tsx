@@ -17,7 +17,7 @@ const RedeemButton = ({ contract }: RedeemButtonProps) => {
     )
   }
   return (
-    <Link passHref href={`/contracts/${contract.txid}/redeem/channel`}>
+    <Link passHref href={`/contracts/${contract.txid}/redeem`}>
       <button className={cN}>{text}</button>
     </Link>
   )

@@ -123,6 +123,6 @@ export enum Tasks {
 export const LightningEnabledTasks: Record<string, boolean> = {
   [Tasks.Borrow]: true,
   [Tasks.Multiply]: false,
-  [Tasks.Redeem]: true,
-  [Tasks.Topup]: true,
+  [Tasks.Redeem]: false,
+  [Tasks.Topup]: false,
 }

@@ -1,10 +1,10 @@
 import type { NextPage } from 'next'
-import Router, { useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
 import { getContract } from 'lib/contracts'
-import { Contract, Tasks } from 'lib/types'
+import { Tasks } from 'lib/types'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 
