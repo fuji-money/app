@@ -18,7 +18,7 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome, Tasks } from 'lib/types'
 import { Psbt } from 'ldk'
 
-const ContractTaskLiquid: NextPage = () => {
+const ContractTopupLiquid: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -127,4 +127,4 @@ const ContractTaskLiquid: NextPage = () => {
   )
 }
 
-export default ContractTaskLiquid
+export default ContractTopupLiquid

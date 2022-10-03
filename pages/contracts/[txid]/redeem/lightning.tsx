@@ -13,7 +13,7 @@ import RedeemModal from 'components/modals/redeem'
 import EnablersLightning from 'components/enablers/lightning'
 import { Outcome, Tasks } from 'lib/types'
 
-const ContractTaskLightning: NextPage = () => {
+const ContractRedeemLightning: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -104,4 +104,4 @@ const ContractTaskLightning: NextPage = () => {
   )
 }
 
-export default ContractTaskLightning
+export default ContractRedeemLightning

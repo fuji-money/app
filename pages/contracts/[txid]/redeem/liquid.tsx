@@ -11,7 +11,7 @@ import RedeemModal from 'components/modals/redeem'
 import EnablersLiquid from 'components/enablers/liquid'
 import { Outcome, Tasks } from 'lib/types'
 
-const ContractTaskLiquid: NextPage = () => {
+const ContractRedeemLiquid: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -79,4 +79,4 @@ const ContractTaskLiquid: NextPage = () => {
   )
 }
 
-export default ContractTaskLiquid
+export default ContractRedeemLiquid

@@ -8,7 +8,7 @@ import { Tasks } from 'lib/types'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 
-const ContractRedeem: NextPage = () => {
+const ContractRedeemMethod: NextPage = () => {
   const { newContract, setNewContract } = useContext(ContractsContext)
   const [loading, setLoading] = useState(true)
 
@@ -31,4 +31,4 @@ const ContractRedeem: NextPage = () => {
   return <Channel contract={newContract} task={Tasks.Redeem} />
 }
 
-export default ContractRedeem
+export default ContractRedeemMethod

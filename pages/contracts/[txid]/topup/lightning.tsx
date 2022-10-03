@@ -24,7 +24,7 @@ import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import { Psbt } from 'ldk'
 
-const ContractTaskLightning: NextPage = () => {
+const ContractTopupLightning: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -170,4 +170,4 @@ const ContractTaskLightning: NextPage = () => {
   )
 }
 
-export default ContractTaskLightning
+export default ContractTopupLightning

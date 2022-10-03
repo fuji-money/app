@@ -1,8 +1,8 @@
 import type { NextPage } from 'next'
 import Contracts from 'components/contracts'
 
-const ContractsPage: NextPage = () => {
+const ContractsList: NextPage = () => {
   return <Contracts />
 }
 
-export default ContractsPage
+export default ContractsList

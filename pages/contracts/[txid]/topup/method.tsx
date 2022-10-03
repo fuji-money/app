@@ -5,7 +5,7 @@ import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
 import { Tasks } from 'lib/types'
 
-const ContractRedeem: NextPage = () => {
+const ContractTopupMethod: NextPage = () => {
   const { newContract } = useContext(ContractsContext)
 
   if (!newContract) return <SomeError>Contract not found</SomeError>
@@ -13,4 +13,4 @@ const ContractRedeem: NextPage = () => {
   return <Channel contract={newContract} task={Tasks.Topup} />
 }
 
-export default ContractRedeem
+export default ContractTopupMethod
