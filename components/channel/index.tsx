@@ -37,8 +37,8 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
   const ChannelButton = ({ name, enabled = true }: ChannelButtonProps) => {
     const channelId = name.toLowerCase()
     // change .../channel with .../<liquid|lightning>
-    const router = useRouter()
-    const path = router.asPath.split('/')
+    const { asPath } = useRouter()
+    const path = asPath.split('/')
     path[path.length - 1] = channelId
     return (
       <Link passHref href={`${path.join('/')}`}>
