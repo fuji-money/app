@@ -5,7 +5,7 @@ import SomeError from 'components/layout/error'
 import { ModalStages } from 'components/modals/modal'
 import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
-import { openModal, extractError } from 'lib/utils'
+import { openModal, extractError, retry } from 'lib/utils'
 import { WalletContext } from 'components/providers/wallet'
 import RedeemModal from 'components/modals/redeem'
 import EnablersLiquid from 'components/enablers/liquid'
@@ -60,14 +60,6 @@ const ContractTaskLiquid: NextPage = () => {
     }
   }
 
-  const retry = (handler: () => {}) => {
-    return () => {
-      setData('')
-      setResult('')
-      handler()
-    }
-  }
-
   return (
     <>
       <EnablersLiquid
@@ -80,7 +72,7 @@ const ContractTaskLiquid: NextPage = () => {
         data={data}
         result={result}
         reset={resetContracts}
-        retry={retry(handleMarina)}
+        retry={retry(setData, setResult, handleMarina)}
         stage={stage}
       />
     </>

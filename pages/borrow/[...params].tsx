@@ -22,7 +22,7 @@ import {
 } from 'lib/covenant'
 import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
 import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
-import { openModal, extractError } from 'lib/utils'
+import { openModal, extractError, retry } from 'lib/utils'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
@@ -169,14 +169,6 @@ const BorrowTicker: NextPage = () => {
     }
   }
 
-  const retry = (handler: () => {}) => {
-    return () => {
-      setData('')
-      setResult('')
-      handler()
-    }
-  }
-
   useEffect(() => {
     if (oracles) {
       fetchOffers().then((data) => {
@@ -222,7 +214,7 @@ const BorrowTicker: NextPage = () => {
                 contract={newContract}
                 data={data}
                 result={result}
-                retry={retry(handleMarina)}
+                retry={retry(setData, setResult, handleMarina)}
                 reset={resetContracts}
                 stage={stage}
               />
@@ -241,7 +233,7 @@ const BorrowTicker: NextPage = () => {
                 data={data}
                 invoice={invoice}
                 result={result}
-                retry={retry(handleInvoice)}
+                retry={retry(setData, setResult, handleInvoice)}
                 reset={resetContracts}
                 stage={stage}
               />

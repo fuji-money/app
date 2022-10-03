@@ -69,3 +69,15 @@ export const operationFromTask = (task: string): string => {
       return 'unknown'
   }
 }
+
+export const retry = (
+  setData: (arg0: string) => void,
+  setResult: (arg0: string) => void,
+  handler = () => {},
+) => {
+  return () => {
+    setData('')
+    setResult('')
+    handler()
+  }
+}

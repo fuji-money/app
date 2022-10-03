@@ -4,7 +4,7 @@ import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
 import { ModalStages } from 'components/modals/modal'
 import { createSubmarineSwap } from 'lib/swaps'
-import { openModal, closeModal, extractError } from 'lib/utils'
+import { openModal, closeModal, extractError, retry } from 'lib/utils'
 import { WalletContext } from 'components/providers/wallet'
 import { prepareRedeemTx } from 'lib/covenant'
 import { markContractRedeemed } from 'lib/contracts'
@@ -84,14 +84,6 @@ const ContractTaskLightning: NextPage = () => {
     }
   }
 
-  const retry = (handler: () => {}) => {
-    return () => {
-      setData('')
-      setResult('')
-      handler()
-    }
-  }
-
   return (
     <>
       <EnablersLightning
@@ -104,7 +96,7 @@ const ContractTaskLightning: NextPage = () => {
         data={data}
         result={result}
         reset={resetContracts}
-        retry={retry(handleInvoice)}
+        retry={retry(setData, setResult, handleInvoice)}
         stage={stage}
       />
       <InvoiceModal contract={newContract} handler={handleInvoice} />

@@ -8,7 +8,7 @@ import { marinaMainAccountID, feeAmount } from 'lib/constants'
 import { saveContractToStorage, markContractTopup } from 'lib/contracts'
 import { prepareTopupTx, proposeTopupContract } from 'lib/covenant'
 import { selectCoinsWithBlindPrivKey } from 'lib/marina'
-import { openModal, extractError } from 'lib/utils'
+import { openModal, extractError, retry } from 'lib/utils'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
@@ -125,14 +125,6 @@ const ContractTaskLiquid: NextPage = () => {
     }
   }
 
-  const retry = (handler: () => {}) => {
-    return () => {
-      setData('')
-      setResult('')
-      handler()
-    }
-  }
-
   return (
     <>
       <EnablersLiquid
@@ -145,7 +137,7 @@ const ContractTaskLiquid: NextPage = () => {
         data={data}
         result={result}
         reset={resetContracts}
-        retry={retry(handleMarina)}
+        retry={retry(setData, setResult, handleMarina)}
         stage={stage}
       />
     </>
