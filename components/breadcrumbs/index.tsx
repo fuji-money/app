@@ -1,20 +1,24 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
+type Step = {
+  name: string
+  href: string
+}
+
 const Breadcrumbs = () => {
-  let href: string[] = []
+  const href: string[] = []
+  const steps: Step[] = []
   const { asPath } = useRouter()
-  const steps = asPath
-    .substring(1)
-    .split('/')
-    .filter((step) => step.length < 32)
-    .map((step) => {
-      href.push(step)
-      return {
-        name: step,
+  for (const item of asPath.substring(1).split('/')) {
+    href.push(item)
+    if (item.length < 32) {
+      steps.push({
+        name: item,
         href: '/' + href.join('/'),
-      }
-    })
+      })
+    }
+  }
   return (
     <nav className="breadcrumb is-small my-5" aria-label="breadcrumbs">
       <ul>
