@@ -20,6 +20,8 @@ export const DEPOSIT_LIGHTNING_LIMITS = {
   minimal: DEFAULT_LIGHTNING_LIMITS.minimal - feeAmount - swapFeeAmount,
 }
 
+// UTILS
+
 // check if amount is out of bounds for lightning swap
 export const swapDepositAmountOutOfBounds = (amount = 0) =>
   amount > DEPOSIT_LIGHTNING_LIMITS.maximal ||
@@ -36,7 +38,30 @@ export const submarineSwapBoltzFees = (amount = 0) => {
   return Decimal.ceil(amount - invoiceAmount).toNumber()
 }
 
-// Submarine swaps
+// return data for given tag in given invoice
+export const getInvoiceTag = (invoice: string, tag: string): TagData => {
+  const decodedInvoice = bolt11.decode(invoice)
+  for (const { tagName, data } of decodedInvoice.tags) {
+    if (tagName === tag) return data
+  }
+  return ''
+}
+
+// return value in given invoice
+export const getInvoiceValue = (invoice: string): number => {
+  const { satoshis, millisatoshis } = bolt11.decode(invoice)
+  if (satoshis) return fromSatoshis(satoshis)
+  if (millisatoshis) return fromSatoshis(Number(millisatoshis) / 1000)
+  return 0
+}
+
+// return invoice expire date
+export const getInvoiceExpireDate = (invoice: string): number => {
+  const { timeExpireDate } = bolt11.decode(invoice)
+  return timeExpireDate ? timeExpireDate * 1000 : 0 // milliseconds
+}
+
+// SUBMARINE SWAPS (LBTC => Lightning)
 
 export interface SubmarineSwap {
   address: string
@@ -72,13 +97,15 @@ const validSwapReedemScript = (
   return scriptAssembly.join() === expectedScript.join()
 }
 
+// check if everything is correct with data received from Boltz:
+// - redeem script
 export const isValidSubmarineSwap = ({
   address,
   expectedAmount,
   redeemScript,
 }: SubmarineSwap): boolean => validSwapReedemScript(redeemScript, address)
 
-// create reverse submarine swap
+// create submarine swap
 export const createSubmarineSwap = async (
   invoice: string,
   network: NetworkString,
@@ -87,7 +114,7 @@ export const createSubmarineSwap = async (
   // boltz object
   const boltz = new Boltz(network)
 
-  // create reverse submarine swap
+  // create submarine swap
   const { expectedAmount, address, redeemScript }: SubmarineSwapResponse =
     await boltz.createSubmarineSwap({
       invoice,
@@ -99,11 +126,10 @@ export const createSubmarineSwap = async (
     expectedAmount,
     redeemScript,
   }
-  return submarineSwap // TODO
   if (isValidSubmarineSwap(submarineSwap)) return submarineSwap
 }
 
-// Reverse submarine swaps
+// REVERSE SUBMARINE SWAPS (Lightning => LBTC)
 
 export interface ReverseSwap {
   claimPublicKey: string
@@ -148,29 +174,6 @@ const isValidReverseSubmarineSwap = ({
     reverseSwapAddressDerivesFromScript(lockupAddress, redeemScript) &&
     validReverseSwapReedemScript(preimage, claimPublicKey, redeemScript)
   )
-}
-
-// return data for given tag in given invoice
-export const getInvoiceTag = (invoice: string, tag: string): TagData => {
-  const decodedInvoice = bolt11.decode(invoice)
-  for (const { tagName, data } of decodedInvoice.tags) {
-    if (tagName === tag) return data
-  }
-  return ''
-}
-
-// return value in given invoice
-export const getInvoiceValue = (invoice: string): number => {
-  const { satoshis, millisatoshis } = bolt11.decode(invoice)
-  if (satoshis) return fromSatoshis(satoshis)
-  if (millisatoshis) return fromSatoshis(Number(millisatoshis) / 1000)
-  return 0
-}
-
-// return invoice expire date
-export const getInvoiceExpireDate = (invoice: string): number => {
-  const { timeExpireDate } = bolt11.decode(invoice)
-  return timeExpireDate ? timeExpireDate * 1000 : 0 // milliseconds
 }
 
 // validates if we can redeem with this redeem script
