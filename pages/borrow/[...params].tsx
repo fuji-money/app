@@ -137,7 +137,7 @@ const BorrowTicker: NextPage = () => {
     openModal('marina-deposit-modal')
     setStage(ModalStages.NeedsCoins)
     try {
-      if (!newContract?.collateral.quantity) return
+      if (!newContract) return
 
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(newContract, network)
