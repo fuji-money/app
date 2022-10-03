@@ -23,7 +23,8 @@ export const contractIsClosed = (contract: Contract): boolean => {
 }
 
 // get contract ratio
-export const getContractRatio = (contract: Contract): number => {
+export const getContractRatio = (contract?: Contract): number => {
+  if (!contract) return 0
   const { collateral, synthetic } = contract
   const collateralAmount = Decimal.mul(collateral.value, collateral.quantity)
   const syntheticAmount = Decimal.mul(synthetic.value, synthetic.quantity)

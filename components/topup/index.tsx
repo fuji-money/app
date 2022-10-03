@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import {
   getCollateralQuantity,
   getContractPayoutAmount,
@@ -18,21 +18,15 @@ const Topup = () => {
   const { newContract, oldContract, oracles, setNewContract } =
     useContext(ContractsContext)
 
-  const [ratio, setRatio] = useState(0)
-  const [topup, setTopup] = useState(0)
-
-  if (oldContract) setRatio(getContractRatio(oldContract))
+  const [ratio, setRatio] = useState(getContractRatio(oldContract))
 
   useEffect(() => {
-    console.log('use effect')
-    if (newContract && oldContract) {
-      const oldQuantity = oldContract.collateral.quantity
-      const newQuantity = getCollateralQuantity(newContract, ratio)
-      const collateral = { ...newContract.collateral, quantity: newQuantity }
+    if (newContract) {
+      const quantity = getCollateralQuantity(newContract, ratio)
+      const collateral = { ...newContract.collateral, quantity }
       const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
-      const payoutAmount = getContractPayoutAmount(newContract, newQuantity)
+      const payoutAmount = getContractPayoutAmount(newContract, quantity)
       setNewContract({ ...newContract, collateral, priceLevel, payoutAmount })
-      setTopup(newQuantity - oldQuantity)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratio])
@@ -41,6 +35,8 @@ const Topup = () => {
     return <SomeError>Contract not found</SomeError>
 
   const minRatio = getContractRatio(oldContract)
+  const topupAmount =
+    newContract.collateral.quantity - oldContract.collateral.quantity
 
   return (
     <section>
@@ -63,13 +59,13 @@ const Topup = () => {
                 contract={newContract}
                 minRatio={minRatio}
                 ratio={ratio}
-                topup={topup}
+                topup={topupAmount}
               />
               <TopupButton
                 oracles={newContract.oracles}
                 minRatio={minRatio}
                 ratio={ratio}
-                topup={topup}
+                topup={topupAmount}
               />
             </>
           </div>

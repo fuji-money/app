@@ -16,11 +16,10 @@ interface BorrowProps {
 
 const Borrow = ({ offer, oracles }: BorrowProps) => {
   const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
+
   const minRatio = offer.collateral.ratio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
   const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
-
-  const topup = 0
 
   return (
     <section>
@@ -42,7 +41,6 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
                 contract={contract}
                 minRatio={minRatio}
                 ratio={ratio}
-                topup={topup}
               />
               <BorrowButton
                 contract={contract}

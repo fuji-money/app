@@ -32,7 +32,6 @@ const ContractRedeemLiquid: NextPage = () => {
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
-      console.log('tx', tx.psbt.data)
       const signed = await tx.unlock()
 
       // inform user transaction is finishing

@@ -9,6 +9,7 @@ import { useRouter } from 'next/router'
 import Balance from 'components/balance'
 import Title from 'components/title'
 import ComingSoon from 'components/messages/comingSoon'
+import { operationFromTask } from 'lib/utils'
 
 interface ChannelButtonProps {
   name: string
@@ -71,7 +72,7 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
           <div className="column is-8">
             <div className="is-box has-pink-border has-text-centered p-6">
               <h2 className="has-text-weight-bold is-size-4 mb-5">
-                Choose how to {task} {ticker}
+                Choose how to {operationFromTask(task)} {ticker}
               </h2>
               <div className="content">
                 <ChannelButton name="Liquid" />

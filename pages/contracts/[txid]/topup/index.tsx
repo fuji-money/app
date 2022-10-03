@@ -5,14 +5,13 @@ import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
 import { getContract } from 'lib/contracts'
 import Topup from 'components/topup'
-import { Contract } from 'lib/types'
 import { ContractsContext } from 'components/providers/contracts'
 
 const ContractTopup: NextPage = () => {
-  const [contract, setContract] = useState<Contract>()
   const [loading, setLoading] = useState(true)
 
-  const { setNewContract, setOldContract } = useContext(ContractsContext)
+  const { newContract, setNewContract, setOldContract } =
+    useContext(ContractsContext)
 
   const router = useRouter()
   const { txid } = router.query
@@ -20,7 +19,10 @@ const ContractTopup: NextPage = () => {
   useEffect(() => {
     if (txid && typeof txid === 'string') {
       getContract(txid).then((contract) => {
-        if (contract) setContract(contract)
+        if (contract) {
+          setNewContract(contract)
+          setOldContract(contract)
+        }
         setLoading(false)
       })
     }
@@ -28,10 +30,7 @@ const ContractTopup: NextPage = () => {
   }, [txid])
 
   if (loading) return <Spinner />
-  if (!contract) return <SomeError>Contract not found</SomeError>
-
-  setNewContract(contract)
-  setOldContract(contract)
+  if (!newContract) return <SomeError>Contract not found</SomeError>
 
   return <Topup />
 }
