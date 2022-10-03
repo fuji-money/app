@@ -30,7 +30,7 @@ import { WalletContext } from 'components/providers/wallet'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 
-const BorrowTicker: NextPage = () => {
+const BorrowParams: NextPage = () => {
   const { network } = useContext(WalletContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -247,4 +247,4 @@ const BorrowTicker: NextPage = () => {
   }
 }
 
-export default BorrowTicker
+export default BorrowParams
