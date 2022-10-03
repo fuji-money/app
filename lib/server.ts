@@ -9,6 +9,7 @@ const lbtc: Asset = {
   isAvailable: false,
   name: 'Liquid BTC',
   precision: 8,
+  quantity: 0,
   ratio: 150,
   ticker: 'L-BTC',
   value: 40000,
@@ -21,6 +22,7 @@ const usdt: Asset = {
   isAvailable: false,
   name: 'Tether USD',
   precision: 8,
+  quantity: 0,
   ratio: 150,
   ticker: 'USDt',
   value: 1,
@@ -33,6 +35,7 @@ const fusd: Asset = {
   isAvailable: true,
   name: 'FUJI USD',
   precision: 8,
+  quantity: 0,
   ticker: 'FUSD',
   value: 1,
 }
@@ -44,6 +47,7 @@ const fbmn: Asset = {
   isAvailable: false,
   name: 'FUJI BMN',
   precision: 8,
+  quantity: 0,
   ticker: 'FBMN',
   value: 309415.05,
 }
@@ -55,6 +59,7 @@ const ftsla: Asset = {
   isAvailable: false,
   name: 'FUJI TSLA',
   precision: 8,
+  quantity: 0,
   ticker: 'FTSLA',
   value: 309415.05,
 }
@@ -66,6 +71,7 @@ const faapl: Asset = {
   isAvailable: false,
   name: 'FUJI AAPL',
   precision: 8,
+  quantity: 0,
   ticker: 'FAAPL',
   value: 309415.05,
 }

@@ -24,7 +24,7 @@ const ContractTaskLightning: NextPage = () => {
 
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
-  const quantity = newContract.collateral.quantity || 0
+  const quantity = newContract.collateral.quantity
   const payoutAmount = newContract.payoutAmount || 0
   const amount = quantity - payoutAmount
 

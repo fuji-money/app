@@ -23,7 +23,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   useEffect(() => {
     fetchAsset(contract.collateral.ticker).then((asset) => {
       const funds = getAssetBalance(asset, balances)
-      const needed = contract.collateral.quantity || 0
+      const needed = contract.collateral.quantity
       const enoughFundsOnMarina = connected && funds > needed
       const outOfBounds = swapDepositAmountOutOfBounds(needed)
       setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
@@ -38,11 +38,9 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const enabled =
     connected &&
     enoughFunds &&
-    collateral.quantity &&
     collateral.quantity > 0 &&
     collateral.value > 0 &&
     ratio >= minRatio &&
-    synthetic.quantity &&
     synthetic.quantity > 0 &&
     synthetic.value > 0 &&
     oracles &&

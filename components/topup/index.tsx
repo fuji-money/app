@@ -25,8 +25,8 @@ const Topup = () => {
 
   useEffect(() => {
     console.log('use effect')
-    if (newContract) {
-      const oldQuantity = oldContract?.collateral.quantity || 0
+    if (newContract && oldContract) {
+      const oldQuantity = oldContract.collateral.quantity
       const newQuantity = getCollateralQuantity(newContract, ratio)
       const collateral = { ...newContract.collateral, quantity: newQuantity }
       const priceLevel = getContractPriceLevel(newContract.collateral, ratio)

@@ -34,7 +34,7 @@ export interface Asset {
   isAvailable: boolean
   name: string
   precision: number
-  quantity?: number
+  quantity: number
   ratio?: number
   ticker: string
   value: number

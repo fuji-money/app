@@ -25,11 +25,8 @@ export const contractIsClosed = (contract: Contract): boolean => {
 // get contract ratio
 export const getContractRatio = (contract: Contract): number => {
   const { collateral, synthetic } = contract
-  const collateralAmount = Decimal.mul(
-    collateral.value,
-    collateral.quantity || 0,
-  )
-  const syntheticAmount = Decimal.mul(synthetic.value, synthetic.quantity || 0)
+  const collateralAmount = Decimal.mul(collateral.value, collateral.quantity)
+  const syntheticAmount = Decimal.mul(synthetic.value, synthetic.quantity)
   return collateralAmount.div(syntheticAmount).mul(100).toNumber()
 }
 
@@ -70,7 +67,7 @@ export const getCollateralQuantity = (
 ): number => {
   const { collateral, synthetic } = contract
   return Decimal.ceil(
-    Decimal.mul(synthetic.quantity || 0, synthetic.value)
+    Decimal.mul(synthetic.quantity, synthetic.value)
       .mul(ratio)
       .div(100)
       .div(collateral.value),
@@ -82,7 +79,7 @@ export const getContractPayoutAmount = (
   contract: Contract,
   quantity?: number,
 ): number => {
-  const collateralAmount = quantity || contract.collateral.quantity || 0
+  const collateralAmount = quantity || contract.collateral.quantity
   if (!collateralAmount) return 0
   const payout = contract.payout || 0.25 // default is 25 basis points, 0.25%
   return Decimal.ceil(

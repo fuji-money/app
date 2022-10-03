@@ -26,7 +26,7 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
 
   const { collateral } = contract
   const ticker = collateral.ticker
-  const quantity = amount || collateral.quantity || 0
+  const quantity = amount || collateral.quantity
 
   const outOfBounds = swapDepositAmountOutOfBounds(quantity)
   console.log('ticker', ticker)

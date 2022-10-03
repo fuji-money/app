@@ -86,9 +86,9 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
   const issuerPk = Buffer.from(issuerPubKey, 'hex')
   const contractParams = {
     borrowAsset: contract.synthetic.id,
-    borrowAmount: contract.synthetic.quantity || 0,
+    borrowAmount: contract.synthetic.quantity,
     collateralAsset: contract.collateral.id,
-    collateralAmount: contract.collateral.quantity || 0,
+    collateralAmount: contract.collateral.quantity,
     payoutAmount: contract.payoutAmount || getContractPayoutAmount(contract),
     oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
@@ -103,7 +103,7 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
   await marina.useAccount(marinaMainAccountID)
 
   // set covenant output
-  const amount = contract.collateral.quantity || 0
+  const amount = contract.collateral.quantity
   const covenantOutput = {
     script: address.toOutputScript(covenantAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(amount),

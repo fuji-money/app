@@ -21,7 +21,6 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
 
   const { collateral, payoutAmount } = contract
 
-  if (!collateral.quantity) throw new Error('Contract without collateral')
   if (!payoutAmount) throw new Error('Contract without payout amount')
 
   const amount = collateral.quantity - payoutAmount - feeAmount

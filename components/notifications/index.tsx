@@ -38,7 +38,7 @@ const Notifications = ({
 
   const { balances, connected } = useContext(WalletContext)
 
-  const spendQuantity = topup ? topup : contract.collateral.quantity || 0
+  const spendQuantity = topup ? topup : contract.collateral.quantity
   const { payout } = contract
 
   useEffect(() => {
