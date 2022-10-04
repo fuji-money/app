@@ -47,7 +47,7 @@ const RedeemModal = ({
         <>
           <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
-          <p>Redeem contract:</p>
+          <p>Close contract:</p>
           <div className="mx-auto">
             <Summary contract={contract} />
           </div>

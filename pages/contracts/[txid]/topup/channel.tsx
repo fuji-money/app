@@ -6,7 +6,7 @@ import SomeError from 'components/layout/error'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 
-const ContractTopupMethod: NextPage = () => {
+const ContractTopupChannel: NextPage = () => {
   const { newContract } = useContext(ContractsContext)
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
@@ -15,4 +15,4 @@ const ContractTopupMethod: NextPage = () => {
   return <Channel contract={newContract} task={Tasks.Topup} />
 }
 
-export default ContractTopupMethod
+export default ContractTopupChannel

@@ -9,7 +9,7 @@ interface RedeemButtonProps {
 
 const RedeemButton = ({ contract }: RedeemButtonProps) => {
   const cN = 'button is-primary ml-3'
-  const text = 'Redeem'
+  const text = 'Close'
   const enabled =
     !contractIsClosed(contract) &&
     contract.confirmed &&
@@ -22,7 +22,7 @@ const RedeemButton = ({ contract }: RedeemButtonProps) => {
     )
   }
   return (
-    <Link passHref href={`/contracts/${contract.txid}/redeem`}>
+    <Link passHref href={`/contracts/${contract.txid}/close/channel`}>
       <button className={cN}>{text}</button>
     </Link>
   )

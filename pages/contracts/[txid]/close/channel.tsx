@@ -9,7 +9,7 @@ import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import NotAllowed from 'components/messages/notAllowed'
 
-const ContractRedeemMethod: NextPage = () => {
+const ContractRedeemChannel: NextPage = () => {
   const { newContract, setNewContract } = useContext(ContractsContext)
   const [loading, setLoading] = useState(true)
 
@@ -33,4 +33,4 @@ const ContractRedeemMethod: NextPage = () => {
   return <Channel contract={newContract} task={Tasks.Redeem} />
 }
 
-export default ContractRedeemMethod
+export default ContractRedeemChannel
