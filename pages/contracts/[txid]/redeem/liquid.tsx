@@ -9,7 +9,9 @@ import { openModal, extractError, retry } from 'lib/utils'
 import { WalletContext } from 'components/providers/wallet'
 import RedeemModal from 'components/modals/redeem'
 import EnablersLiquid from 'components/enablers/liquid'
-import { Outcome, Tasks } from 'lib/types'
+import { Outcome } from 'lib/types'
+import { EnabledTasks, Tasks } from 'lib/tasks'
+import NotAllowed from 'components/messages/notAllowed'
 
 const ContractRedeemLiquid: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
@@ -20,6 +22,7 @@ const ContractRedeemLiquid: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
 
+  if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   const handleMarina = async (): Promise<void> => {

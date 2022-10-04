@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Contract, LightningEnabledTasks } from 'lib/types'
+import { Contract } from 'lib/types'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
@@ -10,6 +10,7 @@ import Balance from 'components/balance'
 import Title from 'components/title'
 import ComingSoon from 'components/messages/comingSoon'
 import { operationFromTask } from 'lib/utils'
+import { LightningEnabledTasks } from 'lib/tasks'
 
 interface ChannelButtonProps {
   name: string

@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js'
 import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
-import { Tasks } from './types'
+import { Tasks } from './tasks'
 
 // number to string
 export function numberToHexEncodedUint64LE(n: number): string {

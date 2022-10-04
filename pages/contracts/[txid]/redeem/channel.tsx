@@ -4,9 +4,10 @@ import { useContext, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
 import { getContract } from 'lib/contracts'
-import { Tasks } from 'lib/types'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
+import NotAllowed from 'components/messages/notAllowed'
 
 const ContractRedeemMethod: NextPage = () => {
   const { newContract, setNewContract } = useContext(ContractsContext)
@@ -25,6 +26,7 @@ const ContractRedeemMethod: NextPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
+  if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (loading) return <Spinner />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 

@@ -112,17 +112,3 @@ export enum Outcome {
   Success = 'success',
   Failure = 'failure',
 }
-
-export enum Tasks {
-  Borrow = 'borrow',
-  Multiply = 'multiply',
-  Redeem = 'redeem',
-  Topup = 'topup',
-}
-
-export const LightningEnabledTasks: Record<string, boolean> = {
-  [Tasks.Borrow]: true,
-  [Tasks.Multiply]: false,
-  [Tasks.Redeem]: false,
-  [Tasks.Topup]: false,
-}

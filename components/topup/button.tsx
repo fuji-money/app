@@ -24,7 +24,7 @@ const TopupButton = ({ minRatio, oracles, ratio, topup }: TopupButtonProps) => {
       <button
         className="button is-primary is-cta"
         disabled={!enabled}
-        onClick={() => Router.push(`${Router.router?.asPath}/method`)}
+        onClick={() => Router.push(`${Router.router?.asPath}/channel`)}
       >
         Proceed to topup
       </button>

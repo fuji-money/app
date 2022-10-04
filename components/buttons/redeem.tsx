@@ -1,4 +1,5 @@
 import { contractIsClosed } from 'lib/contracts'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
 import Link from 'next/link'
 
@@ -9,7 +10,11 @@ interface RedeemButtonProps {
 const RedeemButton = ({ contract }: RedeemButtonProps) => {
   const cN = 'button is-primary ml-3'
   const text = 'Redeem'
-  if (contractIsClosed(contract) || !contract.confirmed) {
+  const enabled =
+    !contractIsClosed(contract) &&
+    contract.confirmed &&
+    EnabledTasks[Tasks.Redeem]
+  if (!enabled) {
     return (
       <button disabled className={cN}>
         {text}

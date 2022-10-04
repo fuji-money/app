@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import EnablersLightning from 'components/enablers/lightning'
-import { Tasks } from 'lib/types'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
 import { ModalStages } from 'components/modals/modal'
@@ -23,6 +23,7 @@ import { broadcastTx } from 'lib/marina'
 import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import { Psbt } from 'ldk'
+import NotAllowed from 'components/messages/notAllowed'
 
 const ContractTopupLightning: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
@@ -34,6 +35,7 @@ const ContractTopupLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
 
+  if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
   if (!oldContract) return <SomeError>Contract not found</SomeError>
 

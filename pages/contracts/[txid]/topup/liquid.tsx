@@ -15,8 +15,10 @@ import { selectCoinsWithBlindPrivKey } from 'lib/marina'
 import { openModal, extractError, retry } from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
-import { Outcome, Tasks } from 'lib/types'
+import { Outcome } from 'lib/types'
 import { Psbt } from 'ldk'
+import { EnabledTasks, Tasks } from 'lib/tasks'
+import NotAllowed from 'components/messages/notAllowed'
 
 const ContractTopupLiquid: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
@@ -27,6 +29,7 @@ const ContractTopupLiquid: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
 
+  if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
   if (!oldContract) return <SomeError>Contract not found</SomeError>
 

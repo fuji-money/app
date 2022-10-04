@@ -31,8 +31,8 @@ const Topup = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratio])
 
-  if (!newContract || !oldContract)
-    return <SomeError>Contract not found</SomeError>
+  if (!newContract) return <SomeError>Contract not found</SomeError>
+  if (!oldContract) return <SomeError>Contract not found</SomeError>
 
   const minRatio = getContractRatio(oldContract)
   const topupAmount =

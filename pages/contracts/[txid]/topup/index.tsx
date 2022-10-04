@@ -6,6 +6,8 @@ import Spinner from 'components/spinner'
 import { getContract } from 'lib/contracts'
 import Topup from 'components/topup'
 import { ContractsContext } from 'components/providers/contracts'
+import NotAllowed from 'components/messages/notAllowed'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 
 const ContractTopup: NextPage = () => {
   const [loading, setLoading] = useState(true)
@@ -29,6 +31,7 @@ const ContractTopup: NextPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
+  if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (loading) return <Spinner />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 

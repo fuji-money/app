@@ -5,10 +5,12 @@ import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
 import { Offer } from 'lib/types'
 import Spinner from 'components/spinner'
+import NotAllowed from 'components/messages/notAllowed'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 
 const Borrow: NextPage = () => {
   const [offers, setOffers] = useState<Offer[]>()
-  const [isLoading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -18,7 +20,8 @@ const Borrow: NextPage = () => {
     })
   }, [])
 
-  if (isLoading) return <Spinner />
+  if (!EnabledTasks[Tasks.Borrow]) return <NotAllowed />
+  if (loading) return <Spinner />
   if (!offers) return <SomeError>Error fetching offers</SomeError>
 
   return <Offers offers={offers} ticker="" />

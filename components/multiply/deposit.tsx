@@ -1,4 +1,4 @@
-import { Contract, Tasks } from 'lib/types'
+import { Contract } from 'lib/types'
 import Channel from 'components/channel'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
@@ -8,6 +8,7 @@ import { useContext, useState } from 'react'
 import { ModalStages } from 'components/modals/modal'
 import EnablersLightning from 'components/enablers/lightning'
 import EnablersLiquid from 'components/enablers/liquid'
+import { Tasks } from 'lib/tasks'
 
 interface MultiplyDepositProps {
   contract: Contract

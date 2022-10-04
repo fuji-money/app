@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Offer, Outcome, Tasks } from 'lib/types'
+import { Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -29,6 +29,8 @@ import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
+import { EnabledTasks, Tasks } from 'lib/tasks'
+import NotAllowed from 'components/messages/notAllowed'
 
 const BorrowParams: NextPage = () => {
   const { network } = useContext(WalletContext)
@@ -178,6 +180,7 @@ const BorrowParams: NextPage = () => {
     }
   }, [oracles])
 
+  if (!EnabledTasks[Tasks.Borrow]) return <NotAllowed />
   if (loading) return <Spinner />
   if (!offers) return <SomeError>Error getting offers</SomeError>
   if (!oracles) return <SomeError>Oracles not found</SomeError>
@@ -198,8 +201,8 @@ const BorrowParams: NextPage = () => {
     case 3:
       if (!newContract) return <SomeError>Contract not found</SomeError>
       switch (params[2]) {
-        // /borrow/fUSD/L-BTC/method => show list of available payment methods
-        case 'method':
+        // /borrow/fUSD/L-BTC/channel => show list of available payment methods
+        case 'channel':
           return <Channel contract={newContract} task={Tasks.Borrow} />
         case 'liquid':
           // /borrow/fUSD/L-BTC/liquid => show list of liquid enablers

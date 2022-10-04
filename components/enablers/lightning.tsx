@@ -1,4 +1,4 @@
-import { Contract, Tasks } from 'lib/types'
+import { Contract } from 'lib/types'
 import Image from 'next/image'
 import Summary from 'components/contract/summary'
 import Title from 'components/title'

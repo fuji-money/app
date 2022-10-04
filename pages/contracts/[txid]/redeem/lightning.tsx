@@ -11,7 +11,9 @@ import { markContractRedeemed } from 'lib/contracts'
 import InvoiceModal from 'components/modals/invoice'
 import RedeemModal from 'components/modals/redeem'
 import EnablersLightning from 'components/enablers/lightning'
-import { Outcome, Tasks } from 'lib/types'
+import { Outcome } from 'lib/types'
+import { EnabledTasks, Tasks } from 'lib/tasks'
+import NotAllowed from 'components/messages/notAllowed'
 
 const ContractRedeemLightning: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
@@ -22,6 +24,7 @@ const ContractRedeemLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
 
+  if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   const quantity = newContract.collateral.quantity

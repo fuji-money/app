@@ -5,7 +5,7 @@ const nextConfig = {
     return [
       {
         source: '/contracts/:txid/redeem',
-        destination: '/contracts/:txid/redeem/method',
+        destination: '/contracts/:txid/redeem/channel',
         permanent: true,
       },
     ]
