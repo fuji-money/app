@@ -22,7 +22,7 @@ const ContractTopup: NextPage = () => {
     if (txid && typeof txid === 'string') {
       getContract(txid).then((contract) => {
         if (contract) {
-          setNewContract(contract)
+          if (!newContract) setNewContract(contract)
           setOldContract(contract)
         }
         setLoading(false)

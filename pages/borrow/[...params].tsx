@@ -189,6 +189,7 @@ const BorrowParams: NextPage = () => {
   switch (params.length) {
     case 1:
       // /borrow/fUSD => show list of offers filtered by ticker
+      resetContracts()
       return <Offers offers={offers} ticker={params[0]} />
     case 2:
       // /borrow/fUSD/L-BTC => show form to borrow synthetic

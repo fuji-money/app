@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import {
   getCollateralQuantity,
   getContractPayoutAmount,
@@ -18,7 +18,9 @@ const Topup = () => {
   const { newContract, oldContract, oracles, setNewContract } =
     useContext(ContractsContext)
 
-  const [ratio, setRatio] = useState(getContractRatio(oldContract))
+  const [ratio, setRatio] = useState(
+    getContractRatio(newContract ? newContract : oldContract),
+  )
 
   useEffect(() => {
     if (newContract) {
