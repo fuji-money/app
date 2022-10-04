@@ -81,7 +81,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRun = useRef(Date.now())
 
   const resetContracts = () => {
-    console.info('reset contracts')
     setNewContract(undefined)
     setOldContract(undefined)
   }
