@@ -1,3 +1,5 @@
+import ReloadButton from 'components/buttons/reload'
+
 interface ContractsHeaderProps {
   showActive: boolean
   setShowActive: (arg0: boolean) => void
@@ -17,6 +19,9 @@ const ContractsHeader = ({
       <div className="level-left">
         <div className="level-item">
           <h2>Contracts</h2>
+        </div>
+        <div className="level-item">
+          <ReloadButton />
         </div>
       </div>
       <div className="level-right">
