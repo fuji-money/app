@@ -24,6 +24,8 @@ import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import { Psbt } from 'ldk'
 import NotAllowed from 'components/messages/notAllowed'
+import { addBoltzKeyToStorage } from 'lib/storage'
+import { Outcome } from 'lib/types'
 
 const ContractTopupLightning: NextPage = () => {
   const { marina, network } = useContext(WalletContext)
@@ -41,8 +43,6 @@ const ContractTopupLightning: NextPage = () => {
 
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
-
-  if (!newContract) throw new Error('Missing contract')
 
   const handleInvoice = async (): Promise<void> => {
     if (!marina) return
@@ -63,7 +63,17 @@ const ContractTopupLightning: NextPage = () => {
         network,
         onchainTopupAmount,
       )
-      if (!boltzSwap) throw new Error('Error creating swap')
+      if (!boltzSwap) {
+        // save used keys on storage
+        addBoltzKeyToStorage({
+          contractId: oldContract.txid || '',
+          privateKey: privateKey.toString('hex'),
+          publicKey: keyPair.publicKey.toString('hex'),
+          status: Outcome.Failure,
+          task: Tasks.Topup,
+        })
+        throw new Error('Error creating swap')
+      }
 
       // deconstruct swap
       const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
@@ -80,7 +90,17 @@ const ContractTopupLightning: NextPage = () => {
       )
 
       // payment was never made, and the invoice expired
-      if (utxos.length === 0) throw new Error('Invoice has expired')
+      if (utxos.length === 0) {
+        // save used keys on storage
+        addBoltzKeyToStorage({
+          contractId: oldContract.txid || '',
+          privateKey: privateKey.toString('hex'),
+          publicKey: keyPair.publicKey.toString('hex'),
+          status: Outcome.Failure,
+          task: Tasks.Topup,
+        })
+        throw new Error('Invoice has expired')
+      }
 
       // show user (via modal) that payment was received
       setInvoice('')
@@ -138,6 +158,15 @@ const ContractTopupLightning: NextPage = () => {
 
       // add additional fields to contract and save to storage
       await saveContractToStorage(newContract, network, preparedTx)
+
+      // save ephemeral key on storage
+      addBoltzKeyToStorage({
+        contractId: newContract.txid,
+        privateKey: privateKey.toString('hex'),
+        publicKey: keyPair.publicKey.toString('hex'),
+        status: Outcome.Success,
+        task: Tasks.Topup,
+      })
 
       // mark old contract as topup
       markContractTopup(oldContract)

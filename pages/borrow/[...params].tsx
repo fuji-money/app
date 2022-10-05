@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Offer, Outcome } from 'lib/types'
+import { BoltzKey, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -31,6 +31,7 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
+import { addBoltzKeyToStorage } from 'lib/storage'
 
 const BorrowParams: NextPage = () => {
   const { network } = useContext(WalletContext)
@@ -66,7 +67,17 @@ const BorrowParams: NextPage = () => {
         network,
         onchainAmount,
       )
-      if (!boltzSwap) throw new Error('Error creating swap')
+      if (!boltzSwap) {
+        // save used keys on storage
+        addBoltzKeyToStorage({
+          contractId: '',
+          privateKey: privateKey.toString('hex'),
+          publicKey: keyPair.publicKey.toString('hex'),
+          status: Outcome.Failure,
+          task: Tasks.Borrow,
+        })
+        throw new Error('Error creating swap')
+      }
 
       // deconstruct swap
       const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
@@ -83,7 +94,17 @@ const BorrowParams: NextPage = () => {
       )
 
       // payment was never made, and the invoice expired
-      if (utxos.length === 0) throw new Error('Invoice has expired')
+      if (utxos.length === 0) {
+        // save used keys on storage
+        addBoltzKeyToStorage({
+          contractId: '',
+          privateKey: privateKey.toString('hex'),
+          publicKey: keyPair.publicKey.toString('hex'),
+          status: Outcome.Failure,
+          task: Tasks.Borrow,
+        })
+        throw new Error('Invoice has expired')
+      }
 
       // show user (via modal) that payment was received
       setInvoice('')
@@ -124,6 +145,15 @@ const BorrowParams: NextPage = () => {
 
       // add additional fields to contract and save to storage
       await saveContractToStorage(newContract, network, preparedTx)
+
+      // save ephemeral key on storage
+      addBoltzKeyToStorage({
+        contractId: newContract.txid,
+        privateKey: privateKey.toString('hex'),
+        publicKey: keyPair.publicKey.toString('hex'),
+        status: Outcome.Success,
+        task: Tasks.Borrow,
+      })
 
       // show success
       setData(newContract.txid)

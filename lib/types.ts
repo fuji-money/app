@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from 'react'
 import type { NextPage } from 'next'
 import type { AppProps } from 'next/app'
 import { Utxo } from 'marina-provider'
+import { Tasks } from './tasks'
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode
@@ -111,4 +112,14 @@ export type UtxoWithBlindPrivKey = Utxo & {
 export enum Outcome {
   Success = 'success',
   Failure = 'failure',
+}
+
+export type BoltzKey = {
+  contractId: string
+  privateKey: string
+  publicKey: string
+  status: string | undefined
+  task: string
+  timestamp?: number
+  when?: Date
 }

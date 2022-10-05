@@ -1,5 +1,5 @@
 import { NetworkString } from 'marina-provider'
-import { Activity, Contract } from './types'
+import { Activity, BoltzKey, Contract } from './types'
 
 // contracts
 
@@ -63,4 +63,30 @@ export function addActivityToStorage(activity: Activity): void {
   const activities = getActivitiesFromStorage()
   activities.push(activity)
   saveActivitiesToStorage(activities)
+}
+
+// keys
+
+const localStorageBoltzKeysKey = 'fujiBoltzKeys'
+
+function saveBoltzKeysToStorage(boltzKeys: BoltzKey[]): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(localStorageBoltzKeysKey, JSON.stringify(boltzKeys))
+}
+
+function getBoltzKeysFromStorage(): BoltzKey[] {
+  if (typeof window === 'undefined') return []
+  const storedBoltzKeys = localStorage.getItem(localStorageBoltzKeysKey)
+  if (!storedBoltzKeys) return []
+  return JSON.parse(storedBoltzKeys)
+}
+
+export function addBoltzKeyToStorage(boltzKey: BoltzKey): void {
+  if (typeof window === 'undefined') return
+  const now = new Date()
+  boltzKey.timestamp = now.getTime()
+  boltzKey.when = now
+  const boltzKeys = getBoltzKeysFromStorage()
+  boltzKeys.push(boltzKey)
+  saveBoltzKeysToStorage(boltzKeys)
 }
