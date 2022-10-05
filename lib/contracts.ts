@@ -101,10 +101,21 @@ export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = await getNetwork()
   const xPubKey = await getXPubKey()
+  // cache assets for performance issues
+  const assetCache = new Map()
+  getMyContractsFromStorage(network, xPubKey).map(
+    ({ collateral, synthetic }) => {
+      assetCache.set(collateral.ticker, {})
+      assetCache.set(synthetic.ticker, {})
+    },
+  )
+  for (const ticker in assetCache) {
+    assetCache.set(ticker, await fetchAsset(ticker))
+  }
   const promises = getMyContractsFromStorage(network, xPubKey).map(
     async (contract: Contract) => {
-      const collateral = await fetchAsset(contract.collateral.ticker)
-      const synthetic = await fetchAsset(contract.synthetic.ticker)
+      const collateral = assetCache.get(contract.collateral.ticker)
+      const synthetic = assetCache.get(contract.synthetic.ticker)
       if (!collateral)
         throw new Error(
           `Contract with unknown collateral ${contract.collateral.ticker}`,
