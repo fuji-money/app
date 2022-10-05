@@ -19,7 +19,7 @@ const Topup = () => {
     useContext(ContractsContext)
 
   const [ratio, setRatio] = useState(
-    getContractRatio(newContract ? newContract : oldContract),
+    getContractRatio(newContract ?? oldContract),
   )
 
   useEffect(() => {
