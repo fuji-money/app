@@ -47,8 +47,9 @@ interface ContractsContextProps {
   newContract: Contract | undefined
   oldContract: Contract | undefined
   oracles: Oracle[]
-  reloadContracts: () => void
+  reloadContracts: (arg0?: boolean) => void
   resetContracts: () => void
+  setLoading: (arg0: boolean) => void
   setNewContract: (arg0: Contract) => void
   setOldContract: (arg0: Contract) => void
 }
@@ -62,6 +63,7 @@ export const ContractsContext = createContext<ContractsContextProps>({
   oracles: [],
   reloadContracts: () => {},
   resetContracts: () => {},
+  setLoading: () => {},
   setNewContract: () => {},
   setOldContract: () => {},
 })
@@ -89,11 +91,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
-  const reloadContracts = async () => {
+  const reloadContracts = async (force = false) => {
     // try to avoid bursts of events emitted by Marina
     const minTimeBetweenReloads = 10 * 1000
     const timeSinceLastReload = Date.now() - lastReload.current
-    const canReload = timeSinceLastReload > minTimeBetweenReloads
+    const canReload = force || timeSinceLastReload > minTimeBetweenReloads
     if (connected && canReload) {
       await checkContractsStatus()
       setContracts(await getContracts())
@@ -256,6 +258,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         oracles,
         reloadContracts,
         resetContracts,
+        setLoading,
         setNewContract,
         setOldContract,
       }}
