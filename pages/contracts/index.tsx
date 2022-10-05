@@ -1,12 +1,15 @@
 import type { NextPage } from 'next'
 import Contracts from 'components/contracts'
 import { ContractsContext } from 'components/providers/contracts'
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 
 const ContractsList: NextPage = () => {
   const { resetContracts } = useContext(ContractsContext)
 
-  resetContracts()
+  useEffect(() => {
+    resetContracts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return <Contracts />
 }
