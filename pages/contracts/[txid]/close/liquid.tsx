@@ -76,6 +76,7 @@ const ContractRedeemLiquid: NextPage = () => {
         reset={resetContracts}
         retry={retry(setData, setResult, handleMarina)}
         stage={stage}
+        task={Tasks.Redeem}
       />
     </>
   )

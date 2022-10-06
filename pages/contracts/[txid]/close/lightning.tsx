@@ -101,6 +101,7 @@ const ContractRedeemLightning: NextPage = () => {
         reset={resetContracts}
         retry={retry(setData, setResult, handleInvoice)}
         stage={stage}
+        task={Tasks.Redeem}
       />
       <InvoiceModal contract={newContract} handler={handleInvoice} />
     </>
