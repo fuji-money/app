@@ -76,7 +76,14 @@ const ContractTopupLightning: NextPage = () => {
       }
 
       // deconstruct swap
-      const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
+      const {
+        id,
+        invoice,
+        lockupAddress,
+        preimage,
+        redeemScript,
+        timeoutBlockHeight,
+      } = boltzSwap
 
       // show qr code to user
       setInvoice(invoice)
@@ -97,7 +104,9 @@ const ContractTopupLightning: NextPage = () => {
           privateKey: privateKey.toString('hex'),
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
+          swapId: id,
           task: Tasks.Topup,
+          timeoutBlockHeight,
         })
         throw new Error('Invoice has expired')
       }
@@ -165,7 +174,9 @@ const ContractTopupLightning: NextPage = () => {
         privateKey: privateKey.toString('hex'),
         publicKey: keyPair.publicKey.toString('hex'),
         status: Outcome.Success,
+        swapId: id,
         task: Tasks.Topup,
+        timeoutBlockHeight,
       })
 
       // mark old contract as topup

@@ -133,10 +133,12 @@ export const createSubmarineSwap = async (
 
 export interface ReverseSwap {
   claimPublicKey: string
+  id: string
   invoice: string
   lockupAddress: string
   preimage: Buffer
   redeemScript: string
+  timeoutBlockHeight: number
 }
 
 // validates if invoice has correct payment hash tag
@@ -226,19 +228,26 @@ export const createReverseSubmarineSwap = async (
   const claimPublicKey = p.pubkey!.toString('hex')
 
   // create reverse submarine swap
-  const { redeemScript, lockupAddress, invoice }: ReverseSubmarineSwapResponse =
-    await boltz.createReverseSubmarineSwap({
-      claimPublicKey,
-      onchainAmount,
-      preimageHash,
-    })
+  const {
+    id,
+    invoice,
+    lockupAddress,
+    redeemScript,
+    timeoutBlockHeight,
+  }: ReverseSubmarineSwapResponse = await boltz.createReverseSubmarineSwap({
+    claimPublicKey,
+    onchainAmount,
+    preimageHash,
+  })
 
   const reverseSwap = {
     claimPublicKey,
+    id,
     invoice,
     lockupAddress,
     preimage,
     redeemScript,
+    timeoutBlockHeight,
   }
   if (isValidReverseSubmarineSwap(reverseSwap)) return reverseSwap
 }

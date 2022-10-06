@@ -21,7 +21,11 @@ import {
   prepareBorrowTx,
 } from 'lib/covenant'
 import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
-import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
+import {
+  createReverseSubmarineSwap,
+  ReverseSwap,
+  waitForLightningPayment,
+} from 'lib/swaps'
 import { openModal, extractError, retry } from 'lib/utils'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
@@ -62,11 +66,12 @@ const BorrowParams: NextPage = () => {
       const onchainAmount = newContract.collateral.quantity + feeAmount
 
       // create swap with Boltz.exchange
-      const boltzSwap = await createReverseSubmarineSwap(
-        keyPair.publicKey,
-        network,
-        onchainAmount,
-      )
+      const boltzSwap: ReverseSwap | undefined =
+        await createReverseSubmarineSwap(
+          keyPair.publicKey,
+          network,
+          onchainAmount,
+        )
       if (!boltzSwap) {
         // save used keys on storage
         addBoltzKeyToStorage({
@@ -80,7 +85,14 @@ const BorrowParams: NextPage = () => {
       }
 
       // deconstruct swap
-      const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
+      const {
+        id,
+        invoice,
+        lockupAddress,
+        preimage,
+        redeemScript,
+        timeoutBlockHeight,
+      } = boltzSwap
 
       // show qr code to user
       setInvoice(invoice)
@@ -101,7 +113,9 @@ const BorrowParams: NextPage = () => {
           privateKey: privateKey.toString('hex'),
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
+          swapId: id,
           task: Tasks.Borrow,
+          timeoutBlockHeight,
         })
         throw new Error('Invoice has expired')
       }
@@ -152,7 +166,9 @@ const BorrowParams: NextPage = () => {
         privateKey: privateKey.toString('hex'),
         publicKey: keyPair.publicKey.toString('hex'),
         status: Outcome.Success,
+        swapId: id,
         task: Tasks.Borrow,
+        timeoutBlockHeight,
       })
 
       // show success

@@ -119,7 +119,9 @@ export type BoltzKey = {
   privateKey: string
   publicKey: string
   status: string | undefined
+  swapId?: string
   task: string
   timestamp?: number
+  timeoutBlockHeight?: number
   when?: Date
 }
