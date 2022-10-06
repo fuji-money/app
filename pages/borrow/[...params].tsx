@@ -22,7 +22,7 @@ import {
 } from 'lib/covenant'
 import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
 import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
-import { openModal, extractError, retry } from 'lib/utils'
+import { openModal, extractError, retry, sleep } from 'lib/utils'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
@@ -86,7 +86,8 @@ const BorrowParams: NextPage = () => {
       if (utxos.length === 0) throw new Error('Invoice has expired')
 
       // show user (via modal) that payment was received
-      setInvoice('')
+      setStage(ModalStages.PaymentReceived)
+      await sleep(2000)
       setStage(ModalStages.NeedsFujiApproval)
 
       // prepare borrow transaction with claim utxo as input

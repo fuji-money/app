@@ -7,7 +7,7 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
 import { ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
-import { extractError, openModal, retry } from 'lib/utils'
+import { extractError, openModal, retry, sleep } from 'lib/utils'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { randomBytes } from 'crypto'
@@ -83,7 +83,8 @@ const ContractTopupLightning: NextPage = () => {
       if (utxos.length === 0) throw new Error('Invoice has expired')
 
       // show user (via modal) that payment was received
-      setInvoice('')
+      setStage(ModalStages.PaymentReceived)
+      await sleep(2000)
       setStage(ModalStages.NeedsFujiApproval)
 
       // get prevout for utxo

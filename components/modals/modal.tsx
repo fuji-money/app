@@ -18,6 +18,7 @@ export const ModalStages = {
   NeedsFujiApproval: ['Preparing transaction', 'Waiting for Fuji approval'],
   NeedsInvoice: ['Making swap', 'Waiting for invoice'],
   NeedsPayment: ['Deposit by scaning this QR', 'Waiting for payment'],
+  PaymentReceived: ['Payment received', ''],
 }
 
 interface ModalProps {

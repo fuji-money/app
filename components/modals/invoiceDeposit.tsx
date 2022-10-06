@@ -1,4 +1,4 @@
-import Modal from './modal'
+import Modal, { ModalStages } from './modal'
 import { sleep } from 'lib/utils'
 import QRCode from 'components/qrcode'
 import { useState } from 'react'
@@ -6,6 +6,7 @@ import Result from 'components/result'
 import Spinner from 'components/spinner'
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
+import Image from 'next/image'
 
 interface InvoiceDepositModalProps {
   contract: Contract
@@ -41,6 +42,8 @@ const InvoiceDepositModal = ({
   }
 
   const [mainMessage, secondaryMessage] = stage
+  const showInvoice = stage === ModalStages.NeedsPayment
+  const showReceived = stage === ModalStages.PaymentReceived
 
   return (
     <Modal id="invoice-deposit-modal" reset={reset}>
@@ -56,24 +59,44 @@ const InvoiceDepositModal = ({
       )}
       {!result && (
         <>
-          <Spinner />
-          <h3 className="mt-4">{mainMessage}</h3>
-          {invoice && <QRCode text={invoice} />}
-          {!invoice && (
+          {showInvoice ? (
             <>
-              <p>Deposit to contract:</p>
-              <div className="mx-auto">
-                <Summary contract={contract} />
-              </div>
+              <Spinner />
+              <h3 className="mt-4">{mainMessage}</h3>
+              <QRCode text={invoice} />
+              <p className="confirm">{secondaryMessage}</p>
+              <p className="has-text-centered mt-4">
+                <button onClick={handleCopy} className="button">
+                  {buttonText}
+                </button>
+              </p>
             </>
-          )}
-          <p className="confirm">{secondaryMessage}</p>
-          {invoice && (
-            <p className="has-text-centered mt-4">
-              <button onClick={handleCopy} className="button">
-                {buttonText}
-              </button>
-            </p>
+          ) : (
+            <>
+              {showReceived ? (
+                <>
+                  <p>
+                    <Image
+                      src={`/images/status/success.svg`}
+                      alt="status icon"
+                      height={100}
+                      width={100}
+                    />
+                  </p>
+                  <h3 className="mt-4">{mainMessage}</h3>
+                </>
+              ) : (
+                <>
+                  <Spinner />
+                  <h3 className="mt-4">{mainMessage}</h3>
+                  <p>Deposit to contract:</p>
+                  <div className="mx-auto">
+                    <Summary contract={contract} />
+                  </div>
+                </>
+              )}
+              <p className="confirm">{secondaryMessage}</p>
+            </>
           )}
         </>
       )}
