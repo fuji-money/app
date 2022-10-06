@@ -84,6 +84,7 @@ function getBoltzKeysFromStorage(): BoltzKey[] {
 export function addBoltzKeyToStorage(boltzKey: BoltzKey): void {
   if (typeof window === 'undefined') return
   const now = new Date()
+  boltzKey.currency = 'L-BTC'
   boltzKey.timestamp = now.getTime()
   boltzKey.when = now
   const boltzKeys = getBoltzKeysFromStorage()

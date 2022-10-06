@@ -116,6 +116,7 @@ export enum Outcome {
 
 export type BoltzKey = {
   contractId: string
+  currency: 'L-BTC'
   privateKey: string
   publicKey: string
   status: string | undefined
