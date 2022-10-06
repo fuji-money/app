@@ -11,6 +11,7 @@ interface MarinaDepositModalProps {
   retry: () => void
   reset: () => void
   stage: string[]
+  task: string
 }
 
 const MarinaDepositModal = ({
@@ -20,12 +21,20 @@ const MarinaDepositModal = ({
   retry,
   reset,
   stage,
+  task,
 }: MarinaDepositModalProps) => {
   const [mainMessage, secondaryMessage] = stage
   return (
     <Modal id="marina-deposit-modal" reset={reset}>
       {result && (
-        <Result data={data} result={result} retry={retry} reset={reset} />
+        <Result
+          contract={contract}
+          data={data}
+          result={result}
+          retry={retry}
+          reset={reset}
+          task={task}
+        />
       )}
       {!result && (
         <>

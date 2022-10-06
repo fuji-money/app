@@ -14,6 +14,7 @@ interface RedeemModalProps {
   result: string
   retry: () => void
   stage: string[]
+  task: string
 }
 
 const RedeemModal = ({
@@ -23,6 +24,7 @@ const RedeemModal = ({
   result,
   retry,
   stage,
+  task,
 }: RedeemModalProps) => {
   const { balances } = useContext(WalletContext)
 
@@ -41,7 +43,14 @@ const RedeemModal = ({
   return (
     <Modal id={'redeem-modal'} reset={reset}>
       {result && (
-        <Result data={data} result={result} retry={retry} reset={reset} />
+        <Result
+          contract={contract}
+          data={data}
+          result={result}
+          retry={retry}
+          reset={reset}
+          task={task}
+        />
       )}
       {!result && hasFunds && (
         <>

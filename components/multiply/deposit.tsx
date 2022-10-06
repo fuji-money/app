@@ -69,6 +69,7 @@ const MultiplyDeposit = ({
         reset={resetDeposit}
         retry={() => {}}
         stage={stage}
+        task={Tasks.Multiply}
       />
       <InvoiceDepositModal
         contract={contract}
@@ -78,6 +79,7 @@ const MultiplyDeposit = ({
         reset={resetDeposit}
         retry={() => {}}
         stage={stage}
+        task={Tasks.Multiply}
       />
     </>
   )

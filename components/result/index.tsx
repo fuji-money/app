@@ -4,18 +4,37 @@ import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
 import { closeAllModals } from 'lib/utils'
-import { Outcome } from 'lib/types'
+import { Contract, Outcome } from 'lib/types'
+import { Tasks } from 'lib/tasks'
+import { prettyAsset, prettyNumber } from 'lib/pretty'
+import { getContractRatio } from 'lib/contracts'
 
 interface SuccessProps {
-  txid: string
+  contract: Contract
   reset: () => void
+  task: string
+  txid: string
 }
 
-const Success = ({ reset, txid }: SuccessProps) => {
+const Success = ({ contract, reset, task, txid }: SuccessProps) => {
   const handleClick = () => {
     closeAllModals()
     reset()
   }
+  // Twitter message
+  // TODO - use this instead of default twitterMessage from lib/constants
+  const message = () => {
+    const op = {
+      [Tasks.Borrow]: 'Borrowed',
+      [Tasks.Redeem]: 'Closed',
+      [Tasks.Topup]: 'Topup',
+    }[task]
+    const collateral = `${prettyAsset(contract.collateral)} collateral`
+    const synthetic = prettyAsset(contract.synthetic, 0, 0)
+    const ratio = `${prettyNumber(getContractRatio(contract), 0, 0)}% ratio`
+    return `${op} a contract ${synthetic} with ${collateral} at ${ratio}`
+  }
+  console.info('message', message())
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -69,14 +88,24 @@ const Failure = ({ error, retry }: FailureProps) => {
 }
 
 interface ResultProps {
+  contract: Contract
   data: string
   result: string
   retry: () => void
   reset: () => void
+  task: string
 }
 
-const Result = ({ data, result, retry, reset }: ResultProps) => {
-  if (result === Outcome.Success) return <Success reset={reset} txid={data} />
+const Result = ({
+  contract,
+  data,
+  result,
+  retry,
+  reset,
+  task,
+}: ResultProps) => {
+  if (result === Outcome.Success)
+    return <Success contract={contract} reset={reset} task={task} txid={data} />
   if (result === Outcome.Failure) return <Failure retry={retry} error={data} />
   return <></>
 }

@@ -15,6 +15,7 @@ interface InvoiceDepositModalProps {
   reset: () => void
   retry: () => void
   stage: string[]
+  task: string
 }
 
 const InvoiceDepositModal = ({
@@ -25,6 +26,7 @@ const InvoiceDepositModal = ({
   reset,
   retry,
   stage,
+  task,
 }: InvoiceDepositModalProps) => {
   const [buttonText, setButtonText] = useState('Copy')
 
@@ -43,7 +45,14 @@ const InvoiceDepositModal = ({
   return (
     <Modal id="invoice-deposit-modal" reset={reset}>
       {result && (
-        <Result data={data} result={result} reset={reset} retry={retry} />
+        <Result
+          contract={contract}
+          data={data}
+          result={result}
+          reset={reset}
+          retry={retry}
+          task={task}
+        />
       )}
       {!result && (
         <>

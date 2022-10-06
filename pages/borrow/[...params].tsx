@@ -221,6 +221,7 @@ const BorrowParams: NextPage = () => {
                 retry={retry(setData, setResult, handleMarina)}
                 reset={resetContracts}
                 stage={stage}
+                task={Tasks.Borrow}
               />
             </>
           )
@@ -240,6 +241,7 @@ const BorrowParams: NextPage = () => {
                 retry={retry(setData, setResult, handleInvoice)}
                 reset={resetContracts}
                 stage={stage}
+                task={Tasks.Borrow}
               />
             </>
           )

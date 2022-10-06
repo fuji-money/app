@@ -167,6 +167,7 @@ const ContractTopupLightning: NextPage = () => {
         retry={retry(setData, setResult, handleInvoice)}
         reset={resetContracts}
         stage={stage}
+        task={Tasks.Topup}
       />
     </>
   )
