@@ -8,7 +8,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Balance from 'components/balance'
 import Title from 'components/title'
-import ComingSoon from 'components/messages/comingSoon'
 import { operationFromTask } from 'lib/utils'
 import { LightningEnabledTasks } from 'lib/tasks'
 
@@ -82,7 +81,6 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
                   enabled={lightningButtonEnabled}
                 />
               </div>
-              {!LightningEnabledTasks[task] && <ComingSoon />}
               {lightningOutOfBounds && <OutOfBounds amount={quantity} />}
             </div>
           </div>
