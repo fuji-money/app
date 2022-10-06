@@ -67,7 +67,7 @@ export function addActivityToStorage(activity: Activity): void {
 
 // keys
 
-const localStorageBoltzKeysKey = 'fujiBoltzKeys'
+export const localStorageBoltzKeysKey = 'fujiBoltzKeys'
 
 function saveBoltzKeysToStorage(boltzKeys: BoltzKey[]): void {
   if (typeof window === 'undefined') return
