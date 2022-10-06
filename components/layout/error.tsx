@@ -5,7 +5,9 @@ interface SomeErrorProps {
 }
 
 const SomeError = ({ children }: SomeErrorProps) => {
-  return <p>{children}</p>
+  return (
+    <p className="has-text-weight-bold has-text-centered my-6">{children}</p>
+  )
 }
 
 export default SomeError

@@ -12,12 +12,12 @@ import {
 import { numberToHexEncodedUint64LE } from './utils'
 import {
   payments,
-  Psbt,
   confidential,
   AssetHash,
   address,
   script,
   Transaction,
+  witnessStackToScriptWitness,
 } from 'liquidjs-lib'
 import { fetchHex, postData } from './fetch'
 import {
@@ -32,7 +32,8 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
-import { getNetwork } from 'ldk'
+import { getNetwork, Psbt } from 'ldk'
+import { randomBytes } from 'crypto'
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
   // get payout amount
@@ -86,9 +87,9 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
   const issuerPk = Buffer.from(issuerPubKey, 'hex')
   const contractParams = {
     borrowAsset: contract.synthetic.id,
-    borrowAmount: contract.synthetic.quantity || 0,
+    borrowAmount: contract.synthetic.quantity,
     collateralAsset: contract.collateral.id,
-    collateralAmount: contract.collateral.quantity || 0,
+    collateralAmount: contract.collateral.quantity,
     payoutAmount: contract.payoutAmount || getContractPayoutAmount(contract),
     oraclePk: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPk: `0x${issuerPk.slice(1).toString('hex')}`,
@@ -103,7 +104,7 @@ async function getCovenantOutput(contract: Contract, network: NetworkString) {
   await marina.useAccount(marinaMainAccountID)
 
   // set covenant output
-  const amount = contract.collateral.quantity || 0
+  const amount = contract.collateral.quantity
   const covenantOutput = {
     script: address.toOutputScript(covenantAddress.confidentialAddress),
     value: confidential.satoshiToConfidentialValue(amount),
@@ -345,7 +346,7 @@ export async function proposeBorrowContract({
 export async function prepareRedeemTx(
   contract: Contract,
   network: NetworkString,
-  setStage: (arg0: string[]) => void,
+  swapAddress?: string,
 ) {
   // check for marina
   const marina = await getMarinaProvider()
@@ -364,7 +365,10 @@ export async function prepareRedeemTx(
   if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
-  // fee amount will be taken from covenant
+  const address =
+    swapAddress || (await marina.getNextAddress()).confidentialAddress
+
+  // payout amount will be taken from covenant
   const payoutAmount =
     contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
@@ -381,9 +385,6 @@ export async function prepareRedeemTx(
       'Contract cannot be found in the connected wallet.' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
-
-  const { txid, vout, prevout, unblindData } = coinToRedeem
-  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
 
   // validate we have sufficient synthetic funds
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
@@ -407,16 +408,21 @@ export async function prepareRedeemTx(
     network: getNetwork(network),
   })
 
-  // get redeem transaction
+  // marina signer for ionio redeem function
   const marinaSigner = {
     signTransaction: async (base64: string) => {
       return await marina.signTransaction(base64)
     },
   }
+
+  // prepapre ionio instance and tx
+  const { txid, vout, prevout, unblindData } = coinToRedeem
+  ionioInstance = ionioInstance.from(txid, vout, prevout, unblindData)
   const tx = ionioInstance.functions.redeem(marinaSigner)
 
   // add synthetic inputs
   for (const utxo of syntheticUtxos) {
+    console.log('adding synthetic utxo', utxo)
     tx.withUtxo(utxo)
   }
 
@@ -424,25 +430,36 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // payout to issuer
+  console.log('adding payout to issuer')
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
-  // get collateral back
-  const collateralAddress = await marina.getNextAddress()
+  // get collateral back or sent to boltz case is a submarine swap
+  console.log('adding collateral return')
   tx.withRecipient(
-    // address.fromConfidential(collateralAddress.confidentialAddress).unconfidentialAddress,
-    collateralAddress.confidentialAddress,
+    address,
     collateral.quantity - payoutAmount - feeAmount,
     collateral.id,
   )
 
+  const aux = (await marina.getNextChangeAddress()).confidentialAddress
+
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
+    console.log('adding synthetic change')
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
       synthetic.id,
     )
+  } else if (swapAddress) {
+    // in a redeem, some inputs (if not all) are confidential.
+    // in the case of a redeem to lightning, if we don't have any change
+    // all outputs will be unconfidential, which would break the protocol.
+    // by adding a confidential op_return with value 0 fixes it.
+    console.log('adding confidential op_return')
+    const blindingKey = randomBytes(33).toString('hex')
+    tx.withOpReturn(0, collateral.id, [], blindingKey)
   }
 
   // pay fees
@@ -738,6 +755,29 @@ export async function proposeTopupContract({
   const { txid, vout } = coinToTopup
   return postData(`${alphaServerUrl}/contracts/${txid}:${vout}/topup`, body)
 }
+
+export const finalizeTopupCovenantInput = (ptx: Psbt) => {
+  const covenantInputIndex = 0
+  const { tapScriptSig } = ptx.data.inputs[covenantInputIndex]
+  let witnessStack: Buffer[] = []
+  if (tapScriptSig && tapScriptSig.length > 0) {
+    for (const s of tapScriptSig) {
+      witnessStack.push(s.signature)
+    }
+  }
+  ptx.finalizeInput(covenantInputIndex, (_, input) => {
+    return {
+      finalScriptSig: undefined,
+      finalScriptWitness: witnessStackToScriptWitness([
+        ...witnessStack,
+        input.tapLeafScript![0].script,
+        input.tapLeafScript![0].controlBlock,
+      ]),
+    }
+  })
+}
+
+// other
 
 export function getFuncNameFromScriptHexOfLeaf(witness: string): string {
   const mapWitnessLengthToState: Record<number, string> = {}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Ticker } from 'lib/types'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 
 interface BorrowButtonProps {
   collateral: Ticker
@@ -7,9 +8,19 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ collateral, synthetic }: BorrowButtonProps) => {
+  const cN = 'button is-primary is-solid-purple'
+  const text = 'Borrow'
+  const enabled = EnabledTasks[Tasks.Borrow]
+  if (!enabled) {
+    return (
+      <button disabled className={cN}>
+        {text}
+      </button>
+    )
+  }
   return (
-    <Link href={`/borrow/${synthetic}/${collateral}`}>
-      <a className="button is-primary is-solid-purple">Borrow</a>
+    <Link passHref href={`/borrow/${synthetic}/${collateral}`}>
+      <button className={cN}>{text}</button>
     </Link>
   )
 }

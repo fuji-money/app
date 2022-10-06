@@ -2,7 +2,6 @@ import { useContext, useState } from 'react'
 import { contractIsClosed } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import EmptyState from 'components/layout/empty'
-import RedeemModal from 'components/modals/redeem'
 import { WalletContext } from 'components/providers/wallet'
 import ContractRow from './row'
 import Spinner from 'components/spinner'
@@ -16,17 +15,6 @@ interface ContractsListProps {
 const ContractsList = ({ showActive }: ContractsListProps) => {
   const { connected } = useContext(WalletContext)
   const { contracts, loading } = useContext(ContractsContext)
-
-  const [assetBalance, setAssetBalance] = useState(0)
-  const [data, setData] = useState('')
-  const [redeem, setReedem] = useState<Contract>()
-  const [result, setResult] = useState('')
-  const [stage, setStage] = useState(ModalStages.NeedsCoins)
-
-  const reset = () => {
-    setData('')
-    setResult('')
-  }
 
   if (!connected)
     return (
@@ -43,25 +31,9 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
 
   return (
     <>
-      <RedeemModal
-        balance={assetBalance}
-        contract={redeem}
-        data={data}
-        result={result}
-        reset={reset}
-        stage={stage}
-      />
       {filteredContracts &&
         filteredContracts.map((contract: Contract, index: number) => (
-          <ContractRow
-            key={index}
-            contract={contract}
-            setAssetBalance={setAssetBalance}
-            setData={setData}
-            setResult={setResult}
-            setRedeem={setReedem}
-            setStage={setStage}
-          />
+          <ContractRow key={index} contract={contract} />
         ))}
     </>
   )

@@ -6,7 +6,7 @@ interface BorrowFeeNotificationProps {
 }
 
 const BorrowFeeNotification = ({ payout }: BorrowFeeNotificationProps) => {
-  const label = `A fixed fee of ${minDustLimit} satoshis + ${payout}% fee of the collateral value will be levied when the borrow position is closed`
+  const label = `A fixed fee of ${minDustLimit} satoshis (miners fee) + ${payout}% fee of the collateral value will be levied when the borrow position is closed`
   const type = 'warning'
   return <Notification label={label} type={type} />
 }

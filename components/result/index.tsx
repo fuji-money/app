@@ -4,17 +4,37 @@ import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
 import { twitterMessage } from 'lib/constants'
 import { closeAllModals } from 'lib/utils'
+import { Contract, Outcome } from 'lib/types'
+import { Tasks } from 'lib/tasks'
+import { prettyAsset, prettyNumber } from 'lib/pretty'
+import { getContractRatio } from 'lib/contracts'
 
 interface SuccessProps {
-  txid: string
+  contract: Contract
   reset: () => void
+  task: string
+  txid: string
 }
 
-const Success = ({ reset, txid }: SuccessProps) => {
+const Success = ({ contract, reset, task, txid }: SuccessProps) => {
   const handleClick = () => {
     closeAllModals()
     reset()
   }
+  // Twitter message
+  // TODO - use this instead of default twitterMessage from lib/constants
+  const message = () => {
+    const op = {
+      [Tasks.Borrow]: 'Borrowed',
+      [Tasks.Redeem]: 'Closed',
+      [Tasks.Topup]: 'Topup',
+    }[task]
+    const collateral = `${prettyAsset(contract.collateral)} collateral`
+    const synthetic = prettyAsset(contract.synthetic, 0, 0)
+    const ratio = `${prettyNumber(getContractRatio(contract), 0, 0)}% ratio`
+    return `${op} a contract ${synthetic} with ${collateral} at ${ratio}`
+  }
+  console.info('message', message())
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -42,10 +62,10 @@ const Success = ({ reset, txid }: SuccessProps) => {
 
 interface FailureProps {
   error: string | unknown
-  reset: () => void
+  retry: () => void
 }
 
-const Failure = ({ error, reset }: FailureProps) => {
+const Failure = ({ error, retry }: FailureProps) => {
   return (
     <div className="has-text-centered mx-6">
       <p>
@@ -59,7 +79,7 @@ const Failure = ({ error, reset }: FailureProps) => {
       <h2 className="mt-4">Something went wrong</h2>
       <p className="is-size-7 mt-4">{`${error}`}</p>
       <p className="has-text-centered mt-5">
-        <button className="button is-cta" onClick={reset}>
+        <button className="button is-cta" onClick={retry}>
           Try again
         </button>
       </p>
@@ -68,14 +88,25 @@ const Failure = ({ error, reset }: FailureProps) => {
 }
 
 interface ResultProps {
+  contract: Contract
   data: string
   result: string
+  retry: () => void
   reset: () => void
+  task: string
 }
 
-const Result = ({ data, result, reset }: ResultProps) => {
-  if (result === 'success') return <Success reset={reset} txid={data} />
-  if (result === 'failure') return <Failure reset={reset} error={data} />
+const Result = ({
+  contract,
+  data,
+  result,
+  retry,
+  reset,
+  task,
+}: ResultProps) => {
+  if (result === Outcome.Success)
+    return <Success contract={contract} reset={reset} task={task} txid={data} />
+  if (result === Outcome.Failure) return <Failure retry={retry} error={data} />
   return <></>
 }
 

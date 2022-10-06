@@ -1,4 +1,3 @@
-import React from 'react'
 import { useQRCode } from 'next-qrcode'
 
 interface QRCodeProps {
@@ -15,7 +14,7 @@ function QRCode({ text }: QRCodeProps) {
         type: 'image/jpeg',
         quality: 0.3,
         level: 'M',
-        margin: 0,
+        margin: 7,
         scale: 4,
         width: 300,
         color: {

@@ -1,14 +1,25 @@
 import Link from 'next/link'
 import { Ticker } from 'lib/types'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 
 interface FilterButtonProps {
   ticker: Ticker
 }
 
 const FilterButton = ({ ticker }: FilterButtonProps) => {
+  const cN = 'button is-primary is-solid-purple ml-3'
+  const text = 'Borrow'
+  const enabled = EnabledTasks[Tasks.Borrow]
+  if (!enabled) {
+    return (
+      <button disabled className={cN}>
+        {text}
+      </button>
+    )
+  }
   return (
-    <Link href={`/borrow/${ticker}`}>
-      <a className="button is-primary is-solid-purple ml-3">Borrow</a>
+    <Link passHref href={`/borrow/${ticker}`}>
+      <button className={cN}>{text}</button>
     </Link>
   )
 }

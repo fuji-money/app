@@ -3,40 +3,60 @@ import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
 import Modal from './modal'
 import Result from 'components/result'
+import { useContext } from 'react'
+import { WalletContext } from 'components/providers/wallet'
+import { getAssetBalance } from 'lib/marina'
 
 interface RedeemModalProps {
-  balance: number
-  contract: Contract | undefined
+  contract: Contract
   data: string
   reset: () => void
   result: string
+  retry: () => void
   stage: string[]
+  task: string
 }
 
 const RedeemModal = ({
-  balance,
   contract,
   data,
-  result,
   reset,
+  result,
+  retry,
   stage,
+  task,
 }: RedeemModalProps) => {
+  const { balances } = useContext(WalletContext)
+
+  if (!contract) return <></>
+
   // messages to show on different steps of the process
   const [mainMessage, secondaryMessage] = stage
 
   // decision variables
-  const ticker = contract?.synthetic.ticker
-  const neededAmount = contract?.synthetic.quantity
+  const { synthetic } = contract
+  const balance = getAssetBalance(synthetic, balances)
+  const ticker = synthetic.ticker
+  const neededAmount = synthetic.quantity
   const hasFunds = neededAmount && balance >= neededAmount
 
   return (
     <Modal id={'redeem-modal'} reset={reset}>
-      {result && <Result data={data} reset={reset} result={result} />}
+      {result && (
+        <Result
+          contract={contract}
+          data={data}
+          result={result}
+          retry={retry}
+          reset={reset}
+          task={task}
+        />
+      )}
       {!result && hasFunds && (
         <>
           <Spinner />
           <h3 className="mt-4">{mainMessage}</h3>
-          <p>Redeem contract:</p>
+          <p>Close contract:</p>
           <div className="mx-auto">
             <Summary contract={contract} />
           </div>

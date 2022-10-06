@@ -4,9 +4,9 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/contracts/:txid',
-        destination: '/contracts/:txid/topup',
-        permanent: false,
+        source: '/contracts/:txid/close',
+        destination: '/contracts/:txid/close/channel',
+        permanent: true,
       },
     ]
   },

@@ -7,21 +7,9 @@ import { fromSatoshis } from 'lib/utils'
 
 interface ContractRowProps {
   contract: Contract
-  setAssetBalance: (arg0: number) => void
-  setData: (arg0: string) => void
-  setResult: (arg0: string) => void
-  setRedeem: (arg0: Contract) => void
-  setStage: (arg0: string[]) => void
 }
 
-const ContractRow = ({
-  contract,
-  setAssetBalance,
-  setData,
-  setResult,
-  setRedeem,
-  setStage,
-}: ContractRowProps) => {
+const ContractRow = ({ contract }: ContractRowProps) => {
   const { quantity, ticker } = contract.synthetic
   return (
     <div className="is-box has-pink-border row">
@@ -36,14 +24,7 @@ const ContractRow = ({
           {contract.txid && <ExplorerLink txid={contract.txid} />}
         </div>
         <div className="column is-5 is-flex is-justify-content-flex-end">
-          <RedeemButton
-            contract={contract}
-            setRedeem={setRedeem}
-            setAssetBalance={setAssetBalance}
-            setStage={setStage}
-            setData={setData}
-            setResult={setResult}
-          />
+          <RedeemButton contract={contract} />
           <TopupButton contract={contract} />
         </div>
       </div>

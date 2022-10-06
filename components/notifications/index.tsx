@@ -19,7 +19,7 @@ interface NotificationsProps {
   contract: Contract
   minRatio: number
   ratio: number
-  topup: number
+  topup?: number
 }
 
 const Notifications = ({
@@ -38,53 +38,47 @@ const Notifications = ({
 
   const { balances, connected } = useContext(WalletContext)
 
-  const spendQuantity = topup ? topup : contract.collateral.quantity || 0
-  const { payout } = contract
+  const { collateral, oracles, payout, payoutAmount } = contract
+  const spendQuantity =
+    typeof topup === 'undefined' ? collateral.quantity : topup
 
   useEffect(() => {
-    fetchAsset(contract.collateral.ticker).then((asset) => {
+    fetchAsset(collateral.ticker).then((asset) => {
       const balance = getAssetBalance(asset, balances)
       setNotEnoughFunds(connected && spendQuantity > balance)
       setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
       setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
     })
-  }, [
-    balances,
-    connected,
-    contract.collateral.ticker,
-    contract.payoutAmount,
-    spendQuantity,
-  ])
+  }, [balances, connected, collateral.ticker, payoutAmount, spendQuantity])
 
   useEffect(() => {
     setRatioTooLow(ratio < minRatio)
   }, [minRatio, ratio])
 
   useEffect(() => {
-    const safeLimit = (contract.collateral.ratio || 0) + 50
+    const safeLimit = (collateral.ratio || 0) + 50
     setRatioUnsafe(ratio < safeLimit)
-  }, [contract.collateral.ratio, ratio])
+  }, [collateral.ratio, ratio])
 
   useEffect(() => {
-    setNotEnoughOracles(contract?.oracles?.length === 0)
-  }, [contract.oracles])
+    setNotEnoughOracles(oracles?.length === 0)
+  }, [oracles])
 
   useEffect(() => {
-    if (contract.payoutAmount)
-      setBelowDustLimit(contract.payoutAmount < minDustLimit)
-  }, [contract])
+    if (payoutAmount) setBelowDustLimit(payoutAmount < minDustLimit)
+  }, [payoutAmount])
 
   return (
     <>
-      {notEnoughOracles && <NotEnoughOraclesNotification />}
-      {belowDustLimit && <BelowDustLimitNotification />}
-      {!connected && <ConnectWalletNotification />}
-      {collateralTooLow && <LowCollateralAmountNotification />}
+      <BorrowFeeNotification payout={payout} />
+      {ratioUnsafe && <RatioUnsafeNotification />}
       {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
       {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
+      {!connected && <ConnectWalletNotification />}
+      {belowDustLimit && <BelowDustLimitNotification />}
+      {collateralTooLow && <LowCollateralAmountNotification />}
+      {notEnoughOracles && <NotEnoughOraclesNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
-      {ratioUnsafe && <RatioUnsafeNotification />}
-      <BorrowFeeNotification payout={payout} />
     </>
   )
 }

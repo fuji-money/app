@@ -1,22 +1,16 @@
 import { WalletContext } from 'components/providers/wallet'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { useContext } from 'react'
+import Router from 'next/router'
 
 interface TopupButtonProps {
   minRatio: number
   oracles: string[]
   ratio: number
-  setDeposit: (arg0: boolean) => void
   topup: number
 }
 
-const TopupButton = ({
-  minRatio,
-  oracles,
-  ratio,
-  setDeposit,
-  topup,
-}: TopupButtonProps) => {
+const TopupButton = ({ minRatio, oracles, ratio, topup }: TopupButtonProps) => {
   const { connected } = useContext(WalletContext)
 
   const enabled =
@@ -30,7 +24,7 @@ const TopupButton = ({
       <button
         className="button is-primary is-cta"
         disabled={!enabled}
-        onClick={() => setDeposit(true)}
+        onClick={() => Router.push(`${Router.router?.asPath}/channel`)}
       >
         Proceed to topup
       </button>
