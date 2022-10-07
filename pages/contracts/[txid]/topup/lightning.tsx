@@ -13,7 +13,7 @@ import * as ecc from 'tiny-secp256k1'
 import { randomBytes } from 'crypto'
 import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
 import { fetchHex } from 'lib/fetch'
-import { Transaction, witnessStackToScriptWitness } from 'liquidjs-lib'
+import { Transaction, witnessStackToScriptWitness, Psbt } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -22,7 +22,6 @@ import {
 import { broadcastTx } from 'lib/marina'
 import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
-import { Psbt } from 'ldk'
 import NotAllowed from 'components/messages/notAllowed'
 
 const ContractTopupLightning: NextPage = () => {
