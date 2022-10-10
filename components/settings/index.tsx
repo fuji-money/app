@@ -4,8 +4,7 @@ import { localStorageContractsKey } from 'lib/storage'
 
 const Settings = () => {
   const handleBackup = () => {
-    const contracts = localStorage.getItem(localStorageContractsKey)
-    if (!contracts) return
+    const contracts = localStorage.getItem(localStorageContractsKey) ?? '[]'
     const prettyJSON = JSON.stringify(JSON.parse(contracts), null, 2)
     const blob = new Blob([prettyJSON], { type: 'application/json' })
     saveAs(blob, 'contracts.json')
