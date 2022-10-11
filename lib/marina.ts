@@ -115,15 +115,27 @@ export function selectCoinsWithBlindPrivKey(
 ): UtxoWithBlindPrivKey[] {
   let totalValue = 0
   const selectedUtxos: Utxo[] = []
+  const utxoScriptBlindingKeyMap = new Map()
 
   // utils to get blinding private key for a coin/utxo
   const addressScript = (a: AddressInterface) =>
     address.toOutputScript(a.confidentialAddress).toString('hex')
+
   const utxoScript = (u: UtxoWithBlindPrivKey) =>
     u.prevout.script.toString('hex')
+
   const getUtxoBlindPrivKey = (u: Utxo) =>
-    addresses.find((a) => addressScript(a) === utxoScript(u))
-      ?.blindingPrivateKey
+    utxoScriptBlindingKeyMap.get(utxoScript(u))
+
+  const utxoValue = (u: Utxo) => u.value || 0
+
+  // for performance reasons, pull all addresses scripts to a map
+  for (const addr of addresses) {
+    utxoScriptBlindingKeyMap.set(addressScript(addr), addr.blindingPrivateKey)
+  }
+
+  // sort utxos in descending order of value
+  utxos = utxos.sort((a, b) => utxoValue(b) - utxoValue(a))
 
   // select coins and add blinding private key to them
   for (const utxo of utxos) {
