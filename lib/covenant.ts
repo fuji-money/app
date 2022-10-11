@@ -425,7 +425,6 @@ export async function prepareRedeemTx(
 
   // add synthetic inputs
   for (const utxo of syntheticUtxos) {
-    console.log('adding synthetic utxo', utxo)
     tx.withUtxo(utxo)
   }
 
@@ -433,11 +432,9 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // payout to issuer
-  console.log('adding payout to issuer')
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
   // get collateral back or sent to boltz case is a submarine swap
-  console.log('adding collateral return')
   tx.withRecipient(
     address,
     collateral.quantity - payoutAmount - feeAmount,
@@ -449,7 +446,6 @@ export async function prepareRedeemTx(
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
-    console.log('adding synthetic change')
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
@@ -460,7 +456,6 @@ export async function prepareRedeemTx(
     // in the case of a redeem to lightning, if we don't have any change
     // all outputs will be unconfidential, which would break the protocol.
     // by adding a confidential op_return with value 0 fixes it.
-    console.log('adding confidential op_return')
     const blindingKey = randomBytes(33).toString('hex')
     tx.withOpReturn(0, collateral.id, [], blindingKey)
   }
