@@ -112,3 +112,5 @@ export enum Outcome {
   Success = 'success',
   Failure = 'failure',
 }
+
+export type BlindPrivKeysMap = Record<string, string>

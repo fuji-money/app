@@ -10,7 +10,6 @@ import {
 } from 'marina-provider'
 import {
   defaultNetwork,
-  feeAmount,
   marinaFujiAccountID,
   marinaMainAccountID,
 } from 'lib/constants'
@@ -105,53 +104,6 @@ export async function broadcastTx(partialTransaction: string) {
     await sleep(1000)
     return (await marina.broadcastTransaction(rawHex)).txid
   }
-}
-
-export function selectCoinsWithBlindPrivKey(
-  utxos: UtxoWithBlindPrivKey[],
-  addresses: AddressInterface[],
-  asset: string,
-  minAmount: number,
-): UtxoWithBlindPrivKey[] {
-  let totalValue = 0
-  const selectedUtxos: Utxo[] = []
-  const utxoScriptBlindingKeyMap = new Map()
-
-  // utils to get blinding private key for a coin/utxo
-  const addressScript = (a: AddressInterface) =>
-    address.toOutputScript(a.confidentialAddress).toString('hex')
-
-  const utxoScript = (u: UtxoWithBlindPrivKey) =>
-    u.prevout.script.toString('hex')
-
-  const getUtxoBlindPrivKey = (u: Utxo) =>
-    utxoScriptBlindingKeyMap.get(utxoScript(u))
-
-  const utxoValue = (u: Utxo) => u.value || 0
-
-  // for performance reasons, pull all addresses scripts to a map
-  for (const addr of addresses) {
-    utxoScriptBlindingKeyMap.set(addressScript(addr), addr.blindingPrivateKey)
-  }
-
-  // sort utxos in descending order of value
-  utxos = utxos.sort((a, b) => utxoValue(b) - utxoValue(a))
-
-  // select coins and add blinding private key to them
-  for (const utxo of utxos) {
-    if (!utxo.value || !utxo.asset) continue
-    if (utxo.asset === asset) {
-      const blindPrivKey = getUtxoBlindPrivKey(utxo)
-      if (!blindPrivKey) continue
-      utxo.blindPrivKey = blindPrivKey
-      selectedUtxos.push(utxo)
-      totalValue += utxo.value
-      if (totalValue >= minAmount) {
-        return selectedUtxos
-      }
-    }
-  }
-  return []
 }
 
 export async function createFujiAccount(marina: MarinaProvider) {
