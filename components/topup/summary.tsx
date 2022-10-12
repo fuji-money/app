@@ -1,6 +1,6 @@
 import { prettyAmount, prettyAsset, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
-import { getContractRatio, getContractState } from 'lib/contracts'
+import { getContractRatio } from 'lib/contracts'
 import PrettyState from 'components/contract/state'
 
 interface SummaryProps {
