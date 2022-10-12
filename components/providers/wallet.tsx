@@ -101,18 +101,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   }, [connected, marina, network])
 
   useEffect(() => {
-    const runAsync = async () => {
-      if (connected && marina) {
-        const map: BlindPrivKeysMap = {}
-        const addressScriptHex = (a: AddressInterface) =>
-          address.toOutputScript(a.confidentialAddress).toString('hex')
-        for (const addr of await marina.getAddresses([marinaMainAccountID])) {
+    if (connected && marina) {
+      const map: BlindPrivKeysMap = {}
+      const addressScriptHex = (a: AddressInterface) =>
+        address.toOutputScript(a.confidentialAddress).toString('hex')
+      marina.getAddresses([marinaMainAccountID]).then((addresses) => {
+        for (const addr of addresses) {
           map[addressScriptHex(addr)] = addr.blindingPrivateKey
         }
         setBlindPrivKeysMap(map)
-      }
+      })
     }
-    runAsync()
   }, [connected, marina, network])
 
   return (
