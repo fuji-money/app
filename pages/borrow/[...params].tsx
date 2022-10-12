@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Offer, Outcome } from 'lib/types'
+import { Asset, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -199,6 +199,12 @@ const BorrowParams: NextPage = () => {
           synthetic.ticker === params[0] && collateral.ticker === params[1],
       )
       if (!offer) return <SomeError>Offer not found</SomeError>
+      // check for values on assets (oracle could be down)
+      const { collateral, synthetic } = offer
+      const noVal = (asset: Asset) => `Unable to get value for ${asset.ticker}`
+      if (!collateral.value) return <SomeError>{noVal(collateral)}</SomeError>
+      if (!synthetic.value) return <SomeError>{noVal(synthetic)}</SomeError>
+      // ok, proceed
       return <Borrow offer={offer} oracles={oracles} />
     case 3:
       if (!newContract) return <SomeError>Contract not found</SomeError>
