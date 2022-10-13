@@ -149,5 +149,5 @@ export const findAssetByTicker = async (ticker: string): Promise<Asset> => {
 
 export const getBTCvalue = async (): Promise<number> => {
   const data = await fetchURL(oracleURL)
-  return Number(data?.lastPrice)
+  return data ? Number(data.lastPrice) : 0
 }

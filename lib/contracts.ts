@@ -44,6 +44,7 @@ export const getRatioState = (
   if (ratio >= safeRatio) return ContractState.Safe
   if (ratio >= unsafe) return ContractState.Unsafe
   if (ratio >= minRatio) return ContractState.Critical
+  if (ratio === 0) return ContractState.Unknown
   return ContractState.Liquidated
 }
 
@@ -102,14 +103,15 @@ export async function getContracts(): Promise<Contract[]> {
   const network = await getNetwork()
   const xPubKey = await getXPubKey()
   // cache assets for performance issues
-  const assetCache = new Map()
+  const assetCache = new Map<string, Asset>()
+  const allTickers = new Set<string>()
   getMyContractsFromStorage(network, xPubKey).map(
     ({ collateral, synthetic }) => {
-      assetCache.set(collateral.ticker, {})
-      assetCache.set(synthetic.ticker, {})
+      allTickers.add(collateral.ticker)
+      allTickers.add(synthetic.ticker)
     },
   )
-  for (const ticker in assetCache) {
+  for (const ticker of Array.from(allTickers.values())) {
     assetCache.set(ticker, await fetchAsset(ticker))
   }
   const promises = getMyContractsFromStorage(network, xPubKey).map(
@@ -124,8 +126,14 @@ export async function getContracts(): Promise<Contract[]> {
         throw new Error(
           `Contract with unknown synthetic ${contract.synthetic.ticker}`,
         )
-      contract.collateral = { ...collateral, ...contract.collateral }
-      contract.synthetic = { ...synthetic, ...contract.synthetic }
+      contract.collateral = {
+        ...collateral,
+        quantity: contract.collateral.quantity,
+      }
+      contract.synthetic = {
+        ...synthetic,
+        quantity: contract.synthetic.quantity,
+      }
       contract.state = getContractState(contract)
       return contract
     },
