@@ -74,6 +74,7 @@ const branchAndBoundStrategy = (
 
       // remove last included utxo from selected list
       currValue -= utxoValue(coins[utxo_pool_index])
+      if (currValue < 0) return // something went wrong
       selected.pop()
     } else {
       // continue on this branch, add the next utxo to selected list
@@ -81,6 +82,7 @@ const branchAndBoundStrategy = (
 
       // remove this utxo from total available amount
       totalValue -= utxoValue(coin)
+      if (totalValue < 0) return // something went wrong
 
       // if this utxo is the first one or
       // if the previous index is included and therefore not relevant for exclusion shortcut
