@@ -1,5 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
-import { getActivities } from 'lib/activities'
+import { useContext } from 'react'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
