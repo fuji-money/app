@@ -2,7 +2,7 @@ import { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 import Borrow from 'components/borrow'
-import SomeError from 'components/layout/error'
+import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
 import { Asset, Offer, Outcome } from 'lib/types'
@@ -202,8 +202,18 @@ const BorrowParams: NextPage = () => {
       // check for values on assets (oracle could be down)
       const { collateral, synthetic } = offer
       const noVal = (asset: Asset) => `Unable to get value for ${asset.ticker}`
-      if (!collateral.value) return <SomeError>{noVal(collateral)}</SomeError>
-      if (!synthetic.value) return <SomeError>{noVal(synthetic)}</SomeError>
+      if (!collateral.value)
+        return (
+          <SomeError>
+            <SomethingWentWrong error={noVal(collateral)} />
+          </SomeError>
+        )
+      if (!synthetic.value)
+        return (
+          <SomeError>
+            <SomethingWentWrong error={noVal(synthetic)} />
+          </SomeError>
+        )
       // ok, proceed
       return <Borrow offer={offer} oracles={oracles} />
     case 3:

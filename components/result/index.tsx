@@ -8,6 +8,7 @@ import { Contract, Outcome } from 'lib/types'
 import { Tasks } from 'lib/tasks'
 import { prettyAsset, prettyNumber } from 'lib/pretty'
 import { getContractRatio } from 'lib/contracts'
+import { SomethingWentWrong } from 'components/layout/error'
 
 interface SuccessProps {
   contract: Contract
@@ -66,25 +67,7 @@ interface FailureProps {
 }
 
 const Failure = ({ error, retry }: FailureProps) => {
-  return (
-    <div className="has-text-centered mx-6">
-      <p>
-        <Image
-          src={`/images/status/failure.svg`}
-          alt="status icon"
-          height={100}
-          width={100}
-        />
-      </p>
-      <h2 className="mt-4">Something went wrong</h2>
-      <p className="is-size-7 mt-4">{`${error}`}</p>
-      <p className="has-text-centered mt-5">
-        <button className="button is-cta" onClick={retry}>
-          Try again
-        </button>
-      </p>
-    </div>
-  )
+  return <SomethingWentWrong error={error} retry={retry} />
 }
 
 interface ResultProps {
