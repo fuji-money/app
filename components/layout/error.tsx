@@ -31,7 +31,7 @@ export const SomethingWentWrong = ({
         />
       </p>
       <h2 className="mt-4">Something went wrong</h2>
-      <p className="is-size-7 mt-4">{error}</p>
+      <p className="is-size-7 mt-4">{`${error}`}</p>
       {retry && (
         <p className="has-text-centered mt-5">
           <button className="button is-cta" onClick={retry}>
