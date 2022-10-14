@@ -201,7 +201,8 @@ const BorrowParams: NextPage = () => {
       if (!offer) return <SomeError>Offer not found</SomeError>
       // check for values on assets (oracle could be down)
       const { collateral, synthetic } = offer
-      const noVal = (asset: Asset) => `Unable to get value for ${asset.ticker}. The oracle provider may be unavailable or you could be offline. Try again later.`
+      const noVal = (asset: Asset) =>
+        `Unable to get value for ${asset.ticker}. The oracle provider may be unavailable or you could be offline. Try again later.`
       if (!collateral.value)
         return (
           <SomeError>
