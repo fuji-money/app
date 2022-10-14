@@ -33,7 +33,7 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 
 const BorrowParams: NextPage = () => {
-  const { network } = useContext(WalletContext)
+  const { blindPrivKeysMap, network } = useContext(WalletContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -143,7 +143,11 @@ const BorrowParams: NextPage = () => {
       if (!newContract) return
 
       // prepare borrow transaction
-      const preparedTx = await prepareBorrowTx(newContract, network)
+      const preparedTx = await prepareBorrowTx(
+        newContract,
+        network,
+        blindPrivKeysMap,
+      )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory

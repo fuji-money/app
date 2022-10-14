@@ -5,11 +5,19 @@ import {
   getNetwork,
   getXPubKey,
 } from 'lib/marina'
-import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
-import { defaultNetwork } from 'lib/constants'
+import {
+  AddressInterface,
+  Balance,
+  MarinaProvider,
+  NetworkString,
+} from 'marina-provider'
+import { defaultNetwork, marinaMainAccountID } from 'lib/constants'
+import { address } from 'liquidjs-lib'
+import { BlindPrivKeysMap } from 'lib/types'
 
 interface WalletContextProps {
   balances: Balance[]
+  blindPrivKeysMap: BlindPrivKeysMap
   connected: boolean
   marina: MarinaProvider | undefined
   network: NetworkString
@@ -19,6 +27,7 @@ interface WalletContextProps {
 
 export const WalletContext = createContext<WalletContextProps>({
   balances: [],
+  blindPrivKeysMap: {},
   connected: false,
   marina: undefined,
   network: defaultNetwork,
@@ -31,6 +40,7 @@ interface WalletProviderProps {
 }
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [balances, setBalances] = useState<Balance[]>([])
+  const [blindPrivKeysMap, setBlindPrivKeysMap] = useState({})
   const [connected, setConnected] = useState(false)
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
@@ -90,9 +100,31 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   }, [connected, marina, network])
 
+  useEffect(() => {
+    if (connected && marina) {
+      const map: BlindPrivKeysMap = {}
+      const addressScriptHex = (a: AddressInterface) =>
+        address.toOutputScript(a.confidentialAddress).toString('hex')
+      marina.getAddresses([marinaMainAccountID]).then((addresses) => {
+        for (const addr of addresses) {
+          map[addressScriptHex(addr)] = addr.blindingPrivateKey
+        }
+        setBlindPrivKeysMap(map)
+      })
+    }
+  }, [connected, marina, network])
+
   return (
     <WalletContext.Provider
-      value={{ balances, connected, marina, network, setConnected, xPubKey }}
+      value={{
+        balances,
+        blindPrivKeysMap,
+        connected,
+        marina,
+        network,
+        setConnected,
+        xPubKey,
+      }}
     >
       {children}
     </WalletContext.Provider>

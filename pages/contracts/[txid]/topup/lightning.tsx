@@ -25,7 +25,7 @@ import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 
 const ContractTopupLightning: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -99,6 +99,7 @@ const ContractTopupLightning: NextPage = () => {
         oldContract,
         network,
         collateralUtxos,
+        blindPrivKeysMap,
       )
 
       // propose contract to alpha factory

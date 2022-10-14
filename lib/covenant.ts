@@ -1,4 +1,4 @@
-import { Contract, UtxoWithBlindPrivKey } from './types'
+import { BlindPrivKeysMap, Contract, UtxoWithBlindPrivKey } from './types'
 import { Utxo, AddressInterface, NetworkString } from 'marina-provider'
 import {
   alphaServerUrl,
@@ -27,7 +27,6 @@ import {
   getMarinaProvider,
   getNextAddress,
   getNextChangeAddress,
-  selectCoinsWithBlindPrivKey,
 } from './marina'
 import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
@@ -35,6 +34,7 @@ import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
 import { getNetwork } from 'ldk'
 import { randomBytes } from 'crypto'
+import { selectCoinsWithBlindPrivKey } from './selection'
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
   // get payout amount
@@ -186,6 +186,7 @@ export async function prepareBorrowTxWithClaimTx(
 export async function prepareBorrowTx(
   contract: Contract,
   network: NetworkString,
+  blindPrivKeysMap: BlindPrivKeysMap,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -206,9 +207,9 @@ export async function prepareBorrowTx(
   // validate we have necessary utxo
   const collateralUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
-    await marina.getAddresses([marinaMainAccountID]),
     collateral.id,
     collateral.quantity + feeAmount,
+    blindPrivKeysMap,
   )
   if (collateralUtxos.length === 0)
     throw new Error('Not enough collateral funds')
@@ -347,6 +348,7 @@ export async function proposeBorrowContract({
 export async function prepareRedeemTx(
   contract: Contract,
   network: NetworkString,
+  blindPrivKeysMap: BlindPrivKeysMap,
   swapAddress?: string,
 ) {
   // check for marina
@@ -390,9 +392,9 @@ export async function prepareRedeemTx(
   // validate we have sufficient synthetic funds
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
-    await marina.getAddresses([marinaMainAccountID]),
     synthetic.id,
     synthetic.quantity,
+    blindPrivKeysMap,
   )
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
@@ -423,7 +425,6 @@ export async function prepareRedeemTx(
 
   // add synthetic inputs
   for (const utxo of syntheticUtxos) {
-    console.log('adding synthetic utxo', utxo)
     tx.withUtxo(utxo)
   }
 
@@ -431,11 +432,9 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // payout to issuer
-  console.log('adding payout to issuer')
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
   // get collateral back or sent to boltz case is a submarine swap
-  console.log('adding collateral return')
   tx.withRecipient(
     address,
     collateral.quantity - payoutAmount - feeAmount,
@@ -447,7 +446,6 @@ export async function prepareRedeemTx(
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
-    console.log('adding synthetic change')
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
@@ -458,7 +456,6 @@ export async function prepareRedeemTx(
     // in the case of a redeem to lightning, if we don't have any change
     // all outputs will be unconfidential, which would break the protocol.
     // by adding a confidential op_return with value 0 fixes it.
-    console.log('adding confidential op_return')
     const blindingKey = randomBytes(33).toString('hex')
     tx.withOpReturn(0, collateral.id, [], blindingKey)
   }
@@ -489,6 +486,7 @@ export async function prepareTopupTx(
   oldContract: Contract,
   network: NetworkString,
   collateralUtxos: any,
+  blindPrivKeysMap: BlindPrivKeysMap,
 ): Promise<PreparedTopupTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -519,9 +517,9 @@ export async function prepareTopupTx(
   // validate we have sufficient synthetic funds to burn
   const syntheticUtxos = selectCoinsWithBlindPrivKey(
     await marina.getCoins([marinaMainAccountID]),
-    await marina.getAddresses([marinaMainAccountID]),
     burnAsset,
     burnAmount,
+    blindPrivKeysMap,
   )
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
