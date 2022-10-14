@@ -11,17 +11,17 @@ import {
   prepareTopupTx,
   proposeTopupContract,
 } from 'lib/covenant'
-import { selectCoinsWithBlindPrivKey } from 'lib/marina'
 import { openModal, extractError, retry } from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome } from 'lib/types'
-import { Psbt } from 'ldk'
+import { Psbt } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
+import { selectCoinsWithBlindPrivKey } from 'lib/selection'
 
 const ContractTopupLiquid: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -43,7 +43,7 @@ const ContractTopupLiquid: NextPage = () => {
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
 
-  const handleMarina = async () => {
+  const handleMarina = async (): Promise<void> => {
     if (!marina) return
     openModal('marina-deposit-modal')
     setStage(ModalStages.NeedsCoins)
@@ -51,9 +51,9 @@ const ContractTopupLiquid: NextPage = () => {
       // validate we have necessary utxos
       const collateralUtxos = selectCoinsWithBlindPrivKey(
         await marina.getCoins([marinaMainAccountID]),
-        await marina.getAddresses([marinaMainAccountID]),
         newContract.collateral.id,
         topupAmount + feeAmount,
+        blindPrivKeysMap,
       )
       if (collateralUtxos.length === 0)
         throw new Error('Not enough collateral funds')
@@ -64,6 +64,7 @@ const ContractTopupLiquid: NextPage = () => {
         oldContract,
         network,
         collateralUtxos,
+        blindPrivKeysMap,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
@@ -125,6 +126,7 @@ const ContractTopupLiquid: NextPage = () => {
         reset={resetContracts}
         retry={retry(setData, setResult, handleMarina)}
         stage={stage}
+        task={Tasks.Topup}
       />
     </>
   )

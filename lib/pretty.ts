@@ -10,8 +10,8 @@ export const prettyNumber = (num = 0, min = 2, max = 8): string => {
 }
 
 // format asset
-export const prettyAsset = (asset: Asset): string =>
-  `${prettyQuantity(asset.quantity)} ${asset.ticker}`
+export const prettyAsset = (asset: Asset, min?: number, max?: number): string =>
+  `${prettyQuantity(asset.quantity, min, max)} ${asset.ticker}`
 
 // format amount (amount is quantity x value)
 export const prettyAmount = (asset: Asset, balance?: number): string => {
@@ -53,8 +53,5 @@ export const prettyRatio = (ratio: number): number =>
   parseFloat(ratio.toFixed(2))
 
 // show asset quantity in unities
-export const prettyQuantity = (
-  quantity = 0,
-  min?: number,
-  max?: number,
-): string => prettyNumber(fromSatoshis(quantity), min, max)
+export const prettyQuantity = (qty = 0, min?: number, max?: number): string =>
+  prettyNumber(fromSatoshis(qty), min, max)

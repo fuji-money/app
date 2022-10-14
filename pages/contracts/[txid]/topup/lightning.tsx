@@ -7,13 +7,13 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
 import { ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
-import { extractError, openModal, retry } from 'lib/utils'
+import { extractError, openModal, retry, sleep } from 'lib/utils'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { randomBytes } from 'crypto'
 import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
 import { fetchHex } from 'lib/fetch'
-import { Transaction, witnessStackToScriptWitness } from 'liquidjs-lib'
+import { Transaction, witnessStackToScriptWitness, Psbt } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -22,13 +22,12 @@ import {
 import { broadcastTx } from 'lib/marina'
 import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
-import { Psbt } from 'ldk'
 import NotAllowed from 'components/messages/notAllowed'
 import { addBoltzKeyToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 
 const ContractTopupLightning: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -43,6 +42,8 @@ const ContractTopupLightning: NextPage = () => {
 
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
+
+  if (!newContract) throw new Error('Missing contract')
 
   const handleInvoice = async (): Promise<void> => {
     if (!marina) return
@@ -112,7 +113,8 @@ const ContractTopupLightning: NextPage = () => {
       }
 
       // show user (via modal) that payment was received
-      setInvoice('')
+      setStage(ModalStages.PaymentReceived)
+      await sleep(2000)
       setStage(ModalStages.NeedsFujiApproval)
 
       // get prevout for utxo
@@ -128,6 +130,7 @@ const ContractTopupLightning: NextPage = () => {
         oldContract,
         network,
         collateralUtxos,
+        blindPrivKeysMap,
       )
 
       // propose contract to alpha factory
@@ -207,6 +210,7 @@ const ContractTopupLightning: NextPage = () => {
         retry={retry(setData, setResult, handleInvoice)}
         reset={resetContracts}
         stage={stage}
+        task={Tasks.Topup}
       />
     </>
   )

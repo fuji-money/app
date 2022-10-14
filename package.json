@@ -30,6 +30,9 @@
     "sharp": "^0.30.7",
     "swr": "^1.2.2"
   },
+  "resolutions": {
+    "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+  },
   "devDependencies": {
     "@types/file-saver": "^2.0.5",
     "@types/node": "17.0.23",

@@ -26,7 +26,7 @@ import {
   ReverseSwap,
   waitForLightningPayment,
 } from 'lib/swaps'
-import { openModal, extractError, retry } from 'lib/utils'
+import { openModal, extractError, retry, sleep } from 'lib/utils'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
@@ -38,7 +38,7 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addBoltzKeyToStorage } from 'lib/storage'
 
 const BorrowParams: NextPage = () => {
-  const { network } = useContext(WalletContext)
+  const { blindPrivKeysMap, network } = useContext(WalletContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -121,7 +121,8 @@ const BorrowParams: NextPage = () => {
       }
 
       // show user (via modal) that payment was received
-      setInvoice('')
+      setStage(ModalStages.PaymentReceived)
+      await sleep(2000)
       setStage(ModalStages.NeedsFujiApproval)
 
       // prepare borrow transaction with claim utxo as input
@@ -188,7 +189,11 @@ const BorrowParams: NextPage = () => {
       if (!newContract) return
 
       // prepare borrow transaction
-      const preparedTx = await prepareBorrowTx(newContract, network)
+      const preparedTx = await prepareBorrowTx(
+        newContract,
+        network,
+        blindPrivKeysMap,
+      )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory
@@ -267,6 +272,7 @@ const BorrowParams: NextPage = () => {
                 retry={retry(setData, setResult, handleMarina)}
                 reset={resetContracts}
                 stage={stage}
+                task={Tasks.Borrow}
               />
             </>
           )
@@ -286,6 +292,7 @@ const BorrowParams: NextPage = () => {
                 retry={retry(setData, setResult, handleInvoice)}
                 reset={resetContracts}
                 stage={stage}
+                task={Tasks.Borrow}
               />
             </>
           )

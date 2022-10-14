@@ -14,7 +14,7 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -31,7 +31,7 @@ const ContractRedeemLiquid: NextPage = () => {
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
-      const tx = await prepareRedeemTx(newContract, network)
+      const tx = await prepareRedeemTx(newContract, network, blindPrivKeysMap)
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
@@ -76,6 +76,7 @@ const ContractRedeemLiquid: NextPage = () => {
         reset={resetContracts}
         retry={retry(setData, setResult, handleMarina)}
         stage={stage}
+        task={Tasks.Redeem}
       />
     </>
   )

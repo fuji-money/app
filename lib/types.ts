@@ -116,7 +116,7 @@ export enum Outcome {
 
 export type BoltzKey = {
   contractId: string
-  currency: 'L-BTC'
+  currency?: string
   privateKey: string
   publicKey: string
   status: string | undefined
@@ -126,3 +126,5 @@ export type BoltzKey = {
   timeoutBlockHeight?: number
   when?: Date
 }
+
+export type BlindPrivKeysMap = Record<string, string>
