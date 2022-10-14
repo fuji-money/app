@@ -425,7 +425,6 @@ export async function prepareRedeemTx(
 
   // add synthetic inputs
   for (const utxo of syntheticUtxos) {
-    console.log('adding synthetic utxo', utxo)
     tx.withUtxo(utxo)
   }
 
@@ -433,7 +432,6 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // payout to issuer
-  console.log('adding payout to issuer')
   tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
   // get collateral back or sent to boltz case is a submarine swap
@@ -448,7 +446,6 @@ export async function prepareRedeemTx(
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
     const borrowChangeAddress = await marina.getNextChangeAddress()
-    console.log('adding synthetic change')
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
