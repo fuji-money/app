@@ -23,7 +23,7 @@ import { broadcastTx } from 'lib/marina'
 import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
-import { addBoltzKeyToStorage } from 'lib/storage'
+import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 
 const ContractTopupLightning: NextPage = () => {
@@ -66,9 +66,11 @@ const ContractTopupLightning: NextPage = () => {
       )
       if (!boltzSwap) {
         // save used keys on storage
-        addBoltzKeyToStorage({
+        addSwapToStorage({
+          boltzRefund: {
+            privateKey: privateKey.toString('hex'),
+          },
           contractId: oldContract.txid || '',
-          privateKey: privateKey.toString('hex'),
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
           task: Tasks.Topup,
@@ -100,14 +102,17 @@ const ContractTopupLightning: NextPage = () => {
       // payment was never made, and the invoice expired
       if (utxos.length === 0) {
         // save used keys on storage
-        addBoltzKeyToStorage({
+        addSwapToStorage({
+          boltzRefund: {
+            id,
+            privateKey: privateKey.toString('hex'),
+            redeemScript,
+            timeoutBlockHeight,
+          },
           contractId: oldContract.txid || '',
-          privateKey: privateKey.toString('hex'),
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
-          swapId: id,
           task: Tasks.Topup,
-          timeoutBlockHeight,
         })
         throw new Error('Invoice has expired')
       }
@@ -172,14 +177,17 @@ const ContractTopupLightning: NextPage = () => {
       await saveContractToStorage(newContract, network, preparedTx)
 
       // save ephemeral key on storage
-      addBoltzKeyToStorage({
+      addSwapToStorage({
+        boltzRefund: {
+          id,
+          privateKey: privateKey.toString('hex'),
+          redeemScript,
+          timeoutBlockHeight,
+        },
         contractId: newContract.txid,
-        privateKey: privateKey.toString('hex'),
         publicKey: keyPair.publicKey.toString('hex'),
         status: Outcome.Success,
-        swapId: id,
         task: Tasks.Topup,
-        timeoutBlockHeight,
       })
 
       // mark old contract as topup

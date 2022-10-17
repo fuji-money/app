@@ -35,7 +35,7 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
-import { addBoltzKeyToStorage } from 'lib/storage'
+import { addSwapToStorage } from 'lib/storage'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -74,9 +74,11 @@ const BorrowParams: NextPage = () => {
         )
       if (!boltzSwap) {
         // save used keys on storage
-        addBoltzKeyToStorage({
+        addSwapToStorage({
+          boltzRefund: {
+            privateKey: privateKey.toString('hex'),
+          },
           contractId: '',
-          privateKey: privateKey.toString('hex'),
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
           task: Tasks.Borrow,
@@ -108,14 +110,17 @@ const BorrowParams: NextPage = () => {
       // payment was never made, and the invoice expired
       if (utxos.length === 0) {
         // save used keys on storage
-        addBoltzKeyToStorage({
+        addSwapToStorage({
+          boltzRefund: {
+            id,
+            privateKey: privateKey.toString('hex'),
+            redeemScript,
+            timeoutBlockHeight,
+          },
           contractId: '',
-          privateKey: privateKey.toString('hex'),
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
-          swapId: id,
           task: Tasks.Borrow,
-          timeoutBlockHeight,
         })
         throw new Error('Invoice has expired')
       }
@@ -162,14 +167,17 @@ const BorrowParams: NextPage = () => {
       await saveContractToStorage(newContract, network, preparedTx)
 
       // save ephemeral key on storage
-      addBoltzKeyToStorage({
+      addSwapToStorage({
+        boltzRefund: {
+          id,
+          privateKey: privateKey.toString('hex'),
+          redeemScript,
+          timeoutBlockHeight,
+        },
         contractId: newContract.txid,
-        privateKey: privateKey.toString('hex'),
         publicKey: keyPair.publicKey.toString('hex'),
         status: Outcome.Success,
-        swapId: id,
         task: Tasks.Borrow,
-        timeoutBlockHeight,
       })
 
       // show success

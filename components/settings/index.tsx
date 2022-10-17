@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { saveAs } from 'file-saver'
-import { localStorageBoltzKeysKey, localStorageContractsKey } from 'lib/storage'
+import { localStorageSwapsKey, localStorageContractsKey } from 'lib/storage'
 
 const downloadFile = (localStorageKey: string, fileName: string) => {
   const item = localStorage.getItem(localStorageKey)
@@ -15,7 +15,7 @@ const Settings = () => {
     downloadFile(localStorageContractsKey, 'contracts.json')
 
   const handleSwapsBackup = () =>
-    downloadFile(localStorageBoltzKeysKey, 'swaps.json')
+    downloadFile(localStorageSwapsKey, 'swaps.json')
 
   return (
     <div className="dropdown is-hoverable my-auto pt-2">

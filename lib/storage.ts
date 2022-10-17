@@ -1,5 +1,5 @@
 import { NetworkString } from 'marina-provider'
-import { Activity, BoltzKey, Contract } from './types'
+import { Activity, Contract, SwapInfo } from './types'
 
 // contracts
 
@@ -65,29 +65,28 @@ export function addActivityToStorage(activity: Activity): void {
   saveActivitiesToStorage(activities)
 }
 
-// keys
+// swaps
 
-export const localStorageBoltzKeysKey = 'fujiBoltzKeys'
+export const localStorageSwapsKey = 'fujiSwaps'
 
-function saveBoltzKeysToStorage(boltzKeys: BoltzKey[]): void {
+function saveSwapsToStorage(swaps: SwapInfo[]): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(localStorageBoltzKeysKey, JSON.stringify(boltzKeys))
+  localStorage.setItem(localStorageSwapsKey, JSON.stringify(swaps))
 }
 
-function getBoltzKeysFromStorage(): BoltzKey[] {
+function getSwapsFromStorage(): SwapInfo[] {
   if (typeof window === 'undefined') return []
-  const storedBoltzKeys = localStorage.getItem(localStorageBoltzKeysKey)
-  if (!storedBoltzKeys) return []
-  return JSON.parse(storedBoltzKeys)
+  const storedSwaps = localStorage.getItem(localStorageSwapsKey)
+  return storedSwaps ? JSON.parse(storedSwaps) : []
 }
 
-export function addBoltzKeyToStorage(boltzKey: BoltzKey): void {
+export function addSwapToStorage(swap: SwapInfo): void {
   if (typeof window === 'undefined') return
   const now = new Date()
-  boltzKey.currency = 'L-BTC'
-  boltzKey.timestamp = now.getTime()
-  boltzKey.when = now
-  const boltzKeys = getBoltzKeysFromStorage()
-  boltzKeys.push(boltzKey)
-  saveBoltzKeysToStorage(boltzKeys)
+  swap.boltzRefund.currency = 'L-BTC'
+  swap.timestamp = now.getTime()
+  swap.when = now
+  const swaps = getSwapsFromStorage()
+  swaps.push(swap)
+  saveSwapsToStorage(swaps)
 }

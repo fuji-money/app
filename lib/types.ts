@@ -113,16 +113,21 @@ export enum Outcome {
   Failure = 'failure',
 }
 
-export type BoltzKey = {
-  contractId: string
+export type BoltzSwapInfo = {
+  id?: string
   currency?: string
+  redeemScript?: string
   privateKey: string
+  timeoutBlockHeight?: number
+}
+
+export type SwapInfo = {
+  boltzRefund: BoltzSwapInfo
+  contractId: string
   publicKey: string
   status: string | undefined
-  swapId?: string
   task: string
   timestamp?: number
-  timeoutBlockHeight?: number
   when?: Date
 }
 
