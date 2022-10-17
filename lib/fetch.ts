@@ -4,8 +4,10 @@ import { explorerURL } from './explorer'
 import { sleep } from './utils'
 
 export async function fetchURL(url: string) {
-  const res = await fetch(url)
-  if (res.ok) return await res.json()
+  try {
+    const res = await fetch(url)
+    if (res.ok) return await res.json()
+  } catch (ignore) {}
 }
 
 export async function postData(url: string, data = {}) {
