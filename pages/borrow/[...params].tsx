@@ -21,7 +21,11 @@ import {
   prepareBorrowTx,
 } from 'lib/covenant'
 import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
-import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
+import {
+  createReverseSubmarineSwap,
+  ReverseSwap,
+  waitForLightningPayment,
+} from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
 import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
@@ -31,6 +35,7 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
+import { addSwapToStorage } from 'lib/storage'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -61,15 +66,35 @@ const BorrowParams: NextPage = () => {
       const onchainAmount = newContract.collateral.quantity + feeAmount
 
       // create swap with Boltz.exchange
-      const boltzSwap = await createReverseSubmarineSwap(
-        keyPair.publicKey,
-        network,
-        onchainAmount,
-      )
-      if (!boltzSwap) throw new Error('Error creating swap')
+      const boltzSwap: ReverseSwap | undefined =
+        await createReverseSubmarineSwap(
+          keyPair.publicKey,
+          network,
+          onchainAmount,
+        )
+      if (!boltzSwap) {
+        // save used keys on storage
+        addSwapToStorage({
+          boltzRefund: {
+            privateKey: privateKey.toString('hex'),
+          },
+          contractId: '',
+          publicKey: keyPair.publicKey.toString('hex'),
+          status: Outcome.Failure,
+          task: Tasks.Borrow,
+        })
+        throw new Error('Error creating swap')
+      }
 
       // deconstruct swap
-      const { invoice, lockupAddress, preimage, redeemScript } = boltzSwap
+      const {
+        id,
+        invoice,
+        lockupAddress,
+        preimage,
+        redeemScript,
+        timeoutBlockHeight,
+      } = boltzSwap
 
       // show qr code to user
       setInvoice(invoice)
@@ -83,7 +108,22 @@ const BorrowParams: NextPage = () => {
       )
 
       // payment was never made, and the invoice expired
-      if (utxos.length === 0) throw new Error('Invoice has expired')
+      if (utxos.length === 0) {
+        // save used keys on storage
+        addSwapToStorage({
+          boltzRefund: {
+            id,
+            privateKey: privateKey.toString('hex'),
+            redeemScript,
+            timeoutBlockHeight,
+          },
+          contractId: '',
+          publicKey: keyPair.publicKey.toString('hex'),
+          status: Outcome.Failure,
+          task: Tasks.Borrow,
+        })
+        throw new Error('Invoice has expired')
+      }
 
       // show user (via modal) that payment was received
       setStage(ModalStages.PaymentReceived)
@@ -125,6 +165,20 @@ const BorrowParams: NextPage = () => {
 
       // add additional fields to contract and save to storage
       await saveContractToStorage(newContract, network, preparedTx)
+
+      // save ephemeral key on storage
+      addSwapToStorage({
+        boltzRefund: {
+          id,
+          privateKey: privateKey.toString('hex'),
+          redeemScript,
+          timeoutBlockHeight,
+        },
+        contractId: newContract.txid,
+        publicKey: keyPair.publicKey.toString('hex'),
+        status: Outcome.Success,
+        task: Tasks.Borrow,
+      })
 
       // show success
       setData(newContract.txid)

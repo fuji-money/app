@@ -32,10 +32,12 @@ export type SubmarineSwapResponse = {
 }
 
 export type ReverseSubmarineSwapResponse = {
-  lockupAddress: string
+  id: string
   invoice: string
+  lockupAddress: string
   onchainAmount: number
   redeemScript: string
+  timeoutBlockHeight: number
 }
 
 export const boltzUrl: Record<NetworkString, string> = {

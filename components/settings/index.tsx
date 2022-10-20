@@ -1,14 +1,22 @@
 import Image from 'next/image'
 import { saveAs } from 'file-saver'
-import { localStorageContractsKey } from 'lib/storage'
+import { localStorageSwapsKey, localStorageContractsKey } from 'lib/storage'
+
+const downloadFile = (localStorageKey: string, fileName: string) => {
+  const item = localStorage.getItem(localStorageKey)
+  if (!item) return
+  const prettyJSON = JSON.stringify(JSON.parse(item), null, 2)
+  const blob = new Blob([prettyJSON], { type: 'application/json' })
+  saveAs(blob, fileName)
+}
 
 const Settings = () => {
-  const handleBackup = () => {
-    const contracts = localStorage.getItem(localStorageContractsKey) ?? '[]'
-    const prettyJSON = JSON.stringify(JSON.parse(contracts), null, 2)
-    const blob = new Blob([prettyJSON], { type: 'application/json' })
-    saveAs(blob, 'contracts.json')
-  }
+  const handleContractsBackup = () =>
+    downloadFile(localStorageContractsKey, 'contracts.json')
+
+  const handleSwapsBackup = () =>
+    downloadFile(localStorageSwapsKey, 'swaps.json')
+
   return (
     <div className="dropdown is-hoverable my-auto pt-2">
       <div className="dropdown-trigger p-2">
@@ -25,8 +33,15 @@ const Settings = () => {
         <div className="dropdown-content">
           <div className="dropdown-item">
             <p>
-              <button className="button" onClick={handleBackup}>
+              <button className="button" onClick={handleContractsBackup}>
                 Backup contracts
+              </button>
+            </p>
+          </div>
+          <div className="dropdown-item">
+            <p>
+              <button className="button" onClick={handleSwapsBackup}>
+                Backup swaps
               </button>
             </p>
           </div>
@@ -41,6 +56,9 @@ const Settings = () => {
         }
         .dropdown:hover {
           background-color: #ffede3;
+        }
+        .button {
+          width: 100%;
         }
       `}</style>
     </div>

@@ -1,5 +1,5 @@
 import { NetworkString } from 'marina-provider'
-import { Activity, Contract } from './types'
+import { Activity, Contract, SwapInfo } from './types'
 
 // contracts
 
@@ -63,4 +63,30 @@ export function addActivityToStorage(activity: Activity): void {
   const activities = getActivitiesFromStorage()
   activities.push(activity)
   saveActivitiesToStorage(activities)
+}
+
+// swaps
+
+export const localStorageSwapsKey = 'fujiSwaps'
+
+function saveSwapsToStorage(swaps: SwapInfo[]): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(localStorageSwapsKey, JSON.stringify(swaps))
+}
+
+function getSwapsFromStorage(): SwapInfo[] {
+  if (typeof window === 'undefined') return []
+  const storedSwaps = localStorage.getItem(localStorageSwapsKey)
+  return storedSwaps ? JSON.parse(storedSwaps) : []
+}
+
+export function addSwapToStorage(swap: SwapInfo): void {
+  if (typeof window === 'undefined') return
+  const now = new Date()
+  swap.boltzRefund.currency = 'L-BTC'
+  swap.timestamp = now.getTime()
+  swap.when = now
+  const swaps = getSwapsFromStorage()
+  swaps.push(swap)
+  saveSwapsToStorage(swaps)
 }

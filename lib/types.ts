@@ -113,4 +113,22 @@ export enum Outcome {
   Failure = 'failure',
 }
 
+export type BoltzSwapInfo = {
+  id?: string
+  currency?: string
+  redeemScript?: string
+  privateKey: string
+  timeoutBlockHeight?: number
+}
+
+export type SwapInfo = {
+  boltzRefund: BoltzSwapInfo
+  contractId: string
+  publicKey: string
+  status: string | undefined
+  task: string
+  timestamp?: number
+  when?: Date
+}
+
 export type BlindPrivKeysMap = Record<string, string>
