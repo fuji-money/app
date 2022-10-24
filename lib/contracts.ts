@@ -149,7 +149,7 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 }
 
 // add contract to storage and create activity
-export function createNewContract(contract: Contract): void {
+function createNewContract(contract: Contract): void {
   addContractToStorage(contract)
   addActivity(contract, ActivityType.Creation, Date.now())
 }
