@@ -1,7 +1,6 @@
 import { NetworkString } from 'marina-provider'
 import { fetchURL } from './fetch'
 import { Contract } from './types'
-import { sleep } from './utils'
 
 export const explorerURL = (network: NetworkString) => {
   switch (network) {
