@@ -134,12 +134,13 @@ const ContractTopupLightning: NextPage = () => {
       // open web socket
       const ws = new WebSocket(electrumWebSocket(network))
 
+      // electrum expects the script from an address in hex reversed
+      const reversedAddressScriptHash = Buffer.from(
+        crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
+      ).toString('hex')
+
+      // send message to subscribe to event
       ws.onopen = () => {
-        // electrum expects the script from an address in hex reversed
-        const reversedAddressScriptHash = Buffer.from(
-          crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
-        ).toString('hex')
-        // send message to subscribe to event
         ws.send(
           JSON.stringify({
             id: 1,
@@ -154,8 +155,18 @@ const ContractTopupLightning: NextPage = () => {
         utxos = await fetchUtxos(lockupAddress, explorerURL(network))
         console.log('utxos.length', utxos.length)
         if (utxos.length > 0) {
-          // close socket and clear invoice expiration timeout
+          // unsubscribe to event
+          ws.send(
+            JSON.stringify({
+              id: 1,
+              method: 'blockchain.scripthash.unsubscribe',
+              params: [reversedAddressScriptHash],
+            }),
+          )
+          // close socket
           ws.close()
+
+          // clear invoice expiration timeout
           clearTimeout(invoiceExpirationTimeout)
 
           // show user (via modal) that payment was received

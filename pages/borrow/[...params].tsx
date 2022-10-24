@@ -138,26 +138,39 @@ const BorrowParams: NextPage = () => {
       // open web socket
       const ws = new WebSocket(electrumWebSocket(network))
 
+      // electrum expects the script from an address in hex reversed
+      const reversedAddressScriptHash = Buffer.from(
+        crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
+      ).toString('hex')
+
+      // send message to subscribe to event
       ws.onopen = () => {
-        // electrum expects the script from an address in hex reversed
-        const reversedAddressScriptHash = Buffer.from(
-          crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
-        ).toString('hex')
-        const sendMsg = JSON.stringify({
-          id: 1,
-          method: 'blockchain.scripthash.subscribe',
-          params: [reversedAddressScriptHash],
-        })
-        ws.send(sendMsg)
-        console.log('Message is sent:', sendMsg)
+        ws.send(
+          JSON.stringify({
+            id: 1,
+            method: 'blockchain.scripthash.subscribe',
+            params: [reversedAddressScriptHash],
+          }),
+        )
       }
 
       // wait for payment
       ws.onmessage = async () => {
         utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        // payment has arrived
         if (utxos.length > 0) {
-          // close socket and clear invoice expiration timeout
+          // unsubscribe to event
+          ws.send(
+            JSON.stringify({
+              id: 1,
+              method: 'blockchain.scripthash.unsubscribe',
+              params: [reversedAddressScriptHash],
+            }),
+          )
+          // close socket
           ws.close()
+
+          // clear invoice expiration timeout
           clearTimeout(invoiceExpirationTimeout)
 
           // show user (via modal) that payment was received
