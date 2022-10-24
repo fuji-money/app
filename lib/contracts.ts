@@ -162,14 +162,6 @@ export function markContractConfirmed(contract: Contract): void {
   updateContractOnStorage(contract)
 }
 
-// mark contract as unconfirmed
-// this happens when we query the explorer and tx is unconfirmed
-export function markContractUnconfirmed(contract: Contract): void {
-  if (!contract.confirmed) return
-  contract.confirmed = false
-  updateContractOnStorage(contract)
-}
-
 // mark contract as redeemed
 // this happens when we query the explorer and tx is spent,
 // and the spent tx used the 'redeem' function of the covenant
