@@ -11,9 +11,19 @@ import { extractError, openModal, retry, sleep } from 'lib/utils'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { randomBytes } from 'crypto'
-import { createReverseSubmarineSwap, waitForLightningPayment } from 'lib/swaps'
+import {
+  createReverseSubmarineSwap,
+  getInvoiceExpireDate,
+  ReverseSwap,
+} from 'lib/swaps'
 import { fetchHex } from 'lib/fetch'
-import { Transaction, witnessStackToScriptWitness, Psbt } from 'liquidjs-lib'
+import {
+  Transaction,
+  crypto,
+  witnessStackToScriptWitness,
+  Psbt,
+  address,
+} from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -25,6 +35,8 @@ import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
+import { electrumWebSocket, explorerURL } from 'lib/explorer'
+import { fetchUtxos, Outpoint } from 'ldk'
 
 const ContractTopupLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -50,7 +62,10 @@ const ContractTopupLightning: NextPage = () => {
     openModal('invoice-deposit-modal')
     setStage(ModalStages.NeedsInvoice)
     try {
-      // create ephemeral account
+      // we will create a ephemeral key pair:
+      // - it will generate a public key to be used with the Boltz swap
+      // - later we will sign the claim transaction with the private key
+      // all swaps are stored on storage and available to backup
       const privateKey = randomBytes(32)
       const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
@@ -59,11 +74,12 @@ const ContractTopupLightning: NextPage = () => {
       const onchainTopupAmount = topupAmount + feeAmount
 
       // create swap with boltz.exchange
-      const boltzSwap = await createReverseSubmarineSwap(
-        keyPair.publicKey,
-        network,
-        onchainTopupAmount,
-      )
+      const boltzSwap: ReverseSwap | undefined =
+        await createReverseSubmarineSwap(
+          keyPair.publicKey,
+          network,
+          onchainTopupAmount,
+        )
       if (!boltzSwap) {
         // save used keys on storage
         addSwapToStorage({
@@ -88,94 +104,6 @@ const ContractTopupLightning: NextPage = () => {
         timeoutBlockHeight,
       } = boltzSwap
 
-      // show qr code to user
-      setInvoice(invoice)
-      setStage(ModalStages.NeedsPayment)
-
-      // wait for payment
-      const utxos = await waitForLightningPayment(
-        invoice,
-        lockupAddress,
-        network,
-      )
-
-      // payment was never made, and the invoice expired
-      if (utxos.length === 0) {
-        // save used keys on storage
-        addSwapToStorage({
-          boltzRefund: {
-            id,
-            privateKey: privateKey.toString('hex'),
-            redeemScript,
-            timeoutBlockHeight,
-          },
-          contractId: oldContract.txid || '',
-          publicKey: keyPair.publicKey.toString('hex'),
-          status: Outcome.Failure,
-          task: Tasks.Topup,
-        })
-        throw new Error('Invoice has expired')
-      }
-
-      // show user (via modal) that payment was received
-      setStage(ModalStages.PaymentReceived)
-      await sleep(2000)
-      setStage(ModalStages.NeedsFujiApproval)
-
-      // get prevout for utxo
-      const [utxo] = utxos
-      const hex = await fetchHex(utxo.txid, network)
-      const prevout = Transaction.fromHex(hex).outs[utxo.vout]
-      const value = onchainTopupAmount
-      const collateralUtxos = [{ ...utxo, prevout, value, redeemScript }]
-
-      // prepare borrow transaction with claim utxo as input
-      const preparedTx = await prepareTopupTx(
-        newContract,
-        oldContract,
-        network,
-        collateralUtxos,
-        blindPrivKeysMap,
-      )
-
-      // propose contract to alpha factory
-      const { partialTransaction } = await proposeTopupContract(preparedTx)
-      if (!partialTransaction) throw new Error('Not accepted by Fuji')
-
-      // sign collateral input with ephemeral key pair
-      const aux = Psbt.fromBase64(partialTransaction)
-      aux.signInput(1, keyPair)
-
-      // ask user to sign tx with marina
-      setStage(ModalStages.NeedsConfirmation)
-      const base64 = await marina.signTransaction(aux.toBase64())
-      const ptx = Psbt.fromBase64(base64)
-
-      // tell user we are now on the final stage of the process
-      setStage(ModalStages.NeedsFinishing)
-
-      // finalize covenant input
-      finalizeTopupCovenantInput(ptx)
-
-      // finalize input[1] - collateral via claim transaction
-      ptx.finalizeInput(1, (_, input) => {
-        return {
-          finalScriptSig: undefined,
-          finalScriptWitness: witnessStackToScriptWitness([
-            input.partialSig![0].signature,
-            preimage,
-            Buffer.from(redeemScript, 'hex'),
-          ]),
-        }
-      })
-
-      // broadcast transaction
-      newContract.txid = await broadcastTx(ptx.toBase64())
-      newContract.vout = 1
-
-      // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
-
       // save ephemeral key on storage
       addSwapToStorage({
         boltzRefund: {
@@ -184,19 +112,120 @@ const ContractTopupLightning: NextPage = () => {
           redeemScript,
           timeoutBlockHeight,
         },
-        contractId: newContract.txid,
+        contractId: newContract.txid || '',
         publicKey: keyPair.publicKey.toString('hex'),
         status: Outcome.Success,
         task: Tasks.Topup,
       })
 
-      // mark old contract as topup
-      markContractTopup(oldContract)
+      // show qr code to user
+      setInvoice(invoice)
+      setStage(ModalStages.NeedsPayment)
 
-      // show success
-      setData(newContract.txid)
-      setResult('success')
-      reloadContracts()
+      // prepare timeout handler
+      const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
+      const invoiceExpirationTimeout = setTimeout(() => {
+        throw new Error('invoice expired')
+      }, invoiceExpireDate - Date.now())
+
+      // list of utxos to get from swap
+      let utxos: Outpoint[] = []
+
+      // open web socket
+      const ws = new WebSocket(electrumWebSocket(network))
+
+      ws.onopen = () => {
+        // electrum expects the script from an address in hex reversed
+        const reversedAddressScriptHash = Buffer.from(
+          crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
+        ).toString('hex')
+        // send message to subscribe to event
+        ws.send(
+          JSON.stringify({
+            id: 1,
+            method: 'blockchain.scripthash.subscribe',
+            params: [reversedAddressScriptHash],
+          }),
+        )
+      }
+
+      ws.onmessage = async () => {
+        console.log('Message received from websocket')
+        utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        console.log('utxos.length', utxos.length)
+        if (utxos.length > 0) {
+          // close socket and clear invoice expiration timeout
+          ws.close()
+          clearTimeout(invoiceExpirationTimeout)
+
+          // show user (via modal) that payment was received
+          setStage(ModalStages.PaymentReceived)
+          await sleep(2000)
+          setStage(ModalStages.NeedsFujiApproval)
+
+          // get prevout for utxo
+          const [utxo] = utxos
+          const hex = await fetchHex(utxo.txid, network)
+          const prevout = Transaction.fromHex(hex).outs[utxo.vout]
+          const value = onchainTopupAmount
+          const collateralUtxos = [{ ...utxo, prevout, value, redeemScript }]
+
+          // prepare borrow transaction with claim utxo as input
+          const preparedTx = await prepareTopupTx(
+            newContract,
+            oldContract,
+            network,
+            collateralUtxos,
+            blindPrivKeysMap,
+          )
+
+          // propose contract to alpha factory
+          const { partialTransaction } = await proposeTopupContract(preparedTx)
+          if (!partialTransaction) throw new Error('Not accepted by Fuji')
+
+          // sign collateral input with ephemeral key pair
+          const aux = Psbt.fromBase64(partialTransaction)
+          aux.signInput(1, keyPair)
+
+          // ask user to sign tx with marina
+          setStage(ModalStages.NeedsConfirmation)
+          const base64 = await marina.signTransaction(aux.toBase64())
+          const ptx = Psbt.fromBase64(base64)
+
+          // tell user we are now on the final stage of the process
+          setStage(ModalStages.NeedsFinishing)
+
+          // finalize covenant input
+          finalizeTopupCovenantInput(ptx)
+
+          // finalize input[1] - collateral via claim transaction
+          ptx.finalizeInput(1, (_, input) => {
+            return {
+              finalScriptSig: undefined,
+              finalScriptWitness: witnessStackToScriptWitness([
+                input.partialSig![0].signature,
+                preimage,
+                Buffer.from(redeemScript, 'hex'),
+              ]),
+            }
+          })
+
+          // broadcast transaction
+          newContract.txid = await broadcastTx(ptx.toBase64())
+          newContract.vout = 1
+
+          // add additional fields to contract and save to storage
+          await saveContractToStorage(newContract, network, preparedTx)
+
+          // mark old contract as topup
+          markContractTopup(oldContract)
+
+          // show success
+          setData(newContract.txid)
+          setResult('success')
+          reloadContracts()
+        }
+      }
     } catch (error) {
       setData(extractError(error))
       setResult('failure')

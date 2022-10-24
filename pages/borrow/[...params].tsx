@@ -23,11 +23,16 @@ import {
 import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
 import {
   createReverseSubmarineSwap,
+  getInvoiceExpireDate,
   ReverseSwap,
-  waitForLightningPayment,
 } from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
-import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
+import {
+  address,
+  crypto,
+  Psbt,
+  witnessStackToScriptWitness,
+} from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
@@ -36,6 +41,8 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
+import { fetchUtxos, Outpoint } from 'ldk'
+import { electrumWebSocket, explorerURL } from 'lib/explorer'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -56,13 +63,16 @@ const BorrowParams: NextPage = () => {
     openModal('invoice-deposit-modal')
     setStage(ModalStages.NeedsInvoice)
     try {
-      // create ephemeral account
+      // we will create a ephemeral key pair:
+      // - it will generate a public key to be used with the Boltz swap
+      // - later we will sign the claim transaction with the private key
+      // all swaps are stored on storage and available to backup
       const privateKey = randomBytes(32)
       const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
       // give enough satoshis to pay for all fees expected, so that we
       // can use the returning coin as a solo input for the borrow tx
-      if (!newContract?.collateral.quantity) return
+      if (!newContract || !newContract.collateral.quantity) return
       const onchainAmount = newContract.collateral.quantity + feeAmount
 
       // create swap with Boltz.exchange
@@ -72,13 +82,15 @@ const BorrowParams: NextPage = () => {
           network,
           onchainAmount,
         )
+
+      // check if swap was successful
       if (!boltzSwap) {
         // save used keys on storage
         addSwapToStorage({
           boltzRefund: {
             privateKey: privateKey.toString('hex'),
           },
-          contractId: '',
+          contractId: newContract.txid || '',
           publicKey: keyPair.publicKey.toString('hex'),
           status: Outcome.Failure,
           task: Tasks.Borrow,
@@ -96,76 +108,6 @@ const BorrowParams: NextPage = () => {
         timeoutBlockHeight,
       } = boltzSwap
 
-      // show qr code to user
-      setInvoice(invoice)
-      setStage(ModalStages.NeedsPayment)
-
-      // wait for payment
-      const utxos = await waitForLightningPayment(
-        invoice,
-        lockupAddress,
-        network,
-      )
-
-      // payment was never made, and the invoice expired
-      if (utxos.length === 0) {
-        // save used keys on storage
-        addSwapToStorage({
-          boltzRefund: {
-            id,
-            privateKey: privateKey.toString('hex'),
-            redeemScript,
-            timeoutBlockHeight,
-          },
-          contractId: '',
-          publicKey: keyPair.publicKey.toString('hex'),
-          status: Outcome.Failure,
-          task: Tasks.Borrow,
-        })
-        throw new Error('Invoice has expired')
-      }
-
-      // show user (via modal) that payment was received
-      setStage(ModalStages.PaymentReceived)
-      await sleep(2000)
-      setStage(ModalStages.NeedsFujiApproval)
-
-      // prepare borrow transaction with claim utxo as input
-      const preparedTx = await prepareBorrowTxWithClaimTx(
-        newContract,
-        network,
-        redeemScript,
-        utxos,
-      )
-
-      // propose contract to alpha factory
-      const { partialTransaction } = await proposeBorrowContract(preparedTx)
-
-      // sign and finalize input[0]
-      const psbt = Psbt.fromBase64(partialTransaction)
-      psbt.signInput(0, keyPair)
-      psbt.finalizeInput(0, (_, input) => {
-        return {
-          finalScriptSig: undefined,
-          finalScriptWitness: witnessStackToScriptWitness([
-            input.partialSig![0].signature,
-            preimage,
-            Buffer.from(redeemScript, 'hex'),
-          ]),
-        }
-      })
-
-      setStage(ModalStages.NeedsFinishing)
-
-      // broadcast transaction
-      newContract.txid = await broadcastTx(psbt.toBase64())
-
-      // add vout to contract
-      newContract.vout = 0
-
-      // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
-
       // save ephemeral key on storage
       addSwapToStorage({
         boltzRefund: {
@@ -174,16 +116,99 @@ const BorrowParams: NextPage = () => {
           redeemScript,
           timeoutBlockHeight,
         },
-        contractId: newContract.txid,
+        contractId: newContract.txid || '',
         publicKey: keyPair.publicKey.toString('hex'),
         status: Outcome.Success,
         task: Tasks.Borrow,
       })
 
-      // show success
-      setData(newContract.txid)
-      setResult(Outcome.Success)
-      reloadContracts()
+      // show lightning invoice to user
+      setInvoice(invoice)
+      setStage(ModalStages.NeedsPayment)
+
+      // prepare timeout handler
+      const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
+      const invoiceExpirationTimeout = setTimeout(() => {
+        throw new Error('invoice expired')
+      }, invoiceExpireDate - Date.now())
+
+      // list of utxos to get from swap
+      let utxos: Outpoint[] = []
+
+      // open web socket
+      const ws = new WebSocket(electrumWebSocket(network))
+
+      ws.onopen = function () {
+        // electrum expects the script from an address in hex reversed
+        const reversedAddressScriptHash = Buffer.from(
+          crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
+        ).toString('hex')
+        const sendMsg = JSON.stringify({
+          id: 1,
+          method: 'blockchain.scripthash.subscribe',
+          params: [reversedAddressScriptHash],
+        })
+        ws.send(sendMsg)
+        console.log('Message is sent:', sendMsg)
+      }
+
+      // wait for payment
+      ws.onmessage = async function () {
+        utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        if (utxos.length > 0) {
+          // close socket and clear invoice expiration timeout
+          ws.close()
+          clearTimeout(invoiceExpirationTimeout)
+
+          // show user (via modal) that payment was received
+          setStage(ModalStages.PaymentReceived)
+          await sleep(2000) // give him time to see the green mark
+          setStage(ModalStages.NeedsFujiApproval)
+
+          // prepare borrow transaction with claim utxo as input
+          const preparedTx = await prepareBorrowTxWithClaimTx(
+            newContract,
+            network,
+            redeemScript,
+            utxos,
+          )
+
+          // propose contract to alpha factory
+          const { partialTransaction } = await proposeBorrowContract(preparedTx)
+          if (!partialTransaction) throw new Error('Not accepted by Fuji')
+
+          // sign and finalize input[0]
+          const psbt = Psbt.fromBase64(partialTransaction)
+          psbt.signInput(0, keyPair)
+          psbt.finalizeInput(0, (_, input) => {
+            return {
+              finalScriptSig: undefined,
+              finalScriptWitness: witnessStackToScriptWitness([
+                input.partialSig![0].signature,
+                preimage,
+                Buffer.from(redeemScript, 'hex'),
+              ]),
+            }
+          })
+
+          // change message to user
+          setStage(ModalStages.NeedsFinishing)
+
+          // broadcast transaction
+          newContract.txid = await broadcastTx(psbt.toBase64())
+
+          // add vout to contract
+          newContract.vout = 0
+
+          // add additional fields to contract and save to storage
+          await saveContractToStorage(newContract, network, preparedTx)
+
+          // show success
+          setData(newContract.txid)
+          setResult(Outcome.Success)
+          reloadContracts()
+        }
+      }
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
