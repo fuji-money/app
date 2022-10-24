@@ -138,7 +138,7 @@ const BorrowParams: NextPage = () => {
       // open web socket
       const ws = new WebSocket(electrumWebSocket(network))
 
-      ws.onopen = function () {
+      ws.onopen = () => {
         // electrum expects the script from an address in hex reversed
         const reversedAddressScriptHash = Buffer.from(
           crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
@@ -153,7 +153,7 @@ const BorrowParams: NextPage = () => {
       }
 
       // wait for payment
-      ws.onmessage = async function () {
+      ws.onmessage = async () => {
         utxos = await fetchUtxos(lockupAddress, explorerURL(network))
         if (utxos.length > 0) {
           // close socket and clear invoice expiration timeout
