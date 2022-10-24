@@ -37,14 +37,5 @@ export const checkOutspend = async (
 }
 
 // get tx from explorer
-// sometimes explorer still doesn't have the tx available, because
-// is too fresh, so we retry a few moments later
-export const getTx = async (txid: string, network: NetworkString) => {
-  const url = `${explorerURL(network)}/tx/${txid}`
-  try {
-    return await fetchURL(url)
-  } catch (_) {
-    await sleep(1000) // wait one second
-    return await fetchURL(url)
-  }
-}
+export const getTx = async (txid: string, network: NetworkString) =>
+  await fetchURL(`${explorerURL(network)}/tx/${txid}`)
