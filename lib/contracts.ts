@@ -275,7 +275,7 @@ export async function saveContractToStorage(
   // see https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-subscribe
   let eventCounter = 0
   ws.onmessage = async (e) => {
-    // sometime the first event has something on field data.result
+    // sometimes the first event has something on field data.result
     // this normally means tx is already on mempool, so we skip a step
     if (e.data.result) eventCounter += 1
     eventCounter += 1
