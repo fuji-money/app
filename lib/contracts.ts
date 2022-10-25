@@ -11,6 +11,8 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
+import { electrumWebSocket } from './explorer'
+import { address, crypto } from 'liquidjs-lib'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -240,6 +242,7 @@ export async function saveContractToStorage(
   contract: Contract,
   network: NetworkString,
   preparedTx: PreparedBorrowTx | PreparedTopupTx,
+  reloadContracts: () => void,
 ): Promise<void> {
   contract.borrowerPubKey = preparedTx.borrowerPublicKey
   contract.contractParams = preparedTx.contractParams
@@ -247,4 +250,40 @@ export async function saveContractToStorage(
   contract.confirmed = false
   contract.xPubKey = await getXPubKey()
   createNewContract(contract)
+  // subscribe to event
+  const addr = preparedTx.borrowerAddress.confidentialAddress
+  const reversedAddressScriptHash = crypto
+    .sha256(address.toOutputScript(addr))
+    .reverse()
+    .toString('hex')
+  const ws = new WebSocket(electrumWebSocket(network))
+  ws.onopen = () => {
+    ws.send(
+      JSON.stringify({
+        id: 1,
+        method: 'blockchain.scripthash.subscribe',
+        params: [reversedAddressScriptHash],
+      }),
+    )
+  }
+  // wait for confirmation
+  let isAckEvent = true
+  ws.onmessage = async (e) => {
+    if (isAckEvent) {
+      isAckEvent = false
+      return
+    }
+    markContractConfirmed(contract)
+    reloadContracts()
+    // unsubscribe to event
+    ws.send(
+      JSON.stringify({
+        id: 1,
+        method: 'blockchain.scripthash.unsubscribe',
+        params: [reversedAddressScriptHash],
+      }),
+    )
+    // close socket
+    ws.close()
+  }
 }

@@ -20,7 +20,7 @@ import {
   proposeBorrowContract,
   prepareBorrowTx,
 } from 'lib/covenant'
-import { broadcastTx, signAndBroadcastTx } from 'lib/marina'
+import { broadcastTx, signTx } from 'lib/marina'
 import {
   createReverseSubmarineSwap,
   getInvoiceExpireDate,
@@ -138,10 +138,11 @@ const BorrowParams: NextPage = () => {
       // open web socket
       const ws = new WebSocket(electrumWebSocket(network))
 
-      // electrum expects the script from an address in hex reversed
-      const reversedAddressScriptHash = Buffer.from(
-        crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
-      ).toString('hex')
+      // electrum expects the hash of address script in hex reversed
+      const reversedAddressScriptHash = crypto
+        .sha256(address.toOutputScript(lockupAddress))
+        .reverse()
+        .toString('hex')
 
       // send message to subscribe to event
       ws.onopen = () => {
@@ -214,7 +215,12 @@ const BorrowParams: NextPage = () => {
           newContract.vout = 0
 
           // add additional fields to contract and save to storage
-          await saveContractToStorage(newContract, network, preparedTx)
+          await saveContractToStorage(
+            newContract,
+            network,
+            preparedTx,
+            reloadContracts,
+          )
 
           // show success
           setData(newContract.txid)
@@ -248,15 +254,21 @@ const BorrowParams: NextPage = () => {
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
-      newContract.txid = await signAndBroadcastTx(partialTransaction)
+      const signedTransaction = await signTx(partialTransaction)
 
       setStage(ModalStages.NeedsFinishing)
+      newContract.txid = await broadcastTx(signedTransaction)
 
       // add vout to contract
       newContract.vout = 0
 
       // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
+      await saveContractToStorage(
+        newContract,
+        network,
+        preparedTx,
+        reloadContracts,
+      )
 
       // show success
       setData(newContract.txid)

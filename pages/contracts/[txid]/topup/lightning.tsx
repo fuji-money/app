@@ -135,9 +135,10 @@ const ContractTopupLightning: NextPage = () => {
       const ws = new WebSocket(electrumWebSocket(network))
 
       // electrum expects the script from an address in hex reversed
-      const reversedAddressScriptHash = Buffer.from(
-        crypto.sha256(address.toOutputScript(lockupAddress)).reverse(),
-      ).toString('hex')
+      const reversedAddressScriptHash = crypto
+        .sha256(address.toOutputScript(lockupAddress))
+        .reverse()
+        .toString('hex')
 
       // send message to subscribe to event
       ws.onopen = () => {
@@ -151,9 +152,7 @@ const ContractTopupLightning: NextPage = () => {
       }
 
       ws.onmessage = async () => {
-        console.log('Message received from websocket')
         utxos = await fetchUtxos(lockupAddress, explorerURL(network))
-        console.log('utxos.length', utxos.length)
         if (utxos.length > 0) {
           // unsubscribe to event
           ws.send(
@@ -226,7 +225,12 @@ const ContractTopupLightning: NextPage = () => {
           newContract.vout = 1
 
           // add additional fields to contract and save to storage
-          await saveContractToStorage(newContract, network, preparedTx)
+          await saveContractToStorage(
+            newContract,
+            network,
+            preparedTx,
+            reloadContracts,
+          )
 
           // mark old contract as topup
           markContractTopup(oldContract)

@@ -97,7 +97,12 @@ const ContractTopupLiquid: NextPage = () => {
       newContract.vout = 1
 
       // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
+      await saveContractToStorage(
+        newContract,
+        network,
+        preparedTx,
+        reloadContracts,
+      )
 
       // mark old contract as topup
       markContractTopup(oldContract)
