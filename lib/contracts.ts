@@ -267,12 +267,19 @@ export async function saveContractToStorage(
     )
   }
   // wait for confirmation
-  let isAckEvent = true
+  // since it's not possible to find out the result
+  // from the status response, we use this hack:
+  // event #1 is the ack event from the web socket
+  // event #2 happens when the transaction in on the mempool
+  // event #3 happens when transactions if confirmed
+  // see https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-subscribe
+  let eventCounter = 0
   ws.onmessage = async (e) => {
-    if (isAckEvent) {
-      isAckEvent = false
-      return
-    }
+    // sometime the first event has something on field data.result
+    // this normally means tx is already on mempool, so we skip a step
+    if (e.data.result) eventCounter += 1
+    eventCounter += 1
+    if (eventCounter !== 3) return
     markContractConfirmed(contract)
     reloadContracts()
     // unsubscribe to event
