@@ -1,6 +1,5 @@
 import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
-import type { NetworkString } from 'ldk'
 import { address, crypto, script, payments } from 'liquidjs-lib'
 import { fromSatoshis } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
@@ -10,6 +9,7 @@ import Boltz, {
 } from './boltz'
 import { randomBytes } from 'crypto'
 import Decimal from 'decimal.js'
+import { NetworkString } from 'marina-provider'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
