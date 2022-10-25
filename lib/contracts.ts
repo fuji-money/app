@@ -11,8 +11,8 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
-import { electrumWebSocket } from './explorer'
 import { address, crypto } from 'liquidjs-lib'
+import { electrumURL } from './websocket'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -256,7 +256,7 @@ export async function saveContractToStorage(
     .sha256(address.toOutputScript(addr))
     .reverse()
     .toString('hex')
-  const ws = new WebSocket(electrumWebSocket(network))
+  const ws = new WebSocket(electrumURL(network))
   ws.onopen = () => {
     ws.send(
       JSON.stringify({

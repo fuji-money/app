@@ -42,7 +42,8 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { fetchUtxos, Outpoint } from 'ldk'
-import { electrumWebSocket, explorerURL } from 'lib/explorer'
+import { explorerURL } from 'lib/explorer'
+import { electrumURL } from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -136,7 +137,7 @@ const BorrowParams: NextPage = () => {
       let utxos: Outpoint[] = []
 
       // open web socket
-      const ws = new WebSocket(electrumWebSocket(network))
+      const ws = new WebSocket(electrumURL(network))
 
       // electrum expects the hash of address script in hex reversed
       const reversedAddressScriptHash = crypto

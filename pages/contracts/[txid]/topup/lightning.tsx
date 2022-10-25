@@ -35,8 +35,9 @@ import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
-import { electrumWebSocket, explorerURL } from 'lib/explorer'
+import { explorerURL } from 'lib/explorer'
 import { fetchUtxos, Outpoint } from 'ldk'
+import { electrumURL } from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -132,7 +133,7 @@ const ContractTopupLightning: NextPage = () => {
       let utxos: Outpoint[] = []
 
       // open web socket
-      const ws = new WebSocket(electrumWebSocket(network))
+      const ws = new WebSocket(electrumURL(network))
 
       // electrum expects the script from an address in hex reversed
       const reversedAddressScriptHash = crypto
