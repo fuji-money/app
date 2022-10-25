@@ -35,7 +35,7 @@ export async function getMarinaProvider(): Promise<MarinaProvider | undefined> {
   try {
     return await detectProvider('marina')
   } catch {
-    console.log('Please install Marina extension')
+    console.info('Please install Marina extension')
     return undefined
   }
 }
@@ -71,19 +71,14 @@ export async function getTransactions(): Promise<Transaction[]> {
   return await marina.getTransactions()
 }
 
-export async function signAndBroadcastTx(partialTransaction: string) {
+export async function signTx(partialTransaction: string) {
   // check for marina
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
 
   // sign and broadcast transaction
   const ptx = Psbt.fromBase64(partialTransaction)
-  const signedPtx = await marina.signTransaction(ptx.toBase64())
-  const finalPtx = Psbt.fromBase64(signedPtx)
-  finalPtx.finalizeAllInputs()
-  const rawHex = finalPtx.extractTransaction().toHex()
-  const sentTransaction = await marina.broadcastTransaction(rawHex)
-  return sentTransaction.txid
+  return await marina.signTransaction(ptx.toBase64())
 }
 
 export async function broadcastTx(partialTransaction: string) {
@@ -95,7 +90,7 @@ export async function broadcastTx(partialTransaction: string) {
   const finalPtx = Psbt.fromBase64(partialTransaction)
   finalPtx.finalizeAllInputs()
   const rawHex = finalPtx.extractTransaction().toHex()
-  console.log('rawHex', rawHex)
+  console.info('rawHex', rawHex)
   // sometimes testnet explorer returns 502 but after curl works,
   // so let's try to broadcast again case there's an error
   try {
