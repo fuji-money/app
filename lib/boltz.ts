@@ -1,4 +1,4 @@
-import type { NetworkString } from 'ldk'
+import { NetworkString } from 'marina-provider'
 import { fetchURL, postData } from './fetch'
 
 interface CreateSwapCommonRequest {
