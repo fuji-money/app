@@ -1,16 +1,14 @@
 import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
 import type { NetworkString } from 'ldk'
-import { address, crypto, script, networks, payments } from 'liquidjs-lib'
-import { fromSatoshis, sleep } from 'lib/utils'
+import { address, crypto, script, payments } from 'liquidjs-lib'
+import { fromSatoshis } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
 import Boltz, {
   ReverseSubmarineSwapResponse,
   SubmarineSwapResponse,
 } from './boltz'
 import { randomBytes } from 'crypto'
-import { explorerURL } from './explorer'
-import { fetchUtxos, Outpoint } from 'ldk'
 import Decimal from 'decimal.js'
 
 // lightning swap invoice amount limit (in satoshis)
