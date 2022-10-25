@@ -20,7 +20,7 @@ import {
   proposeBorrowContract,
   prepareBorrowTx,
 } from 'lib/covenant'
-import { broadcastTx, signTx } from 'lib/marina'
+import { signTx } from 'lib/marina'
 import {
   createReverseSubmarineSwap,
   getInvoiceExpireDate,
@@ -43,7 +43,7 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { fetchUtxos, Outpoint } from 'ldk'
 import { explorerURL } from 'lib/explorer'
-import { electrumURL } from 'lib/websocket'
+import { broadcastTx, electrumURL } from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -210,7 +210,10 @@ const BorrowParams: NextPage = () => {
           setStage(ModalStages.NeedsFinishing)
 
           // broadcast transaction
-          newContract.txid = await broadcastTx(psbt.toBase64())
+          const data = await broadcastTx(psbt.toBase64(), network)
+          if (data.error) throw new Error(data.error)
+          newContract.txid = data.result
+          if (!newContract.txid) throw new Error('No txid returned')
 
           // add vout to contract
           newContract.vout = 0
@@ -258,7 +261,10 @@ const BorrowParams: NextPage = () => {
       const signedTransaction = await signTx(partialTransaction)
 
       setStage(ModalStages.NeedsFinishing)
-      newContract.txid = await broadcastTx(signedTransaction)
+      const data = await broadcastTx(signedTransaction, network)
+      if (data.error) throw new Error(data.error)
+      newContract.txid = data.result
+      if (!newContract.txid) throw new Error('No txid returned')
 
       // add vout to contract
       newContract.vout = 0

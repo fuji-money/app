@@ -29,7 +29,6 @@ import {
   prepareTopupTx,
   proposeTopupContract,
 } from 'lib/covenant'
-import { broadcastTx } from 'lib/marina'
 import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
@@ -37,7 +36,7 @@ import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 import { explorerURL } from 'lib/explorer'
 import { fetchUtxos, Outpoint } from 'ldk'
-import { electrumURL } from 'lib/websocket'
+import { broadcastTx, electrumURL } from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -222,7 +221,12 @@ const ContractTopupLightning: NextPage = () => {
           })
 
           // broadcast transaction
-          newContract.txid = await broadcastTx(ptx.toBase64())
+          const data = await broadcastTx(ptx.toBase64(), network)
+          if (data.error) throw new Error(data.error)
+          newContract.txid = data.result
+          if (!newContract.txid) throw new Error('No txid returned')
+
+          // add vout to contract
           newContract.vout = 1
 
           // add additional fields to contract and save to storage

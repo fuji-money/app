@@ -76,29 +76,9 @@ export async function signTx(partialTransaction: string) {
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('Please install Marina')
 
-  // sign and broadcast transaction
+  // sign transaction
   const ptx = Psbt.fromBase64(partialTransaction)
   return await marina.signTransaction(ptx.toBase64())
-}
-
-export async function broadcastTx(partialTransaction: string) {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
-  // broadcast transaction
-  const finalPtx = Psbt.fromBase64(partialTransaction)
-  finalPtx.finalizeAllInputs()
-  const rawHex = finalPtx.extractTransaction().toHex()
-  console.info('rawHex', rawHex)
-  // sometimes testnet explorer returns 502 but after curl works,
-  // so let's try to broadcast again case there's an error
-  try {
-    return (await marina.broadcastTransaction(rawHex)).txid
-  } catch (_) {
-    await sleep(1000)
-    return (await marina.broadcastTransaction(rawHex)).txid
-  }
 }
 
 export async function createFujiAccount(marina: MarinaProvider) {
