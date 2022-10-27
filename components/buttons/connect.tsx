@@ -23,7 +23,7 @@ const ConnectButton = () => {
     }
   }
 
-  const handleWalletChoice = async (name: string) => {
+  const handleWalletChoice = async () => {
     closeModal('wallets-modal')
     if (!marina) return
     await marina.enable()
