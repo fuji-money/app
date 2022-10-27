@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
@@ -13,7 +13,12 @@ interface ActivitiesListProps {
 
 const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const { connected } = useContext(WalletContext)
-  const { activities, loading } = useContext(ContractsContext)
+  const { activities } = useContext(ContractsContext)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (activities) setLoading(false)
+  }, [activities])
 
   if (!connected)
     return (

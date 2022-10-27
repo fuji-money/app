@@ -8,19 +8,18 @@ import { WalletContext } from 'components/providers/wallet'
 
 const AssetsList = () => {
   const [assets, setAssets] = useState<Asset[]>()
-  const [isLoading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const { network } = useContext(WalletContext)
 
   useEffect(() => {
     const onlySynth = (asset: Asset) => asset.isSynthetic
-    setLoading(true)
     fetchAssets().then((data) => {
       setAssets(data.filter(onlySynth))
       setLoading(false)
     })
   }, [network])
 
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!assets) return <SomeError>Error getting assets</SomeError>
 
   return (

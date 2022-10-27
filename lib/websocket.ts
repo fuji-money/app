@@ -17,29 +17,27 @@ export async function broadcastTx(
   partialTransaction: string,
   network: NetworkString,
 ): Promise<any> {
-  let data
   // finalize transaction
   const finalPtx = Psbt.fromBase64(partialTransaction)
   finalPtx.finalizeAllInputs()
   const rawHex = finalPtx.extractTransaction().toHex()
   console.info('rawHex', rawHex)
   // broadcast transaction
-  const ws = new WebSocket(electrumURL(network))
-  ws.onopen = () => {
-    ws.send(
-      JSON.stringify({
-        id: 1,
-        method: 'blockchain.transaction.broadcast',
-        params: [rawHex],
-      }),
-    )
-  }
-  ws.onmessage = (e) => {
-    ws.close()
-    data = JSON.parse(e.data)
-  }
-  while (!data) {
-    await sleep(1000)
-  }
-  return data
+  return await new Promise((resolve, reject) => {
+    const ws = new WebSocket(electrumURL(network))
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          id: 1,
+          method: 'blockchain.transaction.broadcast',
+          params: [rawHex],
+        }),
+      )
+    }
+    ws.onmessage = (e) => {
+      // TODO deal with error message
+      ws.close()
+      resolve(JSON.parse(e.data))
+    }
+  })
 }
