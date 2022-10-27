@@ -43,7 +43,7 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { fetchUtxos, Outpoint } from 'ldk'
 import { explorerURL } from 'lib/explorer'
-import { broadcastTx, electrumURL } from 'lib/websocket'
+import { broadcastTx, electrumURL, finalizeTx } from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -210,7 +210,8 @@ const BorrowParams: NextPage = () => {
           setStage(ModalStages.NeedsFinishing)
 
           // broadcast transaction
-          const data = await broadcastTx(psbt.toBase64(), network)
+          const rawHex = finalizeTx(psbt.toBase64())
+          const data = await broadcastTx(rawHex, network)
           if (data.error) throw new Error(data.error)
           newContract.txid = data.result
           if (!newContract.txid) throw new Error('No txid returned')
@@ -261,7 +262,9 @@ const BorrowParams: NextPage = () => {
       const signedTransaction = await signTx(partialTransaction)
 
       setStage(ModalStages.NeedsFinishing)
-      const data = await broadcastTx(signedTransaction, network)
+
+      const rawHex = finalizeTx(signedTransaction)
+      const data = await broadcastTx(rawHex, network)
       if (data.error) throw new Error(data.error)
       newContract.txid = data.result
       if (!newContract.txid) throw new Error('No txid returned')

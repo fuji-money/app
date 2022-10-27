@@ -12,6 +12,7 @@ import EnablersLiquid from 'components/enablers/liquid'
 import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
+import { broadcastTx } from 'lib/websocket'
 
 const ContractRedeemLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -48,7 +49,10 @@ const ContractRedeemLiquid: NextPage = () => {
 
       // extract and broadcast transaction
       const rawHex = signed.psbt.extractTransaction().toHex()
-      const txid = (await marina.broadcastTransaction(rawHex)).txid
+      const data = await broadcastTx(rawHex, network)
+      if (data.error) throw new Error(data.error)
+      const txid = data.result
+      if (!txid) throw new Error('No txid returned')
 
       // mark on storage and finalize
       markContractRedeemed(newContract)

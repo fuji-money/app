@@ -1,6 +1,5 @@
-import { fetchTxHex } from 'ldk'
+import { fetchTxHex } from 'lib/websocket'
 import { NetworkString } from 'marina-provider'
-import { explorerURL } from './explorer'
 import { sleep } from './utils'
 
 export async function fetchURL(url: string) {
@@ -29,7 +28,7 @@ export async function postData(url: string, data = {}) {
 export async function fetchHex(txid: string, network: NetworkString) {
   for (let i = 0; i < 10; i++) {
     try {
-      return await fetchTxHex(txid, explorerURL(network))
+      return await fetchTxHex(txid, network)
     } catch (_) {
       await sleep(1000) // wait 1 second
     }

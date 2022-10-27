@@ -36,7 +36,7 @@ import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 import { explorerURL } from 'lib/explorer'
 import { fetchUtxos, Outpoint } from 'ldk'
-import { broadcastTx, electrumURL } from 'lib/websocket'
+import { broadcastTx, electrumURL, finalizeTx } from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -221,7 +221,8 @@ const ContractTopupLightning: NextPage = () => {
           })
 
           // broadcast transaction
-          const data = await broadcastTx(ptx.toBase64(), network)
+          const rawHex = finalizeTx(ptx.toBase64())
+          const data = await broadcastTx(rawHex, network)
           if (data.error) throw new Error(data.error)
           newContract.txid = data.result
           if (!newContract.txid) throw new Error('No txid returned')

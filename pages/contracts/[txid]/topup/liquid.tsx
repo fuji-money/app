@@ -19,6 +19,7 @@ import { Psbt } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoinsWithBlindPrivKey } from 'lib/selection'
+import { broadcastTx } from 'lib/websocket'
 
 const ContractTopupLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -93,7 +94,10 @@ const ContractTopupLiquid: NextPage = () => {
 
       // broadcast transaction
       const rawHex = ptx.extractTransaction().toHex()
-      newContract.txid = (await marina.broadcastTransaction(rawHex)).txid
+      const data = await broadcastTx(rawHex, network)
+      if (data.error) throw new Error(data.error)
+      newContract.txid = data.result
+      if (!newContract.txid) throw new Error('No txid returned')
       newContract.vout = 1
 
       // add additional fields to contract and save to storage
