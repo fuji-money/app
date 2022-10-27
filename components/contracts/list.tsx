@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { contractIsClosed } from 'lib/contracts'
 import { Contract } from 'lib/types'
 import EmptyState from 'components/layout/empty'
@@ -14,7 +14,12 @@ interface ContractsListProps {
 
 const ContractsList = ({ showActive }: ContractsListProps) => {
   const { connected } = useContext(WalletContext)
-  const { contracts, loading } = useContext(ContractsContext)
+  const { contracts } = useContext(ContractsContext)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (contracts) setLoading(false)
+  }, [contracts])
 
   if (!connected)
     return (
