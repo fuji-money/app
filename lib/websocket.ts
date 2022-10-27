@@ -35,9 +35,10 @@ export async function broadcastTx(
       )
     }
     ws.onmessage = (e) => {
-      // TODO deal with error message
       ws.close()
-      resolve(JSON.parse(e.data))
+      const data = JSON.parse(e.data)
+      if (data.error) reject(data.error)
+      resolve(data)
     }
   })
 }
