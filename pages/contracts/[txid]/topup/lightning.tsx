@@ -27,9 +27,9 @@ import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import { Outcome } from 'lib/types'
+import { Outcome, Outpoint } from 'lib/types'
 import { explorerURL } from 'lib/explorer'
-import { fetchUtxos, Outpoint } from 'ldk'
+import { fetchUtxos } from 'ldk'
 import {
   broadcastTx,
   electrumURL,

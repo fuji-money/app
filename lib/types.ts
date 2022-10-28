@@ -132,3 +132,8 @@ export type SwapInfo = {
 }
 
 export type BlindPrivKeysMap = Record<string, string>
+
+export type Outpoint = {
+  txid: string
+  vout: number
+}
