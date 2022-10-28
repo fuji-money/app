@@ -19,6 +19,7 @@ import {
   Transaction,
   witnessStackToScriptWitness,
   Psbt,
+  networks,
 } from 'liquidjs-lib'
 import { fetchHex, postData } from './fetch'
 import {
@@ -32,9 +33,13 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
-import { getNetwork } from 'ldk'
 import { randomBytes } from 'crypto'
 import { selectCoinsWithBlindPrivKey } from './selection'
+import { Network } from 'liquidjs-lib/src/networks'
+
+const getNetwork = (str?: NetworkString): Network => {
+  return str ? (networks as Record<string, Network>)[str] : networks.liquid
+}
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
   // get payout amount
