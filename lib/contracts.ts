@@ -11,8 +11,7 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
-import { address, crypto } from 'liquidjs-lib'
-import { electrumURL } from './websocket'
+import { electrumURL, reverseScriptHash } from './websocket'
 
 // listen for confirmation
 // - first we subscribe to changes for this script hash
@@ -25,10 +24,7 @@ const listenForContractConfirmation = (
   network: NetworkString,
   reloadContracts: () => void,
 ) => {
-  const reversedAddressScriptHash = crypto
-    .sha256(address.toOutputScript(addr))
-    .reverse()
-    .toString('hex')
+  const reversedAddressScriptHash = reverseScriptHash(addr)
   const ws = new WebSocket(electrumURL(network))
   // subscribe changes
   ws.onopen = () => {

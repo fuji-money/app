@@ -17,13 +17,7 @@ import {
   ReverseSwap,
 } from 'lib/swaps'
 import { fetchHex } from 'lib/fetch'
-import {
-  Transaction,
-  crypto,
-  witnessStackToScriptWitness,
-  Psbt,
-  address,
-} from 'liquidjs-lib'
+import { Psbt, Transaction, witnessStackToScriptWitness } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -36,7 +30,12 @@ import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 import { explorerURL } from 'lib/explorer'
 import { fetchUtxos, Outpoint } from 'ldk'
-import { broadcastTx, electrumURL, finalizeTx } from 'lib/websocket'
+import {
+  broadcastTx,
+  electrumURL,
+  finalizeTx,
+  reverseScriptHash,
+} from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -135,10 +134,7 @@ const ContractTopupLightning: NextPage = () => {
       const ws = new WebSocket(electrumURL(network))
 
       // electrum expects the script from an address in hex reversed
-      const reversedAddressScriptHash = crypto
-        .sha256(address.toOutputScript(lockupAddress))
-        .reverse()
-        .toString('hex')
+      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
 
       // send message to subscribe to event
       ws.onopen = () => {

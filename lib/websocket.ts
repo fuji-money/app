@@ -1,4 +1,4 @@
-import { Psbt } from 'liquidjs-lib'
+import { address, crypto, Psbt } from 'liquidjs-lib'
 import { NetworkString } from 'marina-provider'
 
 export const electrumURL = (network: NetworkString) => {
@@ -47,6 +47,9 @@ const callWS = async ({
   })
 }
 
+export const reverseScriptHash = (addr: string) =>
+  crypto.sha256(address.toOutputScript(addr)).reverse().toString('hex')
+
 // finalize transaction
 export const finalizeTx = (ptx: string): string => {
   const finalPtx = Psbt.fromBase64(ptx)
@@ -79,5 +82,18 @@ export const fetchTxHex = async (
     method: 'blockchain.transaction.get',
     network,
     params: [txid],
+  })
+}
+
+// given an address, return utxos
+export const fetchUtxos = async (
+  addr: string,
+  network: NetworkString,
+): Promise<string> => {
+  return await callWS({
+    id: 30,
+    method: 'blockchain.scriptHash.get',
+    network,
+    params: [reverseScriptHash(addr)],
   })
 }

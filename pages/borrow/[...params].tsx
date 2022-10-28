@@ -27,12 +27,7 @@ import {
   ReverseSwap,
 } from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
-import {
-  address,
-  crypto,
-  Psbt,
-  witnessStackToScriptWitness,
-} from 'liquidjs-lib'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
@@ -43,7 +38,12 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { fetchUtxos, Outpoint } from 'ldk'
 import { explorerURL } from 'lib/explorer'
-import { broadcastTx, electrumURL, finalizeTx } from 'lib/websocket'
+import {
+  broadcastTx,
+  electrumURL,
+  finalizeTx,
+  reverseScriptHash,
+} from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
@@ -140,10 +140,7 @@ const BorrowParams: NextPage = () => {
       const ws = new WebSocket(electrumURL(network))
 
       // electrum expects the hash of address script in hex reversed
-      const reversedAddressScriptHash = crypto
-        .sha256(address.toOutputScript(lockupAddress))
-        .reverse()
-        .toString('hex')
+      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
 
       // send message to subscribe to event
       ws.onopen = () => {

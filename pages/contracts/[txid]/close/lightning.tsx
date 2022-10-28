@@ -86,6 +86,7 @@ const ContractRedeemLightning: NextPage = () => {
       )
       if (!boltzSwap) throw new Error('Error creating swap')
       const { address, expectedAmount, redeemScript } = boltzSwap
+      // TODO validate redeem script
       if (expectedAmount > amount)
         throw new Error('Expected amount higher then collateral amount')
       proceedWithRedeem(address)
