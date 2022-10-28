@@ -38,7 +38,7 @@ const Home: NextPage = () => {
       setAuthCookie(cookie)
       Router.push('/dashboard')
     } else {
-      console.log('Email not in short list')
+      console.info('Email not in short list')
       openModal('invalid-email-modal')
       // deleteCookie()
     }

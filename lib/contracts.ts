@@ -11,6 +11,8 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
+import { address, crypto } from 'liquidjs-lib'
+import { electrumURL } from './websocket'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -149,7 +151,7 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 }
 
 // add contract to storage and create activity
-export function createNewContract(contract: Contract): void {
+function createNewContract(contract: Contract): void {
   addContractToStorage(contract)
   addActivity(contract, ActivityType.Creation, Date.now())
 }
@@ -159,14 +161,6 @@ export function createNewContract(contract: Contract): void {
 export function markContractConfirmed(contract: Contract): void {
   if (contract.confirmed) return
   contract.confirmed = true
-  updateContractOnStorage(contract)
-}
-
-// mark contract as unconfirmed
-// this happens when we query the explorer and tx is unconfirmed
-export function markContractUnconfirmed(contract: Contract): void {
-  if (!contract.confirmed) return
-  contract.confirmed = false
   updateContractOnStorage(contract)
 }
 
@@ -248,6 +242,7 @@ export async function saveContractToStorage(
   contract: Contract,
   network: NetworkString,
   preparedTx: PreparedBorrowTx | PreparedTopupTx,
+  reloadContracts: () => void,
 ): Promise<void> {
   contract.borrowerPubKey = preparedTx.borrowerPublicKey
   contract.contractParams = preparedTx.contractParams
@@ -255,4 +250,57 @@ export async function saveContractToStorage(
   contract.confirmed = false
   contract.xPubKey = await getXPubKey()
   createNewContract(contract)
+  // listen for confirmation
+  // - first we subscribe to changes for this script hash
+  // - on message received:
+  //   - if it comes from subscription, check listunspents
+  //   - else, if it comes from listunspent, check height
+  const addr = preparedTx.borrowerAddress.confidentialAddress
+  const reversedAddressScriptHash = crypto
+    .sha256(address.toOutputScript(addr))
+    .reverse()
+    .toString('hex')
+  const ws = new WebSocket(electrumURL(network))
+  // subscribe changes
+  ws.onopen = () => {
+    ws.send(
+      JSON.stringify({
+        id: 1,
+        method: 'blockchain.scripthash.subscribe',
+        params: [reversedAddressScriptHash],
+      }),
+    )
+  }
+  // listen for messages
+  ws.onmessage = async (e) => {
+    const data = JSON.parse(e.data)
+    // this message comes from subscription, which means something changed
+    // check for list of utxos using blockchain.scripthash.listunspent
+    if (data.id === 1 || data.method === 'blockchain.scripthash.subscribe') {
+      ws.send(
+        JSON.stringify({
+          id: 2,
+          method: 'blockchain.scripthash.listunspent',
+          params: [reversedAddressScriptHash],
+        }),
+      )
+      return
+    }
+    // this message comes from listunspent
+    // check if transaction is confirmed (aka has height)
+    if (data.id === 2 && data.result?.[0]?.height > 0) {
+      markContractConfirmed(contract)
+      reloadContracts()
+      // unsubscribe to event
+      ws.send(
+        JSON.stringify({
+          id: 1,
+          method: 'blockchain.scripthash.unsubscribe',
+          params: [reversedAddressScriptHash],
+        }),
+      )
+      // close socket
+      ws.close()
+    }
+  }
 }

@@ -35,7 +35,7 @@ const Success = ({ contract, reset, task, txid }: SuccessProps) => {
     const ratio = `${prettyNumber(getContractRatio(contract), 0, 0)}% ratio`
     return `${op} a contract ${synthetic} with ${collateral} at ${ratio}`
   }
-  console.info('message', message())
+  // console.info('message', message())
   return (
     <div className="has-text-centered mx-6">
       <p>

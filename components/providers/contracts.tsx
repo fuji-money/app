@@ -82,7 +82,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // save first time app was run
   const firstRun = useRef(Date.now())
-  const lastReload = useRef(0)
 
   const resetContracts = () => {
     setNewContract(undefined)
@@ -91,17 +90,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
-  const reloadContracts = async (force = false) => {
-    // try to avoid bursts of events emitted by Marina
-    const minTimeBetweenReloads = 10 * 1000
-    const timeSinceLastReload = Date.now() - lastReload.current
-    const canReload = force || timeSinceLastReload > minTimeBetweenReloads
-    if (connected && canReload) {
+  const reloadContracts = async () => {
+    if (connected) {
       await checkContractsStatus()
       setContracts(await getContracts())
       setActivities(await getActivities())
       setLoading(false)
-      lastReload.current = Date.now()
     }
   }
 
@@ -211,21 +205,21 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // funded with Lightning swap does not use any UTXO, so marina never
   // emits that event on those types of contracts
   const setMarinaListener = () => {
-    // try to avoid first burst of NEW_TX sent by marina
+    // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
       accountID === marinaFujiAccountID && Date.now() - firstRun.current > 60000
     // add event listeners
     if (connected && marina && xPubKey) {
       marina.on('NEW_TX', async ({ accountID }) => {
-        console.log('NEW_TX', accountID)
+        console.info('NEW_TX', accountID)
         if (okToReload(accountID)) reloadContracts()
       })
       marina.on('SPENT_UTXO', async ({ accountID }) => {
-        console.log('SPENT_UTXO', accountID)
+        console.info('SPENT_UTXO', accountID)
         if (okToReload(accountID)) reloadContracts()
       })
       marina.on('NEW_UTXO', async ({ accountID }) => {
-        console.log('NEW_UTXO', accountID)
+        console.info('NEW_UTXO', accountID)
         if (okToReload(accountID)) reloadContracts()
       })
     }

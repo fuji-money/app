@@ -1,17 +1,15 @@
 import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
-import type { NetworkString } from 'ldk'
-import { address, crypto, script, networks, payments } from 'liquidjs-lib'
-import { fromSatoshis, sleep } from 'lib/utils'
+import { address, crypto, script, payments } from 'liquidjs-lib'
+import { fromSatoshis } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
 import Boltz, {
   ReverseSubmarineSwapResponse,
   SubmarineSwapResponse,
 } from './boltz'
 import { randomBytes } from 'crypto'
-import { explorerURL } from './explorer'
-import { fetchUtxos, Outpoint } from 'ldk'
 import Decimal from 'decimal.js'
+import { NetworkString } from 'marina-provider'
 
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
@@ -250,25 +248,4 @@ export const createReverseSubmarineSwap = async (
     timeoutBlockHeight,
   }
   if (isValidReverseSubmarineSwap(reverseSwap)) return reverseSwap
-}
-
-// every 5 seconds, query explorer for payment
-export const waitForLightningPayment = async (
-  invoice: string,
-  address: string,
-  network: NetworkString,
-): Promise<Outpoint[]> => {
-  // check invoice expiration
-  const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
-
-  // wait for user to pay, check for utxos
-  let utxos: Outpoint[] = []
-  while (utxos.length === 0 && Date.now() <= invoiceExpireDate) {
-    console.log('waiting for payment')
-    try {
-      utxos = await fetchUtxos(address, explorerURL(network))
-    } catch (_) {}
-    await sleep(5000) // sleep for 5 seconds
-  }
-  return utxos
 }
