@@ -70,9 +70,10 @@ const ContractRedeemLightning: NextPage = () => {
     reloadContracts()
   }
 
-  const handleInvoice = async (invoice = ''): Promise<void> => {
+  const handleInvoice = async (invoice?: string): Promise<void> => {
     if (!marina) return
-    if (!invoice) return openModal('invoice-modal')
+    if (!invoice || typeof invoice !== 'string')
+      return openModal('invoice-modal')
     closeModal('invoice-modal')
     openModal('redeem-modal')
     try {
