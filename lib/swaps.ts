@@ -21,12 +21,12 @@ export const DEPOSIT_LIGHTNING_LIMITS = {
 // UTILS
 
 // check if amount is out of bounds for lightning swap
-export const swapDepositAmountOutOfBounds = (amount = 0) =>
+export const swapDepositAmountOutOfBounds = (amount = 0): boolean =>
   amount > DEPOSIT_LIGHTNING_LIMITS.maximal ||
   amount < DEPOSIT_LIGHTNING_LIMITS.minimal
 
 // calculate boltz fees for a given amount
-export const submarineSwapBoltzFees = (amount = 0) => {
+export const submarineSwapBoltzFees = (amount = 0): number => {
   const minersFee = 340
   const percentage = 1.005
   const invoiceAmount = new Decimal(amount)
@@ -97,18 +97,17 @@ const validSwapReedemScript = (
 
 // check if everything is correct with data received from Boltz:
 // - redeem script
-export const isValidSubmarineSwap = ({
-  address,
-  expectedAmount,
-  redeemScript,
-}: SubmarineSwap): boolean => validSwapReedemScript(redeemScript, address)
+const isValidSubmarineSwap = (
+  redeemScript: string,
+  refundPublicKey: string,
+): boolean => validSwapReedemScript(redeemScript, refundPublicKey)
 
 // create submarine swap
 export const createSubmarineSwap = async (
   invoice: string,
   network: NetworkString,
   refundPublicKey: string,
-) => {
+): Promise<SubmarineSwap | undefined> => {
   // boltz object
   const boltz = new Boltz(network)
 
@@ -119,12 +118,12 @@ export const createSubmarineSwap = async (
       refundPublicKey,
     })
 
-  const submarineSwap = {
+  const submarineSwap: SubmarineSwap = {
     address,
     expectedAmount,
     redeemScript,
   }
-  if (isValidSubmarineSwap(submarineSwap)) return submarineSwap
+  if (isValidSubmarineSwap(redeemScript, refundPublicKey)) return submarineSwap
 }
 
 // REVERSE SUBMARINE SWAPS (Lightning => LBTC)
