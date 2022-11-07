@@ -1,4 +1,4 @@
-import { feeAmount } from 'lib/constants'
+import { feeAmount, swapFeeAmount } from 'lib/constants'
 import { prettyNumber } from 'lib/pretty'
 import {
   getInvoiceExpireDate,
@@ -23,7 +23,7 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
 
   if (!payoutAmount) throw new Error('Contract without payout amount')
 
-  const amount = collateral.quantity - payoutAmount - feeAmount
+  const amount = collateral.quantity - payoutAmount - swapFeeAmount
   const boltzFees = submarineSwapBoltzFees(amount)
   const invoiceAmount = amount - boltzFees
 
