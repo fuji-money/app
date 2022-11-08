@@ -78,12 +78,13 @@ export const fetchTxHex = async (
   txid: string,
   network: NetworkString,
 ): Promise<string> => {
-  return await callWS({
+  const res = await callWS({
     id: 20,
     method: 'blockchain.transaction.get',
     network,
     params: [txid],
   })
+  return res.result
 }
 
 // given an address, return utxos
