@@ -67,7 +67,7 @@ const BorrowParams: NextPage = () => {
       // we will create a ephemeral key pair:
       // - it will generate a public key to be used with the Boltz swap
       // - later we will sign the claim transaction with the private key
-      // all swaps are stored on storage and available to backup
+      // all swaps are stored on storage and available for backup
       const privateKey = randomBytes(32)
       const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
