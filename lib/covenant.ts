@@ -298,7 +298,7 @@ export async function proposeBorrowContract({
   const blindingPrivKeyOfCollateralInputs: Record<number, string> = {}
 
   const utxoIsConfidential = (u: Utxo) =>
-    u.prevout.rangeProof != null && u.prevout.rangeProof.length > 0
+    u.prevout?.rangeProof != null && u.prevout.rangeProof.length > 0
 
   collateralUtxos.forEach((utxo, idx) => {
     if (utxoIsConfidential(utxo)) {
