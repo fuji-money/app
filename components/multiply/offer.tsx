@@ -1,8 +1,9 @@
+import { EnabledTasks, Tasks } from 'lib/tasks'
 import Image from 'next/image'
 import Link from 'next/link'
 
 const MultiplyOffer = () => {
-  const enabled = true
+  const enabled = EnabledTasks[Tasks.Multiply]
   return (
     <div>
       <div className="is-box has-pink-border mx-auto mt-6">
