@@ -11,7 +11,7 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
-import { electrumURL, reverseScriptHash } from './websocket'
+import { electrumURL, fetchUtxos, reverseScriptHash } from './websocket'
 
 // listen for confirmation
 // - first we subscribe to changes for this script hash
@@ -31,6 +31,7 @@ const listenForContractConfirmation = (
     ws.send(
       JSON.stringify({
         id: 1,
+        jsonrpc: '2.0',
         method: 'blockchain.scripthash.subscribe',
         params: [reversedAddressScriptHash],
       }),
@@ -42,30 +43,22 @@ const listenForContractConfirmation = (
     // this message comes from subscription, which means something changed
     // check for list of utxos using blockchain.scripthash.listunspent
     if (data.id === 1 || data.method === 'blockchain.scripthash.subscribe') {
-      ws.send(
-        JSON.stringify({
-          id: 2,
-          method: 'blockchain.scripthash.listunspent',
-          params: [reversedAddressScriptHash],
-        }),
-      )
-      return
-    }
-    // this message comes from listunspent
-    // check if transaction is confirmed (aka has height)
-    if (data.id === 2 && data.result?.[0]?.height > 0) {
-      markContractConfirmed(contract)
-      reloadContracts()
-      // unsubscribe to event
-      ws.send(
-        JSON.stringify({
-          id: 1,
-          method: 'blockchain.scripthash.unsubscribe',
-          params: [reversedAddressScriptHash],
-        }),
-      )
-      // close socket
-      ws.close()
+      const utxos = await fetchUtxos(addr, network)
+      if (utxos?.length > 0) {
+        markContractConfirmed(contract)
+        reloadContracts()
+        // unsubscribe to event
+        ws.send(
+          JSON.stringify({
+            id: 2,
+            jsonrpc: '2.0',
+            method: 'blockchain.scripthash.unsubscribe',
+            params: [reversedAddressScriptHash],
+          }),
+        )
+        // close socket
+        ws.close()
+      }
     }
   }
 }

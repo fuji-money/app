@@ -29,10 +29,10 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome, Outpoint } from 'lib/types'
 import { explorerURL } from 'lib/explorer'
-import { fetchUtxos } from 'ldk'
 import {
   broadcastTx,
   electrumURL,
+  fetchUtxos,
   finalizeTx,
   reverseScriptHash,
 } from 'lib/websocket'
@@ -141,6 +141,7 @@ const ContractTopupLightning: NextPage = () => {
         ws.send(
           JSON.stringify({
             id: 1,
+            jsonrpc: '2.0',
             method: 'blockchain.scripthash.subscribe',
             params: [reversedAddressScriptHash],
           }),
@@ -148,12 +149,13 @@ const ContractTopupLightning: NextPage = () => {
       }
 
       ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        utxos = await fetchUtxos(lockupAddress, network)
         if (utxos.length > 0) {
           // unsubscribe to event
           ws.send(
             JSON.stringify({
               id: 1,
+              jsonrpc: '2.0',
               method: 'blockchain.scripthash.unsubscribe',
               params: [reversedAddressScriptHash],
             }),

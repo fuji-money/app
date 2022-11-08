@@ -36,11 +36,10 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import { fetchUtxos } from 'ldk'
-import { explorerURL } from 'lib/explorer'
 import {
   broadcastTx,
   electrumURL,
+  fetchUtxos,
   finalizeTx,
   reverseScriptHash,
 } from 'lib/websocket'
@@ -147,6 +146,7 @@ const BorrowParams: NextPage = () => {
         ws.send(
           JSON.stringify({
             id: 1,
+            jsonrpc: '2.0',
             method: 'blockchain.scripthash.subscribe',
             params: [reversedAddressScriptHash],
           }),
@@ -155,13 +155,14 @@ const BorrowParams: NextPage = () => {
 
       // wait for payment
       ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        utxos = await fetchUtxos(lockupAddress, network)
         // payment has arrived
         if (utxos.length > 0) {
           // unsubscribe to event
           ws.send(
             JSON.stringify({
               id: 1,
+              jsonrpc: '2.0',
               method: 'blockchain.scripthash.unsubscribe',
               params: [reversedAddressScriptHash],
             }),
