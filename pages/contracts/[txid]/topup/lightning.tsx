@@ -16,8 +16,7 @@ import {
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
-import { fetchHex } from 'lib/fetch'
-import { Psbt, Transaction, witnessStackToScriptWitness } from 'liquidjs-lib'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -27,8 +26,7 @@ import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import { Outcome, Outpoint } from 'lib/types'
-import { explorerURL } from 'lib/explorer'
+import { Outcome, ElectrumUtxo } from 'lib/types'
 import {
   broadcastTx,
   electrumURL,
@@ -128,7 +126,7 @@ const ContractTopupLightning: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // list of utxos to get from swap
-      let utxos: Outpoint[] = []
+      let utxos: ElectrumUtxo[] = []
 
       // open web socket
       const ws = new WebSocket(electrumURL(network))
@@ -173,10 +171,8 @@ const ContractTopupLightning: NextPage = () => {
 
           // get prevout for utxo
           const [utxo] = utxos
-          const hex = await fetchHex(utxo.txid, network)
-          const prevout = Transaction.fromHex(hex).outs[utxo.vout]
           const value = onchainTopupAmount
-          const collateralUtxos = [{ ...utxo, prevout, value, redeemScript }]
+          const collateralUtxos = [{ ...utxo, value, redeemScript }]
 
           // prepare borrow transaction with claim utxo as input
           const preparedTx = await prepareTopupTx(

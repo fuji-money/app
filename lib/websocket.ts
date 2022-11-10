@@ -1,6 +1,6 @@
-import { address, crypto, Psbt } from 'liquidjs-lib'
+import { address, crypto, Psbt, Transaction } from 'liquidjs-lib'
 import { NetworkString } from 'marina-provider'
-import { Outpoint } from './types'
+import { ElectrumUnspent, ElectrumUtxo } from './types'
 
 export const electrumURL = (network: NetworkString) => {
   switch (network) {
@@ -97,7 +97,7 @@ export const fetchTxHex = async (
 export const fetchUtxos = async (
   addr: string,
   network: NetworkString,
-): Promise<Outpoint[]> => {
+): Promise<ElectrumUtxo[]> => {
   // call web socket to get utxos
   const data = await callWS({
     id: 30,
@@ -105,15 +105,16 @@ export const fetchUtxos = async (
     network,
     params: [reverseScriptHash(addr)],
   })
-  // from https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-listunspent
-  interface Unspent {
-    height: number
-    tx_hash: string
-    tx_pos: number
-    value: number
-  }
-  return data.result.map((unspent: Unspent) => ({
-    txid: unspent.tx_hash,
-    vout: unspent.tx_pos,
-  }))
+
+  return Promise.all(
+    data.result.map(async (unspent: ElectrumUnspent) => {
+      const hex = await fetchTxHex(unspent.tx_hash, network)
+      const prevout = Transaction.fromHex(hex).outs[unspent.tx_pos]
+      return {
+        txid: unspent.tx_hash,
+        vout: unspent.tx_pos,
+        prevout,
+      }
+    }),
+  )
 }

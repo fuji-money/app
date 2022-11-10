@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Asset, Offer, Outcome, Outpoint } from 'lib/types'
+import { Asset, Offer, Outcome, ElectrumUtxo } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -133,7 +133,7 @@ const BorrowParams: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // list of utxos to get from swap
-      let utxos: Outpoint[] = []
+      let utxos: ElectrumUtxo[] = []
 
       // open web socket
       const ws = new WebSocket(electrumURL(network))

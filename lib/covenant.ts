@@ -16,12 +16,11 @@ import {
   AssetHash,
   address,
   script,
-  Transaction,
   witnessStackToScriptWitness,
   Psbt,
   networks,
 } from 'liquidjs-lib'
-import { fetchHex, postData } from './fetch'
+import { postData } from './fetch'
 import {
   createFujiAccount,
   fujiAccountMissing,
@@ -154,8 +153,6 @@ export async function prepareBorrowTxWithClaimTx(
     throw new Error('Invalid contract: no contract priceLevel')
 
   const [utxo] = utxos
-  const hex = await fetchHex(utxo.txid, network)
-  const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
   const psbt = new Psbt({ network: getNetwork(network) })
 
@@ -163,7 +160,7 @@ export async function prepareBorrowTxWithClaimTx(
   psbt.addInput({
     hash: utxo.txid,
     index: utxo.vout,
-    witnessUtxo: prevout,
+    witnessUtxo: utxo.prevout,
     witnessScript: Buffer.from(redeemScript, 'hex'),
   })
 
