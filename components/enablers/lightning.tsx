@@ -69,7 +69,7 @@ const EnablersLightning = ({
                         width={20}
                         height={20}
                       />
-                      <span className="ml-2">Alby Pay</span>
+                      <span className="ml-2">Alby</span>
                     </button>
                   </p>
                   <style jsx>{`
