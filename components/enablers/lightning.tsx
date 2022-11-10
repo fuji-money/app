@@ -61,6 +61,17 @@ const EnablersLightning = ({
                       <span className="ml-2">Bitfinex Pay</span>
                     </button>
                   </p>
+                  <p>
+                    <button className="button is-primary mt-4" disabled>
+                      <Image
+                        src="/images/companies/alby.png"
+                        alt="alby logo"
+                        width={20}
+                        height={20}
+                      />
+                      <span className="ml-2">Alby Pay</span>
+                    </button>
+                  </p>
                   <style jsx>{`
                     .button {
                       justify-content: flex-start;
