@@ -4,6 +4,8 @@ import Title from 'components/title'
 import Balance from 'components/balance'
 import { operationFromTask } from 'lib/utils'
 import { EnablerButton } from './button'
+import { useContext } from 'react'
+import { WalletContext } from 'components/providers/wallet'
 
 interface EnablersLightningProps {
   contract: Contract
@@ -16,6 +18,7 @@ const EnablersLightning = ({
   handleInvoice,
   task,
 }: EnablersLightningProps) => {
+  const { weblnProvider } = useContext(WalletContext)
   return (
     <section>
       <Title title={`Select method to ${operationFromTask(task)}`} />
@@ -41,6 +44,7 @@ const EnablersLightning = ({
                   <EnablerButton
                     name="Alby"
                     icon="/images/companies/alby.png"
+                    handler={weblnProvider ? handleInvoice : undefined}
                   />
                 </div>
                 <div className="column is-6">
