@@ -1,12 +1,13 @@
 import Modal, { ModalStages } from './modal'
 import { sleep } from 'lib/utils'
 import QRCode from 'components/qrcode'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import Result from 'components/result'
 import Spinner from 'components/spinner'
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
 import Image from 'next/image'
+import { WalletContext } from 'components/providers/wallet'
 
 interface InvoiceDepositModalProps {
   contract: Contract
@@ -29,6 +30,7 @@ const InvoiceDepositModal = ({
   stage,
   task,
 }: InvoiceDepositModalProps) => {
+  const { weblnProvider } = useContext(WalletContext)
   const [buttonText, setButtonText] = useState('Copy')
 
   const handleCopy = () => {
@@ -44,6 +46,12 @@ const InvoiceDepositModal = ({
   const [mainMessage, secondaryMessage] = stage
   const showInvoice = stage === ModalStages.NeedsPayment
   const showReceived = stage === ModalStages.PaymentReceived
+  const payWithWebln = weblnProvider
+    ? async () => {
+        await weblnProvider.enable()
+        await weblnProvider.sendPayment(invoice)
+      }
+    : undefined
 
   return (
     <Modal id="invoice-deposit-modal" reset={reset}>
@@ -63,7 +71,14 @@ const InvoiceDepositModal = ({
             <>
               <Spinner />
               <h3 className="mt-4">{mainMessage}</h3>
-              <QRCode text={invoice} />
+              {payWithWebln && (
+                <p>
+                  <a onClick={payWithWebln}>Pay with WebLN</a>
+                </p>
+              )}
+              <p className="mt-4">
+                <QRCode text={invoice} />
+              </p>
               <p className="confirm">{secondaryMessage}</p>
               <p className="has-text-centered mt-4">
                 <button onClick={handleCopy} className="button">

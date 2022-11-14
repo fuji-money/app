@@ -14,6 +14,7 @@ import {
 import { defaultNetwork, marinaMainAccountID } from 'lib/constants'
 import { address } from 'liquidjs-lib'
 import { BlindPrivKeysMap } from 'lib/types'
+import { requestProvider, WebLNProvider } from 'webln'
 
 interface WalletContextProps {
   balances: Balance[]
@@ -23,6 +24,7 @@ interface WalletContextProps {
   network: NetworkString
   setConnected: (arg0: boolean) => void
   xPubKey: string
+  weblnProvider: WebLNProvider | undefined
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -33,6 +35,7 @@ export const WalletContext = createContext<WalletContextProps>({
   network: defaultNetwork,
   setConnected: () => {},
   xPubKey: '',
+  weblnProvider: undefined,
 })
 
 interface WalletProviderProps {
@@ -45,6 +48,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
   const [xPubKey, setXPubKey] = useState('')
+  const [weblnProvider, setWeblnProvider] = useState<WebLNProvider>()
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
@@ -53,6 +57,13 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // get marina provider
   useEffect(() => {
     getMarinaProvider().then((payload) => setMarina(payload))
+  })
+
+  // get webln provider
+  useEffect(() => {
+    try {
+      requestProvider().then((provider) => setWeblnProvider(provider))
+    } catch (ignore) {}
   })
 
   // update connected state
@@ -124,6 +135,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         network,
         setConnected,
         xPubKey,
+        weblnProvider,
       }}
     >
       {children}
