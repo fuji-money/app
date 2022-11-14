@@ -1,9 +1,9 @@
 import { Contract } from 'lib/types'
-import Image from 'next/image'
 import Summary from 'components/contract/summary'
 import Title from 'components/title'
 import Balance from 'components/balance'
 import { operationFromTask } from 'lib/utils'
+import { EnablerButton } from './button'
 
 interface EnablersLightningProps {
   contract: Contract
@@ -25,59 +25,23 @@ const EnablersLightning = ({
             <div className="is-box has-pink-border has-text-centered p-6">
               <div className="columns">
                 <div className="column is-6">
-                  <p>
-                    <button
-                      className="button is-primary"
-                      onClick={handleInvoice}
-                    >
-                      <Image
-                        src="/images/networks/lightning.svg"
-                        alt="lightning logo"
-                        width={20}
-                        height={20}
-                      />
-                      <span className="ml-2">Lightning Invoice</span>
-                    </button>
-                  </p>
-                  <p>
-                    <button className="button is-primary mt-4" disabled>
-                      <Image
-                        src="/images/companies/strike.svg"
-                        alt="strike logo"
-                        width={20}
-                        height={20}
-                      />
-                      <span className="ml-2">Strike</span>
-                    </button>
-                  </p>
-                  <p>
-                    <button className="button is-primary mt-4" disabled>
-                      <Image
-                        src="/images/companies/bitfinex.svg"
-                        alt="bitfinex logo"
-                        width={20}
-                        height={20}
-                      />
-                      <span className="ml-2">Bitfinex Pay</span>
-                    </button>
-                  </p>
-                  <p>
-                    <button className="button is-primary mt-4" disabled>
-                      <Image
-                        src="/images/companies/alby.png"
-                        alt="alby logo"
-                        width={20}
-                        height={20}
-                      />
-                      <span className="ml-2">Alby</span>
-                    </button>
-                  </p>
-                  <style jsx>{`
-                    .button {
-                      justify-content: flex-start;
-                      width: 90%;
-                    }
-                  `}</style>
+                  <EnablerButton
+                    name="Lightning Invoice"
+                    icon="/images/networks/lightning.svg"
+                    handler={handleInvoice}
+                  />
+                  <EnablerButton
+                    name="Strike"
+                    icon="/images/companies/strike.svg"
+                  />
+                  <EnablerButton
+                    name="Bitfinex Pay"
+                    icon="/images/companies/bitfinex.svg"
+                  />
+                  <EnablerButton
+                    name="Alby"
+                    icon="/images/companies/alby.png"
+                  />
                 </div>
                 <div className="column is-6">
                   <Summary contract={contract} />
