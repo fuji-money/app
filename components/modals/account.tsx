@@ -1,10 +1,10 @@
 import Spinner from 'components/spinner'
-import Modal from './modal'
+import Modal, { ModalIds } from './modal'
 import { marinaFujiAccountID } from 'lib/constants'
 
 const AccountModal = () => {
   return (
-    <Modal id="account-modal">
+    <Modal id={ModalIds.Account}>
       <Spinner />
       <h3 className="mt-4">Waiting for confirmation...</h3>
       <p>

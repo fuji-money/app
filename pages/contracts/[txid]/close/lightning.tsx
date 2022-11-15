@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { createSubmarineSwap } from 'lib/swaps'
 import { openModal, closeModal, extractError, retry } from 'lib/utils'
 import { WalletContext } from 'components/providers/wallet'
@@ -67,14 +67,15 @@ const ContractRedeemLightning: NextPage = () => {
     markContractRedeemed(newContract)
     setData(txid)
     setResult(Outcome.Success)
+    setStage(ModalStages.ShowResult)
     reloadContracts()
   }
 
   const handleInvoice = async (invoice?: string): Promise<void> => {
     if (!marina) return
     if (!invoice || typeof invoice !== 'string')
-      return openModal('invoice-modal')
-    closeModal('invoice-modal')
+      return openModal(ModalIds.Invoice)
+    closeModal(ModalIds.Invoice)
     openModal('redeem-modal')
     try {
       setStage(ModalStages.NeedsAddress)
@@ -95,6 +96,7 @@ const ContractRedeemLightning: NextPage = () => {
       console.debug(extractError(error))
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
@@ -102,6 +104,7 @@ const ContractRedeemLightning: NextPage = () => {
     <>
       <EnablersLightning
         contract={newContract}
+        handleAlby={handleInvoice}
         handleInvoice={handleInvoice}
         task={Tasks.Redeem}
       />

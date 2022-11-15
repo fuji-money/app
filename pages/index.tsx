@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Router from 'next/router'
 import { useEffect } from 'react'
 import Script from 'next/script'
+import { ModalIds } from 'components/modals/modal'
 
 const Home: NextPage = () => {
   useEffect(() => {
@@ -39,7 +40,7 @@ const Home: NextPage = () => {
       Router.push('/dashboard')
     } else {
       console.info('Email not in short list')
-      openModal('invalid-email-modal')
+      openModal(ModalIds.InvalidEmail)
       // deleteCookie()
     }
   }

@@ -11,7 +11,7 @@ import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import EnablersLiquid from 'components/enablers/liquid'
 import EnablersLightning from 'components/enablers/lightning'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
 import { saveContractToStorage } from 'lib/contracts'
@@ -45,7 +45,7 @@ import {
 } from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
-  const { blindPrivKeysMap, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, network, weblnProvider } = useContext(WalletContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -54,13 +54,14 @@ const BorrowParams: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [invoice, setInvoice] = useState('')
-  const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+  const [stage, setStage] = useState(ModalStages.NeedsCoins)
+  const [useWebln, setUseWebln] = useState(false)
 
   const router = useRouter()
   const { params } = router.query
 
   const handleInvoice = async (): Promise<void> => {
-    openModal('invoice-deposit-modal')
+    openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {
       // we will create a ephemeral key pair:
@@ -228,17 +229,26 @@ const BorrowParams: NextPage = () => {
           // show success
           setData(newContract.txid)
           setResult(Outcome.Success)
+          setStage(ModalStages.ShowResult)
           reloadContracts()
         }
       }
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
+  const handleAlby = weblnProvider
+    ? async () => {
+        setUseWebln(true)
+        await handleInvoice()
+      }
+    : undefined
+
   const handleMarina = async (): Promise<void> => {
-    openModal('marina-deposit-modal')
+    openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
       if (!newContract) return
@@ -281,10 +291,12 @@ const BorrowParams: NextPage = () => {
       // show success
       setData(newContract.txid)
       setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
       reloadContracts()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
@@ -364,6 +376,7 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLightning
                 contract={newContract}
+                handleAlby={handleAlby}
                 handleInvoice={handleInvoice}
                 task={Tasks.Borrow}
               />
@@ -376,6 +389,7 @@ const BorrowParams: NextPage = () => {
                 reset={resetContracts}
                 stage={stage}
                 task={Tasks.Borrow}
+                useWebln={useWebln}
               />
             </>
           )

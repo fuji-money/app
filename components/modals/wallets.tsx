@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import Modal from './modal'
+import Modal, { ModalIds } from './modal'
 
 interface WalletInfo {
   name: string
@@ -90,7 +90,7 @@ const WalletsModal = ({ handleWalletChoice }: WalletsModalProps) => {
     )
   })
   return (
-    <Modal id="wallets-modal">
+    <Modal id={ModalIds.Wallets}>
       <h3 className="mb-5">Connect wallet</h3>
       {buttons}
     </Modal>

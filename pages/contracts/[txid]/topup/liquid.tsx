@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
 import { marinaMainAccountID, feeAmount } from 'lib/constants'
 import { saveContractToStorage, markContractTopup } from 'lib/contracts'
@@ -46,7 +46,7 @@ const ContractTopupLiquid: NextPage = () => {
 
   const handleMarina = async (): Promise<void> => {
     if (!marina) return
-    openModal('marina-deposit-modal')
+    openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
       // validate we have necessary utxos

@@ -1,7 +1,8 @@
-import Modal, { ModalStages } from './modal'
+/* eslint-disable react/display-name */
+import Modal, { ModalIds, ModalStages } from './modal'
 import { sleep } from 'lib/utils'
 import QRCode from 'components/qrcode'
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import Result from 'components/result'
 import Spinner from 'components/spinner'
 import { Contract } from 'lib/types'
@@ -16,8 +17,9 @@ interface InvoiceDepositModalProps {
   result: string
   reset: () => void
   retry: () => void
-  stage: string[]
+  stage: ModalStages
   task: string
+  useWebln: boolean
 }
 
 const InvoiceDepositModal = ({
@@ -29,9 +31,17 @@ const InvoiceDepositModal = ({
   retry,
   stage,
   task,
+  useWebln,
 }: InvoiceDepositModalProps) => {
   const { weblnProvider } = useContext(WalletContext)
   const [buttonText, setButtonText] = useState('Copy')
+
+  const payWithAlby = async () => {
+    if (weblnProvider) {
+      await weblnProvider.enable()
+      await weblnProvider.sendPayment(invoice)
+    }
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(invoice).then(
@@ -43,19 +53,98 @@ const InvoiceDepositModal = ({
     )
   }
 
-  const [mainMessage, secondaryMessage] = stage
-  const showInvoice = stage === ModalStages.NeedsPayment
-  const showReceived = stage === ModalStages.PaymentReceived
-  const payWithWebln = weblnProvider
-    ? async () => {
-        await weblnProvider.enable()
-        await weblnProvider.sendPayment(invoice)
-      }
-    : undefined
+  const MainMessage = ({ text }: { text: string }) => (
+    <h3 className="mt-4">{text}</h3>
+  )
 
-  return (
-    <Modal id="invoice-deposit-modal" reset={reset}>
-      {result && (
+  const SecondaryMessage = ({ text }: { text: string }) => (
+    <p className="confirm">{text}</p>
+  )
+
+  const ContractSummary = () => (
+    <div className="mx-auto">
+      <Summary contract={contract} />
+    </div>
+  )
+
+  let ModalContent = () => <></>
+
+  switch (stage) {
+    case ModalStages.NeedsInvoice:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Making swap" />
+          <p>Deposit to contract:</p>
+          <ContractSummary />
+        </>
+      )
+      break
+    case ModalStages.NeedsPayment:
+      ModalContent = useWebln
+        ? () => (
+            <>
+              <Spinner />
+              <MainMessage text="Deposit with Webln" />
+              <p>
+                <a onClick={payWithAlby}>Pay with Alby</a>
+              </p>
+              <SecondaryMessage text="Waiting for payment" />
+            </>
+          )
+        : () => (
+            <>
+              <Spinner />
+              <MainMessage text="Deposit by scaning this QR" />
+              <QRCode text={invoice} />
+              <SecondaryMessage text="Waiting for payment" />
+              <p className="has-text-centered mt-4">
+                <button onClick={handleCopy} className="button">
+                  {buttonText}
+                </button>
+              </p>
+            </>
+          )
+      break
+    case ModalStages.PaymentReceived:
+      ModalContent = () => (
+        <>
+          <p>
+            <Image
+              src={`/images/status/success.svg`}
+              alt="status icon"
+              height={100}
+              width={100}
+            />
+          </p>
+          <MainMessage text="Payment received" />
+        </>
+      )
+      break
+    case ModalStages.NeedsFujiApproval:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Preparing transaction" />
+          <p>Preparing contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for Fuji approval" />
+        </>
+      )
+      break
+    case ModalStages.NeedsFinishing:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Finishing" />
+          <p>Creating contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Broadcasting transaction" />
+        </>
+      )
+      break
+    case ModalStages.ShowResult:
+      ModalContent = () => (
         <Result
           contract={contract}
           data={data}
@@ -64,57 +153,15 @@ const InvoiceDepositModal = ({
           retry={retry}
           task={task}
         />
-      )}
-      {!result && (
-        <>
-          {showInvoice ? (
-            <>
-              <Spinner />
-              <h3 className="mt-4">{mainMessage}</h3>
-              {payWithWebln && (
-                <p>
-                  <a onClick={payWithWebln}>Pay with WebLN</a>
-                </p>
-              )}
-              <p className="mt-4">
-                <QRCode text={invoice} />
-              </p>
-              <p className="confirm">{secondaryMessage}</p>
-              <p className="has-text-centered mt-4">
-                <button onClick={handleCopy} className="button">
-                  {buttonText}
-                </button>
-              </p>
-            </>
-          ) : (
-            <>
-              {showReceived ? (
-                <>
-                  <p>
-                    <Image
-                      src={`/images/status/success.svg`}
-                      alt="status icon"
-                      height={100}
-                      width={100}
-                    />
-                  </p>
-                  <h3 className="mt-4">{mainMessage}</h3>
-                </>
-              ) : (
-                <>
-                  <Spinner />
-                  <h3 className="mt-4">{mainMessage}</h3>
-                  <p>Deposit to contract:</p>
-                  <div className="mx-auto">
-                    <Summary contract={contract} />
-                  </div>
-                </>
-              )}
-              <p className="confirm">{secondaryMessage}</p>
-            </>
-          )}
-        </>
-      )}
+      )
+      break
+    default:
+      break
+  }
+
+  return (
+    <Modal id={ModalIds.InvoiceDeposit} reset={reset}>
+      <ModalContent />
     </Modal>
   )
 }

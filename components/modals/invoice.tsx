@@ -8,7 +8,7 @@ import {
 import { Contract } from 'lib/types'
 import { fromSatoshis, toSatoshis } from 'lib/utils'
 import { useState } from 'react'
-import Modal from './modal'
+import Modal, { ModalIds } from './modal'
 
 interface InvoiceModalProps {
   contract: Contract
@@ -56,7 +56,7 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   const pn = (n: number) => prettyNumber(fromSatoshis(n), 8)
 
   return (
-    <Modal id={'invoice-modal'}>
+    <Modal id={ModalIds.Invoice}>
       <h3 className="mt-4">Enter BOLT11 Lightning Invoice</h3>
       <p className="has-text-weight-semibold mb-4">
         Amount: {pn(invoiceAmount)}*

@@ -5,7 +5,7 @@ import EnablersLightning from 'components/enablers/lightning'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
 import { extractError, openModal, retry, sleep } from 'lib/utils'
 import ECPairFactory from 'ecpair'
@@ -36,7 +36,8 @@ import {
 } from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network, weblnProvider } =
+    useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -44,6 +45,7 @@ const ContractTopupLightning: NextPage = () => {
   const [invoice, setInvoice] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
+  const [useWebln, setUseWebln] = useState(false)
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
@@ -56,7 +58,7 @@ const ContractTopupLightning: NextPage = () => {
 
   const handleInvoice = async (): Promise<void> => {
     if (!marina) return
-    openModal('invoice-deposit-modal')
+    openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {
       // we will create a ephemeral key pair:
@@ -247,10 +249,18 @@ const ContractTopupLightning: NextPage = () => {
     }
   }
 
+  const handleAlby = weblnProvider
+    ? async () => {
+        setUseWebln(true)
+        await handleInvoice()
+      }
+    : undefined
+
   return (
     <>
       <EnablersLightning
         contract={newContract}
+        handleAlby={handleAlby}
         handleInvoice={handleInvoice}
         task={Tasks.Topup}
       />
@@ -263,6 +273,7 @@ const ContractTopupLightning: NextPage = () => {
         reset={resetContracts}
         stage={stage}
         task={Tasks.Topup}
+        useWebln={useWebln}
       />
     </>
   )
