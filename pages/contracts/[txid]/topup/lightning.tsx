@@ -240,12 +240,14 @@ const ContractTopupLightning: NextPage = () => {
           // show success
           setData(newContract.txid)
           setResult('success')
+          setStage(ModalStages.ShowResult)
           reloadContracts()
         }
       }
     } catch (error) {
       setData(extractError(error))
       setResult('failure')
+      setStage(ModalStages.ShowResult)
     }
   }
 

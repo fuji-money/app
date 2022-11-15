@@ -114,10 +114,12 @@ const ContractTopupLiquid: NextPage = () => {
       // show success
       setData(newContract.txid)
       setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
       reloadContracts()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 

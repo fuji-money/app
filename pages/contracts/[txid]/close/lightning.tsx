@@ -76,7 +76,7 @@ const ContractRedeemLightning: NextPage = () => {
     if (!invoice || typeof invoice !== 'string')
       return openModal(ModalIds.Invoice)
     closeModal(ModalIds.Invoice)
-    openModal('redeem-modal')
+    openModal(ModalIds.Redeem)
     try {
       setStage(ModalStages.NeedsAddress)
       const refundPublicKey = (await marina.getNextAddress()).publicKey!

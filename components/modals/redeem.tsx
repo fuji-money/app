@@ -1,7 +1,8 @@
+/* eslint-disable react/display-name */
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
 import Spinner from 'components/spinner'
-import Modal, { ModalStages } from './modal'
+import Modal, { ModalIds, ModalStages } from './modal'
 import Result from 'components/result'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
@@ -36,9 +37,8 @@ const RedeemModal = ({
   const ticker = synthetic.ticker
   const neededAmount = synthetic.quantity
   const hasFunds = neededAmount && balance >= neededAmount
-  const modalId = 'redeem-modal'
 
-  const ModalContent = ({
+  const ModalTemplate = ({
     first,
     second,
     third,
@@ -47,7 +47,7 @@ const RedeemModal = ({
     second: string
     third: string
   }) => (
-    <Modal id={modalId} reset={reset}>
+    <>
       <Spinner />
       <h3 className="mt-4">{first}</h3>
       <p>{second}:</p>
@@ -55,12 +55,12 @@ const RedeemModal = ({
         <Summary contract={contract} />
       </div>
       <p className="confirm">{third}</p>
-    </Modal>
+    </>
   )
 
   if (!result && !hasFunds) {
     return (
-      <Modal id={modalId} reset={reset}>
+      <Modal id={ModalIds.Redeem} reset={reset}>
         <h3 className="mt-4">Insufficient funds to redeem contract</h3>
         <p>
           You need{' '}
@@ -78,49 +78,47 @@ const RedeemModal = ({
     )
   }
 
-  if (stage === ModalStages.NeedsAddress) {
-    return (
-      <ModalContent
-        first="Making swap"
-        second="Close contract"
-        third="Waiting for address"
-      />
-    )
-  }
+  let ModalContent = () => <></>
 
-  if (stage === ModalStages.NeedsCoins) {
-    return (
-      <ModalContent
-        first="Selecting coins"
-        second="Close contract"
-        third="Selecting coins needed for transaction"
-      />
-    )
-  }
-
-  if (stage === ModalStages.NeedsConfirmation) {
-    return (
-      <ModalContent
-        first="Approve transaction"
-        second="Close contract"
-        third="Accept and unlock this transaction in your Marina wallet"
-      />
-    )
-  }
-
-  if (stage === ModalStages.NeedsFinishing) {
-    return (
-      <ModalContent
-        first="Finishing"
-        second="Close contract"
-        third="Broadcasting transaction"
-      />
-    )
-  }
-
-  if (stage === ModalStages.ShowResult) {
-    return (
-      <Modal id={modalId} reset={reset}>
+  switch (stage) {
+    case ModalStages.NeedsAddress:
+      ModalContent = () => (
+        <ModalTemplate
+          first="Making swap"
+          second="Close contract"
+          third="Waiting for address"
+        />
+      )
+      break
+    case ModalStages.NeedsCoins:
+      ModalContent = () => (
+        <ModalTemplate
+          first="Selecting coins"
+          second="Close contract"
+          third="Selecting coins needed for transaction"
+        />
+      )
+      break
+    case ModalStages.NeedsConfirmation:
+      ModalContent = () => (
+        <ModalTemplate
+          first="Approve transaction"
+          second="Close contract"
+          third="Accept and unlock this transaction in your Marina wallet"
+        />
+      )
+      break
+    case ModalStages.NeedsFinishing:
+      ModalContent = () => (
+        <ModalTemplate
+          first="Finishing"
+          second="Close contract"
+          third="Broadcasting transaction"
+        />
+      )
+      break
+    case ModalStages.ShowResult:
+      ModalContent = () => (
         <Result
           contract={contract}
           data={data}
@@ -129,11 +127,17 @@ const RedeemModal = ({
           reset={reset}
           task={task}
         />
-      </Modal>
-    )
+      )
+      break
+    default:
+      break
   }
 
-  return <></>
+  return (
+    <Modal id={ModalIds.Redeem} reset={reset}>
+      <ModalContent />
+    </Modal>
+  )
 }
 
 export default RedeemModal

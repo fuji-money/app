@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { openModal, extractError, retry } from 'lib/utils'
@@ -28,7 +28,7 @@ const ContractRedeemLiquid: NextPage = () => {
 
   const handleMarina = async (): Promise<void> => {
     if (!marina) return
-    openModal('redeem-modal')
+    openModal(ModalIds.Redeem)
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
@@ -58,11 +58,13 @@ const ContractRedeemLiquid: NextPage = () => {
       markContractRedeemed(newContract)
       setData(txid)
       setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
       reloadContracts()
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
