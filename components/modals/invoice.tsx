@@ -92,6 +92,7 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
         className="textarea"
         onChange={validateInvoice}
         placeholder="Paste invoice here"
+        rows={5}
       ></textarea>
       <p>&nbsp; {warning} &nbsp;</p>
       <button
