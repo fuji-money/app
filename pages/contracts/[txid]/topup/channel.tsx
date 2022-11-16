@@ -7,12 +7,15 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 
 const ContractTopupChannel: NextPage = () => {
-  const { newContract } = useContext(ContractsContext)
+  const { newContract, oldContract } = useContext(ContractsContext)
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
-  return <Channel contract={newContract} task={Tasks.Topup} />
+  const amount =
+    newContract.collateral.quantity - (oldContract?.collateral.quantity || 0)
+
+  return <Channel amount={amount} contract={newContract} task={Tasks.Topup} />
 }
 
 export default ContractTopupChannel
