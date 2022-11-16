@@ -2,7 +2,7 @@
 import Modal, { ModalIds, ModalStages } from './modal'
 import { sleep } from 'lib/utils'
 import QRCode from 'components/qrcode'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 import Result from 'components/result'
 import Spinner from 'components/spinner'
 import { Contract } from 'lib/types'
