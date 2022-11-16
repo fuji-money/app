@@ -38,8 +38,10 @@ const InvoiceDepositModal = ({
 
   const payWithWebln = async () => {
     if (weblnProvider) {
-      await weblnProvider.enable()
-      await weblnProvider.sendPayment(invoice)
+      try {
+        await weblnProvider.enable()
+        await weblnProvider.sendPayment(invoice)
+      } catch (ignore) {}
     }
   }
 
@@ -77,6 +79,7 @@ const InvoiceDepositModal = ({
           <MainMessage text="Making swap" />
           <p>Deposit to contract:</p>
           <ContractSummary />
+          <SecondaryMessage text="Waiting for invoice" />
         </>
       )
       break
