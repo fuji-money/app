@@ -25,6 +25,7 @@ interface WalletContextProps {
   setConnected: (arg0: boolean) => void
   xPubKey: string
   weblnProvider: WebLNProvider | undefined
+  weblnProviderName: string
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -36,6 +37,7 @@ export const WalletContext = createContext<WalletContextProps>({
   setConnected: () => {},
   xPubKey: '',
   weblnProvider: undefined,
+  weblnProviderName: '',
 })
 
 interface WalletProviderProps {
@@ -49,6 +51,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
   const [xPubKey, setXPubKey] = useState('')
   const [weblnProvider, setWeblnProvider] = useState<WebLNProvider>()
+  const [weblnProviderName, setWeblnProviderName] = useState('')
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
@@ -62,7 +65,14 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // get webln provider
   useEffect(() => {
     try {
-      requestProvider().then((provider) => setWeblnProvider(provider))
+      if (!weblnProvider)
+        requestProvider().then((provider) => {
+          setWeblnProvider(provider)
+          provider.getInfo().then((info) => {
+            if (info.node.alias.includes('getalby.com'))
+              setWeblnProviderName('Alby')
+          })
+        })
     } catch (ignore) {}
   })
 
@@ -136,6 +146,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         setConnected,
         xPubKey,
         weblnProvider,
+        weblnProviderName,
       }}
     >
       {children}
