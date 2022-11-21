@@ -242,7 +242,7 @@ const BorrowParams: NextPage = () => {
   }
 
   const handleAlby =
-    weblnProviderName === 'Alby'
+    weblnProviderName === 'Alby' && network === 'liquid'
       ? async () => {
           setUseWebln(true)
           await handleInvoice()

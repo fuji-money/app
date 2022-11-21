@@ -23,7 +23,7 @@ const MultiplyDeposit = ({
   setChannel,
   setDeposit,
 }: MultiplyDepositProps) => {
-  const { network } = useContext(WalletContext)
+  const { network, weblnProviderName } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')
@@ -42,8 +42,15 @@ const MultiplyDeposit = ({
   }
 
   const handleLightning = async () => {} // TODO
-  const handleAlby = async () => await handleLightning()
   const handleMarina = () => {} // TODO
+
+  const handleAlby =
+    weblnProviderName === 'Alby' && network === 'liquid'
+      ? async () => {
+          setUseWebln(true)
+          await handleLightning()
+        }
+      : undefined
 
   return (
     <>
