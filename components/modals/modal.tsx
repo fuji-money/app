@@ -18,6 +18,7 @@ export enum ModalIds {
   Redeem = 'redeem-modal',
   Trade = 'trade-modal',
   Wallets = 'wallets-modal',
+  Webln = 'webln-modal',
 }
 
 export enum ModalStages {
@@ -62,6 +63,7 @@ const Modal = ({ children, id, reset }: ModalProps) => {
         }
         .modal-content .is-box {
           background: linear-gradient(180deg, #fffbf8 0%, #ffeae5 100%);
+          padding: 2rem;
         }
       `}</style>
     </div>

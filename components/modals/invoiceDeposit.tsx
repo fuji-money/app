@@ -33,7 +33,7 @@ const InvoiceDepositModal = ({
   task,
   useWebln,
 }: InvoiceDepositModalProps) => {
-  const { weblnProvider, weblnProviderName } = useContext(WalletContext)
+  const { weblnProvider } = useContext(WalletContext)
   const [buttonText, setButtonText] = useState('Copy')
 
   const payWithWebln = async () => {
@@ -88,9 +88,11 @@ const InvoiceDepositModal = ({
         ? () => (
             <>
               <Spinner />
-              <MainMessage text="Deposit with Webln" />
-              <p>
-                <a onClick={payWithWebln}>Pay with {weblnProviderName}</a>
+              <MainMessage text="Deposit with Alby" />
+              <p className="has-text-centered mt-4">
+                <button onClick={payWithWebln} className="button is-primary">
+                  Pay invoice
+                </button>
               </p>
               <SecondaryMessage text="Waiting for payment" />
             </>

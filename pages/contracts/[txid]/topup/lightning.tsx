@@ -36,7 +36,7 @@ import {
 } from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network, weblnProvider } =
+  const { blindPrivKeysMap, marina, network, weblnProviderName } =
     useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -251,12 +251,13 @@ const ContractTopupLightning: NextPage = () => {
     }
   }
 
-  const handleAlby = weblnProvider
-    ? async () => {
-        setUseWebln(true)
-        await handleInvoice()
-      }
-    : undefined
+  const handleAlby =
+    weblnProviderName === 'Alby'
+      ? async () => {
+          setUseWebln(true)
+          await handleInvoice()
+        }
+      : undefined
 
   return (
     <>

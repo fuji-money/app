@@ -147,3 +147,5 @@ export type ElectrumUtxo = {
   vout: number
   prevout: TxOutput
 }
+
+export type VoidOrUndefFunc = (() => void) | undefined

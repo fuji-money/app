@@ -45,7 +45,8 @@ import {
 } from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
-  const { blindPrivKeysMap, network, weblnProvider } = useContext(WalletContext)
+  const { blindPrivKeysMap, network, weblnProviderName } =
+    useContext(WalletContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -240,12 +241,13 @@ const BorrowParams: NextPage = () => {
     }
   }
 
-  const handleAlby = weblnProvider
-    ? async () => {
-        setUseWebln(true)
-        await handleInvoice()
-      }
-    : undefined
+  const handleAlby =
+    weblnProviderName === 'Alby'
+      ? async () => {
+          setUseWebln(true)
+          await handleInvoice()
+        }
+      : undefined
 
   const handleMarina = async (): Promise<void> => {
     openModal(ModalIds.MarinaDeposit)
