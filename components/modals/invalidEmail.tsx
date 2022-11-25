@@ -1,8 +1,8 @@
-import Modal from './modal'
+import Modal, { ModalIds } from './modal'
 
 const InvalidEmailModal = () => {
   return (
-    <Modal id="invalid-email-modal">
+    <Modal id={ModalIds.InvalidEmail}>
       <h3 className="mt-4">It&apos;s Not your turn (yet)</h3>
       <p>Email has not been granted access to closed beta</p>
       <p>

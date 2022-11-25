@@ -16,11 +16,11 @@ import {
   AssetHash,
   address,
   script,
-  Transaction,
   witnessStackToScriptWitness,
   Psbt,
+  networks,
 } from 'liquidjs-lib'
-import { fetchHex, postData } from './fetch'
+import { postData } from './fetch'
 import {
   createFujiAccount,
   fujiAccountMissing,
@@ -32,9 +32,13 @@ import { synthAssetArtifact } from 'lib/artifacts'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
-import { getNetwork } from 'ldk'
 import { randomBytes } from 'crypto'
 import { selectCoinsWithBlindPrivKey } from './selection'
+import { Network } from 'liquidjs-lib/src/networks'
+
+const getNetwork = (str?: NetworkString): Network => {
+  return str ? (networks as Record<string, Network>)[str] : networks.liquid
+}
 
 const getIonioInstance = (contract: Contract, network: NetworkString) => {
   // get payout amount
@@ -149,8 +153,6 @@ export async function prepareBorrowTxWithClaimTx(
     throw new Error('Invalid contract: no contract priceLevel')
 
   const [utxo] = utxos
-  const hex = await fetchHex(utxo.txid, network)
-  const prevout = Transaction.fromHex(hex).outs[utxo.vout]
 
   const psbt = new Psbt({ network: getNetwork(network) })
 
@@ -158,7 +160,7 @@ export async function prepareBorrowTxWithClaimTx(
   psbt.addInput({
     hash: utxo.txid,
     index: utxo.vout,
-    witnessUtxo: prevout,
+    witnessUtxo: utxo.prevout,
     witnessScript: Buffer.from(redeemScript, 'hex'),
   })
 
@@ -293,7 +295,7 @@ export async function proposeBorrowContract({
   const blindingPrivKeyOfCollateralInputs: Record<number, string> = {}
 
   const utxoIsConfidential = (u: Utxo) =>
-    u.prevout.rangeProof != null && u.prevout.rangeProof.length > 0
+    u.prevout?.rangeProof != null && u.prevout.rangeProof.length > 0
 
   collateralUtxos.forEach((utxo, idx) => {
     if (utxoIsConfidential(utxo)) {

@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
 import { marinaMainAccountID, feeAmount } from 'lib/constants'
 import { saveContractToStorage, markContractTopup } from 'lib/contracts'
@@ -19,6 +19,7 @@ import { Psbt } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoinsWithBlindPrivKey } from 'lib/selection'
+import { broadcastTx } from 'lib/websocket'
 
 const ContractTopupLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -45,7 +46,7 @@ const ContractTopupLiquid: NextPage = () => {
 
   const handleMarina = async (): Promise<void> => {
     if (!marina) return
-    openModal('marina-deposit-modal')
+    openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
       // validate we have necessary utxos
@@ -93,7 +94,10 @@ const ContractTopupLiquid: NextPage = () => {
 
       // broadcast transaction
       const rawHex = ptx.extractTransaction().toHex()
-      newContract.txid = (await marina.broadcastTransaction(rawHex)).txid
+      const data = await broadcastTx(rawHex, network)
+      if (data.error) throw new Error(data.error)
+      newContract.txid = data.result
+      if (!newContract.txid) throw new Error('No txid returned')
       newContract.vout = 1
 
       // add additional fields to contract and save to storage
@@ -110,10 +114,12 @@ const ContractTopupLiquid: NextPage = () => {
       // show success
       setData(newContract.txid)
       setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
       reloadContracts()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 

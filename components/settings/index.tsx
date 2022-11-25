@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import { saveAs } from 'file-saver'
 import { localStorageSwapsKey, localStorageContractsKey } from 'lib/storage'
+import { useContext } from 'react'
+import { WalletContext } from 'components/providers/wallet'
 
 const downloadFile = (localStorageKey: string, fileName: string) => {
   const item = localStorage.getItem(localStorageKey)
@@ -10,12 +12,34 @@ const downloadFile = (localStorageKey: string, fileName: string) => {
   saveAs(blob, fileName)
 }
 
+const Item = ({ handler, text }: { handler: () => void; text: string }) => {
+  return (
+    <div className="dropdown-item">
+      <p>
+        <button className="button" onClick={handler}>
+          {text}
+        </button>
+      </p>
+      <style jsx>{`
+        .button {
+          width: 100%;
+        }
+      `}</style>
+    </div>
+  )
+}
+
 const Settings = () => {
+  const { weblnProvider, enableWeblnHandler } = useContext(WalletContext)
+
   const handleContractsBackup = () =>
     downloadFile(localStorageContractsKey, 'contracts.json')
 
   const handleSwapsBackup = () =>
     downloadFile(localStorageSwapsKey, 'swaps.json')
+
+  const showEnableWeblnButton =
+    window.webln && !weblnProvider && enableWeblnHandler
 
   return (
     <div className="dropdown is-hoverable my-auto pt-2">
@@ -31,20 +55,11 @@ const Settings = () => {
       </div>
       <div className="dropdown-menu">
         <div className="dropdown-content">
-          <div className="dropdown-item">
-            <p>
-              <button className="button" onClick={handleContractsBackup}>
-                Backup contracts
-              </button>
-            </p>
-          </div>
-          <div className="dropdown-item">
-            <p>
-              <button className="button" onClick={handleSwapsBackup}>
-                Backup swaps
-              </button>
-            </p>
-          </div>
+          <Item handler={handleContractsBackup} text="Backup contracts" />
+          <Item handler={handleSwapsBackup} text="Backup swaps" />
+          {showEnableWeblnButton && (
+            <Item handler={enableWeblnHandler} text="Enable WebLN" />
+          )}
         </div>
       </div>
       <style jsx>{`

@@ -7,18 +7,30 @@ const closeModals = () => {
   })
 }
 
-export const ModalStages = {
-  NeedsAddress: ['Making swap', 'Waiting for address'],
-  NeedsCoins: ['Selecting coins', 'Selecting coins needed for transaction'],
-  NeedsConfirmation: [
-    'Approve transaction',
-    'Accept and unlock this transaction in your Marina wallet',
-  ],
-  NeedsFinishing: ['Finishing', 'Broadcasting transaction'],
-  NeedsFujiApproval: ['Preparing transaction', 'Waiting for Fuji approval'],
-  NeedsInvoice: ['Making swap', 'Waiting for invoice'],
-  NeedsPayment: ['Deposit by scaning this QR', 'Waiting for payment'],
-  PaymentReceived: ['Payment received', ''],
+export enum ModalIds {
+  Account = 'account-modal',
+  CurrentPrice = 'current-price-modal',
+  InvalidEmail = 'invalid-email-modal',
+  Invoice = 'invoice-modal',
+  InvoiceDeposit = 'invoice-deposit-modal',
+  LiquidationPrice = 'liquidation-price-modal',
+  MarinaDeposit = 'marina-deposit-modal',
+  Redeem = 'redeem-modal',
+  Trade = 'trade-modal',
+  Wallets = 'wallets-modal',
+  Webln = 'webln-modal',
+}
+
+export enum ModalStages {
+  NeedsAddress = 'NeedAddress',
+  NeedsCoins = 'NeedsCoins',
+  NeedsConfirmation = 'NeedsConfirmation',
+  NeedsFinishing = 'NeedsFinishing',
+  NeedsFujiApproval = 'NeedsFujiApproval',
+  NeedsInvoice = 'NeedsInvoice',
+  NeedsPayment = 'NeedsPayment',
+  PaymentReceived = 'PaymentReceived',
+  ShowResult = 'ShowResult',
 }
 
 interface ModalProps {
@@ -51,6 +63,7 @@ const Modal = ({ children, id, reset }: ModalProps) => {
         }
         .modal-content .is-box {
           background: linear-gradient(180deg, #fffbf8 0%, #ffeae5 100%);
+          padding: 2rem;
         }
       `}</style>
     </div>

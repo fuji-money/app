@@ -12,6 +12,7 @@ import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
 import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
+import { ModalIds } from 'components/modals/modal'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -73,7 +74,7 @@ const MultiplyForm = ({
           <div className="is-flex is-justify-content-space-between">
             <p className="is-size-7 has-text-weight-bold">Liquidation price</p>
             <p>
-              <a onClick={() => openModal('liquidation-price-modal')}>
+              <a onClick={() => openModal(ModalIds.LiquidationPrice)}>
                 <Image
                   src="/images/icons/help.svg"
                   alt="help icon"
@@ -94,7 +95,7 @@ const MultiplyForm = ({
           <div className="is-flex is-justify-content-space-between">
             <p className="is-size-7 has-text-weight-bold">Current price</p>
             <p>
-              <a onClick={() => openModal('current-price-modal')}>
+              <a onClick={() => openModal(ModalIds.CurrentPrice)}>
                 <Image
                   src="/images/icons/help.svg"
                   alt="help icon"

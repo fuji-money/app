@@ -6,3 +6,9 @@ declare module 'react' {
     global?: boolean
   }
 }
+
+declare global {
+  interface Window {
+    webln?: any
+  }
+}

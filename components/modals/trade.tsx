@@ -1,9 +1,9 @@
 import Image from 'next/image'
-import Modal from './modal'
+import Modal, { ModalIds } from './modal'
 
 const TradeModal = () => {
   return (
-    <Modal id="trade-modal">
+    <Modal id={ModalIds.Trade}>
       <h3 className="mb-5">Trade</h3>
       <p className="is-size-7 mb-5">
         FUJI assets are available for trade in the following venues

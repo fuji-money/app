@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { markContractRedeemed } from 'lib/contracts'
 import { prepareRedeemTx } from 'lib/covenant'
 import { openModal, extractError, retry } from 'lib/utils'
@@ -12,6 +12,7 @@ import EnablersLiquid from 'components/enablers/liquid'
 import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
+import { broadcastTx } from 'lib/websocket'
 
 const ContractRedeemLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -27,7 +28,7 @@ const ContractRedeemLiquid: NextPage = () => {
 
   const handleMarina = async (): Promise<void> => {
     if (!marina) return
-    openModal('redeem-modal')
+    openModal(ModalIds.Redeem)
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
@@ -48,17 +49,22 @@ const ContractRedeemLiquid: NextPage = () => {
 
       // extract and broadcast transaction
       const rawHex = signed.psbt.extractTransaction().toHex()
-      const txid = (await marina.broadcastTransaction(rawHex)).txid
+      const data = await broadcastTx(rawHex, network)
+      if (data.error) throw new Error(data.error)
+      const txid = data.result
+      if (!txid) throw new Error('No txid returned')
 
       // mark on storage and finalize
       markContractRedeemed(newContract)
       setData(txid)
       setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
       reloadContracts()
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 

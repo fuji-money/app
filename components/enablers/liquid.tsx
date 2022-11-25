@@ -1,9 +1,9 @@
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
-import Image from 'next/image'
 import Balance from 'components/balance'
 import Title from 'components/title'
 import { operationFromTask } from 'lib/utils'
+import { EnablerButton } from './button'
 
 interface EnablersLiquidProps {
   contract: Contract
@@ -25,21 +25,11 @@ const EnablersLiquid = ({
             <div className="is-box has-pink-border has-text-centered p-6">
               <div className="columns">
                 <div className="column is-6">
-                  <button className="button is-primary" onClick={handleMarina}>
-                    <Image
-                      src="/images/marina.svg"
-                      alt="marina logo"
-                      width={20}
-                      height={20}
-                    />
-                    <span className="ml-2">Marina</span>
-                  </button>
-                  <style jsx>{`
-                    .button {
-                      justify-content: flex-start;
-                      width: 90%;
-                    }
-                  `}</style>
+                  <EnablerButton
+                    name="Marina"
+                    icon="/images/marina.svg"
+                    handler={handleMarina}
+                  />
                 </div>
                 <div className="column is-6">
                   <Summary contract={contract} />

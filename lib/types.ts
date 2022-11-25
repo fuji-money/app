@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from 'react'
 import type { NextPage } from 'next'
 import type { AppProps } from 'next/app'
 import { Utxo } from 'marina-provider'
+import { TxOutput } from 'liquidjs-lib'
 
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode
@@ -132,3 +133,19 @@ export type SwapInfo = {
 }
 
 export type BlindPrivKeysMap = Record<string, string>
+
+// from https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-listunspent
+export type ElectrumUnspent = {
+  height: number
+  tx_hash: string
+  tx_pos: number
+  value: number
+}
+
+export type ElectrumUtxo = {
+  txid: string
+  vout: number
+  prevout: TxOutput
+}
+
+export type VoidOrUndefFunc = (() => void) | undefined

@@ -23,14 +23,15 @@ const MultiplyDeposit = ({
   setChannel,
   setDeposit,
 }: MultiplyDepositProps) => {
-  const { network } = useContext(WalletContext)
+  const { network, weblnProviderName } = useContext(WalletContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')
+  const [invoice, setInvoice] = useState('')
+  const [paid, setPaid] = useState(false)
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
-  const [paid, setPaid] = useState(false)
-  const [invoice, setInvoice] = useState('')
+  const [useWebln, setUseWebln] = useState(false)
 
   const lightning = channel === 'lightning'
   const liquid = channel === 'liquid'
@@ -40,8 +41,16 @@ const MultiplyDeposit = ({
     setDeposit(false)
   }
 
-  const handleLightning = () => {} // TODO
+  const handleLightning = async () => {} // TODO
   const handleMarina = () => {} // TODO
+
+  const handleAlby =
+    weblnProviderName === 'Alby' && network === 'liquid'
+      ? async () => {
+          setUseWebln(true)
+          await handleLightning()
+        }
+      : undefined
 
   return (
     <>
@@ -50,6 +59,7 @@ const MultiplyDeposit = ({
         {lightning && (
           <EnablersLightning
             contract={contract}
+            handleAlby={handleAlby}
             handleInvoice={handleLightning}
             task={Tasks.Multiply}
           />
@@ -80,6 +90,7 @@ const MultiplyDeposit = ({
         retry={() => {}}
         stage={stage}
         task={Tasks.Multiply}
+        useWebln={useWebln}
       />
     </>
   )

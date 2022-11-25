@@ -5,13 +5,13 @@ import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Asset, Offer, Outcome } from 'lib/types'
+import { Asset, Offer, Outcome, ElectrumUtxo } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import EnablersLiquid from 'components/enablers/liquid'
 import EnablersLightning from 'components/enablers/lightning'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
 import { saveContractToStorage } from 'lib/contracts'
@@ -27,12 +27,7 @@ import {
   ReverseSwap,
 } from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
-import {
-  address,
-  crypto,
-  Psbt,
-  witnessStackToScriptWitness,
-} from 'liquidjs-lib'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
@@ -41,12 +36,17 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import { fetchUtxos, Outpoint } from 'ldk'
-import { explorerURL } from 'lib/explorer'
-import { broadcastTx, electrumURL } from 'lib/websocket'
+import {
+  broadcastTx,
+  electrumURL,
+  fetchUtxos,
+  finalizeTx,
+  reverseScriptHash,
+} from 'lib/websocket'
 
 const BorrowParams: NextPage = () => {
-  const { blindPrivKeysMap, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, network, weblnProviderName } =
+    useContext(WalletContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -55,19 +55,20 @@ const BorrowParams: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [invoice, setInvoice] = useState('')
-  const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+  const [stage, setStage] = useState(ModalStages.NeedsCoins)
+  const [useWebln, setUseWebln] = useState(false)
 
   const router = useRouter()
   const { params } = router.query
 
   const handleInvoice = async (): Promise<void> => {
-    openModal('invoice-deposit-modal')
+    openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {
       // we will create a ephemeral key pair:
       // - it will generate a public key to be used with the Boltz swap
       // - later we will sign the claim transaction with the private key
-      // all swaps are stored on storage and available to backup
+      // all swaps are stored on storage and available for backup
       const privateKey = randomBytes(32)
       const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
 
@@ -134,22 +135,20 @@ const BorrowParams: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // list of utxos to get from swap
-      let utxos: Outpoint[] = []
+      let utxos: ElectrumUtxo[] = []
 
       // open web socket
       const ws = new WebSocket(electrumURL(network))
 
       // electrum expects the hash of address script in hex reversed
-      const reversedAddressScriptHash = crypto
-        .sha256(address.toOutputScript(lockupAddress))
-        .reverse()
-        .toString('hex')
+      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
 
       // send message to subscribe to event
       ws.onopen = () => {
         ws.send(
           JSON.stringify({
             id: 1,
+            jsonrpc: '2.0',
             method: 'blockchain.scripthash.subscribe',
             params: [reversedAddressScriptHash],
           }),
@@ -158,13 +157,14 @@ const BorrowParams: NextPage = () => {
 
       // wait for payment
       ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        utxos = await fetchUtxos(lockupAddress, network)
         // payment has arrived
         if (utxos.length > 0) {
           // unsubscribe to event
           ws.send(
             JSON.stringify({
               id: 1,
+              jsonrpc: '2.0',
               method: 'blockchain.scripthash.unsubscribe',
               params: [reversedAddressScriptHash],
             }),
@@ -210,7 +210,8 @@ const BorrowParams: NextPage = () => {
           setStage(ModalStages.NeedsFinishing)
 
           // broadcast transaction
-          const data = await broadcastTx(psbt.toBase64(), network)
+          const rawHex = finalizeTx(psbt.toBase64())
+          const data = await broadcastTx(rawHex, network)
           if (data.error) throw new Error(data.error)
           newContract.txid = data.result
           if (!newContract.txid) throw new Error('No txid returned')
@@ -229,17 +230,27 @@ const BorrowParams: NextPage = () => {
           // show success
           setData(newContract.txid)
           setResult(Outcome.Success)
+          setStage(ModalStages.ShowResult)
           reloadContracts()
         }
       }
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
+  const handleAlby =
+    weblnProviderName === 'Alby' && network === 'liquid'
+      ? async () => {
+          setUseWebln(true)
+          await handleInvoice()
+        }
+      : undefined
+
   const handleMarina = async (): Promise<void> => {
-    openModal('marina-deposit-modal')
+    openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
       if (!newContract) return
@@ -261,7 +272,9 @@ const BorrowParams: NextPage = () => {
       const signedTransaction = await signTx(partialTransaction)
 
       setStage(ModalStages.NeedsFinishing)
-      const data = await broadcastTx(signedTransaction, network)
+
+      const rawHex = finalizeTx(signedTransaction)
+      const data = await broadcastTx(rawHex, network)
       if (data.error) throw new Error(data.error)
       newContract.txid = data.result
       if (!newContract.txid) throw new Error('No txid returned')
@@ -280,10 +293,12 @@ const BorrowParams: NextPage = () => {
       // show success
       setData(newContract.txid)
       setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
       reloadContracts()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
@@ -363,6 +378,7 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLightning
                 contract={newContract}
+                handleAlby={handleAlby}
                 handleInvoice={handleInvoice}
                 task={Tasks.Borrow}
               />
@@ -375,6 +391,7 @@ const BorrowParams: NextPage = () => {
                 reset={resetContracts}
                 stage={stage}
                 task={Tasks.Borrow}
+                useWebln={useWebln}
               />
             </>
           )

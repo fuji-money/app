@@ -1,8 +1,9 @@
+import { ModalIds } from 'components/modals/modal'
 import { openModal } from 'lib/utils'
 
 const TradeButton = () => {
   return (
-    <button onClick={() => openModal('trade-modal')} className="button">
+    <button onClick={() => openModal(ModalIds.Trade)} className="button">
       Trade
     </button>
   )

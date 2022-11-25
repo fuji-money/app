@@ -5,7 +5,7 @@ import EnablersLightning from 'components/enablers/lightning'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
 import { extractError, openModal, retry, sleep } from 'lib/utils'
 import ECPairFactory from 'ecpair'
@@ -16,14 +16,7 @@ import {
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
-import { fetchHex } from 'lib/fetch'
-import {
-  Transaction,
-  crypto,
-  witnessStackToScriptWitness,
-  Psbt,
-  address,
-} from 'liquidjs-lib'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -33,13 +26,18 @@ import { markContractTopup, saveContractToStorage } from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import { Outcome } from 'lib/types'
-import { explorerURL } from 'lib/explorer'
-import { fetchUtxos, Outpoint } from 'ldk'
-import { broadcastTx, electrumURL } from 'lib/websocket'
+import { Outcome, ElectrumUtxo } from 'lib/types'
+import {
+  broadcastTx,
+  electrumURL,
+  fetchUtxos,
+  finalizeTx,
+  reverseScriptHash,
+} from 'lib/websocket'
 
 const ContractTopupLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network, weblnProviderName } =
+    useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -47,6 +45,7 @@ const ContractTopupLightning: NextPage = () => {
   const [invoice, setInvoice] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
+  const [useWebln, setUseWebln] = useState(false)
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
@@ -59,7 +58,7 @@ const ContractTopupLightning: NextPage = () => {
 
   const handleInvoice = async (): Promise<void> => {
     if (!marina) return
-    openModal('invoice-deposit-modal')
+    openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {
       // we will create a ephemeral key pair:
@@ -129,22 +128,20 @@ const ContractTopupLightning: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // list of utxos to get from swap
-      let utxos: Outpoint[] = []
+      let utxos: ElectrumUtxo[] = []
 
       // open web socket
       const ws = new WebSocket(electrumURL(network))
 
       // electrum expects the script from an address in hex reversed
-      const reversedAddressScriptHash = crypto
-        .sha256(address.toOutputScript(lockupAddress))
-        .reverse()
-        .toString('hex')
+      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
 
       // send message to subscribe to event
       ws.onopen = () => {
         ws.send(
           JSON.stringify({
             id: 1,
+            jsonrpc: '2.0',
             method: 'blockchain.scripthash.subscribe',
             params: [reversedAddressScriptHash],
           }),
@@ -152,12 +149,13 @@ const ContractTopupLightning: NextPage = () => {
       }
 
       ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, explorerURL(network))
+        utxos = await fetchUtxos(lockupAddress, network)
         if (utxos.length > 0) {
           // unsubscribe to event
           ws.send(
             JSON.stringify({
               id: 1,
+              jsonrpc: '2.0',
               method: 'blockchain.scripthash.unsubscribe',
               params: [reversedAddressScriptHash],
             }),
@@ -175,10 +173,8 @@ const ContractTopupLightning: NextPage = () => {
 
           // get prevout for utxo
           const [utxo] = utxos
-          const hex = await fetchHex(utxo.txid, network)
-          const prevout = Transaction.fromHex(hex).outs[utxo.vout]
           const value = onchainTopupAmount
-          const collateralUtxos = [{ ...utxo, prevout, value, redeemScript }]
+          const collateralUtxos = [{ ...utxo, value, redeemScript }]
 
           // prepare borrow transaction with claim utxo as input
           const preparedTx = await prepareTopupTx(
@@ -221,7 +217,8 @@ const ContractTopupLightning: NextPage = () => {
           })
 
           // broadcast transaction
-          const data = await broadcastTx(ptx.toBase64(), network)
+          const rawHex = finalizeTx(ptx.toBase64())
+          const data = await broadcastTx(rawHex, network)
           if (data.error) throw new Error(data.error)
           newContract.txid = data.result
           if (!newContract.txid) throw new Error('No txid returned')
@@ -243,19 +240,30 @@ const ContractTopupLightning: NextPage = () => {
           // show success
           setData(newContract.txid)
           setResult('success')
+          setStage(ModalStages.ShowResult)
           reloadContracts()
         }
       }
     } catch (error) {
       setData(extractError(error))
       setResult('failure')
+      setStage(ModalStages.ShowResult)
     }
   }
+
+  const handleAlby =
+    weblnProviderName === 'Alby' && network === 'liquid'
+      ? async () => {
+          setUseWebln(true)
+          await handleInvoice()
+        }
+      : undefined
 
   return (
     <>
       <EnablersLightning
         contract={newContract}
+        handleAlby={handleAlby}
         handleInvoice={handleInvoice}
         task={Tasks.Topup}
       />
@@ -268,6 +276,7 @@ const ContractTopupLightning: NextPage = () => {
         reset={resetContracts}
         stage={stage}
         task={Tasks.Topup}
+        useWebln={useWebln}
       />
     </>
   )

@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
-import { ModalStages } from 'components/modals/modal'
+import { ModalIds, ModalStages } from 'components/modals/modal'
 import { createSubmarineSwap } from 'lib/swaps'
 import { openModal, closeModal, extractError, retry } from 'lib/utils'
 import { WalletContext } from 'components/providers/wallet'
@@ -14,6 +14,7 @@ import EnablersLightning from 'components/enablers/lightning'
 import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
+import { broadcastTx } from 'lib/websocket'
 
 const ContractRedeemLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -58,19 +59,24 @@ const ContractRedeemLightning: NextPage = () => {
 
     // extract and broadcast transaction
     const rawHex = signed.psbt.extractTransaction().toHex()
-    const txid = (await marina.broadcastTransaction(rawHex)).txid
+    const data = await broadcastTx(rawHex, network)
+    if (data.error) throw new Error(data.error)
+    const txid = data.result
+    if (!txid) throw new Error('No txid returned')
 
     markContractRedeemed(newContract)
     setData(txid)
     setResult(Outcome.Success)
+    setStage(ModalStages.ShowResult)
     reloadContracts()
   }
 
-  const handleInvoice = async (invoice = ''): Promise<void> => {
+  const handleInvoice = async (invoice?: string): Promise<void> => {
     if (!marina) return
-    if (!invoice) return openModal('invoice-modal')
-    closeModal('invoice-modal')
-    openModal('redeem-modal')
+    if (!invoice || typeof invoice !== 'string')
+      return openModal(ModalIds.Invoice)
+    closeModal(ModalIds.Invoice)
+    openModal(ModalIds.Redeem)
     try {
       setStage(ModalStages.NeedsAddress)
       const refundPublicKey = (await marina.getNextAddress()).publicKey!
@@ -81,7 +87,7 @@ const ContractRedeemLightning: NextPage = () => {
         refundPublicKey,
       )
       if (!boltzSwap) throw new Error('Error creating swap')
-      const { address, expectedAmount, redeemScript } = boltzSwap
+      const { address, expectedAmount } = boltzSwap
       if (expectedAmount > amount)
         throw new Error('Expected amount higher then collateral amount')
       proceedWithRedeem(address)
@@ -89,6 +95,7 @@ const ContractRedeemLightning: NextPage = () => {
       console.debug(extractError(error))
       setData(extractError(error))
       setResult(Outcome.Failure)
+      setStage(ModalStages.ShowResult)
     }
   }
 
@@ -96,6 +103,7 @@ const ContractRedeemLightning: NextPage = () => {
     <>
       <EnablersLightning
         contract={newContract}
+        handleAlby={handleInvoice}
         handleInvoice={handleInvoice}
         task={Tasks.Redeem}
       />

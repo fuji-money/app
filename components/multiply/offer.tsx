@@ -1,7 +1,9 @@
+import { EnabledTasks, Tasks } from 'lib/tasks'
 import Image from 'next/image'
 import Link from 'next/link'
 
 const MultiplyOffer = () => {
+  const enabled = EnabledTasks[Tasks.Multiply]
   return (
     <div>
       <div className="is-box has-pink-border mx-auto mt-6">
@@ -31,7 +33,7 @@ const MultiplyOffer = () => {
           Only the collateral will be locked on the Liquid Network, redeemable
           anytime. The FUJI USD amount is converted into BTC automatically.
         </p>
-        <div className="is-flex is-justify-content-space-between">
+        <div className="is-flex is-justify-content-space-between px-4">
           <div>
             <p className="is-secondary-purple has-text-weight-bold is-size-7">
               Max Multiple
@@ -45,12 +47,17 @@ const MultiplyOffer = () => {
             <h3 className="is-purple has-text-right">1.5%</h3>
           </div>
         </div>
-        <p className="has-text-centered mt-2">
-          <Link href={`/multiply/btc-long`} passHref>
-            <button disabled className="button is-primary ml-3">
+        <p className="has-text-centered mt-2 px-4">
+          {enabled && (
+            <Link href={`/multiply/btc-long`} passHref>
+              <button className="button is-primary">Multiply</button>
+            </Link>
+          )}
+          {!enabled && (
+            <button disabled className="button is-primary">
               Coming soon
             </button>
-          </Link>
+          )}
         </p>
       </div>
       <style jsx>{`
