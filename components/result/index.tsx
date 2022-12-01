@@ -37,7 +37,7 @@ const Success = ({ contract, reset, task, txid }: SuccessProps) => {
   }
   // console.info('message', message())
   return (
-    <div className="has-text-centered mx-6">
+    <div className="has-text-centered mx-5">
       <p>
         <Image
           src={`/images/status/success.svg`}
