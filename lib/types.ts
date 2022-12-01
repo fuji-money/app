@@ -149,3 +149,11 @@ export type ElectrumUtxo = {
 }
 
 export type VoidOrUndefFunc = (() => void) | undefined
+
+export interface BlockHeader {
+  height: number
+  merkleRoot: string
+  previousBlockHash: string
+  timestamp: number
+  version: number
+}

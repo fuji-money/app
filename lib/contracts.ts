@@ -11,19 +11,22 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
-import { electrumURL, fetchUtxos, reverseScriptHash } from './websocket'
+import {
+  electrumURL,
+  fetchUtxos,
+  reverseScriptHash,
+  txIsConfirmed,
+} from './websocket'
 
 // listen for confirmation
-// - first we subscribe to changes for this script hash
-// - on message received:
-//   - if it comes from subscription, check listunspents
-//   - else, if it comes from listunspent, check height
 const listenForContractConfirmation = (
   addr: string,
   contract: Contract,
   network: NetworkString,
   reloadContracts: () => void,
 ) => {
+  const { txid } = contract
+  if (!txid) return
   const reversedAddressScriptHash = reverseScriptHash(addr)
   const ws = new WebSocket(electrumURL(network))
   // subscribe changes
@@ -40,25 +43,23 @@ const listenForContractConfirmation = (
   // listen for messages
   ws.onmessage = async (e) => {
     const data = JSON.parse(e.data)
-    // this message comes from subscription, which means something changed
-    // check for list of utxos using blockchain.scripthash.listunspent
-    if (data.id === 1 || data.method === 'blockchain.scripthash.subscribe') {
-      const utxos = await fetchUtxos(addr, network)
-      if (utxos?.length > 0) {
-        markContractConfirmed(contract)
-        reloadContracts()
-        // unsubscribe to event
-        ws.send(
-          JSON.stringify({
-            id: 2,
-            jsonrpc: '2.0',
-            method: 'blockchain.scripthash.unsubscribe',
-            params: [reversedAddressScriptHash],
-          }),
-        )
-        // close socket
-        ws.close()
-      }
+    // subscribe always send a first message with no params, we ignore it
+    if (!data.params) return
+    // check if contract is confirmed
+    if (await txIsConfirmed(txid, network)) {
+      markContractConfirmed(contract)
+      reloadContracts()
+      // unsubscribe to event
+      ws.send(
+        JSON.stringify({
+          id: 2,
+          jsonrpc: '2.0',
+          method: 'blockchain.scripthash.unsubscribe',
+          params: [reversedAddressScriptHash],
+        }),
+      )
+      // close socket
+      ws.close()
     }
   }
 }
@@ -219,9 +220,12 @@ export function markContractConfirmed(contract: Contract): void {
 // note: deletes all activites with (now) invalid activity type
 //   - if now is redeemed, it can't be liquidated
 //   - if now is redeemed, it can't be topuped
-export function markContractRedeemed(contract: Contract, tx?: any): void {
-  const createdAt = tx?.status.block_time * 1000 || Date.now()
+export function markContractRedeemed(
+  contract: Contract,
+  timestamp?: number,
+): void {
   if (contract.state === ContractState.Redeemed) return
+  const createdAt = timestamp ? timestamp * 1000 : Date.now()
   contract.state = ContractState.Redeemed
   updateContractOnStorage(contract)
   addActivity(contract, ActivityType.Redeemed, createdAt)
@@ -236,11 +240,15 @@ export function markContractRedeemed(contract: Contract, tx?: any): void {
 // note: deletes all activites with (now) invalid activity type
 //   - if now is liquidated, it can't be redeemed
 //   - it can be topupped though
-export function markContractLiquidated(contract: Contract, tx: any): void {
+export function markContractLiquidated(
+  contract: Contract,
+  timestamp?: number,
+): void {
   if (contract.state === ContractState.Liquidated) return
+  const createdAt = timestamp ? timestamp * 1000 : Date.now()
   contract.state = ContractState.Liquidated
   updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Liquidated, tx.status.block_time * 1000)
+  addActivity(contract, ActivityType.Liquidated, createdAt)
   // contract could have wrong activities due to network failures, etc.
   removeActivities(contract, ActivityType.Redeemed)
 }
@@ -279,11 +287,15 @@ export function markContractUnknown(contract: Contract): void {
 }
 
 // mark contract as topup
-export function markContractTopup(contract: Contract): void {
+export function markContractTopup(
+  contract: Contract,
+  timestamp?: number,
+): void {
   if (contract.state === ContractState.Topup) return
+  const createdAt = timestamp ? timestamp * 1000 : Date.now()
   contract.state = ContractState.Topup
   updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Topup, Date.now())
+  addActivity(contract, ActivityType.Topup, createdAt)
 }
 
 // add additional fields to contract and save to storage

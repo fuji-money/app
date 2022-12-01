@@ -1,6 +1,6 @@
 import { address, crypto, Psbt, Transaction } from 'liquidjs-lib'
 import { NetworkString } from 'marina-provider'
-import { Contract, ElectrumUnspent, ElectrumUtxo } from './types'
+import { BlockHeader, Contract, ElectrumUnspent, ElectrumUtxo } from './types'
 
 // docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
 
@@ -132,7 +132,7 @@ const fetchTx = async (
 }
 
 // given an address, return history
-export const fetchHistory = async (addr: string, network: NetworkString) => {
+const fetchHistory = async (addr: string, network: NetworkString) => {
   // call web socket to get history
   const data = await callWS({
     id: 30,
@@ -143,7 +143,67 @@ export const fetchHistory = async (addr: string, network: NetworkString) => {
   return data.result
 }
 
-export const checkOutspend2 = async (
+// given an address, return history
+const fetchBlockHeader = async (height: number, network: NetworkString) => {
+  // call web socket to get history
+  const data = await callWS({
+    id: 40,
+    method: 'blockchain.block.header',
+    network,
+    params: [height],
+  })
+  return data.result
+}
+
+// deserializes a block header
+const deserializeBlockHeader = (hex: string): BlockHeader => {
+  const DYNAFED_HF_MASK = 2147483648
+  const buffer = Buffer.from(hex, 'hex')
+  let offset = 0
+
+  let version = buffer.readUInt32LE(offset)
+  offset += 4
+
+  const isDyna = (version & DYNAFED_HF_MASK) !== 0
+  if (isDyna) {
+    version = version & ~DYNAFED_HF_MASK
+  }
+
+  const previousBlockHash = buffer
+    .subarray(offset, offset + 32)
+    .reverse()
+    .toString('hex')
+  offset += 32
+
+  const merkleRoot = buffer.subarray(offset, offset + 32).toString('hex')
+  offset += 32
+
+  const timestamp = buffer.readUInt32LE(offset)
+  offset += 4
+
+  const height = buffer.readUInt32LE(offset)
+  offset += 4
+
+  return {
+    height,
+    merkleRoot,
+    previousBlockHash,
+    timestamp,
+    version,
+  }
+}
+
+// checks if a given contract was already spent
+// 1. fetch the contract funding transaction
+// 2. because we need the covenant script
+// 3. to calculate the corresponding address
+// 4. to fetch this address history
+// 5. to find out if it is already spent (history length = 2)
+// 6. If is spent, we need to fetch the block header
+// 7. because we need to know when was the spending tx
+// 8. and we get it by deserialing the block header
+// 9. Return the input where the utxo is used
+export const checkOutspend = async (
   contract: Contract,
   network: NetworkString,
 ) => {
@@ -156,7 +216,11 @@ export const checkOutspend2 = async (
     const hist = await fetchHistory(addr, network)
     if (!hist) return // tx not found
     if (hist.length === 1) return { spent: false }
-    const { tx_hash } = hist[1] // spending tx
+    const { height, tx_hash } = hist[1] // spending tx
+    // get timestamp from block header
+    const { timestamp } = deserializeBlockHeader(
+      await fetchBlockHeader(height, network),
+    )
     // return input from tx where contract was spent, we need this
     // to find out how it was spent (liquidated, topup or redeemed)
     // by analysing the taproot leaf used
@@ -164,11 +228,19 @@ export const checkOutspend2 = async (
     for (let vin = 0; vin < new_tx.ins.length; vin++) {
       if (txid === new_tx.ins[vin].hash.reverse().toString('hex')) {
         return {
-          spent: true,
           input: new_tx.ins[vin],
-          txid: tx_hash,
+          spent: true,
+          timestamp,
         }
       }
     }
   }
+}
+
+export const txIsConfirmed = async (txid: string, network: NetworkString) => {
+  const tx = await fetchTx(txid, network)
+  const script = tx.outs?.[0].script
+  const addr = address.fromOutputScript(script)
+  const hist = await fetchHistory(addr, network)
+  return hist?.[0].height !== 0
 }

@@ -14,7 +14,6 @@ import {
   markContractUnknown,
   markContractConfirmed,
   markContractTopup,
-  contractIsClosed,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -25,7 +24,6 @@ import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
 import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
-import { checkOutspend, getTx } from 'lib/explorer'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
@@ -33,7 +31,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { checkOutspend2 } from 'lib/websocket'
+import { checkOutspend, txIsConfirmed } from 'lib/websocket'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -111,36 +109,32 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const tx = await getTx(contract.txid, network)
-        if (!tx?.status?.confirmed) continue
+        const confirmed = await txIsConfirmed(contract.txid, network)
+        if (!confirmed) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
       // if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkOutspend2(contract, network)
-      console.log('status', status)
-      console.log('xxx', await checkOutspend2(contract, network))
+      const status = await checkOutspend(contract, network)
       if (!status) continue
-      if (status.spent && status.input) {
+      const { input, spent, timestamp } = status
+      if (spent && input) {
         // contract already spent, let's find out why:
         // we will look at the leaf before the last one,
         // and based on his fingerprint find out if it was:
         // - liquidated (leaf asm will have 37 items)
         // - redeemed (leaf asm will have 47 items)
         // - topuped (leaf asm will have 27 items)
-        const { txid } = status
-        const spentTx = await getTx(txid, network)
-        if (!spentTx) continue
-        const index = status.input.witness.length - 2
-        const leaf = status.input.witness[index].toString('hex')
+        const index = input.witness.length - 2
+        const leaf = input.witness[index].toString('hex')
         console.log('leaf', getFuncNameFromScriptHexOfLeaf(leaf))
         switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
           case 'liquidate':
-            markContractLiquidated(contract, spentTx)
+            markContractLiquidated(contract, timestamp)
             continue
           case 'redeem':
-            markContractRedeemed(contract, spentTx)
+            markContractRedeemed(contract, timestamp)
             continue
           case 'topup':
             markContractTopup(contract)

@@ -1,8 +1,7 @@
 import { NetworkString } from 'marina-provider'
 import { fetchURL } from './fetch'
-import { Contract } from './types'
 
-export const explorerURL = (network: NetworkString) => {
+const explorerURL = (network: NetworkString) => {
   switch (network) {
     case 'regtest':
       return 'http://localhost:3001'
@@ -12,16 +11,6 @@ export const explorerURL = (network: NetworkString) => {
     default:
       return 'https://liquid.network/api'
   }
-}
-
-export const checkOutspend = async (
-  contract: Contract,
-  network: NetworkString,
-) => {
-  const { txid, vout } = contract
-  if (!txid || typeof vout === 'undefined') return
-  const url = `${explorerURL(network)}/tx/${txid}/outspend/${vout}`
-  return await fetchURL(url)
 }
 
 // get tx from explorer
