@@ -33,6 +33,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
+import { checkOutspend2 } from 'lib/websocket'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -115,22 +116,25 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
-      if (contractIsClosed(contract)) continue
+      // if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkOutspend(contract, network)
+      const status = await checkOutspend2(contract, network)
+      console.log('status', status)
+      console.log('xxx', await checkOutspend2(contract, network))
       if (!status) continue
-      if (status.spent) {
+      if (status.spent && status.input) {
         // contract already spent, let's find out why:
         // we will look at the leaf before the last one,
         // and based on his fingerprint find out if it was:
         // - liquidated (leaf asm will have 37 items)
         // - redeemed (leaf asm will have 47 items)
         // - topuped (leaf asm will have 27 items)
-        const { txid, vin } = status
+        const { txid } = status
         const spentTx = await getTx(txid, network)
         if (!spentTx) continue
-        const index = spentTx.vin[vin].witness.length - 2
-        const leaf = spentTx.vin[vin].witness[index]
+        const index = status.input.witness.length - 2
+        const leaf = status.input.witness[index].toString('hex')
+        console.log('leaf', getFuncNameFromScriptHexOfLeaf(leaf))
         switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
           case 'liquidate':
             markContractLiquidated(contract, spentTx)

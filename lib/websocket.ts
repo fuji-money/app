@@ -1,6 +1,8 @@
 import { address, crypto, Psbt, Transaction } from 'liquidjs-lib'
 import { NetworkString } from 'marina-provider'
-import { ElectrumUnspent, ElectrumUtxo } from './types'
+import { Contract, ElectrumUnspent, ElectrumUtxo } from './types'
+
+// docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
 
 export const electrumURL = (network: NetworkString) => {
   switch (network) {
@@ -17,7 +19,7 @@ interface callWSProps {
   id: number
   method: string
   network: NetworkString
-  params: string[]
+  params: any[]
 }
 
 // sends message to web socket
@@ -54,6 +56,7 @@ const callWS = async ({
   })
 }
 
+// given an address, returns its script hash reversed
 export const reverseScriptHash = (addr: string) =>
   crypto.sha256(address.toOutputScript(addr)).reverse().toString('hex')
 
@@ -80,7 +83,7 @@ export const broadcastTx = async (
 }
 
 // given a txid, returns tx hex
-export const fetchTxHex = async (
+const fetchTxHex = async (
   txid: string,
   network: NetworkString,
 ): Promise<string> => {
@@ -117,4 +120,55 @@ export const fetchUtxos = async (
       }
     }),
   )
+}
+
+// given a txid, return Transaction
+const fetchTx = async (
+  txid: string,
+  network: NetworkString,
+): Promise<Transaction> => {
+  const hex = await fetchTxHex(txid, network)
+  return Transaction.fromHex(hex)
+}
+
+// given an address, return history
+export const fetchHistory = async (addr: string, network: NetworkString) => {
+  // call web socket to get history
+  const data = await callWS({
+    id: 30,
+    method: 'blockchain.scripthash.get_history',
+    network,
+    params: [reverseScriptHash(addr)],
+  })
+  return data.result
+}
+
+export const checkOutspend2 = async (
+  contract: Contract,
+  network: NetworkString,
+) => {
+  const { txid, vout } = contract
+  if (!txid || typeof vout === 'undefined') return
+  const tx = await fetchTx(txid, network)
+  const script = tx.outs?.[vout]?.script
+  if (script) {
+    const addr = address.fromOutputScript(script)
+    const hist = await fetchHistory(addr, network)
+    if (!hist) return // tx not found
+    if (hist.length === 1) return { spent: false }
+    const { tx_hash } = hist[1] // spending tx
+    // return input from tx where contract was spent, we need this
+    // to find out how it was spent (liquidated, topup or redeemed)
+    // by analysing the taproot leaf used
+    const new_tx = await fetchTx(tx_hash, network)
+    for (let vin = 0; vin < new_tx.ins.length; vin++) {
+      if (txid === new_tx.ins[vin].hash.reverse().toString('hex')) {
+        return {
+          spent: true,
+          input: new_tx.ins[vin],
+          txid: tx_hash,
+        }
+      }
+    }
+  }
 }
