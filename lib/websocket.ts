@@ -4,17 +4,6 @@ import { BlockHeader, Contract, ElectrumUnspent, ElectrumUtxo } from './types'
 
 // docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
 
-export const electrumURL = (network: NetworkString) => {
-  switch (network) {
-    case 'regtest':
-      return 'http://localhost:3001' // TODO
-    case 'testnet':
-      return 'wss://blockstream.info/liquidtestnet/electrum-websocket/api'
-    default:
-      return 'wss://blockstream.info/liquid/electrum-websocket/api'
-  }
-}
-
 interface callWSProps {
   id: number
   method: string
@@ -56,32 +45,6 @@ const callWS = async ({
   })
 }
 
-// given an address, returns its script hash reversed
-export const reverseScriptHash = (addr: string) =>
-  crypto.sha256(address.toOutputScript(addr)).reverse().toString('hex')
-
-// finalize transaction
-export const finalizeTx = (ptx: string): string => {
-  const finalPtx = Psbt.fromBase64(ptx)
-  finalPtx.finalizeAllInputs()
-  return finalPtx.extractTransaction().toHex()
-}
-
-// broadcasts raw transaction using web sockets
-// finalize inputs and then broadcast
-// returns txid
-export const broadcastTx = async (
-  rawHex: string,
-  network: NetworkString,
-): Promise<any> => {
-  return await callWS({
-    id: 10,
-    method: 'blockchain.transaction.broadcast',
-    network,
-    params: [rawHex],
-  })
-}
-
 // given a txid, returns tx hex
 const fetchTxHex = async (
   txid: string,
@@ -96,33 +59,7 @@ const fetchTxHex = async (
   return data.result
 }
 
-// given an address, return utxos
-export const fetchUtxos = async (
-  addr: string,
-  network: NetworkString,
-): Promise<ElectrumUtxo[]> => {
-  // call web socket to get utxos
-  const data = await callWS({
-    id: 30,
-    method: 'blockchain.scripthash.listunspent',
-    network,
-    params: [reverseScriptHash(addr)],
-  })
-
-  return Promise.all(
-    data.result.map(async (unspent: ElectrumUnspent) => {
-      const hex = await fetchTxHex(unspent.tx_hash, network)
-      const prevout = Transaction.fromHex(hex).outs[unspent.tx_pos]
-      return {
-        txid: unspent.tx_hash,
-        vout: unspent.tx_pos,
-        prevout,
-      }
-    }),
-  )
-}
-
-// given a txid, return Transaction
+// given a txid, returns a Transaction
 const fetchTx = async (
   txid: string,
   network: NetworkString,
@@ -131,8 +68,27 @@ const fetchTx = async (
   return Transaction.fromHex(hex)
 }
 
-// given an address, return history
-const fetchHistory = async (addr: string, network: NetworkString) => {
+// given a contract, returns corresponding address
+const fetchContractAddress = async (
+  contract: Contract,
+  network: NetworkString,
+) => {
+  const { txid, vout } = contract
+  if (!txid || typeof vout === 'undefined') return
+  const tx = await fetchTx(txid, network)
+  const script = tx.outs?.[vout]?.script
+  if (script) return address.fromOutputScript(script)
+}
+
+// returns history for a given contract
+// useful to see if a contract is confirmed and spent
+const fetchHistoryForContract = async (
+  contract: Contract,
+  network: NetworkString,
+) => {
+  // get address for this contract
+  const addr = await fetchContractAddress(contract, network)
+  if (!addr) return
   // call web socket to get history
   const data = await callWS({
     id: 30,
@@ -143,7 +99,7 @@ const fetchHistory = async (addr: string, network: NetworkString) => {
   return data.result
 }
 
-// given an address, return history
+// given a block height returns block header
 const fetchBlockHeader = async (height: number, network: NetworkString) => {
   // call web socket to get history
   const data = await callWS({
@@ -193,6 +149,62 @@ const deserializeBlockHeader = (hex: string): BlockHeader => {
   }
 }
 
+// returns electrum url based on network
+export const electrumURL = (network: NetworkString) => {
+  switch (network) {
+    case 'regtest':
+      return 'http://localhost:3001' // TODO
+    case 'testnet':
+      return 'wss://blockstream.info/liquidtestnet/electrum-websocket/api'
+    default:
+      return 'wss://blockstream.info/liquid/electrum-websocket/api'
+  }
+}
+
+// given an address, returns its script hash reversed
+export const reverseScriptHash = (addr: string) =>
+  crypto.sha256(address.toOutputScript(addr)).reverse().toString('hex')
+
+// broadcasts raw transaction using web sockets
+// returns txid
+export const broadcastTx = async (
+  rawHex: string,
+  network: NetworkString,
+): Promise<any> => {
+  return await callWS({
+    id: 10,
+    method: 'blockchain.transaction.broadcast',
+    network,
+    params: [rawHex],
+  })
+}
+
+// given an address, return utxos
+export const fetchUtxosForAddress = async (
+  addr: string,
+  network: NetworkString,
+): Promise<ElectrumUtxo[]> => {
+  // call web socket to get utxos
+  const data = await callWS({
+    id: 30,
+    method: 'blockchain.scripthash.listunspent',
+    network,
+    params: [reverseScriptHash(addr)],
+  })
+
+  return Promise.all(
+    data.result.map(async (unspent: ElectrumUnspent) => {
+      const hex = await fetchTxHex(unspent.tx_hash, network)
+      const prevout = Transaction.fromHex(hex).outs[unspent.tx_pos]
+      return {
+        txid: unspent.tx_hash,
+        vout: unspent.tx_pos,
+        prevout,
+      }
+    }),
+  )
+}
+
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
 // 2. because we need the covenant script
@@ -203,44 +215,93 @@ const deserializeBlockHeader = (hex: string): BlockHeader => {
 // 7. because we need to know when was the spending tx
 // 8. and we get it by deserialing the block header
 // 9. Return the input where the utxo is used
-export const checkOutspend = async (
+export const checkContractOutspend = async (
   contract: Contract,
   network: NetworkString,
 ) => {
-  const { txid, vout } = contract
-  if (!txid || typeof vout === 'undefined') return
-  const tx = await fetchTx(txid, network)
-  const script = tx.outs?.[vout]?.script
-  if (script) {
-    const addr = address.fromOutputScript(script)
-    const hist = await fetchHistory(addr, network)
-    if (!hist) return // tx not found
-    if (hist.length === 1) return { spent: false }
-    const { height, tx_hash } = hist[1] // spending tx
-    // get timestamp from block header
-    const { timestamp } = deserializeBlockHeader(
-      await fetchBlockHeader(height, network),
-    )
-    // return input from tx where contract was spent, we need this
-    // to find out how it was spent (liquidated, topup or redeemed)
-    // by analysing the taproot leaf used
-    const new_tx = await fetchTx(tx_hash, network)
-    for (let vin = 0; vin < new_tx.ins.length; vin++) {
-      if (txid === new_tx.ins[vin].hash.reverse().toString('hex')) {
-        return {
-          input: new_tx.ins[vin],
-          spent: true,
-          timestamp,
-        }
+  const hist = await fetchHistoryForContract(contract, network)
+  if (!hist) return // tx not found
+  if (hist.length === 1) return { spent: false }
+  const { height, tx_hash } = hist[1] // spending tx
+  // get timestamp from block header
+  const { timestamp } = deserializeBlockHeader(
+    await fetchBlockHeader(height, network),
+  )
+  // return input from tx where contract was spent, we need this
+  // to find out how it was spent (liquidated, topup or redeemed)
+  // by analysing the taproot leaf used
+  const new_tx = await fetchTx(tx_hash, network)
+  for (let vin = 0; vin < new_tx.ins.length; vin++) {
+    if (contract.txid === new_tx.ins[vin].hash.reverse().toString('hex')) {
+      return {
+        input: new_tx.ins[vin],
+        spent: true,
+        timestamp,
       }
     }
   }
 }
 
-export const txIsConfirmed = async (txid: string, network: NetworkString) => {
-  const tx = await fetchTx(txid, network)
-  const script = tx.outs?.[0].script
-  const addr = address.fromOutputScript(script)
-  const hist = await fetchHistory(addr, network)
+// check if a contract is confirmed by analysing its history
+export const contractIsConfirmed = async (
+  contract: Contract,
+  network: NetworkString,
+) => {
+  const hist = await fetchHistoryForContract(contract, network)
   return hist?.[0].height !== 0
+}
+
+export const subscribeToEvent = async (
+  contract: Contract,
+  network: NetworkString,
+) => {
+  return new Promise((resolve, reject) => {
+    fetchContractAddress(contract, network).then((addr) => {
+      if (!addr) reject('address not found')
+      const ws = new WebSocket(electrumURL(network))
+      // subscribe changes
+      ws.onopen = () => {
+        ws.send(
+          JSON.stringify({
+            id: 1,
+            jsonrpc: '2.0',
+            method: 'blockchain.scripthash.subscribe',
+            params: [reverseScriptHash(addr as string)],
+          }),
+        )
+      }
+      // listen for messages
+      ws.onmessage = async (e) => {
+        const data = JSON.parse(e.data)
+        if (data.error) {
+          ws.close()
+          reject(data.error)
+        }
+        if (data.params) {
+          ws.close()
+          resolve(data)
+        }
+      }
+    })
+  })
+}
+
+export const unsubscribeToEvent = async (
+  contract: Contract,
+  network: NetworkString,
+) => {
+  const addr = await fetchContractAddress(contract, network)
+  if (!addr) return
+  const ws = new WebSocket(electrumURL(network))
+  ws.onopen = () => {
+    ws.send(
+      JSON.stringify({
+        id: 1,
+        jsonrpc: '2.0',
+        method: 'blockchain.scripthash.unsubscribe',
+        params: [reverseScriptHash(addr)],
+      }),
+    )
+  }
+  ws.close()
 }

@@ -39,10 +39,10 @@ import { addSwapToStorage } from 'lib/storage'
 import {
   broadcastTx,
   electrumURL,
-  fetchUtxos,
-  finalizeTx,
+  fetchUtxosForAddress,
   reverseScriptHash,
 } from 'lib/websocket'
+import { finalizeTx } from 'lib/transaction'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network, weblnProviderName } =
@@ -157,7 +157,7 @@ const BorrowParams: NextPage = () => {
 
       // wait for payment
       ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, network)
+        utxos = await fetchUtxosForAddress(lockupAddress, network)
         // payment has arrived
         if (utxos.length > 0) {
           // unsubscribe to event

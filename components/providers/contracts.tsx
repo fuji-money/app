@@ -31,7 +31,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { checkOutspend, txIsConfirmed } from 'lib/websocket'
+import { checkContractOutspend, contractIsConfirmed } from 'lib/websocket'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -109,14 +109,14 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const confirmed = await txIsConfirmed(contract.txid, network)
+        const confirmed = await contractIsConfirmed(contract, network)
         if (!confirmed) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
       // if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkOutspend(contract, network)
+      const status = await checkContractOutspend(contract, network)
       if (!status) continue
       const { input, spent, timestamp } = status
       if (spent && input) {
@@ -128,7 +128,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         // - topuped (leaf asm will have 27 items)
         const index = input.witness.length - 2
         const leaf = input.witness[index].toString('hex')
-        console.log('leaf', getFuncNameFromScriptHexOfLeaf(leaf))
         switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
           case 'liquidate':
             markContractLiquidated(contract, timestamp)

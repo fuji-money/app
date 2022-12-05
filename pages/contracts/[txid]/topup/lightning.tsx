@@ -30,10 +30,10 @@ import { Outcome, ElectrumUtxo } from 'lib/types'
 import {
   broadcastTx,
   electrumURL,
-  fetchUtxos,
-  finalizeTx,
+  fetchUtxosForAddress,
   reverseScriptHash,
 } from 'lib/websocket'
+import { finalizeTx } from 'lib/transaction'
 
 const ContractTopupLightning: NextPage = () => {
   const { blindPrivKeysMap, marina, network, weblnProviderName } =
@@ -149,7 +149,7 @@ const ContractTopupLightning: NextPage = () => {
       }
 
       ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, network)
+        utxos = await fetchUtxosForAddress(lockupAddress, network)
         if (utxos.length > 0) {
           // unsubscribe to event
           ws.send(

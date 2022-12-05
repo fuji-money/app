@@ -12,56 +12,26 @@ import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
 import {
-  electrumURL,
-  fetchUtxos,
-  reverseScriptHash,
-  txIsConfirmed,
+  contractIsConfirmed,
+  subscribeToEvent,
+  unsubscribeToEvent,
 } from './websocket'
 
 // listen for confirmation
-const listenForContractConfirmation = (
-  addr: string,
+const listenForContractConfirmation = async (
   contract: Contract,
   network: NetworkString,
   reloadContracts: () => void,
 ) => {
-  const { txid } = contract
-  if (!txid) return
-  const reversedAddressScriptHash = reverseScriptHash(addr)
-  const ws = new WebSocket(electrumURL(network))
-  // subscribe changes
-  ws.onopen = () => {
-    ws.send(
-      JSON.stringify({
-        id: 1,
-        jsonrpc: '2.0',
-        method: 'blockchain.scripthash.subscribe',
-        params: [reversedAddressScriptHash],
-      }),
-    )
-  }
-  // listen for messages
-  ws.onmessage = async (e) => {
-    const data = JSON.parse(e.data)
-    // subscribe always send a first message with no params, we ignore it
-    if (!data.params) return
-    // check if contract is confirmed
-    if (await txIsConfirmed(txid, network)) {
+  subscribeToEvent(contract, network).then(async () => {
+    console.log('event subscribed')
+    if (await contractIsConfirmed(contract, network)) {
+      console.log('contract confirmed')
+      unsubscribeToEvent(contract, network)
       markContractConfirmed(contract)
       reloadContracts()
-      // unsubscribe to event
-      ws.send(
-        JSON.stringify({
-          id: 2,
-          jsonrpc: '2.0',
-          method: 'blockchain.scripthash.unsubscribe',
-          params: [reversedAddressScriptHash],
-        }),
-      )
-      // close socket
-      ws.close()
     }
-  }
+  })
 }
 
 // check if a contract is redeemed or liquidated
@@ -311,6 +281,5 @@ export async function saveContractToStorage(
   contract.confirmed = false
   contract.xPubKey = await getXPubKey()
   createNewContract(contract)
-  const addr = preparedTx.borrowerAddress.confidentialAddress
-  listenForContractConfirmation(addr, contract, network, reloadContracts)
+  listenForContractConfirmation(contract, network, reloadContracts)
 }
