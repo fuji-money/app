@@ -84,12 +84,12 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // get webln provider
   useEffect(() => {
     try {
-      if (window.webln && !weblnProvider) {
+      if (network === 'liquid' && window.webln && !weblnProvider) {
         openModal(ModalIds.Webln)
         setEnableWeblnHandler(() => enableWeblnProvider)
       }
     } catch (ignore) {}
-  }, [weblnProvider])
+  }, [weblnProvider, network])
 
   // update connected state
   useEffect(() => {
@@ -128,26 +128,36 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // update balances and add event listener
   useEffect(() => {
-    updateBalances()
-    if (connected && marina) {
-      updateXPubKey()
-      const id = marina.on('SPENT_UTXO', () => updateBalances())
-      return () => marina.off(id)
+    const updateBalancesAddEventListener = async () => {
+      if (connected && marina) {
+        if (await marina.isEnabled()) {
+          await updateBalances()
+          await updateXPubKey()
+          const id = marina.on('SPENT_UTXO', () => updateBalances())
+          return () => marina.off(id)
+        }
+      }
     }
+    updateBalancesAddEventListener()
   }, [connected, marina, network])
 
   useEffect(() => {
-    if (connected && marina) {
-      const map: BlindPrivKeysMap = {}
-      const addressScriptHex = (a: AddressInterface) =>
-        address.toOutputScript(a.confidentialAddress).toString('hex')
-      marina.getAddresses([marinaMainAccountID]).then((addresses) => {
-        for (const addr of addresses) {
-          map[addressScriptHex(addr)] = addr.blindingPrivateKey
+    const createBlindPrivKeysMap = async () => {
+      if (connected && marina) {
+        if (await marina.isEnabled()) {
+          const map: BlindPrivKeysMap = {}
+          const addressScriptHex = (a: AddressInterface) =>
+            address.toOutputScript(a.confidentialAddress).toString('hex')
+          marina.getAddresses([marinaMainAccountID]).then((addresses) => {
+            for (const addr of addresses) {
+              map[addressScriptHex(addr)] = addr.blindingPrivateKey
+            }
+            setBlindPrivKeysMap(map)
+          })
         }
-        setBlindPrivKeysMap(map)
-      })
+      }
     }
+    createBlindPrivKeysMap()
   }, [connected, marina, network])
 
   return (
