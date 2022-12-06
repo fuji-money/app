@@ -13,6 +13,7 @@ import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
 import {
   contractIsConfirmed,
+  fetchContractAddress,
   subscribeToEvent,
   unsubscribeToEvent,
 } from './websocket'
@@ -23,15 +24,14 @@ const listenForContractConfirmation = async (
   network: NetworkString,
   reloadContracts: () => void,
 ) => {
-  subscribeToEvent(contract, network).then(async () => {
-    console.log('event subscribed')
-    if (await contractIsConfirmed(contract, network)) {
-      console.log('contract confirmed')
-      unsubscribeToEvent(contract, network)
-      markContractConfirmed(contract)
-      reloadContracts()
-    }
-  })
+  const addr = await fetchContractAddress(contract, network)
+  if (!addr) return
+  await subscribeToEvent(addr, network)
+  if (await contractIsConfirmed(contract, network)) {
+    unsubscribeToEvent(addr, network)
+    markContractConfirmed(contract)
+    reloadContracts()
+  }
 }
 
 // check if a contract is redeemed or liquidated
