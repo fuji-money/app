@@ -27,7 +27,7 @@ const ConnectButton = () => {
   const handleWalletChoice = async () => {
     closeModal(ModalIds.Wallets)
     if (!marina) return
-    await marina.enable()
+    if (!(await marina.isEnabled())) await marina.enable()
     if (await fujiAccountMissing(marina)) {
       openModal(ModalIds.Account)
       await createFujiAccount(marina)
