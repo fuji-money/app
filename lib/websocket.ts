@@ -6,7 +6,6 @@ import { BlockHeader, Contract, ElectrumUnspent, ElectrumUtxo } from './types'
 // docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
 
 interface callWSProps {
-  id: number
   method: string
   network: NetworkString
   params: any[]
@@ -15,12 +14,12 @@ interface callWSProps {
 // sends message to web socket
 // opens socket, sends paylod and deal with error
 const callWS = async ({
-  id,
   method,
   network,
   params,
 }: callWSProps): Promise<any> => {
   return new Promise((resolve, reject) => {
+    const id = Math.floor(Math.random() * 1_000)
     const ws = new WebSocket(electrumURL(network))
     ws.onopen = () => {
       ws.send(
@@ -52,7 +51,6 @@ const fetchTxHex = async (
   network: NetworkString,
 ): Promise<string> => {
   const data = await callWS({
-    id: 20,
     method: 'blockchain.transaction.get',
     network,
     params: [txid],
@@ -93,7 +91,6 @@ const fetchContractHistory = async (
   if (!addr) return
   // call web socket to get history
   const data = await callWS({
-    id: 30,
     method: 'blockchain.scripthash.get_history',
     network,
     params: [reverseScriptHash(addr)],
@@ -105,7 +102,6 @@ const fetchContractHistory = async (
 const fetchBlockHeader = async (height: number, network: NetworkString) => {
   // call web socket to get history
   const data = await callWS({
-    id: 40,
     method: 'blockchain.block.header',
     network,
     params: [height],
@@ -174,7 +170,6 @@ export const broadcastTx = async (
   network: NetworkString,
 ): Promise<any> => {
   return await callWS({
-    id: 10,
     method: 'blockchain.transaction.broadcast',
     network,
     params: [rawHex],
@@ -188,7 +183,6 @@ export const fetchUtxosForAddress = async (
 ): Promise<ElectrumUtxo[]> => {
   // call web socket to get utxos
   const data = await callWS({
-    id: 30,
     method: 'blockchain.scripthash.listunspent',
     network,
     params: [reverseScriptHash(addr)],
