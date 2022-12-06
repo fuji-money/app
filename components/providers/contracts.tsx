@@ -14,6 +14,7 @@ import {
   markContractUnknown,
   markContractConfirmed,
   markContractTopup,
+  contractIsClosed,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -114,7 +115,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
-      // if (contractIsClosed(contract)) continue
+      if (contractIsClosed(contract)) continue
       // check if contract is already spent
       const status = await checkContractOutspend(contract, network)
       if (!status) continue
