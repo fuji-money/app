@@ -1,10 +1,9 @@
-import { Asset, UtxoWithBlindPrivKey } from './types'
+import { Asset } from './types'
 import {
   detectProvider,
   MarinaProvider,
   Balance,
   Utxo,
-  AddressInterface,
   NetworkString,
   Transaction,
 } from 'marina-provider'
@@ -14,8 +13,7 @@ import {
   marinaMainAccountID,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import { Psbt, address } from 'liquidjs-lib'
-import { sleep } from './utils'
+import { Psbt } from 'liquidjs-lib'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
