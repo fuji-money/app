@@ -5,6 +5,17 @@ import { BlockHeader, Contract, ElectrumUnspent, ElectrumUtxo } from './types'
 
 // docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
 
+// returns electrum url based on network
+const electrumURL = (network: NetworkString): string => {
+  switch (network) {
+    case 'regtest':
+      return 'http://localhost:3001' // TODO
+    case 'testnet':
+      return 'wss://blockstream.info/liquidtestnet/electrum-websocket/api'
+    default:
+      return 'wss://blockstream.info/liquid/electrum-websocket/api'
+  }
+}
 interface callWSProps {
   method: string
   network: NetworkString
@@ -69,7 +80,7 @@ const fetchTx = async (
 }
 
 // given a contract, returns corresponding address
-export const fetchContractAddress = async (
+const fetchContractAddress = async (
   contract: Contract,
   network: NetworkString,
 ) => {
@@ -87,7 +98,7 @@ const fetchContractHistory = async (
   network: NetworkString,
 ) => {
   // get address for this contract
-  const addr = await fetchContractAddress(contract, network)
+  const addr = contract.addr ?? (await fetchContractAddress(contract, network))
   if (!addr) return
   // call web socket to get history
   const data = await callWS({
@@ -147,20 +158,8 @@ const deserializeBlockHeader = (hex: string): BlockHeader => {
   }
 }
 
-// returns electrum url based on network
-export const electrumURL = (network: NetworkString): string => {
-  switch (network) {
-    case 'regtest':
-      return 'http://localhost:3001' // TODO
-    case 'testnet':
-      return 'wss://blockstream.info/liquidtestnet/electrum-websocket/api'
-    default:
-      return 'wss://blockstream.info/liquid/electrum-websocket/api'
-  }
-}
-
 // given an address, returns its script hash reversed
-export const reverseScriptHash = (addr: string): string =>
+const reverseScriptHash = (addr: string): string =>
   crypto.sha256(address.toOutputScript(addr)).reverse().toString('hex')
 
 // broadcasts raw transaction using web sockets
@@ -247,29 +246,32 @@ export const checkContractOutspend = async (
 }
 
 // check if a contract is confirmed by analysing its history
-export const contractIsConfirmed = async (
+export const checkContractIsConfirmed = async (
   contract: Contract,
   network: NetworkString,
 ): Promise<boolean> => {
   const hist = await fetchContractHistory(contract, network)
-  return hist?.[0]?.height !== 0
+  return hist && hist[0] && hist[0].height !== 0
 }
 
-export const subscribeToEvent = async (
+// given an address, resolve when tx is at least on mempool
+export const waitForAddressAvailable = async (
   addr: string,
   network: NetworkString,
 ): Promise<any> => {
   return new Promise((resolve, reject) => {
     if (!addr) reject('address not found')
+    const id = Math.floor(Math.random() * 1_000)
+    const reversedScriptHash = reverseScriptHash(addr)
     const ws = new WebSocket(electrumURL(network))
     // subscribe changes
     ws.onopen = () => {
       ws.send(
         JSON.stringify({
-          id: 1,
+          id,
           jsonrpc: '2.0',
           method: 'blockchain.scripthash.subscribe',
-          params: [reverseScriptHash(addr)],
+          params: [reversedScriptHash],
         }),
       )
     }
@@ -281,6 +283,15 @@ export const subscribeToEvent = async (
         reject(data.error)
       }
       if (data.params) {
+        // unsubscribe and close websocket
+        ws.send(
+          JSON.stringify({
+            id,
+            jsonrpc: '2.0',
+            method: 'blockchain.scripthash.unsubscribe',
+            params: [reversedScriptHash],
+          }),
+        )
         ws.close()
         resolve(data)
       }
@@ -288,21 +299,59 @@ export const subscribeToEvent = async (
   })
 }
 
-export const unsubscribeToEvent = async (
-  addr: string,
+// given an address, resolve when tx is confirmed
+//
+// subscribe responds in this order:
+// 1. {id, jsonrpc: '2.0', result: null} - ack for subscription
+// 2. {jsonrpc: '2.0', method, params: Array(2)} - tx is on mempool
+// 3. {jsonrpc: '2.0', method, params: Array(2)} - tx is confirmed
+//
+// to distinguish from 2. and 3. calculate the mempool status and check
+// if it's present on params[1] (if so, is mempool, else is confirmed)
+export const waitForContractConfirmation = async (
+  contract: Contract,
   network: NetworkString,
-): Promise<void> => {
-  if (!addr) return
-  const ws = new WebSocket(electrumURL(network))
-  ws.onopen = () => {
-    ws.send(
-      JSON.stringify({
-        id: 1,
-        jsonrpc: '2.0',
-        method: 'blockchain.scripthash.unsubscribe',
-        params: [reverseScriptHash(addr)],
-      }),
-    )
-  }
-  ws.close()
+): Promise<any> => {
+  return new Promise((resolve) => {
+    const { addr, txid } = contract
+    if (!addr) throw new Error('address not found')
+    if (!txid) throw new Error('txid not found')
+    // https://electrumx.readthedocs.io/en/latest/protocol-basics.html#status
+    const mempoolStatus = crypto
+      .sha256(Buffer.from(`${txid}:0:`))
+      .toString('hex')
+    const id = Math.floor(Math.random() * 1_000)
+    const reversedScriptHash = reverseScriptHash(addr)
+    const ws = new WebSocket(electrumURL(network))
+    // subscribe changes
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          id,
+          jsonrpc: '2.0',
+          method: 'blockchain.scripthash.subscribe',
+          params: [reversedScriptHash],
+        }),
+      )
+    }
+    // listen for messages
+    ws.onmessage = async (e) => {
+      const data = JSON.parse(e.data)
+      if (data.params && data.params.length > 1) {
+        if (data.params[1] !== mempoolStatus) {
+          // unsubscribe and close websocket
+          ws.send(
+            JSON.stringify({
+              id,
+              jsonrpc: '2.0',
+              method: 'blockchain.scripthash.unsubscribe',
+              params: [reversedScriptHash],
+            }),
+          )
+          ws.close()
+          resolve(data)
+        }
+      }
+    }
+  })
 }
