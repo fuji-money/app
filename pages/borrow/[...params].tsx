@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Asset, Offer, Outcome, ElectrumUtxo } from 'lib/types'
+import { Asset, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -14,7 +14,7 @@ import EnablersLightning from 'components/enablers/lightning'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
-import { saveContractToStorage } from 'lib/contracts'
+import { markContractConfirmed, saveContractToStorage } from 'lib/contracts'
 import {
   prepareBorrowTxWithClaimTx,
   proposeBorrowContract,
@@ -27,7 +27,12 @@ import {
   ReverseSwap,
 } from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
-import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
+import {
+  address,
+  Psbt,
+  Transaction,
+  witnessStackToScriptWitness,
+} from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
@@ -38,9 +43,9 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import {
   broadcastTx,
-  electrumURL,
   fetchUtxosForAddress,
-  reverseScriptHash,
+  waitForAddressAvailable,
+  waitForContractConfirmation,
 } from 'lib/websocket'
 import { finalizeTx } from 'lib/transaction'
 
@@ -134,105 +139,81 @@ const BorrowParams: NextPage = () => {
         throw new Error('invoice expired')
       }, invoiceExpireDate - Date.now())
 
-      // list of utxos to get from swap
-      let utxos: ElectrumUtxo[] = []
+      // wait for tx to be available (mempool or confirmed)
+      await waitForAddressAvailable(lockupAddress, network)
 
-      // open web socket
-      const ws = new WebSocket(electrumURL(network))
+      // fetch utxos for address
+      const utxos = await fetchUtxosForAddress(lockupAddress, network)
 
-      // electrum expects the hash of address script in hex reversed
-      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
+      // payment has arrived
+      if (utxos.length > 0) {
+        // clear invoice expiration timeout
+        clearTimeout(invoiceExpirationTimeout)
 
-      // send message to subscribe to event
-      ws.onopen = () => {
-        ws.send(
-          JSON.stringify({
-            id: 1,
-            jsonrpc: '2.0',
-            method: 'blockchain.scripthash.subscribe',
-            params: [reversedAddressScriptHash],
-          }),
+        // show user (via modal) that payment was received
+        setStage(ModalStages.PaymentReceived)
+        await sleep(2000) // give him time to see the green mark
+        setStage(ModalStages.NeedsFujiApproval)
+
+        // prepare borrow transaction with claim utxo as input
+        const preparedTx = await prepareBorrowTxWithClaimTx(
+          newContract,
+          network,
+          redeemScript,
+          utxos,
         )
-      }
 
-      // wait for payment
-      ws.onmessage = async () => {
-        utxos = await fetchUtxosForAddress(lockupAddress, network)
-        // payment has arrived
-        if (utxos.length > 0) {
-          // unsubscribe to event
-          ws.send(
-            JSON.stringify({
-              id: 1,
-              jsonrpc: '2.0',
-              method: 'blockchain.scripthash.unsubscribe',
-              params: [reversedAddressScriptHash],
-            }),
-          )
-          // close socket
-          ws.close()
+        // propose contract to alpha factory
+        const { partialTransaction } = await proposeBorrowContract(preparedTx)
+        if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
-          // clear invoice expiration timeout
-          clearTimeout(invoiceExpirationTimeout)
+        // sign and finalize input[0]
+        const psbt = Psbt.fromBase64(partialTransaction)
+        psbt.signInput(0, keyPair)
+        psbt.finalizeInput(0, (_, input) => {
+          return {
+            finalScriptSig: undefined,
+            finalScriptWitness: witnessStackToScriptWitness([
+              input.partialSig![0].signature,
+              preimage,
+              Buffer.from(redeemScript, 'hex'),
+            ]),
+          }
+        })
 
-          // show user (via modal) that payment was received
-          setStage(ModalStages.PaymentReceived)
-          await sleep(2000) // give him time to see the green mark
-          setStage(ModalStages.NeedsFujiApproval)
+        // change message to user
+        setStage(ModalStages.NeedsFinishing)
 
-          // prepare borrow transaction with claim utxo as input
-          const preparedTx = await prepareBorrowTxWithClaimTx(
-            newContract,
-            network,
-            redeemScript,
-            utxos,
-          )
+        // broadcast transaction
+        const rawHex = finalizeTx(psbt.toBase64())
+        const data = await broadcastTx(rawHex, network)
+        if (data.error) throw new Error(data.error)
+        newContract.txid = data.result
+        if (!newContract.txid) throw new Error('No txid returned')
 
-          // propose contract to alpha factory
-          const { partialTransaction } = await proposeBorrowContract(preparedTx)
-          if (!partialTransaction) throw new Error('Not accepted by Fuji')
+        // add vout to contract
+        const covenantVout = 0
+        newContract.vout = covenantVout
 
-          // sign and finalize input[0]
-          const psbt = Psbt.fromBase64(partialTransaction)
-          psbt.signInput(0, keyPair)
-          psbt.finalizeInput(0, (_, input) => {
-            return {
-              finalScriptSig: undefined,
-              finalScriptWitness: witnessStackToScriptWitness([
-                input.partialSig![0].signature,
-                preimage,
-                Buffer.from(redeemScript, 'hex'),
-              ]),
-            }
-          })
+        // add covenant address to contract
+        newContract.addr = address.fromOutputScript(
+          Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
+        )
 
-          // change message to user
-          setStage(ModalStages.NeedsFinishing)
-
-          // broadcast transaction
-          const rawHex = finalizeTx(psbt.toBase64())
-          const data = await broadcastTx(rawHex, network)
-          if (data.error) throw new Error(data.error)
-          newContract.txid = data.result
-          if (!newContract.txid) throw new Error('No txid returned')
-
-          // add vout to contract
-          newContract.vout = 0
-
-          // add additional fields to contract and save to storage
-          await saveContractToStorage(
-            newContract,
-            network,
-            preparedTx,
-            reloadContracts,
-          )
-
-          // show success
-          setData(newContract.txid)
-          setResult(Outcome.Success)
-          setStage(ModalStages.ShowResult)
+        // wait for confirmation, mark contract confirmed and reload contracts
+        waitForContractConfirmation(newContract, network).then(() => {
+          markContractConfirmed(newContract)
           reloadContracts()
-        }
+        })
+
+        // add additional fields to contract and save to storage
+        await saveContractToStorage(newContract, network, preparedTx)
+
+        // show success
+        setData(newContract.txid)
+        setResult(Outcome.Success)
+        setStage(ModalStages.ShowResult)
+        reloadContracts()
       }
     } catch (error) {
       setData(extractError(error))
@@ -280,15 +261,22 @@ const BorrowParams: NextPage = () => {
       if (!newContract.txid) throw new Error('No txid returned')
 
       // add vout to contract
-      newContract.vout = 0
+      const covenantVout = 0
+      newContract.vout = covenantVout
+
+      // add covenant address to contract
+      newContract.addr = address.fromOutputScript(
+        Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
+      )
+
+      // wait for confirmation, mark contract confirmed and reload contracts
+      waitForContractConfirmation(newContract, network).then(() => {
+        markContractConfirmed(newContract)
+        reloadContracts()
+      })
 
       // add additional fields to contract and save to storage
-      await saveContractToStorage(
-        newContract,
-        network,
-        preparedTx,
-        reloadContracts,
-      )
+      await saveContractToStorage(newContract, network, preparedTx)
 
       // show success
       setData(newContract.txid)

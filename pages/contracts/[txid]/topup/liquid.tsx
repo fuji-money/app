@@ -5,7 +5,11 @@ import SomeError from 'components/layout/error'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
 import { marinaMainAccountID, feeAmount } from 'lib/constants'
-import { saveContractToStorage, markContractTopup } from 'lib/contracts'
+import {
+  saveContractToStorage,
+  markContractTopup,
+  markContractConfirmed,
+} from 'lib/contracts'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -15,11 +19,15 @@ import { openModal, extractError, retry } from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome } from 'lib/types'
-import { Psbt } from 'liquidjs-lib'
+import { address, Psbt, Transaction } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoinsWithBlindPrivKey } from 'lib/selection'
-import { broadcastTx } from 'lib/websocket'
+import {
+  broadcastTx,
+  waitForAddressAvailable,
+  waitForContractConfirmation,
+} from 'lib/websocket'
 
 const ContractTopupLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -98,15 +106,24 @@ const ContractTopupLiquid: NextPage = () => {
       if (data.error) throw new Error(data.error)
       newContract.txid = data.result
       if (!newContract.txid) throw new Error('No txid returned')
-      newContract.vout = 1
+
+      // add vout to contract
+      const covenantVout = 1
+      newContract.vout = covenantVout
+
+      // add covenant address to contract
+      newContract.addr = address.fromOutputScript(
+        Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
+      )
+
+      // wait for confirmation, mark contract confirmed and reload contracts
+      waitForContractConfirmation(newContract, network).then(() => {
+        markContractConfirmed(newContract)
+        reloadContracts()
+      })
 
       // add additional fields to contract and save to storage
-      await saveContractToStorage(
-        newContract,
-        network,
-        preparedTx,
-        reloadContracts,
-      )
+      await saveContractToStorage(newContract, network, preparedTx)
 
       // mark old contract as topup
       markContractTopup(oldContract)
