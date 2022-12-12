@@ -43,10 +43,11 @@ import {
   waitForContractConfirmation,
 } from 'lib/websocket'
 import { finalizeTx } from 'lib/transaction'
+import { WeblnContext } from 'components/providers/webln'
 
 const ContractTopupLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network, weblnProviderName } =
-    useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { weblnProviderName } = useContext(WeblnContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 

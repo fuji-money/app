@@ -9,6 +9,7 @@ import { ModalStages } from 'components/modals/modal'
 import EnablersLightning from 'components/enablers/lightning'
 import EnablersLiquid from 'components/enablers/liquid'
 import { Tasks } from 'lib/tasks'
+import { WeblnContext } from 'components/providers/webln'
 
 interface MultiplyDepositProps {
   contract: Contract
@@ -23,7 +24,8 @@ const MultiplyDeposit = ({
   setChannel,
   setDeposit,
 }: MultiplyDepositProps) => {
-  const { network, weblnProviderName } = useContext(WalletContext)
+  const { network } = useContext(WalletContext)
+  const { weblnProviderName } = useContext(WeblnContext)
   const { reloadContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')

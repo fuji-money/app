@@ -48,10 +48,11 @@ import {
   waitForContractConfirmation,
 } from 'lib/websocket'
 import { finalizeTx } from 'lib/transaction'
+import { WeblnContext } from 'components/providers/webln'
 
 const BorrowParams: NextPage = () => {
-  const { blindPrivKeysMap, network, weblnProviderName } =
-    useContext(WalletContext)
+  const { blindPrivKeysMap, network } = useContext(WalletContext)
+  const { weblnProviderName } = useContext(WeblnContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 

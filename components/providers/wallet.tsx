@@ -14,21 +14,15 @@ import {
 import { defaultNetwork, marinaMainAccountID } from 'lib/constants'
 import { address } from 'liquidjs-lib'
 import { BlindPrivKeysMap, VoidOrUndefFunc } from 'lib/types'
-import { requestProvider, WebLNProvider } from 'webln'
-import { closeModal, openModal } from 'lib/utils'
-import { ModalIds } from 'components/modals/modal'
 
 interface WalletContextProps {
   balances: Balance[]
   blindPrivKeysMap: BlindPrivKeysMap
   connected: boolean
   marina: MarinaProvider | undefined
-  enableWeblnHandler: VoidOrUndefFunc
   network: NetworkString
   setConnected: (arg0: boolean) => void
   xPubKey: string
-  weblnProvider: WebLNProvider | undefined
-  weblnProviderName: string
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -36,12 +30,9 @@ export const WalletContext = createContext<WalletContextProps>({
   blindPrivKeysMap: {},
   connected: false,
   marina: undefined,
-  enableWeblnHandler: undefined,
   network: defaultNetwork,
   setConnected: () => {},
   xPubKey: '',
-  weblnProvider: undefined,
-  weblnProviderName: '',
 })
 
 interface WalletProviderProps {
@@ -52,44 +43,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [blindPrivKeysMap, setBlindPrivKeysMap] = useState({})
   const [connected, setConnected] = useState(false)
   const [marina, setMarina] = useState<MarinaProvider>()
-  const [enableWeblnHandler, setEnableWeblnHandler] =
-    useState<VoidOrUndefFunc>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
   const [xPubKey, setXPubKey] = useState('')
-  const [weblnProvider, setWeblnProvider] = useState<WebLNProvider>()
-  const [weblnProviderName, setWeblnProviderName] = useState('')
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
   const updateXPubKey = async () => setXPubKey(await getXPubKey())
 
-  const enableWeblnProvider = () => {
-    closeModal(ModalIds.Webln)
-    try {
-      requestProvider().then((provider) => {
-        setWeblnProvider(provider)
-        provider.getInfo().then((info) => {
-          if (info.node?.alias?.includes('getalby.com'))
-            setWeblnProviderName('Alby')
-        })
-      })
-    } catch (ignore) {}
-  }
-
   // get marina provider
   useEffect(() => {
     getMarinaProvider().then((payload) => setMarina(payload))
   })
-
-  // get webln provider
-  useEffect(() => {
-    try {
-      if (network === 'liquid' && window.webln && !weblnProvider) {
-        openModal(ModalIds.Webln)
-        setEnableWeblnHandler(() => enableWeblnProvider)
-      }
-    } catch (ignore) {}
-  }, [weblnProvider, network])
 
   // update connected state
   useEffect(() => {
@@ -167,12 +131,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         blindPrivKeysMap,
         connected,
         marina,
-        enableWeblnHandler,
         network,
         setConnected,
         xPubKey,
-        weblnProvider,
-        weblnProviderName,
       }}
     >
       {children}

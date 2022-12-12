@@ -1,10 +1,10 @@
-import { WalletContext } from 'components/providers/wallet'
+import { WeblnContext } from 'components/providers/webln'
 import { closeModal } from 'lib/utils'
 import { useContext } from 'react'
 import Modal, { ModalIds } from './modal'
 
 const WeblnModal = () => {
-  const { enableWeblnHandler } = useContext(WalletContext)
+  const { weblnEnableHandler } = useContext(WeblnContext)
   return (
     <Modal id={ModalIds.Webln}>
       <h3 className="mt-4">WebLN provider detected</h3>
@@ -13,7 +13,7 @@ const WeblnModal = () => {
           Close
         </button>
         &nbsp;
-        <button className="button is-primary" onClick={enableWeblnHandler}>
+        <button className="button is-primary" onClick={weblnEnableHandler}>
           Enable it
         </button>
       </p>
