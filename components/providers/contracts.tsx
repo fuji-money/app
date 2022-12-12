@@ -32,7 +32,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { checkContractOutspend, contractIsConfirmed } from 'lib/websocket'
+import { checkContractOutspend, checkContractIsConfirmed } from 'lib/websocket'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -115,7 +115,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const confirmed = await contractIsConfirmed(contract, network)
+        const confirmed = await checkContractIsConfirmed(contract, network)
         if (!confirmed) continue
         markContractConfirmed(contract)
       }
