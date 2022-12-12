@@ -53,6 +53,7 @@ export enum ContractState {
 }
 
 export interface Contract {
+  addr?: string
   borrowerPubKey?: string
   collateral: Asset
   confirmed?: boolean
