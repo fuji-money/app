@@ -11,28 +11,6 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
-import {
-  contractIsConfirmed,
-  fetchContractAddress,
-  subscribeToEvent,
-  unsubscribeToEvent,
-} from './websocket'
-
-// listen for confirmation
-const listenForContractConfirmation = async (
-  contract: Contract,
-  network: NetworkString,
-  reloadContracts: () => void,
-) => {
-  const addr = await fetchContractAddress(contract, network)
-  if (!addr) return
-  await subscribeToEvent(addr, network)
-  if (await contractIsConfirmed(contract, network)) {
-    unsubscribeToEvent(addr, network)
-    markContractConfirmed(contract)
-    reloadContracts()
-  }
-}
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -273,7 +251,6 @@ export async function saveContractToStorage(
   contract: Contract,
   network: NetworkString,
   preparedTx: PreparedBorrowTx | PreparedTopupTx,
-  reloadContracts: () => void,
 ): Promise<void> {
   contract.borrowerPubKey = preparedTx.borrowerPublicKey
   contract.contractParams = preparedTx.contractParams
@@ -281,5 +258,4 @@ export async function saveContractToStorage(
   contract.confirmed = false
   contract.xPubKey = await getXPubKey()
   createNewContract(contract)
-  listenForContractConfirmation(contract, network, reloadContracts)
 }

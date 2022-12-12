@@ -47,7 +47,7 @@ interface ContractsContextProps {
   newContract: Contract | undefined
   oldContract: Contract | undefined
   oracles: Oracle[]
-  reloadContracts: (arg0?: boolean) => void
+  reloadContracts: () => void
   resetContracts: () => void
   setLoading: (arg0: boolean) => void
   setNewContract: (arg0: Contract) => void
@@ -82,6 +82,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   // save first time app was run
   const firstRun = useRef(Date.now())
+
+  const reloadAndMarkLastReload = () => {
+    firstRun.current = Date.now()
+    reloadContracts()
+  }
 
   const resetContracts = () => {
     setNewContract(undefined)
@@ -205,20 +210,16 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
-      accountID === marinaFujiAccountID && Date.now() - firstRun.current > 60000
+      accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
-      marina.on('NEW_TX', async ({ accountID }) => {
-        console.info('NEW_TX', accountID)
-        if (okToReload(accountID)) reloadContracts()
-      })
       marina.on('SPENT_UTXO', async ({ accountID }) => {
         console.info('SPENT_UTXO', accountID)
-        if (okToReload(accountID)) reloadContracts()
+        if (okToReload(accountID)) reloadAndMarkLastReload()
       })
       marina.on('NEW_UTXO', async ({ accountID }) => {
         console.info('NEW_UTXO', accountID)
-        if (okToReload(accountID)) reloadContracts()
+        if (okToReload(accountID)) reloadAndMarkLastReload()
       })
     }
   }
