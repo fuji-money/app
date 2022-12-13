@@ -207,14 +207,14 @@ const BorrowParams: NextPage = () => {
           Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
         )
 
+        // add additional fields to contract and save to storage
+        await saveContractToStorage(newContract, network, preparedTx)
+
         // wait for confirmation, mark contract confirmed and reload contracts
         waitForContractConfirmation(newContract, network).then(() => {
           markContractConfirmed(newContract)
           reloadContracts()
         })
-
-        // add additional fields to contract and save to storage
-        await saveContractToStorage(newContract, network, preparedTx)
 
         // show success
         setData(newContract.txid)
@@ -278,14 +278,14 @@ const BorrowParams: NextPage = () => {
         Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
       )
 
+      // add additional fields to contract and save to storage
+      await saveContractToStorage(newContract, network, preparedTx)
+
       // wait for confirmation, mark contract confirmed and reload contracts
       waitForContractConfirmation(newContract, network).then(() => {
         markContractConfirmed(newContract)
         reloadContracts()
       })
-
-      // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
 
       // show success
       setData(newContract.txid)
