@@ -52,7 +52,8 @@ import { WeblnContext } from 'components/providers/webln'
 
 const BorrowParams: NextPage = () => {
   const { blindPrivKeysMap, network } = useContext(WalletContext)
-  const { weblnProviderName } = useContext(WeblnContext)
+  const { weblnCanEnable, weblnProvider, weblnProviderName } =
+    useContext(WeblnContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -224,7 +225,9 @@ const BorrowParams: NextPage = () => {
   }
 
   const handleAlby =
-    weblnProviderName === 'Alby' && network === 'liquid'
+    weblnProviderName === 'Alby' &&
+    network === 'liquid' &&
+    (weblnProvider.enabled || weblnCanEnable)
       ? async () => {
           setUseWebln(true)
           await handleInvoice()

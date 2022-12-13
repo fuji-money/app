@@ -33,13 +33,14 @@ const InvoiceDepositModal = ({
   task,
   useWebln,
 }: InvoiceDepositModalProps) => {
-  const { weblnProvider } = useContext(WeblnContext)
+  const { weblnCanEnable, weblnProvider } = useContext(WeblnContext)
   const [buttonText, setButtonText] = useState('Copy')
 
   const payWithWebln = async () => {
     if (weblnProvider) {
       try {
-        await weblnProvider.enable()
+        if (!weblnProvider.enabled && weblnCanEnable)
+          await weblnProvider.enable()
         await weblnProvider.sendPayment(invoice)
       } catch (ignore) {}
     }

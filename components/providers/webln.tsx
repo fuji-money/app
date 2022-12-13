@@ -1,6 +1,5 @@
 import { createContext, ReactNode, useEffect, useState } from 'react'
 import { VoidOrUndefFunc } from 'lib/types'
-import { WebLNProvider } from 'webln'
 import { closeModal, openModal } from 'lib/utils'
 import { ModalIds } from 'components/modals/modal'
 
@@ -8,7 +7,7 @@ interface WeblnContextProps {
   weblnIsEnabled: boolean
   weblnEnableHandler: VoidOrUndefFunc
   weblnCanEnable: boolean
-  weblnProvider: WebLNProvider | undefined
+  weblnProvider: any
   weblnProviderName: string
 }
 
@@ -26,7 +25,7 @@ interface WeblnProviderProps {
 export const WeblnProvider = ({ children }: WeblnProviderProps) => {
   const [weblnCanEnable, setWeblnCanEnable] = useState(true)
   const [weblnIsEnabled, setweblnIsEnabled] = useState(false)
-  const [weblnProvider, setWeblnProvider] = useState<WebLNProvider>()
+  const [weblnProvider, setWeblnProvider] = useState<any>()
   const [weblnProviderName, setWeblnProviderName] = useState('')
 
   // asks Alby for permission
@@ -38,7 +37,7 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
         setWeblnCanEnable(false)
         // ask user to authorization
         weblnProvider.enable().then(() => {
-          weblnProvider.getInfo().then((info) => {
+          weblnProvider.getInfo().then((info: any) => {
             if (info.node?.alias?.includes('getalby.com'))
               setWeblnProviderName('Alby')
           })
