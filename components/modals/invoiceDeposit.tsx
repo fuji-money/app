@@ -155,7 +155,6 @@ const InvoiceDepositModal = ({
           contract={contract}
           data={data}
           result={result}
-          reset={reset}
           retry={retry}
           task={task}
         />

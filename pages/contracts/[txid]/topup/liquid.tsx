@@ -23,11 +23,7 @@ import { address, Psbt, Transaction } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoinsWithBlindPrivKey } from 'lib/selection'
-import {
-  broadcastTx,
-  waitForAddressAvailable,
-  waitForContractConfirmation,
-} from 'lib/websocket'
+import { broadcastTx, waitForContractConfirmation } from 'lib/websocket'
 
 const ContractTopupLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -37,6 +33,11 @@ const ContractTopupLiquid: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+
+  const resetModal = () => {
+    resetContracts()
+    history.go(-1)
+  }
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
@@ -151,7 +152,7 @@ const ContractTopupLiquid: NextPage = () => {
         contract={newContract}
         data={data}
         result={result}
-        reset={resetContracts}
+        reset={resetModal}
         retry={retry(setData, setResult, handleMarina)}
         stage={stage}
         task={Tasks.Topup}

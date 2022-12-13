@@ -68,6 +68,11 @@ const BorrowParams: NextPage = () => {
   const router = useRouter()
   const { params } = router.query
 
+  const resetModal = () => {
+    resetContracts()
+    history.go(-2)
+  }
+
   const handleInvoice = async (): Promise<void> => {
     openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
@@ -359,7 +364,7 @@ const BorrowParams: NextPage = () => {
                 data={data}
                 result={result}
                 retry={retry(setData, setResult, handleMarina)}
-                reset={resetContracts}
+                reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
               />
@@ -380,7 +385,7 @@ const BorrowParams: NextPage = () => {
                 invoice={invoice}
                 result={result}
                 retry={retry(setData, setResult, handleInvoice)}
-                reset={resetContracts}
+                reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
                 useWebln={useWebln}

@@ -124,7 +124,6 @@ const RedeemModal = ({
           data={data}
           result={result}
           retry={retry}
-          reset={reset}
           task={task}
         />
       )

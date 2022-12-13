@@ -9,19 +9,23 @@ import { Tasks } from 'lib/tasks'
 import { prettyAsset, prettyNumber } from 'lib/pretty'
 import { getContractRatio } from 'lib/contracts'
 import { SomethingWentWrong } from 'components/layout/error'
+import { useContext } from 'react'
+import { ContractsContext } from 'components/providers/contracts'
 
 interface SuccessProps {
   contract: Contract
-  reset: () => void
   task: string
   txid: string
 }
 
-const Success = ({ contract, reset, task, txid }: SuccessProps) => {
+const Success = ({ contract, task, txid }: SuccessProps) => {
+  const { resetContracts } = useContext(ContractsContext)
+
   const handleClick = () => {
     closeAllModals()
-    reset()
+    resetContracts()
   }
+
   // Twitter message
   // TODO - use this instead of default twitterMessage from lib/constants
   const message = () => {
@@ -36,6 +40,7 @@ const Success = ({ contract, reset, task, txid }: SuccessProps) => {
     return `${op} a contract ${synthetic} with ${collateral} at ${ratio}`
   }
   // console.info('message', message())
+
   return (
     <div className="has-text-centered mx-5">
       <p>
@@ -75,20 +80,12 @@ interface ResultProps {
   data: string
   result: string
   retry: () => void
-  reset: () => void
   task: string
 }
 
-const Result = ({
-  contract,
-  data,
-  result,
-  retry,
-  reset,
-  task,
-}: ResultProps) => {
+const Result = ({ contract, data, result, retry, task }: ResultProps) => {
   if (result === Outcome.Success)
-    return <Success contract={contract} reset={reset} task={task} txid={data} />
+    return <Success contract={contract} task={task} txid={data} />
   if (result === Outcome.Failure) return <Failure retry={retry} error={data} />
   return <></>
 }

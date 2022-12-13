@@ -57,6 +57,11 @@ const ContractTopupLightning: NextPage = () => {
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
 
+  const resetModal = () => {
+    resetContracts()
+    history.go(-1)
+  }
+
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
   if (!oldContract) return <SomeError>Contract not found</SomeError>
@@ -261,7 +266,7 @@ const ContractTopupLightning: NextPage = () => {
         invoice={invoice}
         result={result}
         retry={retry(setData, setResult, handleInvoice)}
-        reset={resetContracts}
+        reset={resetModal}
         stage={stage}
         task={Tasks.Topup}
         useWebln={useWebln}
