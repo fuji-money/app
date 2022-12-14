@@ -1,7 +1,14 @@
-import { createContext, ReactNode, useEffect, useState } from 'react'
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 import { VoidOrUndefFunc } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
 import { ModalIds } from 'components/modals/modal'
+import { WalletContext } from './wallet'
 
 interface WeblnContextProps {
   weblnIsEnabled: boolean
@@ -23,6 +30,8 @@ interface WeblnProviderProps {
   children: ReactNode
 }
 export const WeblnProvider = ({ children }: WeblnProviderProps) => {
+  const { network } = useContext(WalletContext)
+
   const [weblnCanEnable, setWeblnCanEnable] = useState(true)
   const [weblnIsEnabled, setweblnIsEnabled] = useState(false)
   const [weblnProvider, setWeblnProvider] = useState<any>()
@@ -49,12 +58,12 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
 
   // if webln support detected, asks user to enable it
   useEffect(() => {
-    if (window.webln) {
+    if (window.webln && network === 'liquid') {
       setWeblnProvider(window.webln)
       if (window.webln.enabled) setweblnIsEnabled(true)
       else openModal(ModalIds.Webln)
     }
-  }, [])
+  }, [network])
 
   return (
     <WeblnContext.Provider
