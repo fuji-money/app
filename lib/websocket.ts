@@ -1,6 +1,7 @@
 import { address, crypto, Transaction } from 'liquidjs-lib'
 import { Input } from 'liquidjs-lib/src/transaction'
 import { NetworkString } from 'marina-provider'
+import { getContractCovenantAddress } from './contracts'
 import { BlockHeader, Contract, ElectrumUnspent, ElectrumUtxo } from './types'
 
 // docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
@@ -16,6 +17,7 @@ const electrumURL = (network: NetworkString): string => {
       return 'wss://blockstream.info/liquid/electrum-websocket/api'
   }
 }
+
 interface callWSProps {
   method: string
   network: NetworkString
@@ -79,18 +81,6 @@ const fetchTx = async (
   return Transaction.fromHex(hex)
 }
 
-// given a contract, returns corresponding address
-const fetchContractAddress = async (
-  contract: Contract,
-  network: NetworkString,
-) => {
-  const { txid, vout } = contract
-  if (!txid || typeof vout === 'undefined') return
-  const tx = await fetchTx(txid, network)
-  const script = tx?.outs?.[vout]?.script
-  if (script) return address.fromOutputScript(script)
-}
-
 // returns history for a given contract
 // useful to see if a contract is confirmed and spent
 const fetchContractHistory = async (
@@ -98,7 +88,7 @@ const fetchContractHistory = async (
   network: NetworkString,
 ) => {
   // get address for this contract
-  const addr = contract.addr ?? (await fetchContractAddress(contract, network))
+  const addr = getContractCovenantAddress(contract, network)
   if (!addr) return
   // call web socket to get history
   const data = await callWS({
@@ -313,15 +303,16 @@ export const waitForContractConfirmation = async (
   network: NetworkString,
 ): Promise<any> => {
   return new Promise((resolve) => {
-    const { addr, txid } = contract
-    if (!addr) throw new Error('address not found')
+    const { txid } = contract
     if (!txid) throw new Error('txid not found')
+    const covenantAddress = getContractCovenantAddress(contract, network)
+    if (!covenantAddress) throw new Error('covenant address not found')
     // https://electrumx.readthedocs.io/en/latest/protocol-basics.html#status
     const mempoolStatus = crypto
       .sha256(Buffer.from(`${txid}:0:`))
       .toString('hex')
     const id = Math.floor(Math.random() * 1_000)
-    const reversedScriptHash = reverseScriptHash(addr)
+    const reversedScriptHash = reverseScriptHash(covenantAddress)
     const ws = new WebSocket(electrumURL(network))
     // subscribe changes
     ws.onopen = () => {

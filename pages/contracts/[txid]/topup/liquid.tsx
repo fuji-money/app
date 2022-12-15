@@ -19,7 +19,7 @@ import { openModal, extractError, retry } from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome } from 'lib/types'
-import { address, Psbt, Transaction } from 'liquidjs-lib'
+import { Psbt } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoinsWithBlindPrivKey } from 'lib/selection'
@@ -111,11 +111,6 @@ const ContractTopupLiquid: NextPage = () => {
       // add vout to contract
       const covenantVout = 1
       newContract.vout = covenantVout
-
-      // add covenant address to contract
-      newContract.addr = address.fromOutputScript(
-        Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
-      )
 
       // wait for confirmation, mark contract confirmed and reload contracts
       waitForContractConfirmation(newContract, network).then(() => {

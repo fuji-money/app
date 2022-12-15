@@ -16,12 +16,7 @@ import {
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
-import {
-  address,
-  Psbt,
-  Transaction,
-  witnessStackToScriptWitness,
-} from 'liquidjs-lib'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -213,11 +208,6 @@ const ContractTopupLightning: NextPage = () => {
         // add vout to contract
         const covenantVout = 1
         newContract.vout = covenantVout
-
-        // add covenant address to contract
-        newContract.addr = address.fromOutputScript(
-          Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
-        )
 
         // wait for confirmation, mark contract confirmed and reload contracts
         waitForContractConfirmation(newContract, network).then(() => {

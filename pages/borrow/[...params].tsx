@@ -27,12 +27,7 @@ import {
   ReverseSwap,
 } from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
-import {
-  address,
-  Psbt,
-  Transaction,
-  witnessStackToScriptWitness,
-} from 'liquidjs-lib'
+import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
@@ -202,11 +197,6 @@ const BorrowParams: NextPage = () => {
         const covenantVout = 0
         newContract.vout = covenantVout
 
-        // add covenant address to contract
-        newContract.addr = address.fromOutputScript(
-          Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
-        )
-
         // add additional fields to contract and save to storage
         await saveContractToStorage(newContract, network, preparedTx)
 
@@ -272,11 +262,6 @@ const BorrowParams: NextPage = () => {
       // add vout to contract
       const covenantVout = 0
       newContract.vout = covenantVout
-
-      // add covenant address to contract
-      newContract.addr = address.fromOutputScript(
-        Transaction.fromHex(rawHex)?.outs?.[covenantVout]?.script,
-      )
 
       // add additional fields to contract and save to storage
       await saveContractToStorage(newContract, network, preparedTx)

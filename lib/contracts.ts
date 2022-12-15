@@ -9,7 +9,7 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
-import { PreparedBorrowTx, PreparedTopupTx } from './covenant'
+import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
 
 // check if a contract is redeemed or liquidated
@@ -258,4 +258,11 @@ export async function saveContractToStorage(
   contract.confirmed = false
   contract.xPubKey = await getXPubKey()
   createNewContract(contract)
+}
+
+export function getContractCovenantAddress(
+  contract: Contract,
+  network: NetworkString,
+) {
+  return getIonioInstance(contract, network).address
 }

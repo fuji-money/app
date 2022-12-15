@@ -40,7 +40,10 @@ const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
 }
 
-const getIonioInstance = (contract: Contract, network: NetworkString) => {
+export const getIonioInstance = (
+  contract: Contract,
+  network: NetworkString,
+) => {
   // get payout amount
   const payoutAmount =
     contract.payoutAmount || getContractPayoutAmount(contract) // TODO
