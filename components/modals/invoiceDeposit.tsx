@@ -8,7 +8,7 @@ import Spinner from 'components/spinner'
 import { Contract } from 'lib/types'
 import Summary from 'components/contract/summary'
 import Image from 'next/image'
-import { WalletContext } from 'components/providers/wallet'
+import { WeblnContext } from 'components/providers/webln'
 
 interface InvoiceDepositModalProps {
   contract: Contract
@@ -33,13 +33,14 @@ const InvoiceDepositModal = ({
   task,
   useWebln,
 }: InvoiceDepositModalProps) => {
-  const { weblnProvider } = useContext(WalletContext)
+  const { weblnCanEnable, weblnProvider } = useContext(WeblnContext)
   const [buttonText, setButtonText] = useState('Copy')
 
   const payWithWebln = async () => {
     if (weblnProvider) {
       try {
-        await weblnProvider.enable()
+        if (!weblnProvider.enabled && weblnCanEnable)
+          await weblnProvider.enable()
         await weblnProvider.sendPayment(invoice)
       } catch (ignore) {}
     }
@@ -154,7 +155,6 @@ const InvoiceDepositModal = ({
           contract={contract}
           data={data}
           result={result}
-          reset={reset}
           retry={retry}
           task={task}
         />

@@ -25,7 +25,6 @@ import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
 import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
-import { checkOutspend, getTx } from 'lib/explorer'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
 import { toXpub } from 'ldk'
@@ -33,6 +32,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
+import { checkContractOutspend, checkContractIsConfirmed } from 'lib/websocket'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -47,7 +47,7 @@ interface ContractsContextProps {
   newContract: Contract | undefined
   oldContract: Contract | undefined
   oracles: Oracle[]
-  reloadContracts: (arg0?: boolean) => void
+  reloadContracts: () => void
   resetContracts: () => void
   setLoading: (arg0: boolean) => void
   setNewContract: (arg0: Contract) => void
@@ -83,6 +83,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // save first time app was run
   const firstRun = useRef(Date.now())
 
+  const reloadAndMarkLastReload = () => {
+    firstRun.current = Date.now()
+    reloadContracts()
+  }
+
   const resetContracts = () => {
     setNewContract(undefined)
     setOldContract(undefined)
@@ -110,33 +115,31 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const tx = await getTx(contract.txid, network)
-        if (!tx?.status?.confirmed) continue
+        const confirmed = await checkContractIsConfirmed(contract, network)
+        if (!confirmed) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
       if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkOutspend(contract, network)
+      const status = await checkContractOutspend(contract, network)
       if (!status) continue
-      if (status.spent) {
+      const { input, spent, timestamp } = status
+      if (spent && input) {
         // contract already spent, let's find out why:
         // we will look at the leaf before the last one,
         // and based on his fingerprint find out if it was:
         // - liquidated (leaf asm will have 37 items)
         // - redeemed (leaf asm will have 47 items)
         // - topuped (leaf asm will have 27 items)
-        const { txid, vin } = status
-        const spentTx = await getTx(txid, network)
-        if (!spentTx) continue
-        const index = spentTx.vin[vin].witness.length - 2
-        const leaf = spentTx.vin[vin].witness[index]
+        const index = input.witness.length - 2
+        const leaf = input.witness[index].toString('hex')
         switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
           case 'liquidate':
-            markContractLiquidated(contract, spentTx)
+            markContractLiquidated(contract, timestamp)
             continue
           case 'redeem':
-            markContractRedeemed(contract, spentTx)
+            markContractRedeemed(contract, timestamp)
             continue
           case 'topup':
             markContractTopup(contract)
@@ -207,20 +210,16 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
-      accountID === marinaFujiAccountID && Date.now() - firstRun.current > 60000
+      accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
-      marina.on('NEW_TX', async ({ accountID }) => {
-        console.info('NEW_TX', accountID)
-        if (okToReload(accountID)) reloadContracts()
-      })
       marina.on('SPENT_UTXO', async ({ accountID }) => {
         console.info('SPENT_UTXO', accountID)
-        if (okToReload(accountID)) reloadContracts()
+        if (okToReload(accountID)) reloadAndMarkLastReload()
       })
       marina.on('NEW_UTXO', async ({ accountID }) => {
         console.info('NEW_UTXO', accountID)
-        if (okToReload(accountID)) reloadContracts()
+        if (okToReload(accountID)) reloadAndMarkLastReload()
       })
     }
   }

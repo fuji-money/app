@@ -22,22 +22,27 @@ import {
   prepareTopupTx,
   proposeTopupContract,
 } from 'lib/covenant'
-import { markContractTopup, saveContractToStorage } from 'lib/contracts'
+import {
+  markContractConfirmed,
+  markContractTopup,
+  saveContractToStorage,
+} from 'lib/contracts'
 import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import { Outcome, ElectrumUtxo } from 'lib/types'
+import { Outcome } from 'lib/types'
 import {
   broadcastTx,
-  electrumURL,
-  fetchUtxos,
-  finalizeTx,
-  reverseScriptHash,
+  fetchUtxosForAddress,
+  waitForAddressAvailable,
+  waitForContractConfirmation,
 } from 'lib/websocket'
+import { finalizeTx } from 'lib/transaction'
+import { WeblnContext } from 'components/providers/webln'
 
 const ContractTopupLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network, weblnProviderName } =
-    useContext(WalletContext)
+  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { weblnProviderName } = useContext(WeblnContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -46,6 +51,11 @@ const ContractTopupLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+
+  const resetModal = () => {
+    resetContracts()
+    history.go(-1)
+  }
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
@@ -127,122 +137,95 @@ const ContractTopupLightning: NextPage = () => {
         throw new Error('invoice expired')
       }, invoiceExpireDate - Date.now())
 
-      // list of utxos to get from swap
-      let utxos: ElectrumUtxo[] = []
+      // wait for confirmation
+      await waitForAddressAvailable(lockupAddress, network)
 
-      // open web socket
-      const ws = new WebSocket(electrumURL(network))
+      // fetch utxos for address
+      const utxos = await fetchUtxosForAddress(lockupAddress, network)
 
-      // electrum expects the script from an address in hex reversed
-      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
+      // payment has arrived
+      if (utxos.length > 0) {
+        // clear invoice expiration timeout
+        clearTimeout(invoiceExpirationTimeout)
 
-      // send message to subscribe to event
-      ws.onopen = () => {
-        ws.send(
-          JSON.stringify({
-            id: 1,
-            jsonrpc: '2.0',
-            method: 'blockchain.scripthash.subscribe',
-            params: [reversedAddressScriptHash],
-          }),
+        // show user (via modal) that payment was received
+        setStage(ModalStages.PaymentReceived)
+        await sleep(2000)
+        setStage(ModalStages.NeedsFujiApproval)
+
+        // get prevout for utxo
+        const [utxo] = utxos
+        const value = onchainTopupAmount
+        const collateralUtxos = [{ ...utxo, value, redeemScript }]
+
+        // prepare borrow transaction with claim utxo as input
+        const preparedTx = await prepareTopupTx(
+          newContract,
+          oldContract,
+          network,
+          collateralUtxos,
+          blindPrivKeysMap,
         )
-      }
 
-      ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, network)
-        if (utxos.length > 0) {
-          // unsubscribe to event
-          ws.send(
-            JSON.stringify({
-              id: 1,
-              jsonrpc: '2.0',
-              method: 'blockchain.scripthash.unsubscribe',
-              params: [reversedAddressScriptHash],
-            }),
-          )
-          // close socket
-          ws.close()
+        // propose contract to alpha factory
+        const { partialTransaction } = await proposeTopupContract(preparedTx)
+        if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
-          // clear invoice expiration timeout
-          clearTimeout(invoiceExpirationTimeout)
+        // sign collateral input with ephemeral key pair
+        const aux = Psbt.fromBase64(partialTransaction)
+        aux.signInput(1, keyPair)
 
-          // show user (via modal) that payment was received
-          setStage(ModalStages.PaymentReceived)
-          await sleep(2000)
-          setStage(ModalStages.NeedsFujiApproval)
+        // ask user to sign tx with marina
+        setStage(ModalStages.NeedsConfirmation)
+        const base64 = await marina.signTransaction(aux.toBase64())
+        const ptx = Psbt.fromBase64(base64)
 
-          // get prevout for utxo
-          const [utxo] = utxos
-          const value = onchainTopupAmount
-          const collateralUtxos = [{ ...utxo, value, redeemScript }]
+        // tell user we are now on the final stage of the process
+        setStage(ModalStages.NeedsFinishing)
 
-          // prepare borrow transaction with claim utxo as input
-          const preparedTx = await prepareTopupTx(
-            newContract,
-            oldContract,
-            network,
-            collateralUtxos,
-            blindPrivKeysMap,
-          )
+        // finalize covenant input
+        finalizeTopupCovenantInput(ptx)
 
-          // propose contract to alpha factory
-          const { partialTransaction } = await proposeTopupContract(preparedTx)
-          if (!partialTransaction) throw new Error('Not accepted by Fuji')
+        // finalize input[1] - collateral via claim transaction
+        ptx.finalizeInput(1, (_, input) => {
+          return {
+            finalScriptSig: undefined,
+            finalScriptWitness: witnessStackToScriptWitness([
+              input.partialSig![0].signature,
+              preimage,
+              Buffer.from(redeemScript, 'hex'),
+            ]),
+          }
+        })
 
-          // sign collateral input with ephemeral key pair
-          const aux = Psbt.fromBase64(partialTransaction)
-          aux.signInput(1, keyPair)
+        // broadcast transaction
+        const rawHex = finalizeTx(ptx.toBase64())
+        const data = await broadcastTx(rawHex, network)
+        if (data.error) throw new Error(data.error)
+        newContract.txid = data.result
+        if (!newContract.txid) throw new Error('No txid returned')
 
-          // ask user to sign tx with marina
-          setStage(ModalStages.NeedsConfirmation)
-          const base64 = await marina.signTransaction(aux.toBase64())
-          const ptx = Psbt.fromBase64(base64)
+        // add vout to contract
+        const covenantVout = 1
+        newContract.vout = covenantVout
 
-          // tell user we are now on the final stage of the process
-          setStage(ModalStages.NeedsFinishing)
-
-          // finalize covenant input
-          finalizeTopupCovenantInput(ptx)
-
-          // finalize input[1] - collateral via claim transaction
-          ptx.finalizeInput(1, (_, input) => {
-            return {
-              finalScriptSig: undefined,
-              finalScriptWitness: witnessStackToScriptWitness([
-                input.partialSig![0].signature,
-                preimage,
-                Buffer.from(redeemScript, 'hex'),
-              ]),
-            }
-          })
-
-          // broadcast transaction
-          const rawHex = finalizeTx(ptx.toBase64())
-          const data = await broadcastTx(rawHex, network)
-          if (data.error) throw new Error(data.error)
-          newContract.txid = data.result
-          if (!newContract.txid) throw new Error('No txid returned')
-
-          // add vout to contract
-          newContract.vout = 1
-
-          // add additional fields to contract and save to storage
-          await saveContractToStorage(
-            newContract,
-            network,
-            preparedTx,
-            reloadContracts,
-          )
-
-          // mark old contract as topup
-          markContractTopup(oldContract)
-
-          // show success
-          setData(newContract.txid)
-          setResult('success')
-          setStage(ModalStages.ShowResult)
+        // wait for confirmation, mark contract confirmed and reload contracts
+        waitForContractConfirmation(newContract, network).then(() => {
+          markContractConfirmed(newContract)
           reloadContracts()
-        }
+        })
+
+        // add additional fields to contract and save to storage
+        await saveContractToStorage(newContract, network, preparedTx)
+
+        // mark old contract as topup
+        markContractTopup(oldContract)
+
+        // show success
+        setData(newContract.txid)
+        setResult('success')
+        setStage(ModalStages.ShowResult)
+        reloadContracts()
       }
     } catch (error) {
       setData(extractError(error))
@@ -273,7 +256,7 @@ const ContractTopupLightning: NextPage = () => {
         invoice={invoice}
         result={result}
         retry={retry(setData, setResult, handleInvoice)}
-        reset={resetContracts}
+        reset={resetModal}
         stage={stage}
         task={Tasks.Topup}
         useWebln={useWebln}

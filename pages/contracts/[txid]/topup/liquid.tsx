@@ -5,7 +5,11 @@ import SomeError from 'components/layout/error'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
 import { marinaMainAccountID, feeAmount } from 'lib/constants'
-import { saveContractToStorage, markContractTopup } from 'lib/contracts'
+import {
+  saveContractToStorage,
+  markContractTopup,
+  markContractConfirmed,
+} from 'lib/contracts'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -19,7 +23,7 @@ import { Psbt } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoinsWithBlindPrivKey } from 'lib/selection'
-import { broadcastTx } from 'lib/websocket'
+import { broadcastTx, waitForContractConfirmation } from 'lib/websocket'
 
 const ContractTopupLiquid: NextPage = () => {
   const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
@@ -29,6 +33,11 @@ const ContractTopupLiquid: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+
+  const resetModal = () => {
+    resetContracts()
+    history.go(-1)
+  }
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
@@ -98,15 +107,19 @@ const ContractTopupLiquid: NextPage = () => {
       if (data.error) throw new Error(data.error)
       newContract.txid = data.result
       if (!newContract.txid) throw new Error('No txid returned')
-      newContract.vout = 1
+
+      // add vout to contract
+      const covenantVout = 1
+      newContract.vout = covenantVout
+
+      // wait for confirmation, mark contract confirmed and reload contracts
+      waitForContractConfirmation(newContract, network).then(() => {
+        markContractConfirmed(newContract)
+        reloadContracts()
+      })
 
       // add additional fields to contract and save to storage
-      await saveContractToStorage(
-        newContract,
-        network,
-        preparedTx,
-        reloadContracts,
-      )
+      await saveContractToStorage(newContract, network, preparedTx)
 
       // mark old contract as topup
       markContractTopup(oldContract)
@@ -134,7 +147,7 @@ const ContractTopupLiquid: NextPage = () => {
         contract={newContract}
         data={data}
         result={result}
-        reset={resetContracts}
+        reset={resetModal}
         retry={retry(setData, setResult, handleMarina)}
         stage={stage}
         task={Tasks.Topup}

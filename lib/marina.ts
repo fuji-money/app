@@ -1,10 +1,9 @@
-import { Asset, UtxoWithBlindPrivKey } from './types'
+import { Asset } from './types'
 import {
   detectProvider,
   MarinaProvider,
   Balance,
   Utxo,
-  AddressInterface,
   NetworkString,
   Transaction,
 } from 'marina-provider'
@@ -14,8 +13,7 @@ import {
   marinaMainAccountID,
 } from 'lib/constants'
 import { synthAssetArtifact } from 'lib/artifacts'
-import { Psbt, address } from 'liquidjs-lib'
-import { sleep } from './utils'
+import { Psbt } from 'liquidjs-lib'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
@@ -82,16 +80,12 @@ export async function signTx(partialTransaction: string) {
 }
 
 export async function createFujiAccount(marina: MarinaProvider) {
-  console.log('createAccount')
   await marina.createAccount(marinaFujiAccountID)
-  console.log('useAccount')
   await marina.useAccount(marinaFujiAccountID)
-  console.log('importTemplate', synthAssetArtifact)
   await marina.importTemplate({
     type: 'ionio-artifact',
     template: JSON.stringify(synthAssetArtifact),
   })
-  console.log('useAccount')
   await marina.useAccount(marinaMainAccountID)
 }
 

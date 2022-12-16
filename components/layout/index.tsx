@@ -9,6 +9,7 @@ import Auth from 'components/auth'
 import Banner from 'components/banner'
 import { ContractsProvider } from 'components/providers/contracts'
 import WeblnModal from 'components/modals/webln'
+import { WeblnProvider } from 'components/providers/webln'
 
 interface LayoutProps {
   children: ReactNode
@@ -44,22 +45,24 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <Auth>
       <WalletProvider>
-        <ContractsProvider>
-          <UseDesktopBanner />
-          <div className="is-hidden-touch">
-            <Banner />
-            <Navbar />
-            <main>
-              <div className="container">
-                <Breadcrumbs />
-              </div>
-              <div className="container">{children}</div>
-            </main>
-            <Footer />
-            <TradeModal />
-            <WeblnModal />
-          </div>
-        </ContractsProvider>
+        <WeblnProvider>
+          <ContractsProvider>
+            <UseDesktopBanner />
+            <div className="is-hidden-touch">
+              <Banner />
+              <Navbar />
+              <main>
+                <div className="container">
+                  <Breadcrumbs />
+                </div>
+                <div className="container">{children}</div>
+              </main>
+              <Footer />
+              <TradeModal />
+              <WeblnModal />
+            </div>
+          </ContractsProvider>
+        </WeblnProvider>
       </WalletProvider>
     </Auth>
   )

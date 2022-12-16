@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Asset, Offer, Outcome, ElectrumUtxo } from 'lib/types'
+import { Asset, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -14,7 +14,7 @@ import EnablersLightning from 'components/enablers/lightning'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
-import { saveContractToStorage } from 'lib/contracts'
+import { markContractConfirmed, saveContractToStorage } from 'lib/contracts'
 import {
   prepareBorrowTxWithClaimTx,
   proposeBorrowContract,
@@ -38,15 +38,17 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import {
   broadcastTx,
-  electrumURL,
-  fetchUtxos,
-  finalizeTx,
-  reverseScriptHash,
+  fetchUtxosForAddress,
+  waitForAddressAvailable,
+  waitForContractConfirmation,
 } from 'lib/websocket'
+import { finalizeTx } from 'lib/transaction'
+import { WeblnContext } from 'components/providers/webln'
 
 const BorrowParams: NextPage = () => {
-  const { blindPrivKeysMap, network, weblnProviderName } =
-    useContext(WalletContext)
+  const { blindPrivKeysMap, network } = useContext(WalletContext)
+  const { weblnCanEnable, weblnProvider, weblnProviderName } =
+    useContext(WeblnContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -60,6 +62,11 @@ const BorrowParams: NextPage = () => {
 
   const router = useRouter()
   const { params } = router.query
+
+  const resetModal = () => {
+    resetContracts()
+    history.go(-2)
+  }
 
   const handleInvoice = async (): Promise<void> => {
     openModal(ModalIds.InvoiceDeposit)
@@ -134,105 +141,76 @@ const BorrowParams: NextPage = () => {
         throw new Error('invoice expired')
       }, invoiceExpireDate - Date.now())
 
-      // list of utxos to get from swap
-      let utxos: ElectrumUtxo[] = []
+      // wait for tx to be available (mempool or confirmed)
+      await waitForAddressAvailable(lockupAddress, network)
 
-      // open web socket
-      const ws = new WebSocket(electrumURL(network))
+      // fetch utxos for address
+      const utxos = await fetchUtxosForAddress(lockupAddress, network)
 
-      // electrum expects the hash of address script in hex reversed
-      const reversedAddressScriptHash = reverseScriptHash(lockupAddress)
+      // payment has arrived
+      if (utxos.length > 0) {
+        // clear invoice expiration timeout
+        clearTimeout(invoiceExpirationTimeout)
 
-      // send message to subscribe to event
-      ws.onopen = () => {
-        ws.send(
-          JSON.stringify({
-            id: 1,
-            jsonrpc: '2.0',
-            method: 'blockchain.scripthash.subscribe',
-            params: [reversedAddressScriptHash],
-          }),
+        // show user (via modal) that payment was received
+        setStage(ModalStages.PaymentReceived)
+        await sleep(2000) // give him time to see the green mark
+        setStage(ModalStages.NeedsFujiApproval)
+
+        // prepare borrow transaction with claim utxo as input
+        const preparedTx = await prepareBorrowTxWithClaimTx(
+          newContract,
+          network,
+          redeemScript,
+          utxos,
         )
-      }
 
-      // wait for payment
-      ws.onmessage = async () => {
-        utxos = await fetchUtxos(lockupAddress, network)
-        // payment has arrived
-        if (utxos.length > 0) {
-          // unsubscribe to event
-          ws.send(
-            JSON.stringify({
-              id: 1,
-              jsonrpc: '2.0',
-              method: 'blockchain.scripthash.unsubscribe',
-              params: [reversedAddressScriptHash],
-            }),
-          )
-          // close socket
-          ws.close()
+        // propose contract to alpha factory
+        const { partialTransaction } = await proposeBorrowContract(preparedTx)
+        if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
-          // clear invoice expiration timeout
-          clearTimeout(invoiceExpirationTimeout)
+        // sign and finalize input[0]
+        const psbt = Psbt.fromBase64(partialTransaction)
+        psbt.signInput(0, keyPair)
+        psbt.finalizeInput(0, (_, input) => {
+          return {
+            finalScriptSig: undefined,
+            finalScriptWitness: witnessStackToScriptWitness([
+              input.partialSig![0].signature,
+              preimage,
+              Buffer.from(redeemScript, 'hex'),
+            ]),
+          }
+        })
 
-          // show user (via modal) that payment was received
-          setStage(ModalStages.PaymentReceived)
-          await sleep(2000) // give him time to see the green mark
-          setStage(ModalStages.NeedsFujiApproval)
+        // change message to user
+        setStage(ModalStages.NeedsFinishing)
 
-          // prepare borrow transaction with claim utxo as input
-          const preparedTx = await prepareBorrowTxWithClaimTx(
-            newContract,
-            network,
-            redeemScript,
-            utxos,
-          )
+        // broadcast transaction
+        const rawHex = finalizeTx(psbt.toBase64())
+        const data = await broadcastTx(rawHex, network)
+        if (data.error) throw new Error(data.error)
+        newContract.txid = data.result
+        if (!newContract.txid) throw new Error('No txid returned')
 
-          // propose contract to alpha factory
-          const { partialTransaction } = await proposeBorrowContract(preparedTx)
-          if (!partialTransaction) throw new Error('Not accepted by Fuji')
+        // add vout to contract
+        const covenantVout = 0
+        newContract.vout = covenantVout
 
-          // sign and finalize input[0]
-          const psbt = Psbt.fromBase64(partialTransaction)
-          psbt.signInput(0, keyPair)
-          psbt.finalizeInput(0, (_, input) => {
-            return {
-              finalScriptSig: undefined,
-              finalScriptWitness: witnessStackToScriptWitness([
-                input.partialSig![0].signature,
-                preimage,
-                Buffer.from(redeemScript, 'hex'),
-              ]),
-            }
-          })
+        // add additional fields to contract and save to storage
+        await saveContractToStorage(newContract, network, preparedTx)
 
-          // change message to user
-          setStage(ModalStages.NeedsFinishing)
-
-          // broadcast transaction
-          const rawHex = finalizeTx(psbt.toBase64())
-          const data = await broadcastTx(rawHex, network)
-          if (data.error) throw new Error(data.error)
-          newContract.txid = data.result
-          if (!newContract.txid) throw new Error('No txid returned')
-
-          // add vout to contract
-          newContract.vout = 0
-
-          // add additional fields to contract and save to storage
-          await saveContractToStorage(
-            newContract,
-            network,
-            preparedTx,
-            reloadContracts,
-          )
-
-          // show success
-          setData(newContract.txid)
-          setResult(Outcome.Success)
-          setStage(ModalStages.ShowResult)
+        // wait for confirmation, mark contract confirmed and reload contracts
+        waitForContractConfirmation(newContract, network).then(() => {
+          markContractConfirmed(newContract)
           reloadContracts()
-        }
+        })
+
+        // show success
+        setData(newContract.txid)
+        setResult(Outcome.Success)
+        setStage(ModalStages.ShowResult)
+        reloadContracts()
       }
     } catch (error) {
       setData(extractError(error))
@@ -242,7 +220,9 @@ const BorrowParams: NextPage = () => {
   }
 
   const handleAlby =
-    weblnProviderName === 'Alby' && network === 'liquid'
+    weblnProviderName === 'Alby' &&
+    network === 'liquid' &&
+    (weblnProvider.enabled || weblnCanEnable)
       ? async () => {
           setUseWebln(true)
           await handleInvoice()
@@ -280,15 +260,17 @@ const BorrowParams: NextPage = () => {
       if (!newContract.txid) throw new Error('No txid returned')
 
       // add vout to contract
-      newContract.vout = 0
+      const covenantVout = 0
+      newContract.vout = covenantVout
 
       // add additional fields to contract and save to storage
-      await saveContractToStorage(
-        newContract,
-        network,
-        preparedTx,
-        reloadContracts,
-      )
+      await saveContractToStorage(newContract, network, preparedTx)
+
+      // wait for confirmation, mark contract confirmed and reload contracts
+      waitForContractConfirmation(newContract, network).then(() => {
+        markContractConfirmed(newContract)
+        reloadContracts()
+      })
 
       // show success
       setData(newContract.txid)
@@ -367,7 +349,7 @@ const BorrowParams: NextPage = () => {
                 data={data}
                 result={result}
                 retry={retry(setData, setResult, handleMarina)}
-                reset={resetContracts}
+                reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
               />
@@ -388,7 +370,7 @@ const BorrowParams: NextPage = () => {
                 invoice={invoice}
                 result={result}
                 retry={retry(setData, setResult, handleInvoice)}
-                reset={resetContracts}
+                reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
                 useWebln={useWebln}

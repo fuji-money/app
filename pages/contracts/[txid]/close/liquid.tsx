@@ -23,6 +23,11 @@ const ContractRedeemLiquid: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
 
+  const resetModal = () => {
+    resetContracts()
+    history.go(-1)
+  }
+
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
@@ -79,7 +84,7 @@ const ContractRedeemLiquid: NextPage = () => {
         contract={newContract}
         data={data}
         result={result}
-        reset={resetContracts}
+        reset={resetModal}
         retry={retry(setData, setResult, handleMarina)}
         stage={stage}
         task={Tasks.Redeem}

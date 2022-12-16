@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { saveAs } from 'file-saver'
 import { localStorageSwapsKey, localStorageContractsKey } from 'lib/storage'
 import { useContext } from 'react'
-import { WalletContext } from 'components/providers/wallet'
+import { WeblnContext } from 'components/providers/webln'
 
 const downloadFile = (localStorageKey: string, fileName: string) => {
   const item = localStorage.getItem(localStorageKey)
@@ -12,11 +12,25 @@ const downloadFile = (localStorageKey: string, fileName: string) => {
   saveAs(blob, fileName)
 }
 
-const Item = ({ handler, text }: { handler: () => void; text: string }) => {
+const Item = ({
+  disabled,
+  handler,
+  text,
+}: {
+  disabled?: boolean
+  handler: () => void
+  text: string
+}) => {
+  const title = disabled ? 'Reload to re-enable button' : undefined
   return (
     <div className="dropdown-item">
       <p>
-        <button className="button" onClick={handler}>
+        <button
+          className="button"
+          onClick={handler}
+          disabled={disabled}
+          title={title}
+        >
           {text}
         </button>
       </p>
@@ -30,7 +44,8 @@ const Item = ({ handler, text }: { handler: () => void; text: string }) => {
 }
 
 const Settings = () => {
-  const { weblnProvider, enableWeblnHandler } = useContext(WalletContext)
+  const { weblnIsEnabled, weblnCanEnable, weblnProvider, weblnEnableHandler } =
+    useContext(WeblnContext)
 
   const handleContractsBackup = () =>
     downloadFile(localStorageContractsKey, 'contracts.json')
@@ -39,7 +54,7 @@ const Settings = () => {
     downloadFile(localStorageSwapsKey, 'swaps.json')
 
   const showEnableWeblnButton =
-    window.webln && !weblnProvider && enableWeblnHandler
+    weblnProvider && !weblnIsEnabled && weblnEnableHandler
 
   return (
     <div className="dropdown is-hoverable my-auto pt-2">
@@ -58,7 +73,11 @@ const Settings = () => {
           <Item handler={handleContractsBackup} text="Backup contracts" />
           <Item handler={handleSwapsBackup} text="Backup swaps" />
           {showEnableWeblnButton && (
-            <Item handler={enableWeblnHandler} text="Enable WebLN" />
+            <Item
+              handler={weblnEnableHandler}
+              text="Enable WebLN"
+              disabled={!weblnCanEnable}
+            />
           )}
         </div>
       </div>

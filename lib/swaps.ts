@@ -11,6 +11,8 @@ import { randomBytes } from 'crypto'
 import Decimal from 'decimal.js'
 import { NetworkString } from 'marina-provider'
 
+// docs: https://docs.boltz.exchange/en/latest/api/
+
 // lightning swap invoice amount limit (in satoshis)
 export const DEFAULT_LIGHTNING_LIMITS = { maximal: 4294967, minimal: 50000 }
 export const DEPOSIT_LIGHTNING_LIMITS = {
