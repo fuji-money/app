@@ -490,7 +490,8 @@ binary-extensions@^2.0.0:
 
 bip174-liquid@^1.0.3:
   version "1.0.3"
-  resolved "https://github.com/louisinger/bip174.git#994d06eee3dda6690ed9feda0af96b42a3eec1c5"
+  resolved "https://registry.yarnpkg.com/bip174-liquid/-/bip174-liquid-1.0.3.tgz#5009444091da80277c45ee90c255d7919646f907"
+  integrity sha512-e69sC0Cq2tBJuhG2+wieXv40DN13YBR/wbIjZp4Mqwpar5vQm8Ldqijdd6N33XG7LtfvQi/zKm5fSzdPY/9mgw==
 
 bip174@^2.0.1, bip174@^2.1.0:
   version "2.1.0"
