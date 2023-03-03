@@ -8,7 +8,7 @@ export async function fetchURL(url: string) {
   } catch (ignore) {}
 }
 
-export async function postData<TResponse extends Record<string, any>>(
+export async function postData<TResponse extends any>(
   url: string,
   data = {},
 ): Promise<TResponse> {

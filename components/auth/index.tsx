@@ -13,7 +13,10 @@ export default function Auth({ children }: AuthProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const valid = await postData('/api/login/check', document.cookie)
+        const valid = await postData<boolean>(
+          '/api/login/check',
+          document.cookie,
+        )
         if (!valid) router.push('/')
         setValidUser(valid)
       } catch (err) {
