@@ -1,11 +1,11 @@
-import { getNetwork, getXPubKey } from './marina'
+import { getNetwork, getMainAccountXPubKey } from './marina'
 import { prettyAsset } from './pretty'
 import {
   addActivityToStorage,
   getActivitiesFromStorage,
   saveActivitiesToStorage,
 } from './storage'
-import { Activity, ActivityType, Contract, ContractState } from './types'
+import { Activity, ActivityType, Contract } from './types'
 
 // add activity type for given contract to storage
 // removes all previous activities with this type to garantee uniqueness
@@ -39,7 +39,7 @@ export function addActivity(
 // get all activities on storage for this network
 export async function getActivities(): Promise<Activity[]> {
   const network = await getNetwork()
-  const xPubKey = await getXPubKey()
+  const xPubKey = await getMainAccountXPubKey()
   return getActivitiesFromStorage().filter(
     (activity: Activity) =>
       activity.network === network && activity.contract.xPubKey === xPubKey,

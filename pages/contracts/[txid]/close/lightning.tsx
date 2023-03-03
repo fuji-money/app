@@ -14,10 +14,11 @@ import EnablersLightning from 'components/enablers/lightning'
 import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
-import { broadcastTx } from 'lib/websocket'
+import { Extractor, Finalizer } from 'liquidjs-lib'
+import { broadcastTx, getNextAddress, getPublicKey } from 'lib/marina'
 
 const ContractRedeemLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { marina, network } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -42,12 +43,7 @@ const ContractRedeemLightning: NextPage = () => {
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
-    const tx = await prepareRedeemTx(
-      newContract,
-      network,
-      blindPrivKeysMap,
-      swapAddress,
-    )
+    const tx = await prepareRedeemTx(newContract, network, swapAddress)
 
     // ask user to sign transaction
     setStage(ModalStages.NeedsConfirmation)
@@ -58,15 +54,14 @@ const ContractRedeemLightning: NextPage = () => {
 
     // finalize the fuji asset input
     // we skip utxo in position 0 since is finalized already by the redeem function
-    for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
-      signed.psbt.finalizeInput(index)
+    const finalizer = new Finalizer(signed.pset)
+    for (let index = 1; index < signed.pset.globals.inputCount; index++) {
+      finalizer.finalizeInput(index)
     }
 
     // extract and broadcast transaction
-    const rawHex = signed.psbt.extractTransaction().toHex()
-    const data = await broadcastTx(rawHex, network)
-    if (data.error) throw new Error(data.error)
-    const txid = data.result
+    const rawHex = Extractor.extract(finalizer.pset).toHex()
+    const { txid } = await broadcastTx(rawHex)
     if (!txid) throw new Error('No txid returned')
 
     markContractRedeemed(newContract)
@@ -84,7 +79,9 @@ const ContractRedeemLightning: NextPage = () => {
     openModal(ModalIds.Redeem)
     try {
       setStage(ModalStages.NeedsAddress)
-      const refundPublicKey = (await marina.getNextAddress()).publicKey!
+      const refundPublicKey = (
+        await getPublicKey(await getNextAddress())
+      ).toString('hex')
       // create swap with Boltz.exchange
       const boltzSwap = await createSubmarineSwap(
         invoice,

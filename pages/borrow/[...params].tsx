@@ -20,14 +20,21 @@ import {
   proposeBorrowContract,
   prepareBorrowTx,
 } from 'lib/covenant'
-import { signTx } from 'lib/marina'
+import { broadcastTx, signTx } from 'lib/marina'
 import {
   createReverseSubmarineSwap,
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
 import { openModal, extractError, retry, sleep } from 'lib/utils'
-import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
+import {
+  BIP174SigningData,
+  Pset,
+  Signer,
+  witnessStackToScriptWitness,
+  script as bscript,
+  Finalizer,
+} from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
@@ -37,7 +44,6 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import {
-  broadcastTx,
   fetchUtxosForAddress,
   waitForAddressAvailable,
   waitForContractConfirmation,
@@ -46,7 +52,7 @@ import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 
 const BorrowParams: NextPage = () => {
-  const { blindPrivKeysMap, network } = useContext(WalletContext)
+  const { network } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
@@ -158,25 +164,31 @@ const BorrowParams: NextPage = () => {
         setStage(ModalStages.NeedsFujiApproval)
 
         // prepare borrow transaction with claim utxo as input
-        const preparedTx = await prepareBorrowTxWithClaimTx(
-          newContract,
-          network,
-          redeemScript,
-          utxos,
-        )
+        const preparedTx = await prepareBorrowTxWithClaimTx(newContract, utxos)
 
         // propose contract to alpha factory
-        const { partialTransaction } = await proposeBorrowContract(preparedTx)
-        if (!partialTransaction) throw new Error('Not accepted by Fuji')
+        const contractResponse = await proposeBorrowContract(preparedTx)
+        if (!contractResponse.partialTransaction)
+          throw new Error('Not accepted by Fuji')
 
         // sign and finalize input[0]
-        const psbt = Psbt.fromBase64(partialTransaction)
-        psbt.signInput(0, keyPair)
-        psbt.finalizeInput(0, (_, input) => {
+        const pset = Pset.fromBase64(contractResponse.partialTransaction)
+        const signer = new Signer(pset)
+        const sig: BIP174SigningData = {
+          partialSig: {
+            pubkey: keyPair.publicKey,
+            signature: bscript.signature.encode(keyPair.sign(preimage), 1),
+          },
+        }
+
+        signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
+        const finalizer = new Finalizer(pset)
+
+        finalizer.finalizeInput(0, (inputIndex, pset) => {
           return {
             finalScriptSig: undefined,
             finalScriptWitness: witnessStackToScriptWitness([
-              input.partialSig![0].signature,
+              pset.inputs![inputIndex].partialSigs![0].signature,
               preimage,
               Buffer.from(redeemScript, 'hex'),
             ]),
@@ -187,10 +199,9 @@ const BorrowParams: NextPage = () => {
         setStage(ModalStages.NeedsFinishing)
 
         // broadcast transaction
-        const rawHex = finalizeTx(psbt.toBase64())
-        const data = await broadcastTx(rawHex, network)
-        if (data.error) throw new Error(data.error)
-        newContract.txid = data.result
+        const rawHex = finalizeTx(pset)
+        const { txid } = await broadcastTx(rawHex)
+        newContract.txid = txid
         if (!newContract.txid) throw new Error('No txid returned')
 
         // add vout to contract
@@ -236,11 +247,7 @@ const BorrowParams: NextPage = () => {
       if (!newContract) return
 
       // prepare borrow transaction
-      const preparedTx = await prepareBorrowTx(
-        newContract,
-        network,
-        blindPrivKeysMap,
-      )
+      const preparedTx = await prepareBorrowTx(newContract)
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory
@@ -253,10 +260,9 @@ const BorrowParams: NextPage = () => {
 
       setStage(ModalStages.NeedsFinishing)
 
-      const rawHex = finalizeTx(signedTransaction)
-      const data = await broadcastTx(rawHex, network)
-      if (data.error) throw new Error(data.error)
-      newContract.txid = data.result
+      const rawHex = finalizeTx(Pset.fromBase64(signedTransaction))
+      const { txid } = await broadcastTx(rawHex)
+      newContract.txid = txid
       if (!newContract.txid) throw new Error('No txid returned')
 
       // add vout to contract

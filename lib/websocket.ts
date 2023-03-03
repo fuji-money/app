@@ -1,8 +1,8 @@
 import { address, crypto, Transaction } from 'liquidjs-lib'
 import { Input } from 'liquidjs-lib/src/transaction'
-import { NetworkString } from 'marina-provider'
+import { NetworkString, Utxo } from 'marina-provider'
 import { getContractCovenantAddress } from './contracts'
-import { BlockHeader, Contract, ElectrumUnspent, ElectrumUtxo } from './types'
+import { BlockHeader, Contract, ElectrumUnspent } from './types'
 
 // docs at https://electrumx.readthedocs.io/en/latest/protocol-methods.html
 
@@ -88,7 +88,7 @@ const fetchContractHistory = async (
   network: NetworkString,
 ) => {
   // get address for this contract
-  const addr = getContractCovenantAddress(contract, network)
+  const addr = await getContractCovenantAddress(contract, network)
   if (!addr) return
   // call web socket to get history
   const data = await callWS({
@@ -152,24 +152,11 @@ const deserializeBlockHeader = (hex: string): BlockHeader => {
 const reverseScriptHash = (addr: string): string =>
   crypto.sha256(address.toOutputScript(addr)).reverse().toString('hex')
 
-// broadcasts raw transaction using web sockets
-// returns txid
-export const broadcastTx = async (
-  rawHex: string,
-  network: NetworkString,
-): Promise<any> => {
-  return await callWS({
-    method: 'blockchain.transaction.broadcast',
-    network,
-    params: [rawHex],
-  })
-}
-
 // given an address, return utxos
 export const fetchUtxosForAddress = async (
   addr: string,
   network: NetworkString,
-): Promise<ElectrumUtxo[]> => {
+): Promise<Omit<Utxo, 'scriptDetails'>[]> => {
   // call web socket to get utxos
   const data = await callWS({
     method: 'blockchain.scripthash.listunspent',
@@ -180,11 +167,11 @@ export const fetchUtxosForAddress = async (
   return Promise.all(
     data.result.map(async (unspent: ElectrumUnspent) => {
       const hex = await fetchTxHex(unspent.tx_hash, network)
-      const prevout = Transaction.fromHex(hex).outs[unspent.tx_pos]
+      const witnessUtxo = Transaction.fromHex(hex).outs[unspent.tx_pos]
       return {
         txid: unspent.tx_hash,
         vout: unspent.tx_pos,
-        prevout,
+        witnessUtxo,
       }
     }),
   )
@@ -302,10 +289,10 @@ export const waitForContractConfirmation = async (
   contract: Contract,
   network: NetworkString,
 ): Promise<any> => {
+  const covenantAddress = await getContractCovenantAddress(contract, network)
   return new Promise((resolve) => {
     const { txid } = contract
     if (!txid) throw new Error('txid not found')
-    const covenantAddress = getContractCovenantAddress(contract, network)
     if (!covenantAddress) throw new Error('covenant address not found')
     // https://electrumx.readthedocs.io/en/latest/protocol-basics.html#status
     const mempoolStatus = crypto
@@ -343,6 +330,11 @@ export const waitForContractConfirmation = async (
           resolve(data)
         }
       }
+    }
+
+    ws.onerror = (e) => {
+      console.error(e)
+      ws.close()
     }
   })
 }

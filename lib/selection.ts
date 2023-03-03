@@ -1,16 +1,9 @@
-import { BlindPrivKeysMap, UtxoWithBlindPrivKey } from './types'
-import { Utxo } from 'marina-provider'
+import type { Utxo } from 'marina-provider'
 
-const utxoScriptHex = (u: UtxoWithBlindPrivKey) =>
-  u.prevout.script.toString('hex')
-
-const utxoValue = (u: Utxo) => u.value || 0
+const utxoValue = (u: Utxo) => u.blindingData?.value || 0
 
 // coin selection strategy: accumulate utxos until value is achieved
-const accumulativeStrategy = (
-  coins: UtxoWithBlindPrivKey[],
-  target: number,
-): UtxoWithBlindPrivKey[] => {
+const accumulativeStrategy = (coins: Utxo[], target: number): Utxo[] => {
   let totalValue = 0
   const selectedCoins = []
 
@@ -27,9 +20,9 @@ const accumulativeStrategy = (
 
 // coin selection strategy: tries to get an exact value (no change)
 const branchAndBoundStrategy = (
-  coins: UtxoWithBlindPrivKey[],
+  coins: Utxo[],
   target: number,
-): UtxoWithBlindPrivKey[] | undefined => {
+): Utxo[] | undefined => {
   const MAX_TRIES = 1_000
   const selected: number[] = []
 
@@ -110,23 +103,16 @@ const branchAndBoundStrategy = (
 }
 
 // select coins for given amount, with respective blinding private key
-export function selectCoinsWithBlindPrivKey(
-  utxos: UtxoWithBlindPrivKey[],
+export function selectCoins(
+  utxos: Utxo[],
   asset: string,
   minAmount: number,
-  blindPrivKeysMap: BlindPrivKeysMap,
-): UtxoWithBlindPrivKey[] {
-  // return blinding private key for a given utxo
-  const getUtxoBlindPrivKey = (u: Utxo): string | undefined =>
-    blindPrivKeysMap[utxoScriptHex(u)]
-
+): Utxo[] {
   // sort utxos in descending order of value will decrease number of inputs
   // (and fees) but will increase utxo fragmentation
   utxos = utxos
-    .filter((utxo) => utxo.asset === asset)
+    .filter((utxo) => utxo.blindingData && utxo.blindingData.asset === asset)
     .sort((a, b) => utxoValue(b) - utxoValue(a))
-    .map((utxo) => ({ ...utxo, blindPrivKey: getUtxoBlindPrivKey(utxo) }))
-    .filter((utxo) => utxo.blindPrivKey)
 
   // try to find a combination with exact value (aka no change) first
   return (

@@ -12,10 +12,11 @@ import EnablersLiquid from 'components/enablers/liquid'
 import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
-import { broadcastTx } from 'lib/websocket'
+import { Extractor, Finalizer } from 'liquidjs-lib'
+import { broadcastTx } from 'lib/marina'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { marina, network } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -37,7 +38,7 @@ const ContractRedeemLiquid: NextPage = () => {
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
-      const tx = await prepareRedeemTx(newContract, network, blindPrivKeysMap)
+      const tx = await prepareRedeemTx(newContract, network)
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
@@ -48,15 +49,14 @@ const ContractRedeemLiquid: NextPage = () => {
 
       // finalize the fuji asset input
       // we skip utxo in position 0 since is finalized already by the redeem function
-      for (let index = 1; index < signed.psbt.data.inputs.length; index++) {
-        signed.psbt.finalizeInput(index)
+      const finalizer = new Finalizer(signed.pset)
+      for (let index = 1; index < signed.pset.globals.inputCount; index++) {
+        finalizer.finalizeInput(index)
       }
 
       // extract and broadcast transaction
-      const rawHex = signed.psbt.extractTransaction().toHex()
-      const data = await broadcastTx(rawHex, network)
-      if (data.error) throw new Error(data.error)
-      const txid = data.result
+      const rawHex = Extractor.extract(finalizer.pset).toHex()
+      const { txid } = await broadcastTx(rawHex)
       if (!txid) throw new Error('No txid returned')
 
       // mark on storage and finalize

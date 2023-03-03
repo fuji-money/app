@@ -19,14 +19,16 @@ import { openModal, extractError, retry } from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome } from 'lib/types'
-import { Psbt } from 'liquidjs-lib'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
-import { selectCoinsWithBlindPrivKey } from 'lib/selection'
-import { broadcastTx, waitForContractConfirmation } from 'lib/websocket'
+import { selectCoins } from 'lib/selection'
+import { waitForContractConfirmation } from 'lib/websocket'
+import { Pset } from 'liquidjs-lib'
+import { finalizeTx } from 'lib/transaction'
+import { broadcastTx } from 'lib/marina'
 
 const ContractTopupLiquid: NextPage = () => {
-  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { marina, network } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -58,12 +60,12 @@ const ContractTopupLiquid: NextPage = () => {
     openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
+      const utxos = await marina.getCoins([marinaMainAccountID])
       // validate we have necessary utxos
-      const collateralUtxos = selectCoinsWithBlindPrivKey(
-        await marina.getCoins([marinaMainAccountID]),
+      const collateralUtxos = selectCoins(
+        utxos,
         newContract.collateral.id,
         topupAmount + feeAmount,
-        blindPrivKeysMap,
       )
       if (collateralUtxos.length === 0)
         throw new Error('Not enough collateral funds')
@@ -74,7 +76,6 @@ const ContractTopupLiquid: NextPage = () => {
         oldContract,
         network,
         collateralUtxos,
-        blindPrivKeysMap,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
@@ -88,7 +89,7 @@ const ContractTopupLiquid: NextPage = () => {
       // user now must sign transaction on marina
       setStage(ModalStages.NeedsConfirmation)
       const base64 = await marina.signTransaction(partialTransaction)
-      const ptx = Psbt.fromBase64(base64)
+      const ptx = Pset.fromBase64(base64)
 
       // tell user we are now on the final stage of the process
       setStage(ModalStages.NeedsFinishing)
@@ -97,15 +98,11 @@ const ContractTopupLiquid: NextPage = () => {
       finalizeTopupCovenantInput(ptx)
 
       // finalize the other inputs
-      for (let index = 1; index < ptx.data.inputs.length; index++) {
-        ptx.finalizeInput(index)
-      }
+      const rawHex = finalizeTx(ptx)
 
       // broadcast transaction
-      const rawHex = ptx.extractTransaction().toHex()
-      const data = await broadcastTx(rawHex, network)
-      if (data.error) throw new Error(data.error)
-      newContract.txid = data.result
+      const { txid } = await broadcastTx(rawHex)
+      newContract.txid = txid
       if (!newContract.txid) throw new Error('No txid returned')
 
       // add vout to contract

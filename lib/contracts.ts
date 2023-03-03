@@ -2,7 +2,7 @@ import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
 import { minDustLimit } from './constants'
 import { fetchAsset } from './api'
-import { getNetwork, getXPubKey } from './marina'
+import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
   addContractToStorage,
@@ -102,7 +102,7 @@ export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = await getNetwork()
-  const xPubKey = await getXPubKey()
+  const xPubKey = await getMainAccountXPubKey()
   // cache assets for performance issues
   const assetCache = new Map<string, Asset>()
   const allTickers = new Set<string>()
@@ -252,17 +252,16 @@ export async function saveContractToStorage(
   network: NetworkString,
   preparedTx: PreparedBorrowTx | PreparedTopupTx,
 ): Promise<void> {
-  contract.borrowerPubKey = preparedTx.borrowerPublicKey
   contract.contractParams = preparedTx.contractParams
   contract.network = network
   contract.confirmed = false
-  contract.xPubKey = await getXPubKey()
+  contract.xPubKey = await getMainAccountXPubKey()
   createNewContract(contract)
 }
 
-export function getContractCovenantAddress(
+export async function getContractCovenantAddress(
   contract: Contract,
   network: NetworkString,
 ) {
-  return getIonioInstance(contract, network).address
+  return (await getIonioInstance(contract, network)).address
 }

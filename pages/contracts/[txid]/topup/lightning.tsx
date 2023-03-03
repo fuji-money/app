@@ -16,7 +16,15 @@ import {
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
-import { Psbt, witnessStackToScriptWitness } from 'liquidjs-lib'
+import {
+  BIP174SigningData,
+  Pset,
+  Signer,
+  Transaction,
+  witnessStackToScriptWitness,
+  script as bscript,
+  Finalizer,
+} from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
   prepareTopupTx,
@@ -32,16 +40,16 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 import {
-  broadcastTx,
   fetchUtxosForAddress,
   waitForAddressAvailable,
   waitForContractConfirmation,
 } from 'lib/websocket'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
+import { broadcastTx } from 'lib/marina'
 
 const ContractTopupLightning: NextPage = () => {
-  const { blindPrivKeysMap, marina, network } = useContext(WalletContext)
+  const { marina, network } = useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -164,7 +172,6 @@ const ContractTopupLightning: NextPage = () => {
           oldContract,
           network,
           collateralUtxos,
-          blindPrivKeysMap,
         )
 
         // propose contract to alpha factory
@@ -172,13 +179,24 @@ const ContractTopupLightning: NextPage = () => {
         if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
         // sign collateral input with ephemeral key pair
-        const aux = Psbt.fromBase64(partialTransaction)
-        aux.signInput(1, keyPair)
+        const aux = Pset.fromBase64(partialTransaction)
+        const signer = new Signer(aux)
+
+        const sig: BIP174SigningData = {
+          partialSig: {
+            pubkey: keyPair.publicKey,
+            signature: bscript.signature.encode(
+              keyPair.sign(preimage),
+              Transaction.SIGHASH_ALL,
+            ),
+          },
+        }
+        signer.addSignature(1, sig, Pset.ECDSASigValidator(ecc))
 
         // ask user to sign tx with marina
         setStage(ModalStages.NeedsConfirmation)
-        const base64 = await marina.signTransaction(aux.toBase64())
-        const ptx = Psbt.fromBase64(base64)
+        const base64 = await marina.signTransaction(signer.pset.toBase64())
+        const ptx = Pset.fromBase64(base64)
 
         // tell user we are now on the final stage of the process
         setStage(ModalStages.NeedsFinishing)
@@ -186,12 +204,13 @@ const ContractTopupLightning: NextPage = () => {
         // finalize covenant input
         finalizeTopupCovenantInput(ptx)
 
+        const finalizer = new Finalizer(ptx)
         // finalize input[1] - collateral via claim transaction
-        ptx.finalizeInput(1, (_, input) => {
+        finalizer.finalizeInput(1, (inIndex, pset) => {
           return {
             finalScriptSig: undefined,
             finalScriptWitness: witnessStackToScriptWitness([
-              input.partialSig![0].signature,
+              pset.inputs![inIndex].partialSigs![0].signature,
               preimage,
               Buffer.from(redeemScript, 'hex'),
             ]),
@@ -199,10 +218,9 @@ const ContractTopupLightning: NextPage = () => {
         })
 
         // broadcast transaction
-        const rawHex = finalizeTx(ptx.toBase64())
-        const data = await broadcastTx(rawHex, network)
-        if (data.error) throw new Error(data.error)
-        newContract.txid = data.result
+        const rawHex = finalizeTx(finalizer.pset)
+        const { txid } = await broadcastTx(rawHex)
+        newContract.txid = txid
         if (!newContract.txid) throw new Error('No txid returned')
 
         // add vout to contract

@@ -27,12 +27,12 @@ import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
-import { toXpub } from 'ldk'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
 import { checkContractOutspend, checkContractIsConfirmed } from 'lib/websocket'
+import { toXpub } from 'lib/utils'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -166,6 +166,25 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
+  // it ensures that contract are all updated to the latest format
+  const migrateOldContracts = () => {
+    // migrate old contracts to new format
+    getContractsFromStorage().map((contract) => {
+      if (contract.contractParams && (contract as any)['borrowerPubKey']) {
+        contract.contractParams = {
+          ...contract.contractParams,
+          borrowerPublicKey: (contract as any)['borrowerPubKey'],
+          issuerPublicKey: (contract as any)['contractParams']['issuerPk'],
+          oraclePublicKey: (contract as any)['contractParams']['oraclePk'],
+        }
+        delete (contract as any)['borrowerPubKey']
+        delete (contract as any)['contractParams']['issuerPk']
+        delete (contract as any)['contractParams']['oraclePk']
+        updateContractOnStorage(contract)
+      }
+    })
+  }
+
   // temporary fix:
   // 1. fix missing xPubKey on old contracts and store on local storage
   // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
@@ -230,6 +249,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (connected && network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
+        migrateOldContracts()
         fixMissingXPubKeyOnOldContracts()
         setMarinaListener()
         reloadContracts()

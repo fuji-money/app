@@ -4,8 +4,10 @@ export const minMultiplyRatio = 130
 export const maxMultiplyRatio = 330
 
 // marina account IDs
-export const marinaFujiAccountID = 'fuji'
-export const marinaMainAccountID = 'mainAccount'
+export const marinaFujiAccountID = 'fuji' // slip13(fuji)
+export const marinaMainAccountID = 'mainAccount' // m/84'/1776'/0'
+export const marinaTestnetMainAccountID = 'mainAccountTest' // m/84'/1'/0'
+export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 
 export const defaultNetwork = 'testnet'
 
@@ -23,7 +25,7 @@ export const oracleURL =
   process.env.NEXT_PUBLIC_ORACLE_URL ||
   'https://oracle.fuji.money/oracle/BTCUSD' // TODO - remove alternative url
 export const alphaServerUrl =
-  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://alpha-factory.fuji.money' // TODO - remove alternative url
+  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://factory.fuji.money' // TODO - remove alternative url
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx
