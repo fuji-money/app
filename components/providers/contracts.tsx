@@ -23,7 +23,7 @@ import {
 } from 'lib/storage'
 import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
-import { NetworkString } from 'marina-provider'
+import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
@@ -219,28 +219,26 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       })
   }
 
-  // on a NEW_TX event for fuji account, reload contracts
-  // this approach brings a heavy load on the explorer,
-  // since on reload Marina emits all Tx for each account,
-  // so if Fuji account has many Tx it will hammer the explorer.
-  // the alternative would be to use SPENT_UTXO, but borrow contracts
-  // funded with Lightning swap does not use any UTXO, so marina never
-  // emits that event on those types of contracts
+  // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
       accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
-      marina.on('SPENT_UTXO', async ({ accountID }) => {
-        console.info('SPENT_UTXO', accountID)
-        if (okToReload(accountID)) reloadAndMarkLastReload()
-      })
-      marina.on('NEW_UTXO', async ({ accountID }) => {
-        console.info('NEW_UTXO', accountID)
-        if (okToReload(accountID)) reloadAndMarkLastReload()
-      })
+      const listenerFunction = async ({ data: utxo }: { utxo: Utxo, data: any }) => {
+        if (!utxo || !utxo.scriptDetails || !isIonioScriptDetails(utxo.scriptDetails)) return
+        if (okToReload(utxo.scriptDetails.accountName)) reloadAndMarkLastReload()
+      }
+
+      const idSpentUtxo = marina.on('SPENT_UTXO', listenerFunction)
+      const idNewUtxo = marina.on('NEW_UTXO', listenerFunction)
+      return () => {
+        marina.off(idSpentUtxo)
+        marina.off(idNewUtxo)
+      }
     }
+    return () => {}
   }
 
   const firstRender = useRef<NetworkString[]>([])
@@ -251,10 +249,10 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!firstRender.current.includes(network)) {
         migrateOldContracts()
         fixMissingXPubKeyOnOldContracts()
-        setMarinaListener()
         reloadContracts()
         fetchOracles().then((data) => setOracles(data))
         firstRender.current.push(network)
+        return setMarinaListener() // return the close listener function 
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

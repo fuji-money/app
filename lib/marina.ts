@@ -25,10 +25,9 @@ import {
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
   if (!marina) return []
-  if (!(await marina.isEnabled()))
-    throw new Error('enable marina to get balances')
+  if (!(await marina.isEnabled())) return []
   const mainAccountIDs = await getMainAccountIDs()
-  return await marina.getBalances(mainAccountIDs)
+  return marina.getBalances(mainAccountIDs)
 }
 
 export function getAssetBalance(asset: Asset, balances: Balance[]): number {
@@ -78,13 +77,13 @@ export async function getMainAccountCoins(): Promise<Utxo[]> {
 }
 
 export async function getFujiCoins(): Promise<Utxo[]> {
-  return await getCoins(marinaFujiAccountID)
+  return getCoins(marinaFujiAccountID)
 }
 
 export async function getTransactions(): Promise<Transaction[]> {
   const marina = await getMarinaProvider()
   if (!marina) return []
-  return await marina.getTransactions()
+  return marina.getTransactions()
 }
 
 export async function signTx(partialTransaction: string) {

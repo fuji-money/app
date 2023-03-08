@@ -16,7 +16,7 @@ import { Extractor, Finalizer } from 'liquidjs-lib'
 import { broadcastTx } from 'lib/marina'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { network } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -32,12 +32,12 @@ const ContractRedeemLiquid: NextPage = () => {
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
-  const handleMarina = async (): Promise<void> => {
-    if (!marina) return
+  async function handleMarina(): Promise<void> {
     openModal(ModalIds.Redeem)
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
+      if (!newContract) throw new Error('Contract not found')
       const tx = await prepareRedeemTx(newContract, network)
 
       // ask user to sign transaction

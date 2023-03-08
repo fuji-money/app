@@ -45,11 +45,8 @@ import {
 import artifact from 'lib/fuji.ionio.json'
 import * as ecc from 'tiny-secp256k1'
 import {
-  Argument,
   Artifact,
   Contract as IonioContract,
-  replaceArtifactConstructorWithArguments,
-  templateString,
 } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
 import { randomBytes } from 'crypto'
@@ -79,9 +76,9 @@ export async function getIonioInstance(
     // issuer public key
     params.issuerPublicKey,
     // price level
-    Buffer.from(params.priceLevel, 'base64'),
+    `0x${Buffer.from(params.priceLevel, 'base64').toString('hex')}`,
     // timestamp
-    Buffer.from(params.setupTimestamp, 'base64'),
+    `0x${Buffer.from(params.setupTimestamp, 'base64').toString('hex')}`,
   ]
 
   return new IonioContract(
@@ -492,8 +489,8 @@ export async function prepareRedeemTx(
   // burn synthetic
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
-  // payout to issuer
-  tx.withRecipient(issuer.address!, payoutAmount, collateral.id, 0)
+  // payout to issuer (unconfidential)
+  tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
 
   // get collateral back or sent to boltz case is a submarine swap
   tx.withRecipient(
@@ -503,11 +500,9 @@ export async function prepareRedeemTx(
     0,
   )
 
-  const aux = (await marina.getNextChangeAddress()).confidentialAddress
-
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
-    const borrowChangeAddress = await marina.getNextChangeAddress()
+    const borrowChangeAddress = await getNextChangeAddress()
     tx.withRecipient(
       borrowChangeAddress.confidentialAddress,
       syntheticChangeAmount,
@@ -591,8 +586,6 @@ export async function prepareTopupTx(
   const coinToTopup = coins.find(
     (c) => c.txid === oldContract.txid && c.vout === oldContract.vout,
   )
-  console.log('coinToTopup', coinToTopup)
-  console.log('coins', coins)
   if (!coinToTopup)
     throw new Error(
       'Contract cannot be found in the connected wallet. ' +
@@ -700,13 +693,11 @@ export async function prepareTopupTx(
 
   // new covenant output
   // the covenant must be always unconf!
-
   tx.withRecipient(
     address.fromConfidential(covenantAddress.confidentialAddress!)
       .unconfidentialAddress,
     newContract.collateral.quantity,
     newContract.collateral.id,
-    0,
   )
 
   // add collateral change output if needed
