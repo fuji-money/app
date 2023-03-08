@@ -36,3 +36,4 @@ yarn-error.log*
 
 # dev files
 .env.development
+.vscode

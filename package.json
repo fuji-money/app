@@ -39,6 +39,7 @@
     "@types/react": "17.0.43",
     "@types/react-dom": "17.0.14",
     "@types/styled-jsx": "^3.4.4",
+    "buffer": "^6.0.3",
     "eslint": "8.12.0",
     "eslint-config-next": "12.1.4",
     "eslint-config-prettier": "^8.5.0",
