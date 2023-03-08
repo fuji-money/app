@@ -226,9 +226,20 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
-      const listenerFunction = async ({ data: utxo }: { utxo: Utxo, data: any }) => {
-        if (!utxo || !utxo.scriptDetails || !isIonioScriptDetails(utxo.scriptDetails)) return
-        if (okToReload(utxo.scriptDetails.accountName)) reloadAndMarkLastReload()
+      const listenerFunction = async ({
+        data: utxo,
+      }: {
+        utxo: Utxo
+        data: any
+      }) => {
+        if (
+          !utxo ||
+          !utxo.scriptDetails ||
+          !isIonioScriptDetails(utxo.scriptDetails)
+        )
+          return
+        if (okToReload(utxo.scriptDetails.accountName))
+          reloadAndMarkLastReload()
       }
 
       const idSpentUtxo = marina.on('SPENT_UTXO', listenerFunction)
@@ -252,7 +263,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         reloadContracts()
         fetchOracles().then((data) => setOracles(data))
         firstRender.current.push(network)
-        return setMarinaListener() // return the close listener function 
+        return setMarinaListener() // return the close listener function
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

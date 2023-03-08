@@ -44,10 +44,7 @@ import {
 } from './marina'
 import artifact from 'lib/fuji.ionio.json'
 import * as ecc from 'tiny-secp256k1'
-import {
-  Artifact,
-  Contract as IonioContract,
-} from '@ionio-lang/ionio'
+import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { getContractPayoutAmount } from './contracts'
 import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
