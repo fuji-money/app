@@ -33,6 +33,7 @@ const ConnectButton = () => {
       await createFujiAccount(marina)
       closeModal(ModalIds.Account)
     }
+    marina.isEnabled().then((enabled) => setConnected(enabled))
   }
 
   return (
