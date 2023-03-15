@@ -130,15 +130,13 @@ async function getCovenantOutput(contract: Contract): Promise<{
   await marina.useAccount((await getMainAccountIDs(false))[0])
 
   // set covenant output
-  const { scriptPubKey, blindingKey } = address.fromConfidential(
+  const { scriptPubKey } = address.fromConfidential(
     covenantAddress.confidentialAddress,
   )
   const covenantOutput: UpdaterOutput = {
     script: scriptPubKey,
     amount: contract.collateral.quantity,
     asset: contract.collateral.id,
-    blinderIndex: 0,
-    blindingPublicKey: blindingKey,
   }
 
   return {
