@@ -10,7 +10,6 @@ const closeModals = () => {
 export enum ModalIds {
   Account = 'account-modal',
   CurrentPrice = 'current-price-modal',
-  InvalidEmail = 'invalid-email-modal',
   Invoice = 'invoice-modal',
   InvoiceDeposit = 'invoice-deposit-modal',
   LiquidationPrice = 'liquidation-price-modal',

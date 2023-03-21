@@ -5,7 +5,6 @@ import { ReactNode } from 'react'
 import TradeModal from 'components/modals/trade'
 import Breadcrumbs from 'components/breadcrumbs'
 import { WalletProvider } from 'components/providers/wallet'
-import Auth from 'components/auth'
 import Banner from 'components/banner'
 import { ContractsProvider } from 'components/providers/contracts'
 import WeblnModal from 'components/modals/webln'
@@ -43,27 +42,25 @@ export default function Layout({ children }: LayoutProps) {
     )
   }
   return (
-    <Auth>
-      <WalletProvider>
-        <WeblnProvider>
-          <ContractsProvider>
-            <UseDesktopBanner />
-            <div className="is-hidden-touch">
-              <Banner />
-              <Navbar />
-              <main>
-                <div className="container">
-                  <Breadcrumbs />
-                </div>
-                <div className="container">{children}</div>
-              </main>
-              <Footer />
-              <TradeModal />
-              <WeblnModal />
-            </div>
-          </ContractsProvider>
-        </WeblnProvider>
-      </WalletProvider>
-    </Auth>
+    <WalletProvider>
+      <WeblnProvider>
+        <ContractsProvider>
+          <UseDesktopBanner />
+          <div className="is-hidden-touch">
+            <Banner />
+            <Navbar />
+            <main>
+              <div className="container">
+                <Breadcrumbs />
+              </div>
+              <div className="container">{children}</div>
+            </main>
+            <Footer />
+            <TradeModal />
+            <WeblnModal />
+          </div>
+        </ContractsProvider>
+      </WeblnProvider>
+    </WalletProvider>
   )
 }
