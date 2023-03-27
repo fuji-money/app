@@ -5,26 +5,28 @@ import Link from 'next/link'
 
 interface RedeemButtonProps {
   contract: Contract
+  size?: string
 }
 
-const RedeemButton = ({ contract }: RedeemButtonProps) => {
-  const cN = 'button is-primary ml-3'
+const RedeemButton = ({ contract, size }: RedeemButtonProps) => {
+  const cN = `button is-primary is-solid-pink ml-3 ${
+    size === 'small' && 'is-small is-rounded'
+  }`
   const text = 'Close'
+
   const enabled =
     !contractIsClosed(contract) &&
     contract.confirmed &&
     EnabledTasks[Tasks.Redeem]
-  if (!enabled) {
-    return (
-      <button disabled className={cN}>
-        {text}
-      </button>
-    )
-  }
-  return (
+
+  return enabled ? (
     <Link passHref href={`/contracts/${contract.txid}/close/channel`}>
       <button className={cN}>{text}</button>
     </Link>
+  ) : (
+    <button disabled className={cN}>
+      {text}
+    </button>
   )
 }
 

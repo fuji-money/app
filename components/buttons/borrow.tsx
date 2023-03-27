@@ -8,7 +8,7 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ collateral, synthetic }: BorrowButtonProps) => {
-  const cN = 'button is-primary is-solid-purple'
+  const cN = 'button is-primary is-solid-pink'
   const text = 'Borrow'
   const enabled = EnabledTasks[Tasks.Borrow]
   if (!enabled) {

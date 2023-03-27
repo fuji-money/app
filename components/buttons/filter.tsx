@@ -7,7 +7,7 @@ interface FilterButtonProps {
 }
 
 const FilterButton = ({ ticker }: FilterButtonProps) => {
-  const cN = 'button is-primary is-solid-purple ml-3'
+  const cN = 'button is-primary is-solid-pink ml-3'
   const text = 'Borrow'
   const enabled = EnabledTasks[Tasks.Borrow]
   if (!enabled) {

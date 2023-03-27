@@ -2,10 +2,11 @@ import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 
 interface ExplorerLinkProps {
+  extraClass?: string
   txid: string
 }
 
-const ExplorerLink = ({ txid }: ExplorerLinkProps) => {
+const ExplorerLink = ({ extraClass, txid }: ExplorerLinkProps) => {
   const { network } = useContext(WalletContext)
 
   const href =
@@ -14,7 +15,12 @@ const ExplorerLink = ({ txid }: ExplorerLinkProps) => {
       : `https://liquid.network/tx/${txid}`
 
   return (
-    <a href={href} className="button external" target="_blank" rel="noreferrer">
+    <a
+      href={href}
+      className={`button external ${extraClass}`}
+      target="_blank"
+      rel="noreferrer"
+    >
       🔗 Open in explorer
     </a>
   )
