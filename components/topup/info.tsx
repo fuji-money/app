@@ -11,9 +11,7 @@ interface TopupInfoProps {
 const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
   const { collateral, synthetic } = oldContract
   const newPriceLevel = newContract.priceLevel
-  const oldPriceLevel = oldContract.priceLevel
   const newPayoutAmount = getContractPayoutAmount(newContract)
-  const oldPayoutAmount = getContractPayoutAmount(oldContract)
   return (
     <div className="is-box has-pink-border">
       <div className="level">
@@ -35,17 +33,12 @@ const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
                 {prettyQuantity(synthetic.quantity)} {synthetic.ticker}
               </p>
               <p>{prettyNumber(collateral.value, 2)} USD</p>
+              <p>{prettyNumber(newPriceLevel)} USD</p>
               <p>
-                {prettyNumber(oldPriceLevel)} &rarr;{' '}
-                {prettyNumber(newPriceLevel)} USD
-              </p>
-              <p>
-                {prettyQuantity(oldContract.collateral.quantity, 8)} &rarr;{' '}
                 {prettyQuantity(newContract.collateral.quantity, 8)}{' '}
                 {collateral.ticker}
               </p>
               <p>
-                {prettyNumber(fromSatoshis(oldPayoutAmount), 8)} &rarr;{' '}
                 {prettyNumber(fromSatoshis(newPayoutAmount), 8)}{' '}
                 {collateral.ticker}
               </p>
