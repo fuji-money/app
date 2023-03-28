@@ -139,7 +139,7 @@ h3 {
     font-size: 0.8rem;
     text-transform: uppercase;
   }
-  p:nth-child(3) {
+  p:nth-child(3):not(.state) {
     color: #9d9d9d;
     font-size: 0.9rem;
     font-weight: 400;
@@ -229,10 +229,6 @@ p.is-tab-selector.active {
 
 a.external {
   border: 0;
-}
-
-.is-overflow-anywhere {
-  overflow-wrap: anywhere;
 }
 
 .rotates {
