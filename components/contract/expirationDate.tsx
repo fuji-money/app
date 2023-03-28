@@ -5,8 +5,8 @@ const ExpirationDate = ({ contract }: { contract: Contract }) => (
   <>
     <p className="has-text-weight-bold">Expiration Date</p>
     <div className="is-flex is-justify-content-space-between">
-      <p>{prettyExpirationDate(1680029626978)}</p>
-      <p>{prettyTimeToExpiration(1680029626978)}</p>
+      <p>{prettyExpirationDate(contract.expirationDate)}</p>
+      <p>{prettyTimeToExpiration(contract.expirationDate)}</p>
     </div>
     <style jsx>{`
       p {

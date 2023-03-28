@@ -57,7 +57,8 @@ export const prettyQuantity = (qty = 0, min?: number, max?: number): string =>
   prettyNumber(fromSatoshis(qty), min, max)
 
 // pretty expiration date
-export const prettyExpirationDate = (timestamp: number): string => {
+export const prettyExpirationDate = (timestamp = 0): string => {
+  if (timestamp === 0) return 'Perpetual'
   return new Intl.DateTimeFormat('default', {
     day: 'numeric',
     month: 'short',
@@ -66,7 +67,8 @@ export const prettyExpirationDate = (timestamp: number): string => {
 }
 
 // pretty time to expiration
-export const prettyTimeToExpiration = (timestamp: number): string => {
+export const prettyTimeToExpiration = (timestamp = 0): string => {
+  if (timestamp === 0) return ''
   let rest
   const now = Date.now()
   const delta = Math.floor((timestamp - now) / 1_000)
