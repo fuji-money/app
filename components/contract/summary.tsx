@@ -1,4 +1,4 @@
-import { prettyNumber, prettyRatio } from 'lib/pretty'
+import { prettyExpirationDate, prettyNumber, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { getContractRatio } from 'lib/contracts'
 import { fromSatoshis } from 'lib/utils'
@@ -30,6 +30,10 @@ const Summary = ({ contract }: SummaryProps) => {
           <td>Liquidation price</td>
           <td>{prettyNumber(contract.priceLevel)}</td>
           <td>USD</td>
+        </tr>
+        <tr>
+          <td>Expiration date</td>
+          <td>{prettyExpirationDate(contract.expirationDate)}</td>
         </tr>
       </tbody>
       <style jsx>{`
