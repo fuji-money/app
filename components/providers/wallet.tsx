@@ -7,6 +7,7 @@ import {
 } from 'lib/marina'
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
+import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
 
 interface WalletContextProps {
   balances: Balance[]
@@ -15,6 +16,7 @@ interface WalletContextProps {
   network: NetworkString
   setConnected: (arg0: boolean) => void
   xPubKey: string
+  chainSource: ChainSource
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -24,6 +26,7 @@ export const WalletContext = createContext<WalletContextProps>({
   network: defaultNetwork,
   setConnected: () => {},
   xPubKey: '',
+  chainSource: new WsElectrumChainSource(defaultNetwork),
 })
 
 interface WalletProviderProps {
@@ -35,6 +38,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
   const [xPubKey, setXPubKey] = useState('')
+  const [chainSource, setChainSource] = useState<ChainSource>(
+    new WsElectrumChainSource(defaultNetwork),
+  )
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
@@ -80,6 +86,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   }, [connected, marina])
 
+  useEffect(() => {
+    if (chainSource.network !== network) {
+      chainSource
+        .close()
+        .then(() => {
+          setChainSource(new WsElectrumChainSource(network))
+        })
+        .catch(console.error)
+    }
+  }, [network, chainSource])
+
   // update balances and add event listener
   useEffect(() => {
     const updateBalancesAddEventListener = async () => {
@@ -104,6 +121,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         network,
         setConnected,
         xPubKey,
+        chainSource,
       }}
     >
       {children}

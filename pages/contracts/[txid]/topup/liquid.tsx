@@ -9,6 +9,7 @@ import {
   saveContractToStorage,
   markContractTopup,
   markContractConfirmed,
+  getContractCovenantAddress,
 } from 'lib/contracts'
 import {
   finalizeTopupCovenantInput,
@@ -22,13 +23,12 @@ import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { selectCoins } from 'lib/selection'
-import { waitForContractConfirmation } from 'lib/websocket'
 import { Pset } from 'liquidjs-lib'
 import { finalizeTx } from 'lib/transaction'
 import { broadcastTx } from 'lib/marina'
 
 const ContractTopupLiquid: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { marina, network, chainSource } = useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -110,10 +110,15 @@ const ContractTopupLiquid: NextPage = () => {
       newContract.vout = covenantVout
 
       // wait for confirmation, mark contract confirmed and reload contracts
-      waitForContractConfirmation(newContract, network).then(() => {
-        markContractConfirmed(newContract)
-        reloadContracts()
-      })
+      chainSource
+        .waitForConfirmation(
+          newContract.txid,
+          await getContractCovenantAddress(newContract, network),
+        )
+        .then(() => {
+          markContractConfirmed(newContract)
+          reloadContracts()
+        })
 
       // add additional fields to contract and save to storage
       await saveContractToStorage(newContract, network, preparedTx)

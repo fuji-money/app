@@ -14,7 +14,11 @@ import EnablersLightning from 'components/enablers/lightning'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { randomBytes } from 'crypto'
 import { feeAmount } from 'lib/constants'
-import { markContractConfirmed, saveContractToStorage } from 'lib/contracts'
+import {
+  getContractCovenantAddress,
+  markContractConfirmed,
+  saveContractToStorage,
+} from 'lib/contracts'
 import {
   prepareBorrowTxWithClaimTx,
   proposeBorrowContract,
@@ -43,16 +47,11 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
-import {
-  fetchUtxosForAddress,
-  waitForAddressAvailable,
-  waitForContractConfirmation,
-} from 'lib/websocket'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 
 const BorrowParams: NextPage = () => {
-  const { network } = useContext(WalletContext)
+  const { network, chainSource } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
@@ -148,10 +147,10 @@ const BorrowParams: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // wait for tx to be available (mempool or confirmed)
-      await waitForAddressAvailable(lockupAddress, network)
+      await chainSource.waitForAddressReceivesTx(lockupAddress)
 
       // fetch utxos for address
-      const utxos = await fetchUtxosForAddress(lockupAddress, network)
+      const utxos = await chainSource.listUnspents(lockupAddress)
 
       // payment has arrived
       if (utxos.length > 0) {
@@ -212,10 +211,15 @@ const BorrowParams: NextPage = () => {
         await saveContractToStorage(newContract, network, preparedTx)
 
         // wait for confirmation, mark contract confirmed and reload contracts
-        waitForContractConfirmation(newContract, network).then(() => {
-          markContractConfirmed(newContract)
-          reloadContracts()
-        })
+        chainSource
+          .waitForConfirmation(
+            newContract.txid,
+            await getContractCovenantAddress(newContract, network),
+          )
+          .then(() => {
+            markContractConfirmed(newContract)
+            reloadContracts()
+          })
 
         // show success
         setData(newContract.txid)
@@ -273,10 +277,15 @@ const BorrowParams: NextPage = () => {
       await saveContractToStorage(newContract, network, preparedTx)
 
       // wait for confirmation, mark contract confirmed and reload contracts
-      waitForContractConfirmation(newContract, network).then(() => {
-        markContractConfirmed(newContract)
-        reloadContracts()
-      })
+      chainSource
+        .waitForConfirmation(
+          newContract.txid,
+          await getContractCovenantAddress(newContract, network),
+        )
+        .then(() => {
+          markContractConfirmed(newContract)
+          reloadContracts()
+        })
 
       // show success
       setData(newContract.txid)

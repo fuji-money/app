@@ -15,6 +15,7 @@ import {
   markContractConfirmed,
   markContractTopup,
   contractIsClosed,
+  getContractCovenantAddress,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -31,13 +32,61 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { checkContractOutspend, checkContractIsConfirmed } from 'lib/websocket'
 import { toXpub } from 'lib/utils'
+import { address, Transaction } from 'liquidjs-lib'
+import { ChainSource } from 'lib/chainsource.port'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
   const decoded = bip32.fromBase58(xpub)
   return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
+}
+
+type ContractStatus = {
+  spent: boolean
+  input?: Transaction['ins'][0]
+  timestamp?: number
+}
+
+// checks if a given contract was already spent
+// 1. fetch the contract funding transaction
+// 2. because we need the covenant script
+// 3. to calculate the corresponding address
+// 4. to fetch this address history
+// 5. to find out if it is already spent (history length = 2)
+// 6. If is spent, we need to fetch the block header
+// 7. because we need to know when was the spending tx
+// 8. and we get it by deserialing the block header
+// 9. Return the input where the utxo is used
+async function checkContractOutspend(
+  chainSource: ChainSource,
+  contract: Contract,
+  network: NetworkString,
+): Promise<ContractStatus | undefined> {
+  const covenantAddress = await getContractCovenantAddress(contract, network)
+  const [hist] = await chainSource.fetchHistories([
+    address.toOutputScript(covenantAddress),
+  ])
+  if (!hist || hist.length === 0) return // tx not found, not even on mempool
+  if (hist.length === 1) return { spent: false }
+  const { height, tx_hash } = hist[1] // spending tx
+  // get timestamp from block header
+  const { timestamp } = await chainSource.fetchBlockHeader(height)
+  // return input from tx where contract was spent, we need this
+  // to find out how it was spent (liquidated, topup or redeemed)
+  // by analysing the taproot leaf used
+  const [new_tx] = await chainSource.fetchTransactions([tx_hash])
+  if (!new_tx) return
+  const decodedTransaction = Transaction.fromHex(new_tx.hex)
+  for (const input of decodedTransaction.ins) {
+    if (contract.txid === Buffer.from(input.hash).reverse().toString('hex')) {
+      return {
+        input,
+        spent: true,
+        timestamp,
+      }
+    }
+  }
 }
 
 interface ContractsContextProps {
@@ -78,7 +127,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const [newContract, setNewContract] = useState<Contract>()
   const [oldContract, setOldContract] = useState<Contract>()
   const [oracles, setOracles] = useState<Oracle[]>([])
-  const { connected, marina, network, xPubKey } = useContext(WalletContext)
+  const { connected, marina, network, xPubKey, chainSource } =
+    useContext(WalletContext)
 
   // save first time app was run
   const firstRun = useRef(Date.now())
@@ -115,14 +165,20 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const confirmed = await checkContractIsConfirmed(contract, network)
+        // TODO check if this returns false sometimes
+        console.time('waitForConfirmation' + contract.txid)
+        const confirmed = await chainSource.waitForConfirmation(
+          contract.txid,
+          await getContractCovenantAddress(contract, network),
+        )
+        console.timeEnd('waitForConfirmation' + contract.txid)
         if (!confirmed) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
       if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkContractOutspend(contract, network)
+      const status = await checkContractOutspend(chainSource, contract, network)
       if (!status) continue
       const { input, spent, timestamp } = status
       if (spent && input) {

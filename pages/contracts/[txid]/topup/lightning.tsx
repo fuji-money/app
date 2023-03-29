@@ -31,6 +31,7 @@ import {
   proposeTopupContract,
 } from 'lib/covenant'
 import {
+  getContractCovenantAddress,
   markContractConfirmed,
   markContractTopup,
   saveContractToStorage,
@@ -39,17 +40,12 @@ import { feeAmount } from 'lib/constants'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
-import {
-  fetchUtxosForAddress,
-  waitForAddressAvailable,
-  waitForContractConfirmation,
-} from 'lib/websocket'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { broadcastTx } from 'lib/marina'
 
 const ContractTopupLightning: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { marina, network, chainSource } = useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -146,10 +142,10 @@ const ContractTopupLightning: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // wait for confirmation
-      await waitForAddressAvailable(lockupAddress, network)
+      await chainSource.waitForAddressReceivesTx(lockupAddress)
 
       // fetch utxos for address
-      const utxos = await fetchUtxosForAddress(lockupAddress, network)
+      const utxos = await chainSource.listUnspents(lockupAddress)
 
       // payment has arrived
       if (utxos.length > 0) {
@@ -228,10 +224,15 @@ const ContractTopupLightning: NextPage = () => {
         newContract.vout = covenantVout
 
         // wait for confirmation, mark contract confirmed and reload contracts
-        waitForContractConfirmation(newContract, network).then(() => {
-          markContractConfirmed(newContract)
-          reloadContracts()
-        })
+        chainSource
+          .waitForConfirmation(
+            newContract.txid,
+            await getContractCovenantAddress(newContract, network),
+          )
+          .then(() => {
+            markContractConfirmed(newContract)
+            reloadContracts()
+          })
 
         // add additional fields to contract and save to storage
         await saveContractToStorage(newContract, network, preparedTx)
