@@ -11,16 +11,12 @@ export default function Navbar() {
       <div className="container">
         <nav className="is-flex is-justify-content-space-between">
           <div>
-            <Link href="/">
-              <a>
-                <Image
-                  alt="fuji logo"
-                  height={48}
-                  src="/images/fuji-logo-128.png"
-                  width={161.25}
-                />
-              </a>
-            </Link>
+            <Image
+              alt="fuji logo"
+              height={48}
+              src="/images/fuji-logo-128.png"
+              width={161.25}
+            />
           </div>
           <div className="is-flex">
             <Link href="/dashboard">
