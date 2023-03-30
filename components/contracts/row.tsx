@@ -6,6 +6,7 @@ import ExplorerLink from 'components/links/explorer'
 import { fromSatoshis } from 'lib/utils'
 import LiquidationPrice from 'components/contract/liquidationPrice'
 import ExpirationDate from 'components/contract/expirationDate'
+import RenewButton from 'components/buttons/renew'
 
 interface ContractRowProps {
   contract: Contract
@@ -35,6 +36,7 @@ const ContractRow = ({ contract }: ContractRowProps) => {
         </div>
         <div className="column is-4 is-flex is-justify-content-flex-end">
           <RedeemButton contract={contract} size="small" />
+          <RenewButton contract={contract} size="small" />
           <TopupButton contract={contract} size="small" />
         </div>
       </div>
