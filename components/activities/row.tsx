@@ -10,6 +10,7 @@ interface ActivityRowProps {
 const ActivityRow = ({ activity }: ActivityRowProps) => {
   const { createdAt, contract, message, txid } = activity
   const icon = contract.synthetic.icon || ''
+  const [desc, synth] = message.split(' - ')
   return (
     <div className="level">
       <div className="level-left">
@@ -17,7 +18,10 @@ const ActivityRow = ({ activity }: ActivityRowProps) => {
           <Image src={icon} alt="asset logo" height={30} width={30} />
         </div>
         <div className="level-item">
-          <p>{message}</p>
+          <p>{desc}</p>
+        </div>
+        <div className="level-item">
+          <p className="is-gradient">{synth}</p>
         </div>
       </div>
       <div className="level-right">
@@ -44,6 +48,10 @@ const ActivityRow = ({ activity }: ActivityRowProps) => {
           width: 60px;
         }
         div.level {
+          padding: 10px 0;
+          margin: 0;
+        }
+        div.level:not(:last-child) {
           border-bottom: 1px solid #aaa;
         }
       `}</style>
