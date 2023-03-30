@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react'
 import type { NextPage } from 'next'
 import type { AppProps } from 'next/app'
+import { Utxo } from 'marina-provider'
 import { TxOutput } from 'liquidjs-lib'
 
 export type NextPageWithLayout = NextPage & {
@@ -51,52 +52,11 @@ export enum ContractState {
   Unsafe = 'unsafe',
 }
 
-export type OracleAttestation = {
-  signature: string
-  message: string
-  messageHash: string
-}
-
-export type ContractParams = {
-  // contract constructor
-  borrowAsset: string
-  borrowAmount: number
-  issuerPublicKey: string
-  borrowerPublicKey: string
-  oraclePublicKey: string
-  priceLevel: string
-  setupTimestamp: string
-}
-
-export enum ContractStatus {
-  PROPOSED, // when contract is accepted and returned to the borrower
-  COMPLETED, // when contract is detected on the chain
-  CLOSED, // when contract is closed, either by redeem or topup
-  EXPIRED, // when contract PROPOSED is not broadcatsed after expiration timeout
-  LIQUIDATED, // when contract is liquidated
-}
-
-export type ContractResponse = {
-  // outpoint tx:vout
-  id: string
-  // status
-  status: ContractStatus
-  // blockchain data
-  txID: string
-  vout: number
-  scriptPubKey: string
-  collateralAmount: number
-  collateralAsset: string
-  // pset
-  partialTransaction: string
-  // expiration timestamp
-  expirationTimestamp: number
-} & ContractParams
-
 export interface Contract {
+  borrowerPubKey?: string
   collateral: Asset
   confirmed?: boolean
-  contractParams?: ContractParams
+  contractParams?: any
   createdAt?: number
   expirationDate?: number
   network?: string
@@ -146,6 +106,10 @@ export enum TradeTypes {
   Statement = 'Statement',
 }
 
+export type UtxoWithBlindPrivKey = Utxo & {
+  blindPrivKey?: string
+}
+
 export enum Outcome {
   Success = 'success',
   Failure = 'failure',
@@ -169,12 +133,20 @@ export type SwapInfo = {
   when?: Date
 }
 
+export type BlindPrivKeysMap = Record<string, string>
+
 // from https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-listunspent
 export type ElectrumUnspent = {
   height: number
   tx_hash: string
   tx_pos: number
   value: number
+}
+
+export type ElectrumUtxo = {
+  txid: string
+  vout: number
+  prevout: TxOutput
 }
 
 export type VoidOrUndefFunc = (() => void) | undefined
