@@ -20,7 +20,7 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
               <p>Current reference price</p>
               <p>Liquidation price level</p>
               <p>Collateral amount</p>
-              <p>Redemption fee</p>
+              <p>Minting fee</p>
               <p>Expiration date</p>
             </div>
           </div>
