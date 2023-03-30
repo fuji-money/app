@@ -1,5 +1,5 @@
 import { getContractPayoutAmount } from 'lib/contracts'
-import { prettyNumber, prettyQuantity } from 'lib/pretty'
+import { prettyExpirationDate, prettyNumber, prettyQuantity } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
 
@@ -21,6 +21,7 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
               <p>Liquidation price level</p>
               <p>Collateral amount</p>
               <p>Redemption fee</p>
+              <p>Expiration date</p>
             </div>
           </div>
         </div>
@@ -39,6 +40,7 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
                 {prettyNumber(fromSatoshis(payoutAmount), 8)}{' '}
                 {collateral.ticker}
               </p>
+              <p>{prettyExpirationDate(contract.expirationDate)}</p>
             </div>
           </div>
         </div>
