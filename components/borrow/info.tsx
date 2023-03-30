@@ -11,7 +11,7 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
   const { collateral, priceLevel, synthetic } = contract
   const payoutAmount = getContractPayoutAmount(contract)
   return (
-    <div className="is-box has-pink-border">
+    <div className="is-box has-pink-border is-size-7">
       <div className="level">
         <div className="level-left">
           <div className="level-item">

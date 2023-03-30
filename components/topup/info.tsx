@@ -13,7 +13,7 @@ const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
   const newPriceLevel = newContract.priceLevel
   const newPayoutAmount = getContractPayoutAmount(newContract)
   return (
-    <div className="is-box has-pink-border">
+    <div className="is-box has-pink-border is-size-7">
       <div className="level">
         <div className="level-left">
           <div className="level-item">
