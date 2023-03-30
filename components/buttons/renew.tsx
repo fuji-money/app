@@ -9,7 +9,7 @@ interface RenewButtonProps {
 }
 
 const RenewButton = ({ contract, size }: RenewButtonProps) => {
-  const cN = `button is-primary is-solid-pink ml-3 ${
+  const cN = `button is-primary is-solid-purple ml-3 ${
     size === 'small' && 'is-small is-rounded'
   }`
   const text = 'Renew'
