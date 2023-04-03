@@ -108,8 +108,7 @@ export class WsElectrumChainSource implements ChainSource {
       this.subscribeScriptStatus(address.toOutputScript(addr), (_, status) => {
         if (status !== null) {
           this.unsubscribeScriptStatus(address.toOutputScript(addr))
-            .then(resolve)
-            .catch(reject)
+            .finally(() => resolve())
         }
       }).catch(reject)
     })
@@ -142,9 +141,11 @@ export class WsElectrumChainSource implements ChainSource {
   }
 
   private async unsubscribeScriptStatus(script: Buffer): Promise<void> {
-    await this.ws
-      .unsubscribe(SubscribeStatusMethod, toScriptHash(script))
-      .catch()
+    try {
+      await this.ws.unsubscribe(SubscribeStatusMethod, toScriptHash(script))
+    } catch (e) {
+      console.debug('error unsubscribing:', e)
+    }
   }
 
   private async subscribeScriptStatus(

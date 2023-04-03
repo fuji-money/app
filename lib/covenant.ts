@@ -164,7 +164,7 @@ export interface PreparedBorrowTx {
 
 export async function prepareBorrowTxWithClaimTx(
   contract: Contract,
-  utxos: Omit<Utxo, 'scriptDetails'>[],
+  utxos: (Utxo & { redeemScript?: string })[],
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -197,6 +197,7 @@ export async function prepareBorrowTxWithClaimTx(
         txIndex: utxo.vout,
         witnessUtxo: utxo.witnessUtxo,
         sighashType: Transaction.SIGHASH_ALL,
+        witnessScript: utxo.redeemScript ? Buffer.from(utxo.redeemScript, 'hex') : undefined,
       },
     ])
     // add covenant output to position 0

@@ -166,12 +166,10 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
         // TODO check if this returns false sometimes
-        console.time('waitForConfirmation' + contract.txid)
         const confirmed = await chainSource.waitForConfirmation(
           contract.txid,
           await getContractCovenantAddress(contract, network),
         )
-        console.timeEnd('waitForConfirmation' + contract.txid)
         if (!confirmed) continue
         markContractConfirmed(contract)
       }
