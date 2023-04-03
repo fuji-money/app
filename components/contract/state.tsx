@@ -1,4 +1,4 @@
-import { prettyPriceLevel } from 'lib/pretty'
+import { getContractState } from 'lib/contracts'
 import { Contract } from 'lib/types'
 
 interface PrettyStateProps {
@@ -6,57 +6,22 @@ interface PrettyStateProps {
 }
 
 const PrettyState = ({ contract }: PrettyStateProps) => {
-  const priceLevel = prettyPriceLevel(contract.priceLevel)
+  const state = getContractState(contract)
   return (
-    <div className="state-container is-flex">
-      <p className={`state ${contract.state}`}>
-        <span>&bull;</span>
-        <span>{contract.state}</span>
-      </p>
-      <p className="tooltip">{priceLevel}</p>
+    <p className={`state ${state}`}>
+      &#x25cf;&nbsp;{state}
       <style jsx>{`
-        .tooltip {
-          background: linear-gradient(
-            139.8deg,
-            #63159b 15.77%,
-            #f49da4 175.57%
-          );
-          border-radius: 4px;
-          color: white;
-          font-size: 0.6rem;
-          font-weight: 700;
-          line-height: 0.5rem;
-          margin: auto 4px;
-          padding: 4px;
-          visibility: hidden;
-        }
-        .state-container:hover .tooltip {
-          visibility: visible;
-        }
         .state {
           border-radius: 16px;
-          display: flex;
+          font-size: 0.5rem;
           font-weight: 700;
           line-height: 0.5rem;
-          padding: 4px;
+          padding: 5px 4px 4px 4px;
           margin: auto 0;
-          width: 6rem;
-        }
-        .state span {
-          display: block;
-          margin: auto;
-        }
-        .state span:nth-child(1) {
-          /* bullet */
-          font-size: 2rem;
-        }
-        .state span:nth-child(2) {
-          /* string */
-          flex-grow: 8;
-          font-size: 0.6rem;
-          padding-bottom: 0px;
           text-align: center;
           text-transform: uppercase;
+          min-width: 3rem;
+          max-width: 5rem;
         }
         .state.safe {
           background-color: #e4fcff;
@@ -64,7 +29,7 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
         }
         .state.unsafe {
           background-color: #ffecdb;
-          color: #ffba78;
+          color: #f9a14d;
         }
         .state.critical {
           background-color: #ffdedf;
@@ -83,7 +48,7 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
           color: #64bec9;
         }
       `}</style>
-    </div>
+    </p>
   )
 }
 

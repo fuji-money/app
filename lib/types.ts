@@ -58,6 +58,7 @@ export interface Contract {
   confirmed?: boolean
   contractParams?: any
   createdAt?: number
+  expirationDate?: number
   network?: string
   oracles: string[]
   payout: number

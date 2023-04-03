@@ -15,25 +15,25 @@ $family-sans-serif: 'Proxima Nova Regular', sans-serif;
 $link: $my-red;
 $navbar-item-color: $my-purple;
 
-@import "~bulma/bulma.sass";
+@import '~bulma/bulma.sass';
 
 main {
-  background: linear-gradient(180deg, #FFFBF8 0%, #FFEAE5 100%);
+  background: linear-gradient(180deg, #fffbf8 0%, #ffeae5 100%);
   min-height: 100vh;
   padding-bottom: 40px;
 }
 
 .links-wrapper {
   p {
-    border: 2px solid #63159B;
+    border: 2px solid #63159b;
     border-radius: 44px;
-    background: #FFF;
+    background: #fff;
     font-weight: 700;
     margin: 30px auto;
     max-width: 500px;
     padding: 10px;
     a {
-      color: #2C024D;
+      color: #2c024d;
       font-size: 1.5rem;
     }
   }
@@ -47,9 +47,9 @@ main {
 }
 
 .button {
-  border: 2px solid #88389D;
+  border: 2px solid #88389d;
   border-radius: 96px;
-  color: #88389D;
+  color: #88389d;
   font-weight: 700;
   line-height: inherit;
   padding: 18px 42px;
@@ -61,14 +61,20 @@ main {
     background-image: linear-gradient(140deg, #63159b 16%, #f49da4);
     border: 0;
     color: #fff;
-    padding: 20px 42px;
+    padding-bottom: 20px;
+    padding-top: 20px;
     &.is-solid-purple {
       background-color: $my-purple;
       background-image: none;
     }
+    &.is-solid-pink {
+      background-color: $my-pink;
+      background-image: none;
+    }
   }
   &.is-cta {
-    min-width: 400px;
+    width: 100%;
+    max-width: 400px;
   }
 }
 
@@ -78,7 +84,7 @@ main {
 }
 
 .has-pink-background {
-  background-color: #FFF1E3 !important;
+  background-color: #fff1e3 !important;
 }
 
 .stepper {
@@ -87,7 +93,7 @@ main {
   color: #fff;
   display: inline-block;
   height: 20px;
-  margin-right: .5rem;
+  margin-right: 0.5rem;
   width: 20px;
   text-align: center;
 }
@@ -134,8 +140,8 @@ h3 {
     font-size: 0.8rem;
     text-transform: uppercase;
   }
-  p:nth-child(3) {
-    color: #9D9D9D;
+  p:nth-child(3):not(.state) {
+    color: #9d9d9d;
     font-size: 0.9rem;
     font-weight: 400;
   }
@@ -154,19 +160,19 @@ p.confirm {
   }
   p.confirm {
     color: #000;
-    font-size: .9rem;
+    font-size: 0.9rem;
     font-weight: 700;
     margin-top: 1rem;
   }
   .modal-content {
     .box {
-      background: linear-gradient(180deg, #FFFBF8 0%, #FFEAE5 100%);
+      background: linear-gradient(180deg, #fffbf8 0%, #ffeae5 100%);
     }
   }
 }
 
 .is-box {
-  background: #FEFEFE;
+  background: #fefefe;
   box-shadow: 0px 4px 12px 2px rgba(0, 0, 0, 0.05);
   padding: 1.25rem;
   &:not(:last-child) {
@@ -195,8 +201,8 @@ p.confirm {
   background: rgba(255, 128, 171, 0.15);
   border-radius: 50px;
   color: $my-purple;
-  font-size: .6rem;
-  padding: .4rem 1rem;
+  font-size: 0.6rem;
+  padding: 0.4rem 1rem;
 }
 
 p.delta {
@@ -216,7 +222,7 @@ p.is-tab-selector {
   font-size: 0.9rem;
 }
 p.is-tab-selector.active {
-  background-color: #FFF1E3 !important;
+  background-color: #fff1e3 !important;
   border: 1px solid $my-pink;
   border-radius: 3px;
   color: $my-purple;
@@ -224,10 +230,6 @@ p.is-tab-selector.active {
 
 a.external {
   border: 0;
-}
-
-.is-overflow-anywhere {
-  overflow-wrap: anywhere
 }
 
 .rotates {

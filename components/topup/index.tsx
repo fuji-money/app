@@ -56,15 +56,8 @@ const Topup = () => {
                 setNewContract={setNewContract}
                 setRatio={setRatio}
               />
-              <TopupInfo newContract={newContract} oldContract={oldContract} />
               <Notifications
                 contract={newContract}
-                minRatio={minRatio}
-                ratio={ratio}
-                topup={topupAmount}
-              />
-              <TopupButton
-                oracles={newContract.oracles}
                 minRatio={minRatio}
                 ratio={ratio}
                 topup={topupAmount}
@@ -72,7 +65,13 @@ const Topup = () => {
             </>
           </div>
           <div className="column is-4">
-            <Balance />
+            <TopupInfo newContract={newContract} oldContract={oldContract} />
+            <TopupButton
+              oracles={newContract.oracles}
+              minRatio={minRatio}
+              ratio={ratio}
+              topup={topupAmount}
+            />
           </div>
         </div>
       </div>

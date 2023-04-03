@@ -3,24 +3,24 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
 import Link from 'next/link'
 
-interface RedeemButtonProps {
+interface RenewButtonProps {
   contract: Contract
   size?: string
 }
 
-const RedeemButton = ({ contract, size }: RedeemButtonProps) => {
-  const cN = `button is-primary is-solid-pink ml-3 ${
+const RenewButton = ({ contract, size }: RenewButtonProps) => {
+  const cN = `button is-primary is-solid-purple ml-3 ${
     size === 'small' && 'is-small is-rounded'
   }`
-  const text = 'Close'
+  const text = 'Renew'
 
   const enabled =
     !contractIsClosed(contract) &&
     contract.confirmed &&
-    EnabledTasks[Tasks.Redeem]
+    EnabledTasks[Tasks.Renew]
 
   return enabled ? (
-    <Link passHref href={`/contracts/${contract.txid}/close/channel`}>
+    <Link passHref href={`/contracts/${contract.txid}/renew/channel`}>
       <button className={cN}>{text}</button>
     </Link>
   ) : (
@@ -30,4 +30,4 @@ const RedeemButton = ({ contract, size }: RedeemButtonProps) => {
   )
 }
 
-export default RedeemButton
+export default RenewButton

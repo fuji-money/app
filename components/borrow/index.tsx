@@ -46,13 +46,7 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
                 setContract={setContract}
                 setRatio={setRatio}
               />
-              <BorrowInfo contract={contract} />
               <Notifications
-                contract={contract}
-                minRatio={minRatio}
-                ratio={ratio}
-              />
-              <BorrowButton
                 contract={contract}
                 minRatio={minRatio}
                 ratio={ratio}
@@ -60,7 +54,12 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
             </>
           </div>
           <div className="column is-4">
-            <Balance />
+            <BorrowInfo contract={contract} />
+            <BorrowButton
+              contract={contract}
+              minRatio={minRatio}
+              ratio={ratio}
+            />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { getContractPayoutAmount } from 'lib/contracts'
-import { prettyNumber, prettyQuantity } from 'lib/pretty'
+import { prettyExpirationDate, prettyNumber, prettyQuantity } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
 
@@ -11,11 +11,9 @@ interface TopupInfoProps {
 const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
   const { collateral, synthetic } = oldContract
   const newPriceLevel = newContract.priceLevel
-  const oldPriceLevel = oldContract.priceLevel
   const newPayoutAmount = getContractPayoutAmount(newContract)
-  const oldPayoutAmount = getContractPayoutAmount(oldContract)
   return (
-    <div className="is-box has-pink-border">
+    <div className="is-box has-pink-border is-size-7">
       <div className="level">
         <div className="level-left">
           <div className="level-item">
@@ -24,7 +22,8 @@ const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
               <p>Current reference price</p>
               <p>Liquidation price level</p>
               <p>Collateral amount</p>
-              <p>Redemption fee</p>
+              <p>Minting fee</p>
+              <p>Expiration date</p>
             </div>
           </div>
         </div>
@@ -35,20 +34,16 @@ const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
                 {prettyQuantity(synthetic.quantity)} {synthetic.ticker}
               </p>
               <p>{prettyNumber(collateral.value, 2)} USD</p>
+              <p>{prettyNumber(newPriceLevel)} USD</p>
               <p>
-                {prettyNumber(oldPriceLevel)} &rarr;{' '}
-                {prettyNumber(newPriceLevel)} USD
-              </p>
-              <p>
-                {prettyQuantity(oldContract.collateral.quantity, 8)} &rarr;{' '}
                 {prettyQuantity(newContract.collateral.quantity, 8)}{' '}
                 {collateral.ticker}
               </p>
               <p>
-                {prettyNumber(fromSatoshis(oldPayoutAmount), 8)} &rarr;{' '}
                 {prettyNumber(fromSatoshis(newPayoutAmount), 8)}{' '}
                 {collateral.ticker}
               </p>
+              <p>{prettyExpirationDate(newContract.expirationDate)}</p>
             </div>
           </div>
         </div>

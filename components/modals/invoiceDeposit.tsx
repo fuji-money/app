@@ -101,7 +101,7 @@ const InvoiceDepositModal = ({
         : () => (
             <>
               <Spinner />
-              <MainMessage text="Deposit by scaning this QR" />
+              <MainMessage text="Deposit by scanning this QR" />
               <QRCode text={invoice} />
               <SecondaryMessage text="Waiting for payment" />
               <p className="has-text-centered mt-4">

@@ -5,7 +5,6 @@ import NotEnoughFundsNotification from 'components/notifications/notEnoughFunds'
 import NotEnoughOraclesNotification from 'components/notifications/notEnoughOracles'
 import RatioTooLowNotification from 'components/notifications/ratioTooLow'
 import RatioUnsafeNotification from 'components/notifications/ratioUnsafe'
-import BorrowFeeNotification from './borrowFee'
 import BelowDustLimitNotification from './belowDustLimit'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { WalletContext } from 'components/providers/wallet'
@@ -70,7 +69,6 @@ const Notifications = ({
 
   return (
     <>
-      <BorrowFeeNotification payout={payout} />
       {ratioUnsafe && <RatioUnsafeNotification />}
       {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
       {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
