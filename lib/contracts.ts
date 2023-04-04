@@ -11,6 +11,7 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { NetworkString } from 'marina-provider'
+import { bufferBase64ToString } from './utils'
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -252,7 +253,13 @@ export async function saveContractToStorage(
   network: NetworkString,
   preparedTx: PreparedBorrowTx | PreparedTopupTx,
 ): Promise<void> {
-  contract.contractParams = preparedTx.contractParams
+  const { contractParams } = preparedTx
+  // build contract
+  contract.contractParams = {
+    ...contractParams,
+    priceLevel: bufferBase64ToString(contractParams.priceLevel),
+    setupTimestamp: bufferBase64ToString(contractParams.setupTimestamp),
+  }
   contract.network = network
   contract.confirmed = false
   contract.xPubKey = await getMainAccountXPubKey()

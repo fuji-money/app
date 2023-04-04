@@ -437,7 +437,7 @@ export async function prepareRedeemTx(
     },
   }
 
-  // prepapre ionio instance and tx
+  // prepare ionio instance and tx
   const { txid, vout, witnessUtxo, blindingData } = coinToRedeem
   if (!witnessUtxo) throw new Error('Invalid witnessUtxo')
 
