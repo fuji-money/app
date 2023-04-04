@@ -1,5 +1,6 @@
 export enum Tasks {
   Borrow = 'borrow',
+  Exchange = 'exchange',
   Multiply = 'multiply',
   Redeem = 'redeem',
   Renew = 'renew',
@@ -8,6 +9,7 @@ export enum Tasks {
 
 export const EnabledTasks: Record<string, boolean> = {
   [Tasks.Borrow]: true,
+  [Tasks.Exchange]: false,
   [Tasks.Multiply]: false,
   [Tasks.Redeem]: true,
   [Tasks.Renew]: false,
@@ -16,6 +18,7 @@ export const EnabledTasks: Record<string, boolean> = {
 
 export const LightningEnabledTasks: Record<string, boolean> = {
   [Tasks.Borrow]: true,
+  [Tasks.Exchange]: false,
   [Tasks.Multiply]: false,
   [Tasks.Redeem]: false,
   [Tasks.Renew]: false,
