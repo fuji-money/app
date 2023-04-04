@@ -38,6 +38,7 @@ import {
   witnessStackToScriptWitness,
   script as bscript,
   Finalizer,
+  Transaction,
 } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
@@ -163,24 +164,31 @@ const BorrowParams: NextPage = () => {
         setStage(ModalStages.NeedsFujiApproval)
 
         // prepare borrow transaction with claim utxo as input
-        const preparedTx = await prepareBorrowTxWithClaimTx(newContract, utxos)
+        const preparedTx = await prepareBorrowTxWithClaimTx(
+          newContract,
+          utxos,
+          redeemScript,
+        )
 
         // propose contract to alpha factory
         const contractResponse = await proposeBorrowContract(preparedTx)
         if (!contractResponse.partialTransaction)
           throw new Error('Not accepted by Fuji')
 
-        // sign and finalize input[0]
+        // sign the input & add the signature via custom finalizer
         const pset = Pset.fromBase64(contractResponse.partialTransaction)
         const signer = new Signer(pset)
         const sig: BIP174SigningData = {
           partialSig: {
             pubkey: keyPair.publicKey,
-            signature: bscript.signature.encode(keyPair.sign(preimage), 1),
+            signature: bscript.signature.encode(
+              keyPair.sign(preimage),
+              pset.inputs![0].sighashType || Transaction.SIGHASH_ALL,
+            ),
           },
         }
 
-        signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
+        signer.addSignature(0, sig, () => true) // skip validation
         const finalizer = new Finalizer(pset)
 
         finalizer.finalizeInput(0, (inputIndex, pset) => {
@@ -199,6 +207,7 @@ const BorrowParams: NextPage = () => {
 
         // broadcast transaction
         const rawHex = finalizeTx(pset)
+        console.log('rawHex', rawHex)
         const { txid } = await broadcastTx(rawHex)
         newContract.txid = txid
         if (!newContract.txid) throw new Error('No txid returned')
@@ -228,6 +237,7 @@ const BorrowParams: NextPage = () => {
         reloadContracts()
       }
     } catch (error) {
+      console.error(error)
       setData(extractError(error))
       setResult(Outcome.Failure)
       setStage(ModalStages.ShowResult)
