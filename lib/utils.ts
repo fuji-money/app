@@ -1,8 +1,16 @@
 import b58 from 'bs58check'
 import Decimal from 'decimal.js'
-import { writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
+import { readUInt64LE, writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
 import { Tasks } from './tasks'
 
+// Buffer encoded in base64 to string
+export function bufferBase64ToString(base64: string) {
+  const buf = Buffer.from(base64, 'base64')
+  const num = readUInt64LE(buf, 0)
+  return num.toString()
+}
+
+// number to uint64LE
 export function numberToUint64LE(n: number): Buffer {
   const num = Decimal.floor(n).toNumber()
   const buf = Buffer.alloc(8)
