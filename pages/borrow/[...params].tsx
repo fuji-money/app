@@ -178,17 +178,21 @@ const BorrowParams: NextPage = () => {
         // sign the input & add the signature via custom finalizer
         const pset = Pset.fromBase64(contractResponse.partialTransaction)
         const signer = new Signer(pset)
+        const txHashToSign = signer.pset.getInputPreimage(
+          0,
+          Transaction.SIGHASH_ALL,
+        )
         const sig: BIP174SigningData = {
           partialSig: {
             pubkey: keyPair.publicKey,
             signature: bscript.signature.encode(
-              keyPair.sign(preimage),
-              pset.inputs![0].sighashType || Transaction.SIGHASH_ALL,
+              keyPair.sign(txHashToSign),
+              Transaction.SIGHASH_ALL,
             ),
           },
         }
 
-        signer.addSignature(0, sig, () => true) // skip validation
+        signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
         const finalizer = new Finalizer(pset)
 
         finalizer.finalizeInput(0, (inputIndex, pset) => {
