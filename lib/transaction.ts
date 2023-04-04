@@ -1,8 +1,8 @@
-import { Psbt } from 'liquidjs-lib'
+import { Extractor, Finalizer, Pset } from 'liquidjs-lib'
 
-// finalize transaction
-export const finalizeTx = (ptx: string): string => {
-  const finalPtx = Psbt.fromBase64(ptx)
-  finalPtx.finalizeAllInputs()
-  return finalPtx.extractTransaction().toHex()
+// finalize and extract psetv2
+export function finalizeTx(pset: Pset): string {
+  const finalizer = new Finalizer(pset)
+  finalizer.finalize()
+  return Extractor.extract(finalizer.pset).toHex()
 }

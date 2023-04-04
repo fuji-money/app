@@ -3,36 +3,30 @@ import {
   getBalances,
   getMarinaProvider,
   getNetwork,
-  getXPubKey,
+  getMainAccountXPubKey,
 } from 'lib/marina'
-import {
-  AddressInterface,
-  Balance,
-  MarinaProvider,
-  NetworkString,
-} from 'marina-provider'
-import { defaultNetwork, marinaMainAccountID } from 'lib/constants'
-import { address } from 'liquidjs-lib'
-import { BlindPrivKeysMap, VoidOrUndefFunc } from 'lib/types'
+import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
+import { defaultNetwork } from 'lib/constants'
+import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
 
 interface WalletContextProps {
   balances: Balance[]
-  blindPrivKeysMap: BlindPrivKeysMap
   connected: boolean
   marina: MarinaProvider | undefined
   network: NetworkString
   setConnected: (arg0: boolean) => void
   xPubKey: string
+  chainSource: ChainSource
 }
 
 export const WalletContext = createContext<WalletContextProps>({
   balances: [],
-  blindPrivKeysMap: {},
   connected: false,
   marina: undefined,
   network: defaultNetwork,
   setConnected: () => {},
   xPubKey: '',
+  chainSource: new WsElectrumChainSource(defaultNetwork),
 })
 
 interface WalletProviderProps {
@@ -40,15 +34,17 @@ interface WalletProviderProps {
 }
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [balances, setBalances] = useState<Balance[]>([])
-  const [blindPrivKeysMap, setBlindPrivKeysMap] = useState({})
   const [connected, setConnected] = useState(false)
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
   const [xPubKey, setXPubKey] = useState('')
+  const [chainSource, setChainSource] = useState<ChainSource>(
+    new WsElectrumChainSource(defaultNetwork),
+  )
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
-  const updateXPubKey = async () => setXPubKey(await getXPubKey())
+  const updateXPubKey = async () => setXPubKey(await getMainAccountXPubKey())
 
   // get marina provider
   useEffect(() => {
@@ -90,6 +86,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   }, [connected, marina])
 
+  useEffect(() => {
+    if (chainSource.network !== network) {
+      chainSource
+        .close()
+        .then(() => {
+          setChainSource(new WsElectrumChainSource(network))
+        })
+        .catch(console.error)
+    }
+  }, [network, chainSource])
+
   // update balances and add event listener
   useEffect(() => {
     const updateBalancesAddEventListener = async () => {
@@ -105,35 +112,16 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     updateBalancesAddEventListener()
   }, [connected, marina, network])
 
-  useEffect(() => {
-    const createBlindPrivKeysMap = async () => {
-      if (connected && marina) {
-        if (await marina.isEnabled()) {
-          const map: BlindPrivKeysMap = {}
-          const addressScriptHex = (a: AddressInterface) =>
-            address.toOutputScript(a.confidentialAddress).toString('hex')
-          marina.getAddresses([marinaMainAccountID]).then((addresses) => {
-            for (const addr of addresses) {
-              map[addressScriptHex(addr)] = addr.blindingPrivateKey
-            }
-            setBlindPrivKeysMap(map)
-          })
-        }
-      }
-    }
-    createBlindPrivKeysMap()
-  }, [connected, marina, network])
-
   return (
     <WalletContext.Provider
       value={{
         balances,
-        blindPrivKeysMap,
         connected,
         marina,
         network,
         setConnected,
         xPubKey,
+        chainSource,
       }}
     >
       {children}

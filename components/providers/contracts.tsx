@@ -15,6 +15,7 @@ import {
   markContractConfirmed,
   markContractTopup,
   contractIsClosed,
+  getContractCovenantAddress,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -23,21 +24,69 @@ import {
 } from 'lib/storage'
 import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
-import { NetworkString } from 'marina-provider'
+import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getFujiCoins } from 'lib/marina'
-import { toXpub } from 'ldk'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { checkContractOutspend, checkContractIsConfirmed } from 'lib/websocket'
+import { toXpub } from 'lib/utils'
+import { address, Transaction } from 'liquidjs-lib'
+import { ChainSource } from 'lib/chainsource.port'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
   const decoded = bip32.fromBase58(xpub)
   return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
+}
+
+type ContractStatus = {
+  spent: boolean
+  input?: Transaction['ins'][0]
+  timestamp?: number
+}
+
+// checks if a given contract was already spent
+// 1. fetch the contract funding transaction
+// 2. because we need the covenant script
+// 3. to calculate the corresponding address
+// 4. to fetch this address history
+// 5. to find out if it is already spent (history length = 2)
+// 6. If is spent, we need to fetch the block header
+// 7. because we need to know when was the spending tx
+// 8. and we get it by deserialing the block header
+// 9. Return the input where the utxo is used
+async function checkContractOutspend(
+  chainSource: ChainSource,
+  contract: Contract,
+  network: NetworkString,
+): Promise<ContractStatus | undefined> {
+  const covenantAddress = await getContractCovenantAddress(contract, network)
+  const [hist] = await chainSource.fetchHistories([
+    address.toOutputScript(covenantAddress),
+  ])
+  if (!hist || hist.length === 0) return // tx not found, not even on mempool
+  if (hist.length === 1) return { spent: false }
+  const { height, tx_hash } = hist[1] // spending tx
+  // get timestamp from block header
+  const { timestamp } = await chainSource.fetchBlockHeader(height)
+  // return input from tx where contract was spent, we need this
+  // to find out how it was spent (liquidated, topup or redeemed)
+  // by analysing the taproot leaf used
+  const [new_tx] = await chainSource.fetchTransactions([tx_hash])
+  if (!new_tx) return
+  const decodedTransaction = Transaction.fromHex(new_tx.hex)
+  for (const input of decodedTransaction.ins) {
+    if (contract.txid === Buffer.from(input.hash).reverse().toString('hex')) {
+      return {
+        input,
+        spent: true,
+        timestamp,
+      }
+    }
+  }
 }
 
 interface ContractsContextProps {
@@ -78,7 +127,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const [newContract, setNewContract] = useState<Contract>()
   const [oldContract, setOldContract] = useState<Contract>()
   const [oracles, setOracles] = useState<Oracle[]>([])
-  const { connected, marina, network, xPubKey } = useContext(WalletContext)
+  const { connected, marina, network, xPubKey, chainSource } =
+    useContext(WalletContext)
 
   // save first time app was run
   const firstRun = useRef(Date.now())
@@ -115,14 +165,18 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const confirmed = await checkContractIsConfirmed(contract, network)
+        // TODO check if this returns false sometimes
+        const confirmed = await chainSource.waitForConfirmation(
+          contract.txid,
+          await getContractCovenantAddress(contract, network),
+        )
         if (!confirmed) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
       if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkContractOutspend(contract, network)
+      const status = await checkContractOutspend(chainSource, contract, network)
       if (!status) continue
       const { input, spent, timestamp } = status
       if (spent && input) {
@@ -166,6 +220,25 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
+  // it ensures that contract are all updated to the latest format
+  const migrateOldContracts = () => {
+    // migrate old contracts to new format
+    getContractsFromStorage().map((contract) => {
+      if (contract.contractParams && (contract as any)['borrowerPubKey']) {
+        contract.contractParams = {
+          ...contract.contractParams,
+          borrowerPublicKey: (contract as any)['borrowerPubKey'],
+          issuerPublicKey: (contract as any)['contractParams']['issuerPk'],
+          oraclePublicKey: (contract as any)['contractParams']['oraclePk'],
+        }
+        delete (contract as any)['borrowerPubKey']
+        delete (contract as any)['contractParams']['issuerPk']
+        delete (contract as any)['contractParams']['oraclePk']
+        updateContractOnStorage(contract)
+      }
+    })
+  }
+
   // temporary fix:
   // 1. fix missing xPubKey on old contracts and store on local storage
   // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
@@ -200,28 +273,37 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       })
   }
 
-  // on a NEW_TX event for fuji account, reload contracts
-  // this approach brings a heavy load on the explorer,
-  // since on reload Marina emits all Tx for each account,
-  // so if Fuji account has many Tx it will hammer the explorer.
-  // the alternative would be to use SPENT_UTXO, but borrow contracts
-  // funded with Lightning swap does not use any UTXO, so marina never
-  // emits that event on those types of contracts
+  // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
       accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
-      marina.on('SPENT_UTXO', async ({ accountID }) => {
-        console.info('SPENT_UTXO', accountID)
-        if (okToReload(accountID)) reloadAndMarkLastReload()
-      })
-      marina.on('NEW_UTXO', async ({ accountID }) => {
-        console.info('NEW_UTXO', accountID)
-        if (okToReload(accountID)) reloadAndMarkLastReload()
-      })
+      const listenerFunction = async ({
+        data: utxo,
+      }: {
+        utxo: Utxo
+        data: any
+      }) => {
+        if (
+          !utxo ||
+          !utxo.scriptDetails ||
+          !isIonioScriptDetails(utxo.scriptDetails)
+        )
+          return
+        if (okToReload(utxo.scriptDetails.accountName))
+          reloadAndMarkLastReload()
+      }
+
+      const idSpentUtxo = marina.on('SPENT_UTXO', listenerFunction)
+      const idNewUtxo = marina.on('NEW_UTXO', listenerFunction)
+      return () => {
+        marina.off(idSpentUtxo)
+        marina.off(idNewUtxo)
+      }
     }
+    return () => {}
   }
 
   const firstRender = useRef<NetworkString[]>([])
@@ -230,11 +312,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (connected && network && xPubKey) {
       // run only on first render for each network
       if (!firstRender.current.includes(network)) {
+        migrateOldContracts()
         fixMissingXPubKeyOnOldContracts()
-        setMarinaListener()
         reloadContracts()
         fetchOracles().then((data) => setOracles(data))
         firstRender.current.push(network)
+        return setMarinaListener() // return the close listener function
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
