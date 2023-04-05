@@ -16,6 +16,7 @@ import {
   markContractTopup,
   contractIsClosed,
   getContractCovenantAddress,
+  checkContractOutspend,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -33,8 +34,7 @@ import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
 import { toXpub } from 'lib/utils'
-import { address, Transaction } from 'liquidjs-lib'
-import { ChainSource } from 'lib/chainsource.port'
+import { Transaction } from 'liquidjs-lib'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -46,47 +46,6 @@ type ContractStatus = {
   spent: boolean
   input?: Transaction['ins'][0]
   timestamp?: number
-}
-
-// checks if a given contract was already spent
-// 1. fetch the contract funding transaction
-// 2. because we need the covenant script
-// 3. to calculate the corresponding address
-// 4. to fetch this address history
-// 5. to find out if it is already spent (history length = 2)
-// 6. If is spent, we need to fetch the block header
-// 7. because we need to know when was the spending tx
-// 8. and we get it by deserialing the block header
-// 9. Return the input where the utxo is used
-async function checkContractOutspend(
-  chainSource: ChainSource,
-  contract: Contract,
-  network: NetworkString,
-): Promise<ContractStatus | undefined> {
-  const covenantAddress = await getContractCovenantAddress(contract, network)
-  const [hist] = await chainSource.fetchHistories([
-    address.toOutputScript(covenantAddress),
-  ])
-  if (!hist || hist.length === 0) return // tx not found, not even on mempool
-  if (hist.length === 1) return { spent: false }
-  const { height, tx_hash } = hist[1] // spending tx
-  // get timestamp from block header
-  const { timestamp } = await chainSource.fetchBlockHeader(height)
-  // return input from tx where contract was spent, we need this
-  // to find out how it was spent (liquidated, topup or redeemed)
-  // by analysing the taproot leaf used
-  const [new_tx] = await chainSource.fetchTransactions([tx_hash])
-  if (!new_tx) return
-  const decodedTransaction = Transaction.fromHex(new_tx.hex)
-  for (const input of decodedTransaction.ins) {
-    if (contract.txid === Buffer.from(input.hash).reverse().toString('hex')) {
-      return {
-        input,
-        spent: true,
-        timestamp,
-      }
-    }
-  }
 }
 
 interface ContractsContextProps {

@@ -9,9 +9,143 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
-import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
-import { NetworkString } from 'marina-provider'
+import {
+  getFuncNameFromScriptHexOfLeaf,
+  getIonioInstance,
+  PreparedBorrowTx,
+  PreparedTopupTx,
+} from './covenant'
+import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { bufferBase64LEToString } from './utils'
+import { ChainSource } from './chainsource.port'
+import { address, Transaction } from 'liquidjs-lib'
+
+// calculate contract state
+export async function calcContractState(
+  contract: Contract,
+  chainSource: ChainSource,
+): Promise<ContractState> {
+  const network = await getNetwork()
+  if (!contract.txid) return ContractState.Unknown
+  const confirmed = await chainSource.waitForConfirmation(
+    contract.txid,
+    await getContractCovenantAddress(contract, network),
+  )
+  console.log(
+    'confirmed',
+    contract.txid,
+    await getContractCovenantAddress(contract, network),
+  )
+  if (!confirmed) return ContractState.Unconfirmed
+  const status = await checkContractOutspend(chainSource, contract, network)
+  if (!status) return ContractState.Unknown
+  const { input, spent } = status
+  if (spent && input) {
+    // contract already spent, let's find out why:
+    // we will look at the leaf before the last one,
+    // and based on his fingerprint find out if it was:
+    // - liquidated (leaf asm will have 37 items)
+    // - redeemed (leaf asm will have 47 items)
+    // - topuped (leaf asm will have 27 items)
+    const index = input.witness.length - 2
+    const leaf = input.witness[index].toString('hex')
+    switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
+      case 'liquidate':
+        return ContractState.Liquidated
+      case 'redeem':
+        return ContractState.Redeemed
+      case 'topup':
+        return ContractState.Topup
+      default:
+        return ContractState.Unknown
+    }
+  }
+  // contract not spent, return state based on ratio
+  const ratio = getContractRatio(contract)
+  return getRatioState(ratio, contract.collateral.ratio ?? 150)
+}
+
+// checks if a given contract was already spent
+// 1. fetch the contract funding transaction
+// 2. because we need the covenant script
+// 3. to calculate the corresponding address
+// 4. to fetch this address history
+// 5. to find out if it is already spent (history length = 2)
+// 6. If is spent, we need to fetch the block header
+// 7. because we need to know when was the spending tx
+// 8. and we get it by deserialing the block header
+// 9. Return the input where the utxo is used
+export async function checkContractOutspend(
+  chainSource: ChainSource,
+  contract: Contract,
+  network: NetworkString,
+) {
+  const covenantAddress = await getContractCovenantAddress(contract, network)
+  const [hist] = await chainSource.fetchHistories([
+    address.toOutputScript(covenantAddress),
+  ])
+  if (!hist || hist.length === 0) return // tx not found, not even on mempool
+  if (hist.length === 1) return { spent: false }
+  const { height, tx_hash } = hist[1] // spending tx
+  // get timestamp from block header
+  const { timestamp } = await chainSource.fetchBlockHeader(height)
+  // return input from tx where contract was spent, we need this
+  // to find out how it was spent (liquidated, topup or redeemed)
+  // by analysing the taproot leaf used
+  const [new_tx] = await chainSource.fetchTransactions([tx_hash])
+  if (!new_tx) return
+  const decodedTransaction = Transaction.fromHex(new_tx.hex)
+  for (const input of decodedTransaction.ins) {
+    if (contract.txid === Buffer.from(input.hash).reverse().toString('hex')) {
+      return {
+        input,
+        spent: true,
+        timestamp,
+      }
+    }
+  }
+}
+
+// transform a fuji coin into a contract
+export const coinToContract = async (
+  coin: Utxo,
+): Promise<Contract | undefined> => {
+  const normalize = (hex: string) => {
+    return bufferBase64LEToString(
+      Buffer.from(hex.slice(2), 'hex').toString('base64'),
+    )
+  }
+  if (
+    coin.scriptDetails &&
+    isIonioScriptDetails(coin.scriptDetails) &&
+    coin.blindingData
+  ) {
+    const params = coin.scriptDetails.params
+    return {
+      collateral: {
+        ...(await fetchAsset(coin.blindingData.asset)),
+        quantity: coin.blindingData.value,
+      },
+      contractParams: {
+        borrowAsset: params[0] as string,
+        borrowAmount: params[1] as number,
+        borrowerPublicKey: params[2] as string,
+        oraclePublicKey: params[3] as string,
+        issuerPublicKey: params[4] as string,
+        priceLevel: normalize(params[5] as string),
+        setupTimestamp: normalize(params[6] as string),
+      },
+      oracles: ['id0'], // TODO
+      payout: 0.25, // TODO
+      synthetic: {
+        ...(await fetchAsset(params[0] as string)),
+        quantity: params[1] as number,
+      },
+      txid: coin.txid,
+      vout: coin.vout,
+    }
+  }
+}
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
