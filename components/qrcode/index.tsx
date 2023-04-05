@@ -10,7 +10,6 @@ function QRCode({ text }: QRCodeProps) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text).then(() => {
-      console.log('copy')
       const div = document.getElementById('div')
       if (!div) return
       div.style.background = `#eee`
