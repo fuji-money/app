@@ -3,8 +3,8 @@ import { getAssetBalance, getBalances } from './marina'
 import { getBTCvalue } from './server'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
-export async function fetchAsset(ticker: string): Promise<Asset> {
-  const asset = await fetchURL(`/api/assets/${ticker}`)
+export async function fetchAsset(tickerOrId: string): Promise<Asset> {
+  const asset = await fetchURL(`/api/assets/${tickerOrId}`)
   if (asset.ticker === 'L-BTC') {
     asset.value = await getBTCvalue()
   }

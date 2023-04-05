@@ -1,13 +1,17 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { findAssetByTicker } from 'lib/server'
+import { apiAssets } from 'lib/server'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const { ticker } = req.query
-  const asset = await findAssetByTicker(ticker as string)
+  const tickerOrId = req.query.tickerOrId as string
+  const asset = (await apiAssets()).find(
+    (a) =>
+      a.ticker.toLowerCase() === tickerOrId.toLowerCase() ||
+      a.id === tickerOrId,
+  )
   if (!asset) return res.status(404)
   res.status(200).json(asset)
 }
