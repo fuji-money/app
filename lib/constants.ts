@@ -25,7 +25,7 @@ export const oracleURL =
   process.env.NEXT_PUBLIC_ORACLE_URL ||
   'https://oracle.fuji.money/oracle/BTCUSD' // TODO - remove alternative url
 export const alphaServerUrl =
-  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://factory.fuji.money' // TODO - remove alternative url
+  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://alpha-factory.fuji-labs.io'
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx
