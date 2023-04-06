@@ -19,6 +19,7 @@ import {
   checkContractOutspend,
 } from 'lib/contracts'
 import {
+  addContractToStorage,
   getContractsFromStorage,
   getMyContractsFromStorage,
   updateContractOnStorage,
@@ -28,7 +29,7 @@ import { WalletContext } from './wallet'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
-import { getFujiCoins } from 'lib/marina'
+import { getContractsFromMarina, getFujiCoins } from 'lib/marina'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
@@ -198,6 +199,25 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     })
   }
 
+  // Marina could know about contracts that local storage doesn't
+  // This could happen if the user is using more than one device
+  // In this case, we will add the unknown contracts into storage
+  const syncContractsWithMarina = async () => {
+    if (!xPubKey) return
+    const storageContracts = getContractsFromStorage()
+    const marinaContracts = await getContractsFromMarina()
+    const notInStorage = (mc: Contract) =>
+      storageContracts.some(
+        (sc) => sc.txid === mc.txid && sc.vout === mc.vout,
+      ) === false
+    for (const contract of marinaContracts) {
+      if (notInStorage(contract)) {
+        contract.xPubKey = xPubKey
+        addContractToStorage(contract)
+      }
+    }
+  }
+
   // temporary fix:
   // 1. fix missing xPubKey on old contracts and store on local storage
   // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
@@ -268,17 +288,21 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    if (connected && network && xPubKey) {
-      // run only on first render for each network
-      if (!firstRender.current.includes(network)) {
-        migrateOldContracts()
-        fixMissingXPubKeyOnOldContracts()
-        reloadContracts()
-        fetchOracles().then((data) => setOracles(data))
-        firstRender.current.push(network)
-        return setMarinaListener() // return the close listener function
+    async function run() {
+      if (connected && network && xPubKey) {
+        // run only on first render for each network
+        if (!firstRender.current.includes(network)) {
+          migrateOldContracts()
+          fixMissingXPubKeyOnOldContracts()
+          await syncContractsWithMarina()
+          reloadContracts()
+          fetchOracles().then((data) => setOracles(data))
+          firstRender.current.push(network)
+          return setMarinaListener() // return the close listener function
+        }
       }
     }
+    run()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xPubKey])
 

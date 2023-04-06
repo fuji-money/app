@@ -140,8 +140,10 @@ export const coinToContract = async (
         priceLevel: normalize(params[5] as string),
         setupTimestamp: normalize(params[6] as string),
       },
+      network: await getNetwork(),
       oracles: [oracle.id],
       payout: 0.25, // TODO
+      priceLevel: parseInt(normalize(params[5] as string)),
       synthetic: {
         ...synthetic,
         quantity: params[1] as number,
