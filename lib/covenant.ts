@@ -68,7 +68,7 @@ export async function getIonioInstance(
     params.oraclePublicKey,
     params.issuerPublicKey,
     numberToHexEncodedUint64LE(Number(params.priceLevel)),
-    numberToHexEncodedUint64LE(Number(params.setupTimestamp)), 
+    numberToHexEncodedUint64LE(Number(params.setupTimestamp)),
   ]
 
   return new IonioContract(

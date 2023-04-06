@@ -4,11 +4,15 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 
 interface BorrowButtonProps {
   collateral: Ticker
-  synthetic: Ticker,
+  synthetic: Ticker
   text?: string
 }
 
-const BorrowButton = ({ collateral, synthetic, text = 'Mint' }: BorrowButtonProps) => {
+const BorrowButton = ({
+  collateral,
+  synthetic,
+  text = 'Mint',
+}: BorrowButtonProps) => {
   const cN = 'button is-primary is-solid-pink'
   const enabled = EnabledTasks[Tasks.Borrow]
   if (!enabled) {

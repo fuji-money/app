@@ -52,7 +52,7 @@ const BorrowForm = ({
     <div className="is-box has-pink-border">
       <h3 className="mt-4">
         <span className="stepper">1</span>
-         Amount of {synthetic.ticker}
+        Amount of {synthetic.ticker}
       </h3>
       <p className="is-size-6 ml-5 mb-4">
         Enter the desired amount of Fuji USD you want to mint.

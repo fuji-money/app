@@ -3,7 +3,7 @@ import { Ticker } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 
 interface FilterButtonProps {
-  ticker: Ticker,
+  ticker: Ticker
   text?: string
 }
 
