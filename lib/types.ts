@@ -129,6 +129,7 @@ export interface Oracle {
   id: string
   name: string
   disabled: boolean
+  pubkey?: string
 }
 
 export interface Stock {

@@ -79,9 +79,15 @@ const faapl: Asset = {
 const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl]
 
 const oracles: Oracle[] = [
-  { id: 'id0', name: 'Fuji.Money', disabled: false },
-  { id: 'id1', name: 'Bitfinex (Coming soon)', disabled: true },
-  { id: 'id2', name: 'Blockstream (Coming soon)', disabled: true },
+  {
+    disabled: false,
+    id: 'id0',
+    name: 'Fuji.Money',
+    pubkey:
+      '0xc304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e',
+  },
+  { disabled: true, id: 'id1', name: 'Bitfinex' },
+  { disabled: true, id: 'id2', name: 'Blockstream' },
 ]
 
 export const apiAssets = async (): Promise<Asset[]> => {
