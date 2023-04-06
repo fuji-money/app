@@ -12,9 +12,11 @@ export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 export const defaultNetwork = 'testnet'
 
 // covenant
-export const issuerPubKey = process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||
+export const issuerPubKey =
+  process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||
   '03e6fbc4bcd62026a3d5a13ab8fd5b72008ff38907b2ee64de45e25263a418c377'
-export const oraclePubKey = process.env.NEXT_PUBLIC_FUJI_LABS_ORACLE_PUBKEY ||
+export const oraclePubKey =
+  process.env.NEXT_PUBLIC_FUJI_LABS_ORACLE_PUBKEY ||
   '02c304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e'
 
 export const fUSDtestnet =
