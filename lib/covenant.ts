@@ -9,7 +9,7 @@ import {
   minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
-import { numberToUint64LE } from './utils'
+import { numberToHexEncodedUint64LE, numberToUint64LE } from './utils'
 import {
   payments,
   address,
@@ -67,8 +67,8 @@ export async function getIonioInstance(
     params.borrowerPublicKey,
     params.oraclePublicKey,
     params.issuerPublicKey,
-    Buffer.from(params.priceLevel, 'base64'),
-    Buffer.from(params.setupTimestamp, 'base64'),
+    numberToHexEncodedUint64LE(Number(params.priceLevel)),
+    numberToHexEncodedUint64LE(Number(params.setupTimestamp)), 
   ]
 
   return new IonioContract(
@@ -410,12 +410,6 @@ export async function prepareRedeemTx(
     0,
   )
   const syntheticChangeAmount = syntheticUtxosAmount - synthetic.quantity
-
-  // get issuer address
-  const issuer = payments.p2wpkh({
-    pubkey: Buffer.from(issuerPubKey, 'hex'),
-    network: getNetwork(network),
-  })
 
   // marina signer for ionio redeem function
   const marinaSigner = {
