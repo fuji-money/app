@@ -1,7 +1,7 @@
 import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
 import { minDustLimit } from './constants'
-import { fetchAsset } from './api'
+import { fetchAsset, fetchOracle } from './api'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
@@ -110,6 +110,7 @@ export async function checkContractOutspend(
 export const coinToContract = async (
   coin: Utxo,
 ): Promise<Contract | undefined> => {
+  // util to normalize values in priceLevel and setupTimestamp
   const normalize = (hex: string) => {
     return bufferBase64LEToString(
       Buffer.from(hex.slice(2), 'hex').toString('base64'),
@@ -121,9 +122,13 @@ export const coinToContract = async (
     coin.blindingData
   ) {
     const params = coin.scriptDetails.params
+    const collateral = await fetchAsset(coin.blindingData.asset)
+    const synthetic = await fetchAsset(params[0] as string)
+    const oracle = await fetchOracle(params[3] as string)
+    if (!collateral || !synthetic || !oracle) return
     return {
       collateral: {
-        ...(await fetchAsset(coin.blindingData.asset)),
+        ...collateral,
         quantity: coin.blindingData.value,
       },
       contractParams: {
@@ -135,10 +140,10 @@ export const coinToContract = async (
         priceLevel: normalize(params[5] as string),
         setupTimestamp: normalize(params[6] as string),
       },
-      oracles: ['id0'], // TODO
+      oracles: [oracle.id],
       payout: 0.25, // TODO
       synthetic: {
-        ...(await fetchAsset(params[0] as string)),
+        ...synthetic,
         quantity: params[1] as number,
       },
       txid: coin.txid,

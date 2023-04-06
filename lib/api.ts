@@ -40,6 +40,10 @@ export async function fetchOffers(): Promise<Offer[]> {
   return await fetchURL('/api/offers')
 }
 
+export async function fetchOracle(namePubkeyOrId: string): Promise<Oracle> {
+  return await fetchURL(`/api/oracles/${namePubkeyOrId}`)
+}
+
 export async function fetchOracles(): Promise<Oracle[]> {
   return await fetchURL('/api/oracles')
 }
