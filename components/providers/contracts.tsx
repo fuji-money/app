@@ -17,9 +17,9 @@ import {
   contractIsClosed,
   getContractCovenantAddress,
   checkContractOutspend,
+  createNewContract,
 } from 'lib/contracts'
 import {
-  addContractToStorage,
   getContractsFromStorage,
   getMyContractsFromStorage,
   updateContractOnStorage,
@@ -34,19 +34,13 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { toXpub } from 'lib/utils'
-import { Transaction } from 'liquidjs-lib'
+import { hexLEToString, toXpub } from 'lib/utils'
+import Decimal from 'decimal.js'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
   const decoded = bip32.fromBase58(xpub)
   return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
-}
-
-type ContractStatus = {
-  spent: boolean
-  input?: Transaction['ins'][0]
-  timestamp?: number
 }
 
 interface ContractsContextProps {
@@ -212,8 +206,14 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       ) === false
     for (const contract of marinaContracts) {
       if (notInStorage(contract)) {
+        // add xPubKey to contract
         contract.xPubKey = xPubKey
-        addContractToStorage(contract)
+        // check creation date so that activity will match
+        const setupTimestamp = contract.contractParams?.setupTimestamp
+        const timestamp = setupTimestamp
+          ? Decimal.floor(hexLEToString(setupTimestamp)).toNumber()
+          : undefined
+        createNewContract(contract, timestamp)
       }
     }
   }

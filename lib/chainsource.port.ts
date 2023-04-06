@@ -128,7 +128,8 @@ export class WsElectrumChainSource implements ChainSource {
     return new Promise((resolve) => {
       this.subscribeScriptStatus(script, (_, status) => {
         resolve(!!(status && status !== mempoolStatus))
-        this.unsubscribeScriptStatus(script).catch(() => resolve(false))
+        // TODO: for some reason unsubscribe throws a timeout exception
+        // this.unsubscribeScriptStatus(script).catch(() => resolve(false))
       }).catch(() => resolve(false))
     })
   }

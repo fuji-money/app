@@ -9,61 +9,11 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
-import {
-  getFuncNameFromScriptHexOfLeaf,
-  getIonioInstance,
-  PreparedBorrowTx,
-  PreparedTopupTx,
-} from './covenant'
+import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { bufferBase64LEToString } from './utils'
+import { bufferBase64LEToString, hexLEToString } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
-
-// calculate contract state
-export async function calcContractState(
-  contract: Contract,
-  chainSource: ChainSource,
-): Promise<ContractState> {
-  const network = await getNetwork()
-  if (!contract.txid) return ContractState.Unknown
-  const confirmed = await chainSource.waitForConfirmation(
-    contract.txid,
-    await getContractCovenantAddress(contract, network),
-  )
-  console.log(
-    'confirmed',
-    contract.txid,
-    await getContractCovenantAddress(contract, network),
-  )
-  if (!confirmed) return ContractState.Unconfirmed
-  const status = await checkContractOutspend(chainSource, contract, network)
-  if (!status) return ContractState.Unknown
-  const { input, spent } = status
-  if (spent && input) {
-    // contract already spent, let's find out why:
-    // we will look at the leaf before the last one,
-    // and based on his fingerprint find out if it was:
-    // - liquidated (leaf asm will have 37 items)
-    // - redeemed (leaf asm will have 47 items)
-    // - topuped (leaf asm will have 27 items)
-    const index = input.witness.length - 2
-    const leaf = input.witness[index].toString('hex')
-    switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
-      case 'liquidate':
-        return ContractState.Liquidated
-      case 'redeem':
-        return ContractState.Redeemed
-      case 'topup':
-        return ContractState.Topup
-      default:
-        return ContractState.Unknown
-    }
-  }
-  // contract not spent, return state based on ratio
-  const ratio = getContractRatio(contract)
-  return getRatioState(ratio, contract.collateral.ratio ?? 150)
-}
 
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
@@ -110,12 +60,6 @@ export async function checkContractOutspend(
 export const coinToContract = async (
   coin: Utxo,
 ): Promise<Contract | undefined> => {
-  // util to normalize values in priceLevel and setupTimestamp
-  const normalize = (hex: string) => {
-    return bufferBase64LEToString(
-      Buffer.from(hex.slice(2), 'hex').toString('base64'),
-    )
-  }
   if (
     coin.scriptDetails &&
     isIonioScriptDetails(coin.scriptDetails) &&
@@ -126,7 +70,7 @@ export const coinToContract = async (
     const synthetic = await fetchAsset(params[0] as string)
     const oracle = await fetchOracle(params[3] as string)
     if (!collateral || !synthetic || !oracle) return
-    return {
+    const contract: Contract = {
       collateral: {
         ...collateral,
         quantity: coin.blindingData.value,
@@ -137,13 +81,13 @@ export const coinToContract = async (
         borrowerPublicKey: params[2] as string,
         oraclePublicKey: params[3] as string,
         issuerPublicKey: params[4] as string,
-        priceLevel: normalize(params[5] as string),
-        setupTimestamp: normalize(params[6] as string),
+        priceLevel: params[5] as string,
+        setupTimestamp: params[6] as string,
       },
       network: await getNetwork(),
       oracles: [oracle.id],
       payout: 0.25, // TODO
-      priceLevel: parseInt(normalize(params[5] as string)),
+      priceLevel: Decimal.floor(hexLEToString(params[5] as string)).toNumber(),
       synthetic: {
         ...synthetic,
         quantity: params[1] as number,
@@ -151,6 +95,8 @@ export const coinToContract = async (
       txid: coin.txid,
       vout: coin.vout,
     }
+    contract.payoutAmount = getContractPayoutAmount(contract)
+    return contract
   }
 }
 
@@ -291,9 +237,12 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 }
 
 // add contract to storage and create activity
-function createNewContract(contract: Contract): void {
+export function createNewContract(
+  contract: Contract,
+  timestamp = Date.now(),
+): void {
   addContractToStorage(contract)
-  addActivity(contract, ActivityType.Creation, Date.now())
+  addActivity(contract, ActivityType.Creation, timestamp)
 }
 
 // mark contract as confirmed

@@ -62,20 +62,13 @@ export async function getIonioInstance(
   const params = contract.contractParams
   if (!params) throw new Error('missing contract params')
   const constructorParams = [
-    // borrow asset
     params.borrowAsset,
-    // borrow amount
     params.borrowAmount,
-    // borrower public key
     params.borrowerPublicKey,
-    // oracle public key
     params.oraclePublicKey,
-    // issuer public key
     params.issuerPublicKey,
-    // price level
-    `0x${Buffer.from(params.priceLevel, 'base64').toString('hex')}`,
-    // timestamp
-    `0x${Buffer.from(params.setupTimestamp, 'base64').toString('hex')}`,
+    params.priceLevel,
+    params.setupTimestamp,
   ]
 
   return new IonioContract(

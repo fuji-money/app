@@ -18,6 +18,13 @@ export function numberToUint64LE(n: number): Buffer {
   return Buffer.from(buf)
 }
 
+// hex LE to string
+export function hexLEToString(hex: string): string {
+  return bufferBase64LEToString(
+    Buffer.from(hex.slice(2), 'hex').toString('base64'),
+  )
+}
+
 // number to string
 export function numberToHexEncodedUint64LE(n: number): string {
   const buf = numberToUint64LE(n)
