@@ -485,9 +485,6 @@ export async function prepareRedeemTx(
   // burn synthetic
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
-  // payout to issuer (unconfidential)
-  tx.withRecipient(issuer.address!, payoutAmount, collateral.id)
-
   // get collateral back or sent to boltz case is a submarine swap
   tx.withRecipient(
     address,
