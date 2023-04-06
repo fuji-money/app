@@ -1,7 +1,7 @@
 const OffersHeader = () => {
   return (
     <div className="header level mb-4">
-      <h2>Borrow</h2>
+      <h2>Mint</h2>
     </div>
   )
 }

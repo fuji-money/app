@@ -52,10 +52,10 @@ const BorrowForm = ({
     <div className="is-box has-pink-border">
       <h3 className="mt-4">
         <span className="stepper">1</span>
-        How much {synthetic.ticker} you want to borrow?
+         Amount of {synthetic.ticker}
       </h3>
       <p className="is-size-6 ml-5 mb-4">
-        Position can be closed by repaying the borrowed amount.
+        Enter the desired amount of Fuji USD you want to mint.
       </p>
       <Synthetic
         asset={synthetic}
@@ -75,7 +75,7 @@ const BorrowForm = ({
       />
       <h3 className="mt-6">
         <span className="stepper">3</span>
-        Confirm collateral amount
+        Collateral amount
       </h3>
       <p className="is-size-6 ml-5 mb-4">
         Amount of collateral to be locked in the contract.

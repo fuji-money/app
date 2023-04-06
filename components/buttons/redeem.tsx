@@ -5,14 +5,14 @@ import Link from 'next/link'
 
 interface RedeemButtonProps {
   contract: Contract
-  size?: string
+  size?: string,
+  text?: string
 }
 
-const RedeemButton = ({ contract, size }: RedeemButtonProps) => {
+const RedeemButton = ({ contract, size, text = 'Redeem' }: RedeemButtonProps) => {
   const cN = `button is-primary is-solid-pink ml-3 ${
     size === 'small' && 'is-small is-rounded'
   }`
-  const text = 'Close'
 
   const enabled =
     !contractIsClosed(contract) &&
