@@ -379,17 +379,11 @@ export async function prepareRedeemTx(
     throw new Error('Invalid contract: no synthetic quantity')
   if (!contract.priceLevel)
     throw new Error('Invalid contract: no contract priceLevel')
-  if (!contract.payoutAmount)
-    throw new Error('Invalid contract: no contract payoutAmount')
-  if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
+  if (collateral.quantity < feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
   const address =
     swapAddress || (await marina.getNextAddress()).confidentialAddress
-
-  // payout amount will be taken from covenant
-  const payoutAmount =
-    contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
   // get ionio instance
   let ionioInstance = await getIonioInstance(contract, network)
@@ -479,12 +473,7 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // get collateral back or sent to boltz case is a submarine swap
-  tx.withRecipient(
-    address,
-    collateral.quantity - payoutAmount - feeAmount,
-    collateral.id,
-    0,
-  )
+  tx.withRecipient(address, collateral.quantity - feeAmount, collateral.id, 0)
 
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
