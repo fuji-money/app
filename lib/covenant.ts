@@ -67,8 +67,8 @@ export async function getIonioInstance(
     params.borrowerPublicKey,
     params.oraclePublicKey,
     params.issuerPublicKey,
-    params.priceLevel,
-    params.setupTimestamp,
+    Buffer.from(params.priceLevel, 'base64'),
+    Buffer.from(params.setupTimestamp, 'base64'),
   ]
 
   return new IonioContract(

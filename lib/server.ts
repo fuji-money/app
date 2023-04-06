@@ -52,31 +52,7 @@ const fbmn: Asset = {
   value: 309415.05,
 }
 
-const ftsla: Asset = {
-  icon: '/images/assets/FTSLA.svg',
-  id: 'ftsla',
-  isSynthetic: true,
-  isAvailable: false,
-  name: 'FUJI TSLA',
-  precision: 8,
-  quantity: 0,
-  ticker: 'FTSLA',
-  value: 309415.05,
-}
-
-const faapl: Asset = {
-  icon: '/images/assets/FAAPL.svg',
-  id: 'faapl',
-  isSynthetic: true,
-  isAvailable: false,
-  name: 'FUJI AAPL',
-  precision: 8,
-  quantity: 0,
-  ticker: 'FAAPL',
-  value: 309415.05,
-}
-
-const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl]
+const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
 
 const oracles: Oracle[] = [
   {
@@ -111,22 +87,6 @@ export const apiOffers = async (): Promise<Offer[]> => [
     payout: 0.25,
     synthetic: await findAssetByTicker('fusd'),
     isAvailable: true,
-  },
-  {
-    id: 'usdtftsla',
-    collateral: await findAssetByTicker('usdt'),
-    oracles: [oracles[0].id],
-    payout: 0.25,
-    synthetic: await findAssetByTicker('ftsla'),
-    isAvailable: false,
-  },
-  {
-    id: 'usdtfaapl',
-    collateral: await findAssetByTicker('usdt'),
-    oracles: [oracles[0].id],
-    payout: 0.25,
-    synthetic: await findAssetByTicker('faapl'),
-    isAvailable: false,
   },
   {
     id: 'usdtfbmn',
