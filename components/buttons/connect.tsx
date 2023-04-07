@@ -8,11 +8,6 @@ import { ModalIds } from 'components/modals/modal'
 
 const ConnectButton = () => {
   const { connected, marina, setConnected } = useContext(WalletContext)
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    setMessage(connected ? 'Disconnect' : 'Connect wallet')
-  }, [connected])
 
   const toggle = async () => {
     if (!marina) return
@@ -28,6 +23,7 @@ const ConnectButton = () => {
     closeModal(ModalIds.Wallets)
     if (!marina) return
     if (!(await marina.isEnabled())) await marina.enable()
+    setConnected(true)
     if (await fujiAccountMissing(marina)) {
       openModal(ModalIds.Account)
       await createFujiAccount(marina)
@@ -40,7 +36,7 @@ const ConnectButton = () => {
       {marina && (
         <>
           <button onClick={toggle} className="button is-primary my-auto mr-4">
-            {message}
+            {connected ? 'Disconnect' : 'Connect wallet'}
           </button>
           <AccountModal />
           <WalletsModal handleWalletChoice={handleWalletChoice} />
