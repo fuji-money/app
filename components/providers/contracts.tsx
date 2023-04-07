@@ -36,6 +36,7 @@ import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
 import { hexLEToNumber, hexLEToString, toXpub } from 'lib/utils'
 import Decimal from 'decimal.js'
+import { address } from 'liquidjs-lib'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -119,12 +120,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        // TODO check if this returns false sometimes
-        const confirmed = await chainSource.waitForConfirmation(
-          contract.txid,
-          await getContractCovenantAddress(contract, network),
-        )
-        if (!confirmed) continue
+        const [hist] = await chainSource.fetchHistories([
+          address.toOutputScript(
+            await getContractCovenantAddress(contract, network),
+          ),
+        ])
+        if (hist.length === 0) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
