@@ -16,7 +16,7 @@ const ReloadButton = () => {
   const reload = async () => {
     setLoading(true)
     rotateIcon()
-    reloadContracts()
+    await reloadContracts()
     setLoading(false)
   }
 
