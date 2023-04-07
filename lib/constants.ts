@@ -11,7 +11,7 @@ export const defaultNetwork = 'testnet'
 
 // covenant
 export const issuerPubKey =
-  '02a3d89442c53fa319737bce93e0408d00f817f992a276fea1a2aa0ffbdc4a8a76'
+  '0209bf6ee287df1803f7ce4de36ad2bd0d78a42808249b1639463ee62731e22956'
 export const oraclePubKey =
   '02c304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e'
 
