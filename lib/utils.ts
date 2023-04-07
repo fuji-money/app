@@ -25,6 +25,11 @@ export function hexLEToString(hex: string): string {
   )
 }
 
+// hex LE to number
+export function hexLEToNumber(hex: string): number {
+  return Decimal.floor(hexLEToString(hex)).toNumber()
+}
+
 // number to string
 export function numberToHexEncodedUint64LE(n: number): string {
   const buf = numberToUint64LE(n)

@@ -34,7 +34,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { hexLEToString, toXpub } from 'lib/utils'
+import { hexLEToNumber, hexLEToString, toXpub } from 'lib/utils'
 import Decimal from 'decimal.js'
 
 function computeOldXPub(xpub: string): string {
@@ -211,7 +211,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         // check creation date so that activity will match
         const setupTimestamp = contract.contractParams?.setupTimestamp
         const timestamp = setupTimestamp
-          ? Decimal.floor(hexLEToString(setupTimestamp)).toNumber()
+          ? Decimal.floor(setupTimestamp).toNumber()
           : undefined
         createNewContract(contract, timestamp)
       }
