@@ -1,6 +1,6 @@
 import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { minDustLimit } from './constants'
+import { defaultPayout, minDustLimit } from './constants'
 import { fetchAsset, fetchOracle } from './api'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
@@ -86,7 +86,7 @@ export const coinToContract = async (
       },
       network: await getNetwork(),
       oracles: [oracle.id],
-      payout: 0.25, // TODO
+      payout: defaultPayout,
       priceLevel: Decimal.floor(hexLEToString(params[5] as string)).toNumber(),
       synthetic: {
         ...synthetic,
@@ -171,7 +171,7 @@ export const getContractPayoutAmount = (
 ): number => {
   const collateralAmount = quantity || contract.collateral.quantity
   if (!collateralAmount) return 0
-  const payout = contract.payout || 0.25 // default is 25 basis points, 0.25%
+  const payout = contract.payout || defaultPayout
   return Decimal.ceil(
     Decimal.mul(collateralAmount, payout).div(100).add(minDustLimit),
   ).toNumber()

@@ -1,4 +1,4 @@
-import { oracleURL } from './constants'
+import { defaultPayout, oracleURL } from './constants'
 import { fetchURL } from './fetch'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
@@ -84,7 +84,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     id: 'lbtcfusd',
     collateral: await findAssetByTicker('l-btc'),
     oracles: [oracles[0].id],
-    payout: 0.25,
+    payout: defaultPayout,
     synthetic: await findAssetByTicker('fusd'),
     isAvailable: true,
   },
@@ -92,7 +92,7 @@ export const apiOffers = async (): Promise<Offer[]> => [
     id: 'usdtfbmn',
     collateral: await findAssetByTicker('usdt'),
     oracles: [oracles[0].id],
-    payout: 0.25,
+    payout: defaultPayout,
     synthetic: await findAssetByTicker('fbmn'),
     isAvailable: false,
   },
