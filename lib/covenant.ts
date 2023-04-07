@@ -484,7 +484,7 @@ export async function prepareRedeemTx(
     // all outputs will be unconfidential, which would break the protocol.
     // by adding a confidential op_return with value 0 fixes it.
     const blindingKey = randomBytes(33).toString('hex')
-    tx.withOpReturn(0, collateral.id, [], blindingKey)
+    tx.withOpReturn(0, collateral.id, [], blindingKey, 0)
   }
 
   // pay fees
