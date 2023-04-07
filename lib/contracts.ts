@@ -169,6 +169,7 @@ export const getContractPayoutAmount = (
   contract: Contract,
   quantity?: number,
 ): number => {
+  if (defaultPayout === 0) return 0
   const collateralAmount = quantity || contract.collateral.quantity
   if (!collateralAmount) return 0
   const payout = contract.payout || defaultPayout
