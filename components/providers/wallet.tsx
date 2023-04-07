@@ -34,13 +34,14 @@ interface WalletProviderProps {
 }
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [balances, setBalances] = useState<Balance[]>([])
-  const [connected, setConnected] = useState(false)
-  const [marina, setMarina] = useState<MarinaProvider>()
-  const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
-  const [xPubKey, setXPubKey] = useState('')
   const [chainSource, setChainSource] = useState<ChainSource>(
     new WsElectrumChainSource(defaultNetwork),
   )
+  const [connected, setConnected] = useState(false)
+  const [marina, setMarina] = useState<MarinaProvider>()
+  const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
+  const [showBanner, setShowBanner] = useState(false)
+  const [xPubKey, setXPubKey] = useState('')
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
@@ -110,7 +111,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       }
     }
     updateBalancesAddEventListener()
+    setShowBanner(connected && network !== 'testnet')
   }, [connected, marina, network])
+
+  const UseTestnetBanner = () => (
+    <div className="container">
+      <div className="is-box has-pink-border mt-6 mx-6 has-text-centered">
+        <h3>Only Testnet is supported</h3>
+        <p>Change the network on your Marina wallet</p>
+      </div>
+    </div>
+  )
 
   return (
     <WalletContext.Provider
@@ -124,7 +135,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         chainSource,
       }}
     >
-      {children}
+      {showBanner ? <UseTestnetBanner /> : children}
     </WalletContext.Provider>
   )
 }
