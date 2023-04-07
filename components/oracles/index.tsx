@@ -28,6 +28,7 @@ export default function Oracles({
           onClick={() => handleClick(oracle)}
         >
           {oracle.name}
+          {oracle.disabled && ' (Coming Soon)'}
         </p>
       ))}
       <style jsx>{`

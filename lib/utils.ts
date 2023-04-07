@@ -3,8 +3,8 @@ import Decimal from 'decimal.js'
 import { readUInt64LE, writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
 import { Tasks } from './tasks'
 
-// Buffer encoded in base64 to string
-export function bufferBase64ToString(base64: string) {
+// Buffer encoded in base64 Little Endian to string
+export function bufferBase64LEToString(base64: string) {
   const buf = Buffer.from(base64, 'base64')
   const num = readUInt64LE(buf, 0)
   return num.toString()
@@ -16,6 +16,18 @@ export function numberToUint64LE(n: number): Buffer {
   const buf = Buffer.alloc(8)
   writeUInt64LE(buf, num, 0)
   return Buffer.from(buf)
+}
+
+// hex LE to string
+export function hexLEToString(hex: string): string {
+  return bufferBase64LEToString(
+    Buffer.from(hex.slice(2), 'hex').toString('base64'),
+  )
+}
+
+// hex LE to number
+export function hexLEToNumber(hex: string): number {
+  return Decimal.floor(hexLEToString(hex)).toNumber()
 }
 
 // number to string

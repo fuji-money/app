@@ -4,11 +4,11 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 
 interface FilterButtonProps {
   ticker: Ticker
+  text?: string
 }
 
-const FilterButton = ({ ticker }: FilterButtonProps) => {
+const FilterButton = ({ ticker, text = 'Mint' }: FilterButtonProps) => {
   const cN = 'button is-primary is-solid-pink ml-3'
-  const text = 'Borrow'
   const enabled = EnabledTasks[Tasks.Borrow]
   if (!enabled) {
     return (

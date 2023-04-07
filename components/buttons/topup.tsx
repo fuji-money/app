@@ -10,7 +10,9 @@ interface TopupButtonProps {
 
 const TopupButton = ({ contract, size }: TopupButtonProps) => {
   const cN = `button ml-3 ${size === 'small' && 'is-small is-rounded'}`
-  const text = EnabledTasks[Tasks.Topup] ? 'Topup' : 'Topup (coming soon)'
+  const text = EnabledTasks[Tasks.Topup]
+    ? 'Manage Collateral'
+    : 'Manage Collateral (soon)'
 
   const enabled =
     !contractIsClosed(contract) &&

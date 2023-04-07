@@ -9,7 +9,7 @@ import {
   minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
-import { numberToUint64LE } from './utils'
+import { numberToHexEncodedUint64LE, numberToUint64LE } from './utils'
 import {
   payments,
   address,
@@ -62,20 +62,13 @@ export async function getIonioInstance(
   const params = contract.contractParams
   if (!params) throw new Error('missing contract params')
   const constructorParams = [
-    // borrow asset
     params.borrowAsset,
-    // borrow amount
     params.borrowAmount,
-    // borrower public key
     params.borrowerPublicKey,
-    // oracle public key
     params.oraclePublicKey,
-    // issuer public key
     params.issuerPublicKey,
-    // price level
-    `0x${Buffer.from(params.priceLevel, 'base64').toString('hex')}`,
-    // timestamp
-    `0x${Buffer.from(params.setupTimestamp, 'base64').toString('hex')}`,
+    numberToHexEncodedUint64LE(Number(params.priceLevel)),
+    numberToHexEncodedUint64LE(Number(params.setupTimestamp)),
   ]
 
   return new IonioContract(
@@ -386,17 +379,11 @@ export async function prepareRedeemTx(
     throw new Error('Invalid contract: no synthetic quantity')
   if (!contract.priceLevel)
     throw new Error('Invalid contract: no contract priceLevel')
-  if (!contract.payoutAmount)
-    throw new Error('Invalid contract: no contract payoutAmount')
-  if (collateral.quantity < contract.payoutAmount + feeAmount + minDustLimit)
+  if (collateral.quantity < feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
   const address =
     swapAddress || (await marina.getNextAddress()).confidentialAddress
-
-  // payout amount will be taken from covenant
-  const payoutAmount =
-    contract.payoutAmount || getContractPayoutAmount(contract) // TODO
 
   // get ionio instance
   let ionioInstance = await getIonioInstance(contract, network)
@@ -423,12 +410,6 @@ export async function prepareRedeemTx(
     0,
   )
   const syntheticChangeAmount = syntheticUtxosAmount - synthetic.quantity
-
-  // get issuer address
-  const issuer = payments.p2wpkh({
-    pubkey: Buffer.from(issuerPubKey, 'hex'),
-    network: getNetwork(network),
-  })
 
   // marina signer for ionio redeem function
   const marinaSigner = {
@@ -486,12 +467,7 @@ export async function prepareRedeemTx(
   tx.withOpReturn(synthetic.quantity, synthetic.id)
 
   // get collateral back or sent to boltz case is a submarine swap
-  tx.withRecipient(
-    address,
-    collateral.quantity - payoutAmount - feeAmount,
-    collateral.id,
-    0,
-  )
+  tx.withRecipient(address, collateral.quantity - feeAmount, collateral.id, 0)
 
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
@@ -508,7 +484,7 @@ export async function prepareRedeemTx(
     // all outputs will be unconfidential, which would break the protocol.
     // by adding a confidential op_return with value 0 fixes it.
     const blindingKey = randomBytes(33).toString('hex')
-    tx.withOpReturn(0, collateral.id, [], blindingKey)
+    tx.withOpReturn(0, collateral.id, [], blindingKey, 0)
   }
 
   // pay fees

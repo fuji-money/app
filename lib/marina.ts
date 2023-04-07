@@ -1,7 +1,7 @@
 import * as ecc from 'tiny-secp256k1'
 import { BIP32Factory } from 'bip32'
 import { Pset } from 'liquidjs-lib'
-import { Asset } from './types'
+import { Asset, Contract } from './types'
 import {
   detectProvider,
   MarinaProvider,
@@ -21,6 +21,7 @@ import {
   marinaMainAccountID,
   marinaTestnetMainAccountID,
 } from 'lib/constants'
+import { coinToContract } from './contracts'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
@@ -160,4 +161,14 @@ export async function broadcastTx(rawTxHex: string): Promise<SentTransaction> {
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('No Marina provider found')
   return marina.broadcastTransaction(rawTxHex)
+}
+
+export async function getContractsFromMarina(): Promise<Contract[]> {
+  const contracts: Contract[] = []
+  const coins = await getFujiCoins()
+  for (const coin of coins) {
+    const contract = await coinToContract(coin)
+    if (contract) contracts.push(contract)
+  }
+  return contracts
 }

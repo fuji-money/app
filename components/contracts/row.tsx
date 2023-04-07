@@ -36,7 +36,9 @@ const ContractRow = ({ contract }: ContractRowProps) => {
         </div>
         <div className="column is-4 is-flex is-justify-content-flex-end">
           <RedeemButton contract={contract} size="small" />
-          <RenewButton contract={contract} size="small" />
+          {contract.expirationDate && (
+            <RenewButton contract={contract} size="small" />
+          )}
           <TopupButton contract={contract} size="small" />
         </div>
       </div>

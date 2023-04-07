@@ -11,8 +11,8 @@ const ExplorerLink = ({ extraClass, txid }: ExplorerLinkProps) => {
 
   const href =
     network === 'testnet'
-      ? `https://liquid.network/testnet/tx/${txid}`
-      : `https://liquid.network/tx/${txid}`
+      ? `https://blockstream.info/liquidtestnet/tx/${txid}`
+      : `https://blockstream.info/liquid/tx/${txid}`
 
   return (
     <a
