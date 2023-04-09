@@ -13,12 +13,7 @@ interface ActivitiesListProps {
 
 const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const { connected } = useContext(WalletContext)
-  const { activities } = useContext(ContractsContext)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (activities) setLoading(false)
-  }, [activities])
+  const { activities, loading } = useContext(ContractsContext)
 
   if (!connected)
     return (

@@ -15,6 +15,9 @@ import {
   markContractConfirmed,
   markContractTopup,
   contractIsClosed,
+  getContractCovenantAddress,
+  checkContractOutspend,
+  createNewContract,
 } from 'lib/contracts'
 import {
   getContractsFromStorage,
@@ -23,16 +26,17 @@ import {
 } from 'lib/storage'
 import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
-import { NetworkString } from 'marina-provider'
+import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
-import { getFujiCoins } from 'lib/marina'
-import { toXpub } from 'ldk'
+import { getContractsFromMarina, getFujiCoins } from 'lib/marina'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { checkContractOutspend, checkContractIsConfirmed } from 'lib/websocket'
+import { hexLEToNumber, hexLEToString, toXpub } from 'lib/utils'
+import Decimal from 'decimal.js'
+import { address } from 'liquidjs-lib'
 
 function computeOldXPub(xpub: string): string {
   const bip32 = BIP32Factory(ecc)
@@ -78,7 +82,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const [newContract, setNewContract] = useState<Contract>()
   const [oldContract, setOldContract] = useState<Contract>()
   const [oracles, setOracles] = useState<Oracle[]>([])
-  const { connected, marina, network, xPubKey } = useContext(WalletContext)
+  const { connected, marina, network, xPubKey, chainSource } =
+    useContext(WalletContext)
 
   // save first time app was run
   const firstRun = useRef(Date.now())
@@ -115,14 +120,18 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const confirmed = await checkContractIsConfirmed(contract, network)
-        if (!confirmed) continue
+        const [hist] = await chainSource.fetchHistories([
+          address.toOutputScript(
+            await getContractCovenantAddress(contract, network),
+          ),
+        ])
+        if (hist.length === 0) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
       if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkContractOutspend(contract, network)
+      const status = await checkContractOutspend(chainSource, contract, network)
       if (!status) continue
       const { input, spent, timestamp } = status
       if (spent && input) {
@@ -166,6 +175,50 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
+  // it ensures that contract are all updated to the latest format
+  const migrateOldContracts = () => {
+    // migrate old contracts to new format
+    getContractsFromStorage().map((contract) => {
+      if (contract.contractParams && (contract as any)['borrowerPubKey']) {
+        contract.contractParams = {
+          ...contract.contractParams,
+          borrowerPublicKey: (contract as any)['borrowerPubKey'],
+          issuerPublicKey: (contract as any)['contractParams']['issuerPk'],
+          oraclePublicKey: (contract as any)['contractParams']['oraclePk'],
+        }
+        delete (contract as any)['borrowerPubKey']
+        delete (contract as any)['contractParams']['issuerPk']
+        delete (contract as any)['contractParams']['oraclePk']
+        updateContractOnStorage(contract)
+      }
+    })
+  }
+
+  // Marina could know about contracts that local storage doesn't
+  // This could happen if the user is using more than one device
+  // In this case, we will add the unknown contracts into storage
+  const syncContractsWithMarina = async () => {
+    if (!xPubKey) return
+    const storageContracts = getContractsFromStorage()
+    const marinaContracts = await getContractsFromMarina()
+    const notInStorage = (mc: Contract) =>
+      storageContracts.some(
+        (sc) => sc.txid === mc.txid && sc.vout === mc.vout,
+      ) === false
+    for (const contract of marinaContracts) {
+      if (notInStorage(contract)) {
+        // add xPubKey to contract
+        contract.xPubKey = xPubKey
+        // check creation date so that activity will match
+        const setupTimestamp = contract.contractParams?.setupTimestamp
+        const timestamp = setupTimestamp
+          ? Decimal.floor(setupTimestamp).toNumber()
+          : undefined
+        createNewContract(contract, timestamp)
+      }
+    }
+  }
+
   // temporary fix:
   // 1. fix missing xPubKey on old contracts and store on local storage
   // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
@@ -200,43 +253,57 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       })
   }
 
-  // on a NEW_TX event for fuji account, reload contracts
-  // this approach brings a heavy load on the explorer,
-  // since on reload Marina emits all Tx for each account,
-  // so if Fuji account has many Tx it will hammer the explorer.
-  // the alternative would be to use SPENT_UTXO, but borrow contracts
-  // funded with Lightning swap does not use any UTXO, so marina never
-  // emits that event on those types of contracts
+  // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
       accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
-      marina.on('SPENT_UTXO', async ({ accountID }) => {
-        console.info('SPENT_UTXO', accountID)
-        if (okToReload(accountID)) reloadAndMarkLastReload()
-      })
-      marina.on('NEW_UTXO', async ({ accountID }) => {
-        console.info('NEW_UTXO', accountID)
-        if (okToReload(accountID)) reloadAndMarkLastReload()
-      })
+      const listenerFunction = async ({
+        data: utxo,
+      }: {
+        utxo: Utxo
+        data: any
+      }) => {
+        if (
+          !utxo ||
+          !utxo.scriptDetails ||
+          !isIonioScriptDetails(utxo.scriptDetails)
+        )
+          return
+        if (okToReload(utxo.scriptDetails.accountName))
+          reloadAndMarkLastReload()
+      }
+
+      const idSpentUtxo = marina.on('SPENT_UTXO', listenerFunction)
+      const idNewUtxo = marina.on('NEW_UTXO', listenerFunction)
+      return () => {
+        marina.off(idSpentUtxo)
+        marina.off(idNewUtxo)
+      }
     }
+    return () => {}
   }
 
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    if (connected && network && xPubKey) {
-      // run only on first render for each network
-      if (!firstRender.current.includes(network)) {
-        fixMissingXPubKeyOnOldContracts()
-        setMarinaListener()
-        reloadContracts()
-        fetchOracles().then((data) => setOracles(data))
-        firstRender.current.push(network)
+    async function run() {
+      if (connected && network && xPubKey) {
+        // run only on first render for each network
+        if (!firstRender.current.includes(network)) {
+          migrateOldContracts()
+          fixMissingXPubKeyOnOldContracts()
+          await syncContractsWithMarina()
+          reloadContracts()
+          fetchOracles().then((data) => setOracles(data))
+          firstRender.current.push(network)
+          return setMarinaListener() // return the close listener function
+        }
       }
     }
+    run()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xPubKey])
 

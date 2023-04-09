@@ -11,16 +11,18 @@
     "prettier:fix": "npx prettier --write pages/ components/ lib/"
   },
   "dependencies": {
-    "@ionio-lang/ionio": "^0.1.9",
+    "@ionio-lang/ionio": "^0.3.0",
     "@types/tiny-secp256k1": "^2.0.1",
+    "@vulpemventures/secp256k1-zkp": "^2.1.1",
     "bip32": "^3.0.1",
     "bolt11": "^1.4.0",
+    "bs58check": "^3.0.1",
     "bulma": "^0.9.3",
     "cookies": "^0.8.0",
     "decimal.js": "^10.3.1",
     "file-saver": "^2.0.5",
-    "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support",
-    "marina-provider": "^1.7.1",
+    "liquidjs-lib": "^6.0.2-liquid.23",
+    "marina-provider": "^2.0.0",
     "next": "^12.2.2",
     "next-qrcode": "^2.2.0",
     "react": "18.0.0",
@@ -29,10 +31,8 @@
     "sass": "^1.49.11",
     "sharp": "^0.30.7",
     "swr": "^1.2.2",
-    "webln": "^0.3.0"
-  },
-  "resolutions": {
-    "liquidjs-lib": "git+https://github.com/louisinger/liquidjs-lib.git#psbt-taproot-support"
+    "webln": "^0.3.0",
+    "ws-electrumx-client": "^1.0.1"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.5",
@@ -40,6 +40,7 @@
     "@types/react": "17.0.43",
     "@types/react-dom": "17.0.14",
     "@types/styled-jsx": "^3.4.4",
+    "buffer": "^6.0.3",
     "eslint": "8.12.0",
     "eslint-config-next": "12.1.4",
     "eslint-config-prettier": "^8.5.0",

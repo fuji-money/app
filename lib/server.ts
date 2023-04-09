@@ -1,4 +1,4 @@
-import { oracleURL } from './constants'
+import { defaultPayout, oracleURL } from './constants'
 import { fetchURL } from './fetch'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
@@ -52,36 +52,18 @@ const fbmn: Asset = {
   value: 309415.05,
 }
 
-const ftsla: Asset = {
-  icon: '/images/assets/FTSLA.svg',
-  id: 'ftsla',
-  isSynthetic: true,
-  isAvailable: false,
-  name: 'FUJI TSLA',
-  precision: 8,
-  quantity: 0,
-  ticker: 'FTSLA',
-  value: 309415.05,
-}
-
-const faapl: Asset = {
-  icon: '/images/assets/FAAPL.svg',
-  id: 'faapl',
-  isSynthetic: true,
-  isAvailable: false,
-  name: 'FUJI AAPL',
-  precision: 8,
-  quantity: 0,
-  ticker: 'FAAPL',
-  value: 309415.05,
-}
-
-const assets: Asset[] = [lbtc, usdt, fusd, fbmn, ftsla, faapl]
+const assets: Asset[] = [lbtc, usdt, fusd, fbmn]
 
 const oracles: Oracle[] = [
-  { id: 'id0', name: 'Fuji.Money', disabled: false },
-  { id: 'id1', name: 'Bitfinex (Coming soon)', disabled: true },
-  { id: 'id2', name: 'Blockstream (Coming soon)', disabled: true },
+  {
+    disabled: false,
+    id: 'id0',
+    name: 'Fuji.Money',
+    pubkey:
+      '0xc304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e',
+  },
+  { disabled: true, id: 'id1', name: 'Bitfinex' },
+  { disabled: true, id: 'id2', name: 'Blockstream' },
 ]
 
 export const apiAssets = async (): Promise<Asset[]> => {
@@ -102,31 +84,15 @@ export const apiOffers = async (): Promise<Offer[]> => [
     id: 'lbtcfusd',
     collateral: await findAssetByTicker('l-btc'),
     oracles: [oracles[0].id],
-    payout: 0.25,
+    payout: defaultPayout,
     synthetic: await findAssetByTicker('fusd'),
     isAvailable: true,
-  },
-  {
-    id: 'usdtftsla',
-    collateral: await findAssetByTicker('usdt'),
-    oracles: [oracles[0].id],
-    payout: 0.25,
-    synthetic: await findAssetByTicker('ftsla'),
-    isAvailable: false,
-  },
-  {
-    id: 'usdtfaapl',
-    collateral: await findAssetByTicker('usdt'),
-    oracles: [oracles[0].id],
-    payout: 0.25,
-    synthetic: await findAssetByTicker('faapl'),
-    isAvailable: false,
   },
   {
     id: 'usdtfbmn',
     collateral: await findAssetByTicker('usdt'),
     oracles: [oracles[0].id],
-    payout: 0.25,
+    payout: defaultPayout,
     synthetic: await findAssetByTicker('fbmn'),
     isAvailable: false,
   },

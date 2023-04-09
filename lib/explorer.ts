@@ -6,10 +6,10 @@ const explorerURL = (network: NetworkString) => {
     case 'regtest':
       return 'http://localhost:3001'
     case 'testnet':
-      // return 'https://blockstream.info/liquidtestnet/api'
-      return 'https://liquid.network/liquidtestnet/api'
+      return 'https://blockstream.info/liquidtestnet/api'
+    //return 'https://liquid.network/liquidtestnet/api'
     default:
-      return 'https://liquid.network/api'
+      return 'https://blockstream.info/liquid/api'
   }
 }
 

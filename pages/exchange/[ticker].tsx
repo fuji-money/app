@@ -6,6 +6,8 @@ import { fetchAsset, fetchOffer } from 'lib/api'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
 import ExchangeDashboard from 'components/exchange/dashboard'
+import NotAllowed from 'components/messages/notAllowed'
+import { EnabledTasks, Tasks } from 'lib/tasks'
 
 const ExchangeTicker: NextPage = () => {
   const router = useRouter()
@@ -28,6 +30,7 @@ const ExchangeTicker: NextPage = () => {
     }
   }, [ticker])
 
+  if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (isLoading) return <Spinner />
   if (!offer) return <SomeError>Error getting offer</SomeError>
 

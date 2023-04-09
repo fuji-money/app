@@ -45,9 +45,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     synthetic.value > 0 &&
     oracles &&
     oracles.length > 0 &&
-    payoutAmount &&
-    payoutAmount >= minDustLimit &&
-    collateral.quantity > payoutAmount + feeAmount + minDustLimit
+    collateral.quantity > feeAmount + minDustLimit
 
   return (
     <div className="has-text-centered">

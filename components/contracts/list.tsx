@@ -14,12 +14,7 @@ interface ContractsListProps {
 
 const ContractsList = ({ showActive }: ContractsListProps) => {
   const { connected } = useContext(WalletContext)
-  const { contracts } = useContext(ContractsContext)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (contracts) setLoading(false)
-  }, [contracts])
+  const { contracts, loading } = useContext(ContractsContext)
 
   if (!connected)
     return (

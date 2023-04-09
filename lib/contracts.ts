@@ -1,8 +1,8 @@
 import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { minDustLimit } from './constants'
-import { fetchAsset } from './api'
-import { getNetwork, getXPubKey } from './marina'
+import { defaultPayout, minDustLimit } from './constants'
+import { fetchAsset, fetchOracle } from './api'
+import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
   addContractToStorage,
@@ -10,7 +10,95 @@ import {
 } from './storage'
 import { addActivity, removeActivities } from './activities'
 import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
-import { NetworkString } from 'marina-provider'
+import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
+import { bufferBase64LEToString, hexLEToNumber, hexLEToString } from './utils'
+import { ChainSource } from './chainsource.port'
+import { address, Transaction } from 'liquidjs-lib'
+
+// checks if a given contract was already spent
+// 1. fetch the contract funding transaction
+// 2. because we need the covenant script
+// 3. to calculate the corresponding address
+// 4. to fetch this address history
+// 5. to find out if it is already spent (history length = 2)
+// 6. If is spent, we need to fetch the block header
+// 7. because we need to know when was the spending tx
+// 8. and we get it by deserialing the block header
+// 9. Return the input where the utxo is used
+export async function checkContractOutspend(
+  chainSource: ChainSource,
+  contract: Contract,
+  network: NetworkString,
+) {
+  const covenantAddress = await getContractCovenantAddress(contract, network)
+  const [hist] = await chainSource.fetchHistories([
+    address.toOutputScript(covenantAddress),
+  ])
+  if (!hist || hist.length === 0) return // tx not found, not even on mempool
+  if (hist.length === 1) return { spent: false }
+  const { height, tx_hash } = hist[1] // spending tx
+  // get timestamp from block header
+  const { timestamp } = await chainSource.fetchBlockHeader(height)
+  // return input from tx where contract was spent, we need this
+  // to find out how it was spent (liquidated, topup or redeemed)
+  // by analysing the taproot leaf used
+  const [new_tx] = await chainSource.fetchTransactions([tx_hash])
+  if (!new_tx) return
+  const decodedTransaction = Transaction.fromHex(new_tx.hex)
+  for (const input of decodedTransaction.ins) {
+    if (contract.txid === Buffer.from(input.hash).reverse().toString('hex')) {
+      return {
+        input,
+        spent: true,
+        timestamp,
+      }
+    }
+  }
+}
+
+// transform a fuji coin into a contract
+export const coinToContract = async (
+  coin: Utxo,
+): Promise<Contract | undefined> => {
+  if (
+    coin.scriptDetails &&
+    isIonioScriptDetails(coin.scriptDetails) &&
+    coin.blindingData
+  ) {
+    const params = coin.scriptDetails.params
+    const collateral = await fetchAsset(coin.blindingData.asset)
+    const synthetic = await fetchAsset(params[0] as string)
+    const oracle = await fetchOracle(params[3] as string)
+    if (!collateral || !synthetic || !oracle) return
+    const contract: Contract = {
+      collateral: {
+        ...collateral,
+        quantity: coin.blindingData.value,
+      },
+      contractParams: {
+        borrowAsset: params[0] as string,
+        borrowAmount: params[1] as number,
+        borrowerPublicKey: params[2] as string,
+        oraclePublicKey: params[3] as string,
+        issuerPublicKey: params[4] as string,
+        priceLevel: hexLEToString(params[5] as string),
+        setupTimestamp: hexLEToString(params[6] as string),
+      },
+      network: await getNetwork(),
+      oracles: [oracle.id],
+      payout: defaultPayout,
+      priceLevel: hexLEToNumber(params[5] as string),
+      synthetic: {
+        ...synthetic,
+        quantity: params[1] as number,
+      },
+      txid: coin.txid,
+      vout: coin.vout,
+    }
+    contract.payoutAmount = getContractPayoutAmount(contract)
+    return contract
+  }
+}
 
 // check if a contract is redeemed or liquidated
 export const contractIsClosed = (contract: Contract): boolean => {
@@ -81,9 +169,10 @@ export const getContractPayoutAmount = (
   contract: Contract,
   quantity?: number,
 ): number => {
+  if (defaultPayout === 0) return 0
   const collateralAmount = quantity || contract.collateral.quantity
   if (!collateralAmount) return 0
-  const payout = contract.payout || 0.25 // default is 25 basis points, 0.25%
+  const payout = contract.payout || defaultPayout
   return Decimal.ceil(
     Decimal.mul(collateralAmount, payout).div(100).add(minDustLimit),
   ).toNumber()
@@ -102,7 +191,7 @@ export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
 export async function getContracts(): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const network = await getNetwork()
-  const xPubKey = await getXPubKey()
+  const xPubKey = await getMainAccountXPubKey()
   // cache assets for performance issues
   const assetCache = new Map<string, Asset>()
   const allTickers = new Set<string>()
@@ -149,9 +238,12 @@ export async function getContract(txid: string): Promise<Contract | undefined> {
 }
 
 // add contract to storage and create activity
-function createNewContract(contract: Contract): void {
+export function createNewContract(
+  contract: Contract,
+  timestamp = Date.now(),
+): void {
   addContractToStorage(contract)
-  addActivity(contract, ActivityType.Creation, Date.now())
+  addActivity(contract, ActivityType.Creation, timestamp)
 }
 
 // mark contract as confirmed
@@ -252,17 +344,22 @@ export async function saveContractToStorage(
   network: NetworkString,
   preparedTx: PreparedBorrowTx | PreparedTopupTx,
 ): Promise<void> {
-  contract.borrowerPubKey = preparedTx.borrowerPublicKey
-  contract.contractParams = preparedTx.contractParams
+  const { contractParams } = preparedTx
+  // build contract
+  contract.contractParams = {
+    ...contractParams,
+    priceLevel: bufferBase64LEToString(contractParams.priceLevel),
+    setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
+  }
   contract.network = network
   contract.confirmed = false
-  contract.xPubKey = await getXPubKey()
+  contract.xPubKey = await getMainAccountXPubKey()
   createNewContract(contract)
 }
 
-export function getContractCovenantAddress(
+export async function getContractCovenantAddress(
   contract: Contract,
   network: NetworkString,
 ) {
-  return getIonioInstance(contract, network).address
+  return (await getIonioInstance(contract, network)).address
 }

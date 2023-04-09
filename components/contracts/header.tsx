@@ -39,7 +39,7 @@ const ContractsHeader = ({
               className={isActiveSelected(false)}
               onClick={() => setShowActive(false)}
             >
-              Expired
+              Closed
             </a>
           </p>
         </div>

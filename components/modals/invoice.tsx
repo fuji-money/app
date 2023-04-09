@@ -19,11 +19,9 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   const [valid, setValid] = useState(false)
   const [warning, setWarning] = useState('')
 
-  const { collateral, payoutAmount } = contract
+  const { collateral } = contract
 
-  if (!payoutAmount) throw new Error('Contract without payout amount')
-
-  const amount = collateral.quantity - payoutAmount - swapFeeAmount
+  const amount = collateral.quantity - swapFeeAmount
   const boltzFees = submarineSwapBoltzFees(amount)
   const invoiceAmount = amount - boltzFees
 
@@ -67,13 +65,6 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
           <br />
           {pn(collateral.quantity)}
         </p>
-        <Separator />
-        <p>
-          Payout amount
-          <br />
-          {pn(payoutAmount)}
-        </p>
-
         <Separator />
         <p>
           Boltz fees

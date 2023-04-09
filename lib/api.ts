@@ -1,24 +1,18 @@
 import { fetchURL } from './fetch'
 import { getAssetBalance, getBalances } from './marina'
-import { getBTCvalue } from './server'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
-export async function fetchAsset(ticker: string): Promise<Asset> {
-  const asset = await fetchURL(`/api/assets/${ticker}`)
-  if (asset.ticker === 'L-BTC') {
-    asset.value = await getBTCvalue()
-  }
+export async function fetchAsset(tickerOrId: string): Promise<Asset> {
+  const asset = await fetchURL(`/api/assets/${tickerOrId}`)
   const balances = await getBalances()
   asset.quantity = getAssetBalance(asset, balances)
   return asset
 }
 
 export async function fetchAssets(): Promise<Asset[]> {
-  const value = await getBTCvalue()
   const assets = await fetchURL('/api/assets')
   const balances = await getBalances()
   const promises = assets.map(async (asset: Asset) => {
-    if (asset.ticker === 'L-BTC') asset.value = value
     asset.quantity = getAssetBalance(asset, balances)
     return asset
   })
@@ -38,6 +32,10 @@ export async function fetchOffer(
 
 export async function fetchOffers(): Promise<Offer[]> {
   return await fetchURL('/api/offers')
+}
+
+export async function fetchOracle(namePubkeyOrId: string): Promise<Oracle> {
+  return await fetchURL(`/api/oracles/${namePubkeyOrId}`)
 }
 
 export async function fetchOracles(): Promise<Oracle[]> {
