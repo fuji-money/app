@@ -120,6 +120,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
     // check if a contract is confirmed by its transaction history
     // https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
+    // In summary:
+    //   unknown => hist.length == 0
+    //   mempool => hist.length == 1 && hist[0].height == 0
+    //   confirm => hist.length > 0 && hist[0].height != 0
+    //   spent   => hist.length == 2
     const notConfirmed = async (contract: Contract) => {
       const [hist] = await chainSource.fetchHistories([
         address.toOutputScript(
