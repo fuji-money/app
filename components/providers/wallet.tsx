@@ -11,22 +11,24 @@ import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
 
 interface WalletContextProps {
   balances: Balance[]
+  chainSource: ChainSource
   connected: boolean
   marina: MarinaProvider | undefined
   network: NetworkString
   setConnected: (arg0: boolean) => void
+  updateBalances: () => void
   xPubKey: string
-  chainSource: ChainSource
 }
 
 export const WalletContext = createContext<WalletContextProps>({
   balances: [],
+  chainSource: new WsElectrumChainSource(defaultNetwork),
   connected: false,
   marina: undefined,
   network: defaultNetwork,
   setConnected: () => {},
+  updateBalances: () => {},
   xPubKey: '',
-  chainSource: new WsElectrumChainSource(defaultNetwork),
 })
 
 interface WalletProviderProps {
@@ -127,12 +129,13 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     <WalletContext.Provider
       value={{
         balances,
+        chainSource,
         connected,
         marina,
         network,
         setConnected,
+        updateBalances,
         xPubKey,
-        chainSource,
       }}
     >
       {showBanner ? <UseTestnetBanner /> : children}
