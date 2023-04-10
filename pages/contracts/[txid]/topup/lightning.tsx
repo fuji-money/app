@@ -45,7 +45,8 @@ import { WeblnContext } from 'components/providers/webln'
 import { broadcastTx } from 'lib/marina'
 
 const ContractTopupLightning: NextPage = () => {
-  const { marina, network, chainSource } = useContext(WalletContext)
+  const { chainSource, marina, network, updateBalances } =
+    useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -274,7 +275,7 @@ const ContractTopupLightning: NextPage = () => {
         data={data}
         invoice={invoice}
         result={result}
-        retry={retry(setData, setResult, handleInvoice)}
+        retry={retry(setData, setResult, handleInvoice, updateBalances)}
         reset={resetModal}
         stage={stage}
         task={Tasks.Topup}
