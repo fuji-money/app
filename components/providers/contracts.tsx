@@ -34,7 +34,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { hexLEToNumber, hexLEToString, toXpub } from 'lib/utils'
+import { toXpub } from 'lib/utils'
 import Decimal from 'decimal.js'
 import { address } from 'liquidjs-lib'
 
@@ -114,18 +114,33 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // - check for creation tx (to confirm)
   // - check if unspend (for status)
   const checkContractsStatus = async () => {
+    // function to check if contract has fuji coin
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
+
+    // check if a contract is confirmed by its transaction history
+    // https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
+    // In summary:
+    //   unknown => hist.length == 0
+    //   mempool => hist.length == 1 && hist[0].height == 0
+    //   confirm => hist.length > 0 && hist[0].height != 0
+    //   spent   => hist.length == 2
+    const notConfirmed = async (contract: Contract) => {
+      const [hist] = await chainSource.fetchHistories([
+        address.toOutputScript(
+          await getContractCovenantAddress(contract, network),
+        ),
+      ])
+      const confirmed = hist.length > 0 && hist[0].height !== 0
+      return !confirmed
+    }
+
+    // iterate through contracts in storage
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
       if (!contract.txid) continue
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        const [hist] = await chainSource.fetchHistories([
-          address.toOutputScript(
-            await getContractCovenantAddress(contract, network),
-          ),
-        ])
-        if (hist.length === 0) continue
+        if (await notConfirmed(contract)) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated
