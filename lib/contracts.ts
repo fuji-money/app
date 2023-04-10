@@ -9,9 +9,9 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
-import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
+import { getIonioInstance } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { bufferBase64LEToString, hexLEToNumber, hexLEToString } from './utils'
+import { hexLEToNumber, hexLEToString } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
 
@@ -342,15 +342,7 @@ export function markContractTopup(
 export async function saveContractToStorage(
   contract: Contract,
   network: NetworkString,
-  preparedTx: PreparedBorrowTx | PreparedTopupTx,
 ): Promise<void> {
-  const { contractParams } = preparedTx
-  // build contract
-  contract.contractParams = {
-    ...contractParams,
-    priceLevel: bufferBase64LEToString(contractParams.priceLevel),
-    setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
-  }
   contract.network = network
   contract.confirmed = false
   contract.xPubKey = await getMainAccountXPubKey()

@@ -16,7 +16,12 @@ import {
   prepareTopupTx,
   proposeTopupContract,
 } from 'lib/covenant'
-import { openModal, extractError, retry } from 'lib/utils'
+import {
+  openModal,
+  extractError,
+  retry,
+  bufferBase64LEToString,
+} from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome } from 'lib/types'
@@ -109,6 +114,18 @@ const ContractTopupLiquid: NextPage = () => {
       const covenantVout = 1
       newContract.vout = covenantVout
 
+      // add contractParams to contract
+      const { contractParams } = preparedTx
+      newContract.contractParams = {
+        ...contractParams,
+        priceLevel: bufferBase64LEToString(contractParams.priceLevel),
+        setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
+      }
+
+      // add additional fields to contract and save to storage
+      // note: save before mark as confirmed (next code block)
+      await saveContractToStorage(newContract, network)
+
       // wait for confirmation, mark contract confirmed and reload contracts
       chainSource
         .waitForConfirmation(
@@ -119,9 +136,6 @@ const ContractTopupLiquid: NextPage = () => {
           markContractConfirmed(newContract)
           reloadContracts()
         })
-
-      // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
 
       // mark old contract as topup
       markContractTopup(oldContract)

@@ -31,7 +31,13 @@ import {
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
-import { openModal, extractError, retry, sleep } from 'lib/utils'
+import {
+  openModal,
+  extractError,
+  retry,
+  sleep,
+  bufferBase64LEToString,
+} from 'lib/utils'
 import {
   BIP174SigningData,
   Pset,
@@ -93,6 +99,18 @@ const BorrowParams: NextPage = () => {
     const covenantVout = 0
     newContract.vout = covenantVout
 
+    // add contractParams to contract
+    const { contractParams } = preparedTx
+    newContract.contractParams = {
+      ...contractParams,
+      priceLevel: bufferBase64LEToString(contractParams.priceLevel),
+      setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
+    }
+
+    // add additional fields to contract and save to storage
+    // note: save before mark as confirmed (next code block)
+    await saveContractToStorage(newContract, network)
+
     // wait for confirmation, mark contract confirmed and reload contracts
     chainSource
       .waitForConfirmation(
@@ -103,9 +121,6 @@ const BorrowParams: NextPage = () => {
         markContractConfirmed(newContract)
         reloadContracts()
       })
-
-    // add additional fields to contract and save to storage
-    await saveContractToStorage(newContract, network, preparedTx)
 
     // show success
     setData(newContract.txid)
