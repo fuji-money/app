@@ -5,7 +5,7 @@ import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
 import { fetchOffers } from 'lib/api'
-import { Asset, Offer, Outcome } from 'lib/types'
+import { Asset, Contract, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -23,6 +23,7 @@ import {
   prepareBorrowTxWithClaimTx,
   proposeBorrowContract,
   prepareBorrowTx,
+  PreparedBorrowTx,
 } from 'lib/covenant'
 import { broadcastTx, signTx } from 'lib/marina'
 import {
@@ -72,6 +73,45 @@ const BorrowParams: NextPage = () => {
   const resetModal = () => {
     resetContracts()
     history.go(-2)
+  }
+
+  const finalizeAndBroadcast = async (
+    pset: Pset,
+    newContract: Contract,
+    preparedTx: PreparedBorrowTx,
+  ) => {
+    // change message to user
+    setStage(ModalStages.NeedsFinishing)
+    // broadcast transaction
+    const rawHex = finalizeTx(pset)
+    console.log('rawHex', rawHex)
+    const { txid } = await broadcastTx(rawHex)
+    newContract.txid = txid
+    if (!newContract.txid) throw new Error('No txid returned')
+
+    // add vout to contract
+    const covenantVout = 0
+    newContract.vout = covenantVout
+
+    // wait for confirmation, mark contract confirmed and reload contracts
+    chainSource
+      .waitForConfirmation(
+        newContract.txid,
+        await getContractCovenantAddress(newContract, network),
+      )
+      .then(() => {
+        markContractConfirmed(newContract)
+        reloadContracts()
+      })
+
+    // add additional fields to contract and save to storage
+    await saveContractToStorage(newContract, network, preparedTx)
+
+    // show success
+    setData(newContract.txid)
+    setResult(Outcome.Success)
+    setStage(ModalStages.ShowResult)
+    reloadContracts()
   }
 
   const handleInvoice = async (): Promise<void> => {
@@ -206,39 +246,8 @@ const BorrowParams: NextPage = () => {
           }
         })
 
-        // change message to user
-        setStage(ModalStages.NeedsFinishing)
-
-        // broadcast transaction
-        const rawHex = finalizeTx(pset)
-        console.log('rawHex', rawHex)
-        const { txid } = await broadcastTx(rawHex)
-        newContract.txid = txid
-        if (!newContract.txid) throw new Error('No txid returned')
-
-        // add vout to contract
-        const covenantVout = 0
-        newContract.vout = covenantVout
-
-        // add additional fields to contract and save to storage
-        await saveContractToStorage(newContract, network, preparedTx)
-
-        // wait for confirmation, mark contract confirmed and reload contracts
-        chainSource
-          .waitForConfirmation(
-            newContract.txid,
-            await getContractCovenantAddress(newContract, network),
-          )
-          .then(() => {
-            markContractConfirmed(newContract)
-            reloadContracts()
-          })
-
-        // show success
-        setData(newContract.txid)
-        setResult(Outcome.Success)
-        setStage(ModalStages.ShowResult)
-        reloadContracts()
+        // finalize and broadcast transaction
+        finalizeAndBroadcast(pset, newContract, preparedTx)
       }
     } catch (error) {
       console.error(error)
@@ -276,36 +285,9 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.NeedsConfirmation)
       const signedTransaction = await signTx(partialTransaction)
 
-      setStage(ModalStages.NeedsFinishing)
-
-      const rawHex = finalizeTx(Pset.fromBase64(signedTransaction))
-      const { txid } = await broadcastTx(rawHex)
-      newContract.txid = txid
-      if (!newContract.txid) throw new Error('No txid returned')
-
-      // add vout to contract
-      const covenantVout = 0
-      newContract.vout = covenantVout
-
-      // add additional fields to contract and save to storage
-      await saveContractToStorage(newContract, network, preparedTx)
-
-      // wait for confirmation, mark contract confirmed and reload contracts
-      chainSource
-        .waitForConfirmation(
-          newContract.txid,
-          await getContractCovenantAddress(newContract, network),
-        )
-        .then(() => {
-          markContractConfirmed(newContract)
-          reloadContracts()
-        })
-
-      // show success
-      setData(newContract.txid)
-      setResult(Outcome.Success)
-      setStage(ModalStages.ShowResult)
-      reloadContracts()
+      // finalize and broadcast transaction
+      const pset = Pset.fromBase64(signedTransaction)
+      finalizeAndBroadcast(pset, newContract, preparedTx)
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
