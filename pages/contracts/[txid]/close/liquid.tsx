@@ -16,7 +16,7 @@ import { Extractor, Finalizer } from 'liquidjs-lib'
 import { broadcastTx } from 'lib/marina'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { network } = useContext(WalletContext)
+  const { network, updateBalances } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -85,7 +85,7 @@ const ContractRedeemLiquid: NextPage = () => {
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleMarina)}
+        retry={retry(setData, setResult, handleMarina, updateBalances)}
         stage={stage}
         task={Tasks.Redeem}
       />

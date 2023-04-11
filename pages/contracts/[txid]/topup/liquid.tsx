@@ -33,7 +33,8 @@ import { finalizeTx } from 'lib/transaction'
 import { broadcastTx } from 'lib/marina'
 
 const ContractTopupLiquid: NextPage = () => {
-  const { marina, network, chainSource } = useContext(WalletContext)
+  const { chainSource, marina, network, updateBalances } =
+    useContext(WalletContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -164,7 +165,7 @@ const ContractTopupLiquid: NextPage = () => {
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleMarina)}
+        retry={retry(setData, setResult, handleMarina, updateBalances)}
         stage={stage}
         task={Tasks.Topup}
       />

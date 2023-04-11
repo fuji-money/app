@@ -59,7 +59,7 @@ import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 
 const BorrowParams: NextPage = () => {
-  const { network, chainSource } = useContext(WalletContext)
+  const { chainSource, network, updateBalances } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
   const { newContract, oracles, reloadContracts, resetContracts } =
@@ -374,7 +374,7 @@ const BorrowParams: NextPage = () => {
                 contract={newContract}
                 data={data}
                 result={result}
-                retry={retry(setData, setResult, handleMarina)}
+                retry={retry(setData, setResult, handleMarina, updateBalances)}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
@@ -395,7 +395,7 @@ const BorrowParams: NextPage = () => {
                 data={data}
                 invoice={invoice}
                 result={result}
-                retry={retry(setData, setResult, handleInvoice)}
+                retry={retry(setData, setResult, handleInvoice, updateBalances)}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}

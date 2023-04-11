@@ -18,7 +18,7 @@ import { Extractor, Finalizer } from 'liquidjs-lib'
 import { broadcastTx, getNextAddress, getPublicKey } from 'lib/marina'
 
 const ContractRedeemLightning: NextPage = () => {
-  const { marina, network } = useContext(WalletContext)
+  const { marina, network, updateBalances } = useContext(WalletContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -114,7 +114,7 @@ const ContractRedeemLightning: NextPage = () => {
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleInvoice)}
+        retry={retry(setData, setResult, handleInvoice, updateBalances)}
         stage={stage}
         task={Tasks.Redeem}
       />
