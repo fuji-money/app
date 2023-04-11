@@ -1,6 +1,6 @@
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
@@ -76,24 +76,34 @@ const BorrowParams: NextPage = () => {
   const router = useRouter()
   const { params } = router.query
 
+  interface UnspentSwap {
+    pset: Pset
+    newContract: Contract
+    preparedTx: PreparedBorrowTx
+  }
+  const unspentSwap = useRef<UnspentSwap>()
+  console.log('rendering', unspentSwap)
+
   const resetModal = () => {
     resetContracts()
     history.go(-2)
   }
 
-  const finalizeAndBroadcast = async (
-    pset: Pset,
-    newContract: Contract,
-    preparedTx: PreparedBorrowTx,
-  ) => {
+  const finalizeAndBroadcast = async () => {
     // change message to user
     setStage(ModalStages.NeedsFinishing)
+    // deconstruct unspentSwap
+    if (!unspentSwap.current) return
+    const { pset, newContract, preparedTx } = unspentSwap.current
     // broadcast transaction
     const rawHex = finalizeTx(pset)
     console.log('rawHex', rawHex)
     const { txid } = await broadcastTx(rawHex)
     newContract.txid = txid
     if (!newContract.txid) throw new Error('No txid returned')
+
+    // swap utxo is now spent
+    unspentSwap.current = undefined
 
     // add vout to contract
     const covenantVout = 0
@@ -131,6 +141,9 @@ const BorrowParams: NextPage = () => {
 
   const handleInvoice = async (): Promise<void> => {
     openModal(ModalIds.InvoiceDeposit)
+    // if there's a swap unspent, use it
+    console.log('unspentSwap.current?.pset', typeof unspentSwap.current?.pset)
+    if (unspentSwap.current?.pset) return finalizeAndBroadcast()
     setStage(ModalStages.NeedsInvoice)
     try {
       // we will create a ephemeral key pair:
@@ -262,7 +275,9 @@ const BorrowParams: NextPage = () => {
         })
 
         // finalize and broadcast transaction
-        finalizeAndBroadcast(pset, newContract, preparedTx)
+        unspentSwap.current = { pset, newContract, preparedTx }
+        console.log('is it there?', typeof unspentSwap.current.pset)
+        finalizeAndBroadcast()
       }
     } catch (error) {
       console.error(error)
@@ -302,7 +317,8 @@ const BorrowParams: NextPage = () => {
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      finalizeAndBroadcast(pset, newContract, preparedTx)
+      unspentSwap.current = { pset, newContract, preparedTx }
+      finalizeAndBroadcast()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)

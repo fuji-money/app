@@ -216,6 +216,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (!xPubKey) return
     const storageContracts = getContractsFromStorage()
     const marinaContracts = await getContractsFromMarina()
+    console.log('marinaContracts', marinaContracts)
     const notInStorage = (mc: Contract) =>
       storageContracts.some(
         (sc) => sc.txid === mc.txid && sc.vout === mc.vout,
