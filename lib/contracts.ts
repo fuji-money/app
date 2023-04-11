@@ -125,11 +125,11 @@ export const getRatioState = (
   minRatio: number,
   safeRatio?: number,
 ): ContractState => {
-  safeRatio ||= minRatio + 50
+  const _safeRatio = safeRatio || minRatio + 50
   // first half between min and safe is considered critical
   // second half between min and safe is considered unsafe
-  const unsafe = (safeRatio - minRatio) / 2 + minRatio
-  if (ratio >= safeRatio) return ContractState.Safe
+  const unsafe = (_safeRatio - minRatio) / 2 + minRatio
+  if (ratio >= _safeRatio) return ContractState.Safe
   if (ratio >= unsafe) return ContractState.Unsafe
   if (ratio >= minRatio) return ContractState.Critical
   if (ratio === 0) return ContractState.Unknown

@@ -20,8 +20,7 @@ const BalanceInFiat = () => {
       setBalance(
         data.reduce((prev, asset) => {
           const quantity = getAssetBalance(asset, balances)
-          prev += quantity * asset.value
-          return prev
+          return prev + quantity * asset.value
         }, 0),
       )
       setLoading(false)

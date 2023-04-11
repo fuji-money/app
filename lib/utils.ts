@@ -140,10 +140,10 @@ function changeVersionBytes(xpub: string, targetFormat: string) {
   }
 
   // trim whitespace
-  xpub = xpub.trim()
+  const _xpub = xpub.trim()
 
   try {
-    let data = b58.decode(xpub)
+    let data = b58.decode(_xpub)
     data = data.slice(4)
     data = Buffer.concat([
       Buffer.from(prefixes.get(targetFormat)!, 'hex'),

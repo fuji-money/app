@@ -32,10 +32,7 @@ const branchAndBoundStrategy = (
   let utxo_pool_index = 0
 
   // calculate total available value
-  let totalValue = coins.reduce(
-    (acc: number, coin) => (acc += utxoValue(coin)),
-    0,
-  )
+  let totalValue = coins.reduce((acc: number, coin) => acc + utxoValue(coin), 0)
 
   // return undefined if we don't have enough funds
   if (totalValue < target) return
@@ -110,13 +107,13 @@ export function selectCoins(
 ): Utxo[] {
   // sort utxos in descending order of value will decrease number of inputs
   // (and fees) but will increase utxo fragmentation
-  utxos = utxos
+  const _utxos = utxos
     .filter((utxo) => utxo.blindingData && utxo.blindingData.asset === asset)
     .sort((a, b) => utxoValue(b) - utxoValue(a))
 
   // try to find a combination with exact value (aka no change) first
   return (
-    branchAndBoundStrategy(utxos, minAmount) ??
-    accumulativeStrategy(utxos, minAmount)
+    branchAndBoundStrategy(_utxos, minAmount) ??
+    accumulativeStrategy(_utxos, minAmount)
   )
 }
