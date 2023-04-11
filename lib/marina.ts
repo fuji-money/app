@@ -164,7 +164,6 @@ export async function broadcastTx(rawTxHex: string): Promise<SentTransaction> {
 export async function getContractsFromMarina(): Promise<Contract[]> {
   const contracts: Contract[] = []
   const coins = await getFujiCoins()
-  console.log('coins', coins)
   for (const coin of coins) {
     const contract = await coinToContract(coin)
     if (contract) contracts.push(contract)

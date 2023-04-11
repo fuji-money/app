@@ -57,6 +57,7 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
+import { Utxo } from 'marina-provider'
 
 const BorrowParams: NextPage = () => {
   const { chainSource, network, updateBalances } = useContext(WalletContext)
@@ -76,25 +77,120 @@ const BorrowParams: NextPage = () => {
   const router = useRouter()
   const { params } = router.query
 
-  interface UnspentSwap {
-    pset: Pset
-    newContract: Contract
-    preparedTx: PreparedBorrowTx
-  }
-  const unspentSwap = useRef<UnspentSwap>()
-  console.log('rendering', unspentSwap)
-
   const resetModal = () => {
     resetContracts()
     history.go(-2)
   }
 
-  const finalizeAndBroadcast = async () => {
+  interface ActiveSwap {
+    keyPair: any
+    preimage: Buffer
+    redeemScript: string
+    utxos: Utxo[]
+  }
+
+  // store swap here while is not spent
+  const unspentSwap = useRef<ActiveSwap>()
+
+  // make a swap via boltz.exchange
+  const makeSwap = async (): Promise<ActiveSwap> => {
+    setStage(ModalStages.NeedsInvoice)
+    // we will create a ephemeral key pair:
+    // - it will generate a public key to be used with the Boltz swap
+    // - later we will sign the claim transaction with the private key
+    // all swaps are stored on storage and available for backup
+    const privateKey = randomBytes(32)
+    const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
+
+    // give enough satoshis to pay for all fees expected, so that we
+    // can use the returning coin as a solo input for the borrow tx
+    if (!newContract) throw new Error('no contract found')
+    if (!newContract.collateral.quantity)
+      throw new Error('no collateral quantity')
+    const onchainAmount = newContract.collateral.quantity + feeAmount
+
+    // create swap with Boltz.exchange
+    const boltzSwap: ReverseSwap | undefined = await createReverseSubmarineSwap(
+      keyPair.publicKey,
+      network,
+      onchainAmount,
+    )
+
+    // check if swap was successful
+    if (!boltzSwap) {
+      // save used keys on storage
+      addSwapToStorage({
+        boltzRefund: {
+          privateKey: privateKey.toString('hex'),
+        },
+        contractId: newContract.txid || '',
+        publicKey: keyPair.publicKey.toString('hex'),
+        status: Outcome.Failure,
+        task: Tasks.Borrow,
+      })
+      throw new Error('Error creating swap')
+    }
+
+    // deconstruct swap
+    const {
+      id,
+      invoice,
+      lockupAddress,
+      preimage,
+      redeemScript,
+      timeoutBlockHeight,
+    } = boltzSwap
+
+    // save ephemeral key on storage
+    addSwapToStorage({
+      boltzRefund: {
+        id,
+        privateKey: privateKey.toString('hex'),
+        redeemScript,
+        timeoutBlockHeight,
+      },
+      contractId: newContract.txid || '',
+      publicKey: keyPair.publicKey.toString('hex'),
+      status: Outcome.Success,
+      task: Tasks.Borrow,
+    })
+
+    // show lightning invoice to user
+    setInvoice(invoice)
+    setStage(ModalStages.NeedsPayment)
+
+    // prepare timeout handler
+    const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
+    const invoiceExpirationTimeout = setTimeout(() => {
+      throw new Error('invoice expired')
+    }, invoiceExpireDate - Date.now())
+
+    // wait for tx to be available (mempool or confirmed)
+    await chainSource.waitForAddressReceivesTx(lockupAddress)
+
+    // fetch utxos for address
+    const utxos = await chainSource.listUnspents(lockupAddress)
+
+    // clear invoice expiration timeout
+    clearTimeout(invoiceExpirationTimeout)
+
+    if (utxos.length === 0) throw new Error('error making swap')
+
+    // show user (via modal) that payment has arrived
+    setStage(ModalStages.PaymentReceived)
+    await sleep(2000) // give him time to see the green mark
+
+    return { keyPair, preimage, redeemScript, utxos }
+  }
+
+  // finalize and broadcast proposed transaction
+  const finalizeAndBroadcast = async (
+    pset: Pset,
+    newContract: Contract,
+    preparedTx: PreparedBorrowTx,
+  ) => {
     // change message to user
     setStage(ModalStages.NeedsFinishing)
-    // deconstruct unspentSwap
-    if (!unspentSwap.current) return
-    const { pset, newContract, preparedTx } = unspentSwap.current
     // broadcast transaction
     const rawHex = finalizeTx(pset)
     console.log('rawHex', rawHex)
@@ -139,146 +235,66 @@ const BorrowParams: NextPage = () => {
     reloadContracts()
   }
 
+  // handle payment through lightning invoice
   const handleInvoice = async (): Promise<void> => {
-    openModal(ModalIds.InvoiceDeposit)
-    // if there's a swap unspent, use it
-    console.log('unspentSwap.current?.pset', typeof unspentSwap.current?.pset)
-    if (unspentSwap.current?.pset) return finalizeAndBroadcast()
-    setStage(ModalStages.NeedsInvoice)
+    // nothing to do if no new contract
+    if (!newContract) return
+
     try {
-      // we will create a ephemeral key pair:
-      // - it will generate a public key to be used with the Boltz swap
-      // - later we will sign the claim transaction with the private key
-      // all swaps are stored on storage and available for backup
-      const privateKey = randomBytes(32)
-      const keyPair = ECPairFactory(ecc).fromPrivateKey(privateKey)
+      openModal(ModalIds.InvoiceDeposit)
 
-      // give enough satoshis to pay for all fees expected, so that we
-      // can use the returning coin as a solo input for the borrow tx
-      if (!newContract || !newContract.collateral.quantity) return
-      const onchainAmount = newContract.collateral.quantity + feeAmount
+      // if there's an unspent swap, we will use it
+      const { keyPair, preimage, redeemScript, utxos } =
+        unspentSwap.current ?? (await makeSwap())
 
-      // create swap with Boltz.exchange
-      const boltzSwap: ReverseSwap | undefined =
-        await createReverseSubmarineSwap(
-          keyPair.publicKey,
-          network,
-          onchainAmount,
-        )
+      // save this swap for the case this process fails after the swap
+      // we don't users to have to make the swap again
+      unspentSwap.current = { keyPair, preimage, redeemScript, utxos }
 
-      // check if swap was successful
-      if (!boltzSwap) {
-        // save used keys on storage
-        addSwapToStorage({
-          boltzRefund: {
-            privateKey: privateKey.toString('hex'),
-          },
-          contractId: newContract.txid || '',
-          publicKey: keyPair.publicKey.toString('hex'),
-          status: Outcome.Failure,
-          task: Tasks.Borrow,
-        })
-        throw new Error('Error creating swap')
+      // inform user we asking permission to mint
+      setStage(ModalStages.NeedsFujiApproval)
+
+      // prepare borrow transaction with claim utxo as input
+      const preparedTx = await prepareBorrowTxWithClaimTx(
+        newContract,
+        utxos,
+        redeemScript,
+      )
+
+      // propose contract to alpha factory
+      const resp = await proposeBorrowContract(preparedTx)
+      if (!resp.partialTransaction) throw new Error('Not accepted by Fuji')
+
+      // sign the input & add the signature via custom finalizer
+      const pset = Pset.fromBase64(resp.partialTransaction)
+      const signer = new Signer(pset)
+      const toSign = signer.pset.getInputPreimage(0, Transaction.SIGHASH_ALL)
+      const sig: BIP174SigningData = {
+        partialSig: {
+          pubkey: keyPair.publicKey,
+          signature: bscript.signature.encode(
+            keyPair.sign(toSign),
+            Transaction.SIGHASH_ALL,
+          ),
+        },
       }
 
-      // deconstruct swap
-      const {
-        id,
-        invoice,
-        lockupAddress,
-        preimage,
-        redeemScript,
-        timeoutBlockHeight,
-      } = boltzSwap
+      signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
+      const finalizer = new Finalizer(pset)
 
-      // save ephemeral key on storage
-      addSwapToStorage({
-        boltzRefund: {
-          id,
-          privateKey: privateKey.toString('hex'),
-          redeemScript,
-          timeoutBlockHeight,
-        },
-        contractId: newContract.txid || '',
-        publicKey: keyPair.publicKey.toString('hex'),
-        status: Outcome.Success,
-        task: Tasks.Borrow,
+      finalizer.finalizeInput(0, (inputIndex, pset) => {
+        return {
+          finalScriptSig: undefined,
+          finalScriptWitness: witnessStackToScriptWitness([
+            pset.inputs![inputIndex].partialSigs![0].signature,
+            preimage,
+            Buffer.from(redeemScript, 'hex'),
+          ]),
+        }
       })
 
-      // show lightning invoice to user
-      setInvoice(invoice)
-      setStage(ModalStages.NeedsPayment)
-
-      // prepare timeout handler
-      const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
-      const invoiceExpirationTimeout = setTimeout(() => {
-        throw new Error('invoice expired')
-      }, invoiceExpireDate - Date.now())
-
-      // wait for tx to be available (mempool or confirmed)
-      await chainSource.waitForAddressReceivesTx(lockupAddress)
-
-      // fetch utxos for address
-      const utxos = await chainSource.listUnspents(lockupAddress)
-
-      // payment has arrived
-      if (utxos.length > 0) {
-        // clear invoice expiration timeout
-        clearTimeout(invoiceExpirationTimeout)
-
-        // show user (via modal) that payment was received
-        setStage(ModalStages.PaymentReceived)
-        await sleep(2000) // give him time to see the green mark
-        setStage(ModalStages.NeedsFujiApproval)
-
-        // prepare borrow transaction with claim utxo as input
-        const preparedTx = await prepareBorrowTxWithClaimTx(
-          newContract,
-          utxos,
-          redeemScript,
-        )
-
-        // propose contract to alpha factory
-        const contractResponse = await proposeBorrowContract(preparedTx)
-        if (!contractResponse.partialTransaction)
-          throw new Error('Not accepted by Fuji')
-
-        // sign the input & add the signature via custom finalizer
-        const pset = Pset.fromBase64(contractResponse.partialTransaction)
-        const signer = new Signer(pset)
-        const txHashToSign = signer.pset.getInputPreimage(
-          0,
-          Transaction.SIGHASH_ALL,
-        )
-        const sig: BIP174SigningData = {
-          partialSig: {
-            pubkey: keyPair.publicKey,
-            signature: bscript.signature.encode(
-              keyPair.sign(txHashToSign),
-              Transaction.SIGHASH_ALL,
-            ),
-          },
-        }
-
-        signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
-        const finalizer = new Finalizer(pset)
-
-        finalizer.finalizeInput(0, (inputIndex, pset) => {
-          return {
-            finalScriptSig: undefined,
-            finalScriptWitness: witnessStackToScriptWitness([
-              pset.inputs![inputIndex].partialSigs![0].signature,
-              preimage,
-              Buffer.from(redeemScript, 'hex'),
-            ]),
-          }
-        })
-
-        // finalize and broadcast transaction
-        unspentSwap.current = { pset, newContract, preparedTx }
-        console.log('is it there?', typeof unspentSwap.current.pset)
-        finalizeAndBroadcast()
-      }
+      // finalize and broadcast transaction
+      finalizeAndBroadcast(pset, newContract, preparedTx)
     } catch (error) {
       console.error(error)
       setData(extractError(error))
@@ -287,6 +303,7 @@ const BorrowParams: NextPage = () => {
     }
   }
 
+  // handle payment through Alby
   const handleAlby =
     weblnProviderName === 'Alby' &&
     network === 'liquid' &&
@@ -297,11 +314,14 @@ const BorrowParams: NextPage = () => {
         }
       : undefined
 
+  // handle payment through marina browser extension
   const handleMarina = async (): Promise<void> => {
-    openModal(ModalIds.MarinaDeposit)
-    setStage(ModalStages.NeedsCoins)
+    // nothing to do if no new contract
+    if (!newContract) return
+
     try {
-      if (!newContract) return
+      openModal(ModalIds.MarinaDeposit)
+      setStage(ModalStages.NeedsCoins)
 
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(newContract)
@@ -317,8 +337,7 @@ const BorrowParams: NextPage = () => {
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      unspentSwap.current = { pset, newContract, preparedTx }
-      finalizeAndBroadcast()
+      finalizeAndBroadcast(pset, newContract, preparedTx)
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
