@@ -27,7 +27,7 @@ export function hexLEToString(hex: string): string {
 
 // hex LE to number
 export function hexLEToNumber(hex: string): number {
-  return Decimal.floor(hexLEToString(hex)).toNumber()
+  return Number(hexLEToString(hex))
 }
 
 // number to string
