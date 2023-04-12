@@ -9,9 +9,9 @@ import {
   getMyContractsFromStorage,
 } from './storage'
 import { addActivity, removeActivities } from './activities'
-import { getIonioInstance, PreparedBorrowTx, PreparedTopupTx } from './covenant'
+import { getIonioInstance } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { bufferBase64LEToString, hexLEToNumber, hexLEToString } from './utils'
+import { hexLEToNumber, hexLEToString } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
 
@@ -84,6 +84,7 @@ export const coinToContract = async (
         priceLevel: hexLEToString(params[5] as string),
         setupTimestamp: hexLEToString(params[6] as string),
       },
+      createdAt: hexLEToNumber(params[6] as string),
       network: await getNetwork(),
       oracles: [oracle.id],
       payout: defaultPayout,
@@ -125,11 +126,11 @@ export const getRatioState = (
   minRatio: number,
   safeRatio?: number,
 ): ContractState => {
-  safeRatio ||= minRatio + 50
+  const _safeRatio = safeRatio || minRatio + 50
   // first half between min and safe is considered critical
   // second half between min and safe is considered unsafe
-  const unsafe = (safeRatio - minRatio) / 2 + minRatio
-  if (ratio >= safeRatio) return ContractState.Safe
+  const unsafe = (_safeRatio - minRatio) / 2 + minRatio
+  if (ratio >= _safeRatio) return ContractState.Safe
   if (ratio >= unsafe) return ContractState.Unsafe
   if (ratio >= minRatio) return ContractState.Critical
   if (ratio === 0) return ContractState.Unknown
@@ -342,15 +343,7 @@ export function markContractTopup(
 export async function saveContractToStorage(
   contract: Contract,
   network: NetworkString,
-  preparedTx: PreparedBorrowTx | PreparedTopupTx,
 ): Promise<void> {
-  const { contractParams } = preparedTx
-  // build contract
-  contract.contractParams = {
-    ...contractParams,
-    priceLevel: bufferBase64LEToString(contractParams.priceLevel),
-    setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
-  }
   contract.network = network
   contract.confirmed = false
   contract.xPubKey = await getMainAccountXPubKey()

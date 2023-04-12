@@ -4,7 +4,7 @@ import { readUInt64LE, writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
 import { Tasks } from './tasks'
 
 // Buffer encoded in base64 Little Endian to string
-export function bufferBase64LEToString(base64: string) {
+export function bufferBase64LEToString(base64: string): string {
   const buf = Buffer.from(base64, 'base64')
   const num = readUInt64LE(buf, 0)
   return num.toString()
@@ -27,7 +27,7 @@ export function hexLEToString(hex: string): string {
 
 // hex LE to number
 export function hexLEToNumber(hex: string): number {
-  return Decimal.floor(hexLEToString(hex)).toNumber()
+  return Number(hexLEToString(hex))
 }
 
 // number to string
@@ -140,10 +140,10 @@ function changeVersionBytes(xpub: string, targetFormat: string) {
   }
 
   // trim whitespace
-  xpub = xpub.trim()
+  const _xpub = xpub.trim()
 
   try {
-    let data = b58.decode(xpub)
+    let data = b58.decode(_xpub)
     data = data.slice(4)
     data = Buffer.concat([
       Buffer.from(prefixes.get(targetFormat)!, 'hex'),

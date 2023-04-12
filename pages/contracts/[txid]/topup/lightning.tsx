@@ -7,7 +7,13 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
-import { extractError, openModal, retry, sleep } from 'lib/utils'
+import {
+  bufferBase64LEToString,
+  extractError,
+  openModal,
+  retry,
+  sleep,
+} from 'lib/utils'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { randomBytes } from 'crypto'
@@ -224,6 +230,18 @@ const ContractTopupLightning: NextPage = () => {
         const covenantVout = 1
         newContract.vout = covenantVout
 
+        // add contractParams to contract
+        const { contractParams } = preparedTx
+        newContract.contractParams = {
+          ...contractParams,
+          priceLevel: bufferBase64LEToString(contractParams.priceLevel),
+          setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
+        }
+
+        // add additional fields to contract and save to storage
+        // note: save before mark as confirmed (next code block)
+        await saveContractToStorage(newContract, network)
+
         // wait for confirmation, mark contract confirmed and reload contracts
         chainSource
           .waitForConfirmation(
@@ -234,9 +252,6 @@ const ContractTopupLightning: NextPage = () => {
             markContractConfirmed(newContract)
             reloadContracts()
           })
-
-        // add additional fields to contract and save to storage
-        await saveContractToStorage(newContract, network, preparedTx)
 
         // mark old contract as topup
         markContractTopup(oldContract)

@@ -39,11 +39,11 @@ const BorrowForm = ({
   }
 
   const setContractRatio = (newRatio: number) => {
-    newRatio = newRatio > minRatio ? newRatio : minRatio
-    setRatio(newRatio)
-    const quantity = getCollateralQuantity(contract, newRatio)
+    const ratio = newRatio > minRatio ? newRatio : minRatio
+    setRatio(ratio)
+    const quantity = getCollateralQuantity(contract, ratio)
     const collateral = { ...contract.collateral, quantity }
-    const priceLevel = getContractPriceLevel(contract.collateral, newRatio)
+    const priceLevel = getContractPriceLevel(contract.collateral, ratio)
     const payoutAmount = getContractPayoutAmount(contract, quantity)
     setContract({ ...contract, collateral, priceLevel, payoutAmount })
   }

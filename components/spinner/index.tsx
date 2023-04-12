@@ -5,9 +5,9 @@ interface SpinnerProps {
 }
 
 const Spinner = ({ color, speed, size }: SpinnerProps) => {
-  color ||= '#94227d'
-  speed ||= '.9s'
-  size ||= '40px'
+  const _color = color || '#94227d'
+  const _speed = speed || '.9s'
+  const _size = size || '40px'
   return (
     <div className="dot-spinner">
       <div className="dot-spinner__dot"></div>
@@ -20,9 +20,9 @@ const Spinner = ({ color, speed, size }: SpinnerProps) => {
       <div className="dot-spinner__dot"></div>
       <style jsx>{`
         .dot-spinner {
-          --uib-color: ${color};
-          --uib-speed: ${speed};
-          --uib-size: ${size};
+          --uib-color: ${_color};
+          --uib-speed: ${_speed};
+          --uib-size: ${_size};
 
           position: relative;
           display: flex;

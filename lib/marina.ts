@@ -112,11 +112,10 @@ export async function getNextAddress(accountID?: AccountID) {
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('No Marina provider found')
   const mainAccountIDs = await getMainAccountIDs(false)
-  if (!accountID) accountID = mainAccountIDs[0]
-  await marina.useAccount(accountID)
+  const id = accountID ?? mainAccountIDs[0]
+  await marina.useAccount(id)
   const address = await marina.getNextAddress()
-  if (accountID !== mainAccountIDs[0])
-    await marina.useAccount(mainAccountIDs[0])
+  if (id !== mainAccountIDs[0]) await marina.useAccount(mainAccountIDs[0])
   return address
 }
 
@@ -124,11 +123,10 @@ export async function getNextChangeAddress(accountID?: AccountID) {
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('No Marina provider found')
   const mainAccountIDs = await getMainAccountIDs(false)
-  if (!accountID) accountID = mainAccountIDs[0]
-  await marina.useAccount(accountID)
+  const id = accountID ?? mainAccountIDs[0]
+  await marina.useAccount(id)
   const address = await marina.getNextChangeAddress()
-  if (accountID !== mainAccountIDs[0])
-    await marina.useAccount(mainAccountIDs[0])
+  if (id !== mainAccountIDs[0]) await marina.useAccount(mainAccountIDs[0])
   return address
 }
 
