@@ -84,6 +84,7 @@ export const coinToContract = async (
         priceLevel: hexLEToString(params[5] as string),
         setupTimestamp: hexLEToString(params[6] as string),
       },
+      createdAt: hexLEToNumber(params[6] as string),
       network: await getNetwork(),
       oracles: [oracle.id],
       payout: defaultPayout,
