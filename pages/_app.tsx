@@ -2,10 +2,16 @@ import 'styles/globals.scss'
 import Layout from 'components/layout'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
+import Script from 'next/script'
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Layout>
+      <Script
+        data-domain="app.fuji.money"
+        src="https://analytics.fuji.money/js/plausible.js"
+        strategy="lazyOnload"
+      />
       <Head>
         <title>App - Fuji Money</title>
         <meta
