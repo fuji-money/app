@@ -24,23 +24,6 @@ const UseDesktopBanner = () => (
 )
 
 export default function Layout({ children }: LayoutProps) {
-  const { route } = useRouter()
-  if (route === '/') {
-    return (
-      <main>
-        <UseDesktopBanner />
-        <div className="container is-hidden-touch">{children}</div>
-        <style jsx>{`
-          main {
-            background-image: url('/images/homebg.svg');
-            background-size: 120% auto;
-            background-position: bottom -40px;
-            background-repeat: no-repeat;
-          }
-        `}</style>
-      </main>
-    )
-  }
   return (
     <WalletProvider>
       <WeblnProvider>
