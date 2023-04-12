@@ -229,9 +229,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         contract.xPubKey = xPubKey
         // check creation date so that activity will match
         const setupTimestamp = contract.contractParams?.setupTimestamp
-        const timestamp = setupTimestamp
-          ? Decimal.floor(setupTimestamp).toNumber()
-          : undefined
+        const timestamp = setupTimestamp ? Number(setupTimestamp) : undefined
         createNewContract(contract, timestamp)
       }
     }
