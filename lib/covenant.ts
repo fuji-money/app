@@ -9,7 +9,7 @@ import {
   minDustLimit,
   oraclePubKey,
 } from 'lib/constants'
-import { numberToHexEncodedUint64LE, numberToUint64LE } from './utils'
+import { numberToHex64LE, hex64LEToBase64LE } from './utils'
 import {
   payments,
   address,
@@ -67,8 +67,8 @@ export async function getIonioInstance(
     params.borrowerPublicKey,
     params.oraclePublicKey,
     params.issuerPublicKey,
-    numberToHexEncodedUint64LE(Number(params.priceLevel)),
-    numberToHexEncodedUint64LE(Number(params.setupTimestamp)),
+    params.priceLevel,
+    params.setupTimestamp,
   ]
 
   return new IonioContract(
@@ -97,26 +97,15 @@ async function getCovenantOutput(contract: Contract): Promise<{
     borrowAmount: contract.synthetic.quantity,
     oraclePublicKey: `0x${oraclePk.slice(1).toString('hex')}`,
     issuerPublicKey: `0x${issuerPk.slice(1).toString('hex')}`,
-    priceLevel: numberToUint64LE(contract.priceLevel || 0).toString('base64'),
-    setupTimestamp: numberToUint64LE(timestamp).toString('base64'),
+    priceLevel: numberToHex64LE(contract.priceLevel || 0),
+    setupTimestamp: numberToHex64LE(timestamp),
   }
 
   // get needed addresses
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress({
     artifact: artifact as Artifact,
-    // Marina needs to have the priceLevel and setupTimestamp params as Buffer
-    args: {
-      ...contractParams,
-      priceLevel: `0x${Buffer.from(
-        contractParams.priceLevel,
-        'base64',
-      ).toString('hex')}`,
-      setupTimestamp: `0x${Buffer.from(
-        contractParams.setupTimestamp,
-        'base64',
-      ).toString('hex')}`,
-    },
+    args: contractParams,
   })
 
   // switch back to marina main account
@@ -350,8 +339,8 @@ export async function proposeBorrowContract({
       issuerPublicKey,
       oraclePublicKey,
       borrowerPublicKey,
-      priceLevel,
-      setupTimestamp,
+      priceLevel: hex64LEToBase64LE(priceLevel),
+      setupTimestamp: hex64LEToBase64LE(setupTimestamp),
     },
     blindersOfCollateralInputs,
     partialTransaction: pset.toBase64(),
@@ -782,8 +771,8 @@ export async function proposeTopupContract({
       issuerPublicKey,
       oraclePublicKey,
       borrowerPublicKey,
-      priceLevel,
-      setupTimestamp,
+      priceLevel: hex64LEToBase64LE(priceLevel),
+      setupTimestamp: hex64LEToBase64LE(setupTimestamp),
     },
     blindersOfCollateralInputs,
     blindersOfSynthInputs,

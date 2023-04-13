@@ -11,7 +11,7 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { getIonioInstance } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { hexLEToNumber, hexLEToString } from './utils'
+import { hex64LEToNumber } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
 
@@ -81,14 +81,14 @@ export const coinToContract = async (
         borrowerPublicKey: params[2] as string,
         oraclePublicKey: params[3] as string,
         issuerPublicKey: params[4] as string,
-        priceLevel: hexLEToString(params[5] as string),
-        setupTimestamp: hexLEToString(params[6] as string),
+        priceLevel: params[5] as string,
+        setupTimestamp: params[6] as string,
       },
-      createdAt: hexLEToNumber(params[6] as string),
+      createdAt: hex64LEToNumber(params[6] as string),
       network: await getNetwork(),
       oracles: [oracle.id],
       payout: defaultPayout,
-      priceLevel: hexLEToNumber(params[5] as string),
+      priceLevel: hex64LEToNumber(params[5] as string),
       synthetic: {
         ...synthetic,
         quantity: params[1] as number,

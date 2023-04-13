@@ -16,12 +16,7 @@ import {
   prepareTopupTx,
   proposeTopupContract,
 } from 'lib/covenant'
-import {
-  openModal,
-  extractError,
-  retry,
-  bufferBase64LEToString,
-} from 'lib/utils'
+import { openModal, extractError, retry } from 'lib/utils'
 import EnablersLiquid from 'components/enablers/liquid'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import { Outcome } from 'lib/types'
@@ -117,11 +112,7 @@ const ContractTopupLiquid: NextPage = () => {
 
       // add contractParams to contract
       const { contractParams } = preparedTx
-      newContract.contractParams = {
-        ...contractParams,
-        priceLevel: bufferBase64LEToString(contractParams.priceLevel),
-        setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
-      }
+      newContract.contractParams = { ...contractParams }
 
       // add additional fields to contract and save to storage
       // note: save before mark as confirmed (next code block)

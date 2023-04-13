@@ -31,13 +31,7 @@ import {
   getInvoiceExpireDate,
   ReverseSwap,
 } from 'lib/swaps'
-import {
-  openModal,
-  extractError,
-  retry,
-  sleep,
-  bufferBase64LEToString,
-} from 'lib/utils'
+import { openModal, extractError, retry, sleep } from 'lib/utils'
 import {
   BIP174SigningData,
   Pset,
@@ -207,11 +201,7 @@ const BorrowParams: NextPage = () => {
 
     // add contractParams to contract
     const { contractParams } = preparedTx
-    newContract.contractParams = {
-      ...contractParams,
-      priceLevel: bufferBase64LEToString(contractParams.priceLevel),
-      setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
-    }
+    newContract.contractParams = { ...contractParams }
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)

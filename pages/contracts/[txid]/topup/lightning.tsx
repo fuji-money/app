@@ -7,13 +7,7 @@ import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { WalletContext } from 'components/providers/wallet'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
-import {
-  bufferBase64LEToString,
-  extractError,
-  openModal,
-  retry,
-  sleep,
-} from 'lib/utils'
+import { extractError, openModal, retry, sleep } from 'lib/utils'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { randomBytes } from 'crypto'
@@ -232,11 +226,7 @@ const ContractTopupLightning: NextPage = () => {
 
         // add contractParams to contract
         const { contractParams } = preparedTx
-        newContract.contractParams = {
-          ...contractParams,
-          priceLevel: bufferBase64LEToString(contractParams.priceLevel),
-          setupTimestamp: bufferBase64LEToString(contractParams.setupTimestamp),
-        }
+        newContract.contractParams = { ...contractParams }
 
         // add additional fields to contract and save to storage
         // note: save before mark as confirmed (next code block)
