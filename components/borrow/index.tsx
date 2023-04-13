@@ -17,7 +17,9 @@ interface BorrowProps {
 
 const Borrow = ({ offer, oracles }: BorrowProps) => {
   const { newContract } = useContext(ContractsContext)
-  const [ratio, setRatio] = useState(offer.collateral.ratio || 0)
+
+  const startingRatio = offer.collateral.ratio ? offer.collateral.ratio + 50 : 0
+  const [ratio, setRatio] = useState(startingRatio)
 
   const minRatio = offer.collateral.ratio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer.collateral, minRatio)
