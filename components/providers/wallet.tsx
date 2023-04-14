@@ -103,17 +103,27 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // update balances and add event listener
   useEffect(() => {
-    const updateBalancesAddEventListener = async () => {
-      if (connected && marina) {
-        if (await marina.isEnabled()) {
-          await updateBalances()
-          await updateXPubKey()
-          const id = marina.on('SPENT_UTXO', () => updateBalances())
-          return () => marina.off(id)
-        }
-      }
+    // marina can take up to 10 seconds to update balances
+    // so web update balances now and on 10 seconds in the future
+    const updateNowAndLater = () => {
+      updateBalances()
+      setTimeout(updateBalances, 10_000)
     }
-    updateBalancesAddEventListener()
+    // add event listeners
+    if (connected && marina) {
+      marina.isEnabled().then((enabled) => {
+        if (enabled) {
+          updateBalances()
+          updateXPubKey()
+          const onSpentUtxoId = marina.on('SPENT_UTXO', updateNowAndLater)
+          const onNewUtxoId = marina.on('NEW_UTXO', updateNowAndLater)
+          return () => {
+            marina.off(onSpentUtxoId)
+            marina.off(onNewUtxoId)
+          }
+        }
+      })
+    }
     setShowBanner(connected && network !== 'testnet')
   }, [connected, marina, network])
 
