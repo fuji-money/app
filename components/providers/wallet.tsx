@@ -89,6 +89,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   }, [connected, marina])
 
+  // when network changes, connect to respective electrum server
   useEffect(() => {
     if (chainSource.network !== network) {
       chainSource

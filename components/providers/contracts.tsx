@@ -34,7 +34,7 @@ import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { toXpub } from 'lib/utils'
+import { hex64LEToNumber, numberToHex64LE, toXpub } from 'lib/utils'
 import Decimal from 'decimal.js'
 import { address } from 'liquidjs-lib'
 
@@ -194,9 +194,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const migrateOldContracts = () => {
     // migrate old contracts to new format
     getContractsFromStorage().map((contract) => {
-      if (contract.contractParams && (contract as any)['borrowerPubKey']) {
+      if (!contract.contractParams) return
+      const { contractParams } = contract
+      // new contractParams format
+      if ((contract as any)['borrowerPubKey']) {
         contract.contractParams = {
-          ...contract.contractParams,
+          ...contractParams,
           borrowerPublicKey: (contract as any)['borrowerPubKey'],
           issuerPublicKey: (contract as any)['contractParams']['issuerPk'],
           oraclePublicKey: (contract as any)['contractParams']['oraclePk'],
@@ -204,6 +207,20 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         delete (contract as any)['borrowerPubKey']
         delete (contract as any)['contractParams']['issuerPk']
         delete (contract as any)['contractParams']['oraclePk']
+        updateContractOnStorage(contract)
+      }
+      // store priceLevel and setupTimestamp as hex64LE
+      // previous version had those as "123" (number as string)
+      if (contractParams.priceLevel.match(/^\d(?!x)/)) {
+        contract.contractParams.priceLevel = numberToHex64LE(
+          Number(contractParams.priceLevel),
+        )
+        updateContractOnStorage(contract)
+      }
+      if (contractParams.setupTimestamp.match(/^\d(?!x)/)) {
+        contract.contractParams.setupTimestamp = numberToHex64LE(
+          Number(contractParams.setupTimestamp),
+        )
         updateContractOnStorage(contract)
       }
     })
@@ -229,7 +246,9 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         contract.xPubKey = xPubKey
         // check creation date so that activity will match
         const setupTimestamp = contract.contractParams?.setupTimestamp
-        const timestamp = setupTimestamp ? Number(setupTimestamp) : undefined
+        const timestamp = setupTimestamp
+          ? hex64LEToNumber(setupTimestamp)
+          : undefined
         createNewContract(contract, timestamp)
       }
     }

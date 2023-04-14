@@ -3,36 +3,34 @@ import Decimal from 'decimal.js'
 import { readUInt64LE, writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
 import { Tasks } from './tasks'
 
-// Buffer encoded in base64 Little Endian to string
-export function bufferBase64LEToString(base64: string): string {
-  const buf = Buffer.from(base64, 'base64')
-  const num = readUInt64LE(buf, 0)
-  return num.toString()
+// The 3 following function are need to transform encoding
+// for contractParams.priceLevel and contractParams.setupTimestamp:
+// - values go to alpha factory in base64 64 bytes LE (Little Endian)
+// - are used by Marina and Ionio encoded in hex 64 bytes LE
+// - we need to extract the numeric values to recreate contracts
+//   from marina coins in syncContractsWithMarina and coinToContract
+// The strategy is to have it allways store in hex64LE and derive from there
+
+// used to propose contracts to alpha factory
+export function hex64LEToBase64LE(hex: string): string {
+  const buf = Buffer.from(hex.slice(2), 'hex')
+  return buf.toString('base64')
 }
 
-// number to uint64LE
-export function numberToUint64LE(n: number): Buffer {
+// used in coinToContract (marina coin => contract)
+// used in syncContractsWithMarina
+export function hex64LEToNumber(hex: string): number {
+  const buf = Buffer.from(hex.slice(2), 'hex')
+  return readUInt64LE(buf, 0)
+}
+
+// used in contract provider to migrate old contracts
+// used in getCovenantOutput to transform contract.priceLevel (number)
+// into contract.contractParams.priceLevel (hex 64 LE)
+export function numberToHex64LE(n: number): string {
   const num = Decimal.floor(n).toNumber()
   const buf = Buffer.alloc(8)
   writeUInt64LE(buf, num, 0)
-  return Buffer.from(buf)
-}
-
-// hex LE to string
-export function hexLEToString(hex: string): string {
-  return bufferBase64LEToString(
-    Buffer.from(hex.slice(2), 'hex').toString('base64'),
-  )
-}
-
-// hex LE to number
-export function hexLEToNumber(hex: string): number {
-  return Number(hexLEToString(hex))
-}
-
-// number to string
-export function numberToHexEncodedUint64LE(n: number): string {
-  const buf = numberToUint64LE(n)
   return '0x'.concat(buf.toString('hex'))
 }
 
