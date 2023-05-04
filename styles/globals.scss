@@ -1,10 +1,12 @@
 // colors
 $primary: #20003c;
+$info: #6b1d9c;
 $my-purple: #6b1d9c;
 $my-secondary-purple: #5e558c;
 $my-red: #dc3768;
 $my-pink: #f18c95;
 $my-grey: #b4a0ab;
+$my-yellow: #ffede3;
 
 // bulma variables
 $box-radius: 0;
@@ -14,6 +16,9 @@ $control-border-width: 2px;
 $family-sans-serif: 'Proxima Nova Regular', sans-serif;
 $link: $my-red;
 $navbar-item-color: $my-purple;
+
+$progress-bar-background-color: $my-yellow;
+$progress-border-radius: 2px;
 
 @import '~bulma/bulma.sass';
 

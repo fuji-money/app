@@ -32,12 +32,19 @@ const AssetRow = ({ asset }: AssetRowProps) => {
             </p>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-2">
+          <progress
+            className="progress is-info"
+            value={asset.mint?.actual}
+            max={asset.mint?.max}
+          ></progress>
+        </div>
+        <div className="column is-2">
           <p className="has-text-weight-bold is-gradient">
             {prettyAmount(asset, balance)}
           </p>
         </div>
-        <div className="column is-6 has-text-right">
+        <div className="column is-5 has-text-right">
           {asset.isAvailable ? (
             <>
               <TradeButton />
