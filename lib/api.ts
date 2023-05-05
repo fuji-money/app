@@ -14,7 +14,7 @@ export async function fetchAssets(): Promise<Asset[]> {
   const balances = await getBalances()
   const promises = assets.map(async (asset: Asset) => {
     asset.quantity = getAssetBalance(asset, balances)
-    asset.mint = { actual: 15, max: 100 } // TODO, replace with factory query
+    asset.mint = { actual: 42, max: 100 } // TODO, replace with factory query
     return asset
   })
   return Promise.all(promises)

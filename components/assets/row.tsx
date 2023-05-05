@@ -1,4 +1,4 @@
-import { prettyAmount, prettyQuantity } from 'lib/pretty'
+import { prettyQuantity } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
@@ -6,6 +6,7 @@ import TradeButton from 'components/buttons/trade'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
+import ProgressBar from 'components/progress'
 
 interface AssetRowProps {
   asset: Asset
@@ -33,15 +34,11 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           </div>
         </div>
         <div className="column is-2">
-          <progress
-            className="progress is-info"
-            value={asset.mint?.actual}
-            max={asset.mint?.max}
-          ></progress>
+          <ProgressBar asset={asset} />
         </div>
         <div className="column is-2">
           <p className="has-text-weight-bold is-gradient">
-            {prettyAmount(asset, balance)}
+            Available for Minting
           </p>
         </div>
         <div className="column is-5 has-text-right">
