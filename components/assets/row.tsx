@@ -7,6 +7,7 @@ import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
 import ProgressBar from 'components/progress'
+import LeftToMint from 'components/progress/leftToMint'
 
 interface AssetRowProps {
   asset: Asset
@@ -33,8 +34,11 @@ const AssetRow = ({ asset }: AssetRowProps) => {
             </p>
           </div>
         </div>
-        <div className="column is-4">
+        <div className="column is-3">
           <ProgressBar asset={asset} />
+        </div>
+        <div className="column is-1">
+          <LeftToMint asset={asset} />
         </div>
         <div className="column is-5 has-text-right">
           {asset.isAvailable ? (

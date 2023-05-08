@@ -1,3 +1,4 @@
+import { prettyNumber } from 'lib/pretty'
 import { Asset } from 'lib/types'
 
 const ProgressBar = ({ asset }: { asset: Asset }) => {
@@ -6,17 +7,19 @@ const ProgressBar = ({ asset }: { asset: Asset }) => {
   const percentFilledBarWidth = (actual * 100) / max
   const percentEmptyBarWidth = 100 - percentFilledBarWidth
   const [yellow, purple] = ['#ffede3', '#6b1d9c']
+  const minted = actual ? prettyNumber(actual, 0, 3) : ''
+  const remaining = max - actual ? prettyNumber(max - actual, 0, 3) : ''
   return (
     <div className="progress-container is-flex">
       <div className="filled">
-        <span>{actual || ''}</span>
+        <span>{minted}</span>
       </div>
       <div className="empty">
-        <span>{max - actual || ''}</span>
+        <span>{remaining}</span>
       </div>
       <style jsx>{`
         div {
-          height: 1.5rem;
+          height: 2rem;
         }
         div.filled {
           background-color: ${purple};
@@ -36,6 +39,7 @@ const ProgressBar = ({ asset }: { asset: Asset }) => {
           font-size: 0.75rem;
           padding: 0 4px;
           position: relative;
+          top: 0.25rem;
         }
         .progress-container:hover span {
           display: inline;
