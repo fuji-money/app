@@ -9,36 +9,33 @@ const ProgressBar = ({ asset }: { asset: Asset }) => {
   return (
     <div className="progress-container is-flex">
       <div className="filled">
-        <span>{actual}</span>
+        <span>{actual || ''}</span>
       </div>
       <div className="empty">
-        <span>{max - actual}</span>
+        <span>{max - actual || ''}</span>
       </div>
       <style jsx>{`
+        div {
+          height: 1.5rem;
+        }
         div.filled {
           background-color: ${purple};
-          height: 1rem;
-          padding-left: 4px;
+          border-top-left-radius: 2px;
+          border-bottom-left-radius: 2px;
           width: ${percentFilledBarWidth}%;
-        }
-        div.filled span {
-          color: ${yellow};
         }
         div.empty {
           background-color: ${yellow};
-          height: 1rem;
-          padding-right: 4px;
+          border-radius: 2px;
           text-align: right;
           width: ${percentEmptyBarWidth}%;
         }
-        div.empty span {
-          color: ${purple};
-        }
         span {
+          color: #b4a0ab;
           display: none;
-          font-size: 0.6rem;
+          font-size: 0.75rem;
+          padding: 0 4px;
           position: relative;
-          top: -5px;
         }
         .progress-container:hover span {
           display: inline;
