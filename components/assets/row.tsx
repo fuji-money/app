@@ -1,4 +1,4 @@
-import { prettyAmount, prettyQuantity } from 'lib/pretty'
+import { prettyQuantity } from 'lib/pretty'
 import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
@@ -6,6 +6,8 @@ import TradeButton from 'components/buttons/trade'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
+import ProgressBar from 'components/progress'
+import LeftToMint from 'components/progress/leftToMint'
 
 interface AssetRowProps {
   asset: Asset
@@ -33,11 +35,12 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           </div>
         </div>
         <div className="column is-3">
-          <p className="has-text-weight-bold is-gradient">
-            {prettyAmount(asset, balance)}
-          </p>
+          <ProgressBar asset={asset} />
         </div>
-        <div className="column is-6 has-text-right">
+        <div className="column is-1">
+          <LeftToMint asset={asset} />
+        </div>
+        <div className="column is-5 has-text-right">
           {asset.isAvailable ? (
             <>
               <TradeButton />

@@ -31,6 +31,7 @@ export interface Asset {
   id: string
   isSynthetic: boolean
   isAvailable: boolean
+  mint?: { actual: number; max: number }
   name: string
   precision: number
   quantity: number
