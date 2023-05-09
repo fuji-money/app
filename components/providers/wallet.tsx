@@ -42,7 +42,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [connected, setConnected] = useState(false)
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
-  const [showBanner, setShowBanner] = useState(false)
   const [xPubKey, setXPubKey] = useState('')
 
   const updateBalances = async () => setBalances(await getBalances())
@@ -124,17 +123,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         }
       })
     }
-    setShowBanner(connected && network !== 'testnet')
   }, [connected, marina, network])
-
-  const UseTestnetBanner = () => (
-    <div className="container">
-      <div className="is-box has-pink-border mt-6 mx-6 has-text-centered">
-        <h3>Only Testnet is supported</h3>
-        <p>Change the network on your Marina wallet</p>
-      </div>
-    </div>
-  )
 
   return (
     <WalletContext.Provider
@@ -149,7 +138,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         xPubKey,
       }}
     >
-      {showBanner ? <UseTestnetBanner /> : children}
+      {children}
     </WalletContext.Provider>
   )
 }
