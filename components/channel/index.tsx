@@ -10,6 +10,7 @@ import Balance from 'components/balance'
 import Title from 'components/title'
 import { operationFromTask } from 'lib/utils'
 import { LightningEnabledTasks } from 'lib/tasks'
+import { TICKERS } from 'lib/server'
 
 interface ChannelButtonProps {
   name: string
@@ -33,7 +34,9 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
   const lightningOutOfBounds =
     LightningEnabledTasks[task] && swapDepositAmountOutOfBounds(quantity)
   const lightningButtonEnabled =
-    LightningEnabledTasks[task] && ticker === 'L-BTC' && !lightningOutOfBounds
+    LightningEnabledTasks[task] &&
+    ticker === TICKERS.lbtc &&
+    !lightningOutOfBounds
 
   const ChannelButton = ({ name, enabled = true }: ChannelButtonProps) => {
     const channelId = name.toLowerCase()

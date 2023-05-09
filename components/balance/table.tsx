@@ -12,7 +12,7 @@ const BalanceTable = () => {
 
   useEffect(() => {
     setLoading(true)
-    fetchAssets().then((data) => {
+    fetchAssets(network).then((data) => {
       setAssets(data)
       setLoading(false)
     })

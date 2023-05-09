@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { Offer } from 'lib/types'
 import { fetchAsset, fetchOffer } from 'lib/api'
@@ -8,10 +8,14 @@ import Spinner from 'components/spinner'
 import ExchangeDashboard from 'components/exchange/dashboard'
 import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
+import { WalletContext } from 'components/providers/wallet'
+import { TICKERS } from 'lib/server'
 
 const ExchangeTicker: NextPage = () => {
   const router = useRouter()
   const { ticker } = router.query
+
+  const { network } = useContext(WalletContext)
 
   const [offer, setOffer] = useState<Offer>()
   const [isLoading, setLoading] = useState(false)
@@ -19,16 +23,16 @@ const ExchangeTicker: NextPage = () => {
   useEffect(() => {
     setLoading(true)
     if (ticker && typeof ticker === 'string') {
-      fetchAsset(ticker).then((asset) => {
+      fetchAsset(ticker, network).then((asset) => {
         if (asset) {
-          fetchOffer(asset.ticker, 'L-BTC').then((data) => {
+          fetchOffer(asset.ticker, TICKERS.lbtc, network).then((data) => {
             setOffer(data)
             setLoading(false)
           })
         }
       })
     }
-  }, [ticker])
+  }, [network, ticker])
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
   if (isLoading) return <Spinner />

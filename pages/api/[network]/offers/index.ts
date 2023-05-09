@@ -2,10 +2,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Offer } from 'lib/types'
 import { apiOffers } from 'lib/server'
+import { NetworkString } from 'marina-provider'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Offer[]>,
 ) {
-  res.status(200).json(await apiOffers())
+  const network = req.query.network as NetworkString
+  res.status(200).json(await apiOffers(network))
 }

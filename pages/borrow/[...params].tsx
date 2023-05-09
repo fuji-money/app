@@ -337,12 +337,12 @@ const BorrowParams: NextPage = () => {
 
   useEffect(() => {
     if (oracles) {
-      fetchOffers().then((data) => {
+      fetchOffers(network).then((data) => {
         setOffers(data)
         setLoading(false)
       })
     }
-  }, [oracles])
+  }, [network, oracles])
 
   if (!EnabledTasks[Tasks.Borrow]) return <NotAllowed />
   if (loading) return <Spinner />

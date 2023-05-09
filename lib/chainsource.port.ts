@@ -60,10 +60,13 @@ export class WsElectrumChainSource implements ChainSource {
   }
 
   async fetchHistories(scripts: Buffer[]): Promise<TransactionHistory[]> {
+    console.log('fh 1')
     const scriptsHashes = scripts.map((s) => toScriptHash(s))
+    console.log('fh 2', scriptsHashes)
     const responses = await this.ws.batchRequest<TransactionHistory[]>(
       ...scriptsHashes.map((s) => ({ method: GetHistoryMethod, params: [s] })),
     )
+    console.log('fh 3')
     return responses
   }
 

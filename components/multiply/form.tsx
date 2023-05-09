@@ -1,5 +1,5 @@
 import MultiplyButton from './button'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'
@@ -13,6 +13,8 @@ import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
 import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
 import { ModalIds } from 'components/modals/modal'
+import { WalletContext } from 'components/providers/wallet'
+import { TICKERS } from 'lib/server'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -25,6 +27,7 @@ const MultiplyForm = ({
   setContract,
   setDeposit,
 }: MultiplyFormProps) => {
+  const { network } = useContext(WalletContext)
   const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
@@ -37,14 +40,14 @@ const MultiplyForm = ({
 
   useEffect(() => {
     setLoading(true)
-    fetchOracles().then((data) => {
+    fetchOracles(network).then((data) => {
       setOracles(data)
-      fetchAsset('L-BTC').then((data) => {
+      fetchAsset(TICKERS.lbtc, network).then((data) => {
         setLbtc(data)
         setLoading(false)
       })
     })
-  }, [])
+  }, [network])
 
   useEffect(() => {
     if (lbtc) {

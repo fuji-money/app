@@ -35,20 +35,27 @@ const Notifications = ({
   const [collateralTooLow, setCollateralTooLow] = useState(false)
   const [outOfBounds, setOutOfBounds] = useState(false)
 
-  const { balances, connected } = useContext(WalletContext)
+  const { balances, connected, network } = useContext(WalletContext)
 
-  const { collateral, oracles, payout, payoutAmount } = contract
+  const { collateral, oracles, payoutAmount } = contract
   const spendQuantity =
     typeof topup === 'undefined' ? collateral.quantity : topup
 
   useEffect(() => {
-    fetchAsset(collateral.ticker).then((asset) => {
+    fetchAsset(collateral.ticker, network).then((asset) => {
       const balance = getAssetBalance(asset, balances)
       setNotEnoughFunds(connected && spendQuantity > balance)
       setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
       setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
     })
-  }, [balances, connected, collateral.ticker, payoutAmount, spendQuantity])
+  }, [
+    balances,
+    connected,
+    collateral.ticker,
+    network,
+    payoutAmount,
+    spendQuantity,
+  ])
 
   useEffect(() => {
     setRatioTooLow(ratio < minRatio)

@@ -102,8 +102,10 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
     if (connected) {
+      console.log('reloading contracts', await getContracts(network))
       await checkContractsStatus()
-      setContracts(await getContracts())
+      console.log('set contracts', network)
+      setContracts(await getContracts(network))
       setActivities(await getActivities())
       setLoading(false)
     }
@@ -136,17 +138,27 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
 
     // iterate through contracts in storage
+    console.log(
+      'getMyContractsFromStorage(network, xPubKey)',
+      getMyContractsFromStorage(network, xPubKey),
+    )
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
+      console.log('1')
       if (!contract.txid) continue
+      console.log('2')
       if (!contract.confirmed) {
+        console.log('3')
         // if funding tx is not confirmed, we can skip this contract
         if (await notConfirmed(contract)) continue
         markContractConfirmed(contract)
       }
+      console.log('4')
       // if contract is redeemed, topup or liquidated
       if (contractIsClosed(contract)) continue
+      console.log('5')
       // check if contract is already spent
       const status = await checkContractOutspend(chainSource, contract, network)
+      console.log('status', status)
       if (!status) continue
       const { input, spent, timestamp } = status
       if (spent && input) {
@@ -232,7 +244,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const syncContractsWithMarina = async () => {
     if (!xPubKey) return
     const storageContracts = getContractsFromStorage()
-    const marinaContracts = await getContractsFromMarina()
+    const marinaContracts = await getContractsFromMarina(network)
 
     // check if contract from marina is on storage
     const notInStorage = (mc: Contract) =>
@@ -326,13 +338,14 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   useEffect(() => {
     async function run() {
       if (connected && network && xPubKey) {
+        reloadContracts()
+        await syncContractsWithMarina()
+        fetchOracles(network).then((data) => setOracles(data))
         // run only on first render for each network
         if (!firstRender.current.includes(network)) {
+          console.log('first run for', network)
           migrateOldContracts()
           fixMissingXPubKeyOnOldContracts()
-          await syncContractsWithMarina()
-          reloadContracts()
-          fetchOracles().then((data) => setOracles(data))
           firstRender.current.push(network)
           return setMarinaListener() // return the close listener function
         }
@@ -340,7 +353,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
     run()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [xPubKey])
+  }, [network, xPubKey])
+
+  useEffect(() => {
+    console.log('contracts', contracts.length, network)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [network])
 
   return (
     <ContractsContext.Provider

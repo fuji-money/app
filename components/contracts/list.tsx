@@ -16,16 +16,24 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const { connected } = useContext(WalletContext)
   const { contracts, loading } = useContext(ContractsContext)
 
+  const [filteredContracts, setFilteredContracts] = useState<Contract[]>([])
+
+  useEffect(() => {
+    console.log('changed')
+    setFilteredContracts(
+      contracts.filter((contract) =>
+        showActive ? !contractIsClosed(contract) : contractIsClosed(contract),
+      ),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contracts])
+
   if (!connected)
     return (
       <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
     )
   if (loading) return <Spinner />
   if (!contracts) return <EmptyState>Error getting contracts</EmptyState>
-
-  const filteredContracts = contracts.filter((contract) =>
-    showActive ? !contractIsClosed(contract) : contractIsClosed(contract),
-  )
   if (filteredContracts.length === 0)
     return <EmptyState>No contracts yet</EmptyState>
 

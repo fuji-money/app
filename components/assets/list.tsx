@@ -13,7 +13,7 @@ const AssetsList = () => {
 
   useEffect(() => {
     const onlySynth = (asset: Asset) => asset.isSynthetic
-    fetchAssets().then((data) => {
+    fetchAssets(network).then((data) => {
       setAssets(data.filter(onlySynth))
       setLoading(false)
     })

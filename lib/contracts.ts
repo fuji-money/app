@@ -30,10 +30,13 @@ export async function checkContractOutspend(
   contract: Contract,
   network: NetworkString,
 ) {
+  console.log('a')
   const covenantAddress = await getContractCovenantAddress(contract, network)
+  console.log('b', covenantAddress)
   const [hist] = await chainSource.fetchHistories([
     address.toOutputScript(covenantAddress),
   ])
+  console.log('c')
   if (!hist || hist.length === 0) return // tx not found, not even on mempool
   if (hist.length === 1) return { spent: false }
   const { height, tx_hash } = hist[1] // spending tx
@@ -59,6 +62,7 @@ export async function checkContractOutspend(
 // transform a fuji coin into a contract
 export const coinToContract = async (
   coin: Utxo,
+  network: NetworkString,
 ): Promise<Contract | undefined> => {
   if (
     coin.scriptDetails &&
@@ -66,9 +70,9 @@ export const coinToContract = async (
     coin.blindingData
   ) {
     const params = coin.scriptDetails.params
-    const collateral = await fetchAsset(coin.blindingData.asset)
-    const synthetic = await fetchAsset(params[0] as string)
-    const oracle = await fetchOracle(params[3] as string)
+    const collateral = await fetchAsset(coin.blindingData.asset, network)
+    const synthetic = await fetchAsset(params[0] as string, network)
+    const oracle = await fetchOracle(params[3] as string, network)
     if (!collateral || !synthetic || !oracle) return
     const contract: Contract = {
       collateral: {
@@ -189,9 +193,10 @@ export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
 }
 
 // get all contacts belonging to this xpub and network
-export async function getContracts(): Promise<Contract[]> {
+export async function getContracts(
+  network: NetworkString,
+): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
-  const network = await getNetwork()
   const xPubKey = await getMainAccountXPubKey()
   // cache assets for performance issues
   const assetCache = new Map<string, Asset>()
@@ -203,7 +208,7 @@ export async function getContracts(): Promise<Contract[]> {
     },
   )
   for (const ticker of Array.from(allTickers.values())) {
-    assetCache.set(ticker, await fetchAsset(ticker))
+    assetCache.set(ticker, await fetchAsset(ticker, network))
   }
   const promises = getMyContractsFromStorage(network, xPubKey).map(
     async (contract: Contract) => {
@@ -233,8 +238,11 @@ export async function getContracts(): Promise<Contract[]> {
 }
 
 // get contract with txid
-export async function getContract(txid: string): Promise<Contract | undefined> {
-  const contracts = await getContracts()
+export async function getContract(
+  txid: string,
+  network: NetworkString,
+): Promise<Contract | undefined> {
+  const contracts = await getContracts(network)
   return contracts.find((c) => c.txid === txid)
 }
 

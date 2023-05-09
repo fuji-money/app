@@ -16,12 +16,9 @@ interface AssetRowProps {
 const AssetRow = ({ asset }: AssetRowProps) => {
   const { balances } = useContext(WalletContext)
   const balance = getAssetBalance(asset, balances)
+  const disabled = !(asset.isAvailable && asset.id)
   return (
-    <div
-      className={`is-box has-pink-border row ${
-        !asset.isAvailable && `disabled`
-      }`}
-    >
+    <div className={`is-box has-pink-border row ${disabled && `disabled`}`}>
       <div className="columns level">
         <div className="column is-flex is-3">
           <div className="pr-4">
@@ -41,15 +38,15 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           <LeftToMint asset={asset} />
         </div>
         <div className="column is-5 has-text-right">
-          {asset.isAvailable ? (
+          {disabled ? (
+            <p className="is-size-6 has-text-weight-bold has-text-right mr-3">
+              Coming soon
+            </p>
+          ) : (
             <>
               <TradeButton />
               <FilterButton ticker={asset.ticker} />
             </>
-          ) : (
-            <p className="is-size-6 has-text-weight-bold has-text-right mr-3">
-              Coming soon
-            </p>
           )}
         </div>
       </div>

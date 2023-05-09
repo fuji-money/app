@@ -8,7 +8,7 @@ import { getAssetBalance } from 'lib/marina'
 const BalanceInFiat = () => {
   const [balance, setBalance] = useState(0)
   const [isLoading, setLoading] = useState(false)
-  const { balances, connected } = useContext(WalletContext)
+  const { balances, connected, network } = useContext(WalletContext)
 
   const delta = -2345.67
   const calcDelta = () => prettyPercentage(delta / balance)
@@ -16,7 +16,7 @@ const BalanceInFiat = () => {
 
   useEffect(() => {
     setLoading(true)
-    fetchAssets().then((data) => {
+    fetchAssets(network).then((data) => {
       setBalance(
         data.reduce((prev, asset) => {
           const quantity = getAssetBalance(asset, balances)
@@ -25,7 +25,7 @@ const BalanceInFiat = () => {
       )
       setLoading(false)
     })
-  }, [balances, connected])
+  }, [balances, connected, network])
 
   if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
   if (isLoading) return <Spinner />

@@ -16,12 +16,12 @@ interface BorrowButtonProps {
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { setNewContract } = useContext(ContractsContext)
-  const { balances, connected } = useContext(WalletContext)
+  const { balances, connected, network } = useContext(WalletContext)
   const [enoughFunds, setEnoughFunds] = useState(false)
   const { collateral, oracles, payoutAmount, synthetic } = contract
 
   useEffect(() => {
-    fetchAsset(contract.collateral.ticker).then((asset) => {
+    fetchAsset(contract.collateral.ticker, network).then((asset) => {
       const funds = getAssetBalance(asset, balances)
       const needed = contract.collateral.quantity
       const enoughFundsOnMarina = connected && funds > needed
