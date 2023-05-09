@@ -20,16 +20,15 @@ const ProgressBar = ({ asset }: { asset: Asset }) => {
       <style jsx>{`
         div {
           height: 2rem;
+          border-radius: 2px;
         }
         div.filled {
           background-color: ${purple};
-          border-top-left-radius: 2px;
-          border-bottom-left-radius: 2px;
           width: ${percentFilledBarWidth}%;
         }
         div.empty {
           background-color: ${yellow};
-          border-radius: 2px;
+          direction: rtl;
           text-align: right;
           width: ${percentEmptyBarWidth}%;
         }
