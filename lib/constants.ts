@@ -11,7 +11,7 @@ export const marinaMainAccountID = 'mainAccount' // m/84'/1776'/0'
 export const marinaTestnetMainAccountID = 'mainAccountTest' // m/84'/1'/0'
 export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 
-export const defaultNetwork = 'testnet'
+export const defaultNetwork = 'liquid'
 
 // covenant
 export const issuerPubKey =
@@ -23,13 +23,13 @@ export const oraclePubKey =
 
 export const fUSDtestnet =
   process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
-  '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518'
+  '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806'
 
 export const oracleURL =
   process.env.NEXT_PUBLIC_ORACLE_URL ||
   'https://oracle.fuji.money/oracle/BTCUSD' // TODO - remove alternative url
 export const alphaServerUrl =
-  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://alpha-factory.fuji.money'
+  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev.factory.fuji.money'
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx
