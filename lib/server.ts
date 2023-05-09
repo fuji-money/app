@@ -19,17 +19,17 @@ const assetHashByTicker: Record<string, Record<NetworkString, string>> = {
     testnet: '',
   },
   [TICKERS.fuji]: {
-    liquid: '',
+    liquid: '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806',
     regtest: '',
     testnet: '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518',
   },
   [TICKERS.lbtc]: {
-    liquid: '',
+    liquid: '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d',
     regtest: '',
     testnet: '144c654344aa716d6f3abcc1ca90e5641e4e2a7f633bc09fe3baf64585819a49',
   },
   [TICKERS.usdt]: {
-    liquid: '',
+    liquid: 'ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2',
     regtest: '',
     testnet: 'f3d1ec678811398cd2ae277cbe3849c6f6dbd72c74bc542f7c4b11ff0e820958',
   },
