@@ -34,7 +34,7 @@ const fusd: Asset = {
   isSynthetic: true,
   isAvailable: true,
   name: 'FUJI USD',
-  precision: 8,
+  precision: 2,
   quantity: 0,
   ticker: 'FUSD',
   value: 1,
