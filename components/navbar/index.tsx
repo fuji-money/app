@@ -8,7 +8,7 @@ import { ModalIds } from 'components/modals/modal'
 export default function Navbar() {
   return (
     <>
-      <div className="container">
+      <div className="container mt-2">
         <nav className="is-flex is-justify-content-space-between">
           <div>
             <Image
