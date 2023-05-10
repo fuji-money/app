@@ -21,15 +21,18 @@ export const oraclePubKey =
   process.env.NEXT_PUBLIC_FUJI_LABS_ORACLE_PUBKEY ||
   '02c304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e'
 
-export const fUSDtestnet =
+export const fUSDAssetId =
   process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
   '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806'
 
 export const oracleURL =
   process.env.NEXT_PUBLIC_ORACLE_URL ||
   'https://oracle.fuji.money/oracle/BTCUSD' // TODO - remove alternative url
-export const alphaServerUrl =
+export const factoryUrlMainnet =
   process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev-factory.fuji.money'
+export const factoryUrlTestnet =
+  process.env.NEXT_PUBLIC_FACTORY_URL_TESTNET ||
+  'https://alpha-factory.fuji.money'
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx

@@ -2,7 +2,8 @@ import { Contract, ContractParams, ContractResponse } from './types'
 import { Utxo, Address, NetworkString } from 'marina-provider'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import {
-  alphaServerUrl,
+  factoryUrlMainnet,
+  factoryUrlTestnet,
   feeAmount,
   issuerPubKey,
   marinaFujiAccountID,
@@ -53,6 +54,9 @@ import { Network } from 'liquidjs-lib/src/networks'
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
 }
+
+const getFactoryUrl = (network: NetworkString) =>
+  network === 'liquid' ? factoryUrlMainnet : factoryUrlTestnet
 
 export async function getIonioInstance(
   contract: Contract,
@@ -277,14 +281,17 @@ export async function prepareBorrowTx(
   }
 }
 
-export async function proposeBorrowContract({
-  borrowerAddress,
-  contractParams,
-  collateralAsset,
-  collateralAmount,
-  collateralUtxos,
-  pset,
-}: PreparedBorrowTx): Promise<ContractResponse> {
+export async function proposeBorrowContract(
+  {
+    borrowerAddress,
+    contractParams,
+    collateralAsset,
+    collateralAmount,
+    collateralUtxos,
+    pset,
+  }: PreparedBorrowTx,
+  network: NetworkString,
+): Promise<ContractResponse> {
   // deconstruct contractParams
   const {
     borrowAsset,
@@ -347,7 +354,8 @@ export async function proposeBorrowContract({
   }
 
   // post and return
-  return contractsRequest(alphaServerUrl, args)
+  const factoryUrl = getFactoryUrl(network)
+  return contractsRequest(factoryUrl, args)
 }
 
 // redeem
@@ -704,15 +712,18 @@ export async function prepareTopupTx(
   }
 }
 
-export async function proposeTopupContract({
-  borrowerAddress,
-  coinToTopup,
-  contractParams,
-  pset,
-  collateralAmount,
-  collateralAsset,
-  collateralAndSynthUtxos,
-}: PreparedTopupTx): Promise<ContractResponse> {
+export async function proposeTopupContract(
+  {
+    borrowerAddress,
+    coinToTopup,
+    contractParams,
+    pset,
+    collateralAmount,
+    collateralAsset,
+    collateralAndSynthUtxos,
+  }: PreparedTopupTx,
+  network: NetworkString,
+): Promise<ContractResponse> {
   // deconstruct contractParams
   const {
     borrowAsset,
@@ -780,7 +791,8 @@ export async function proposeTopupContract({
   }
 
   // post and return
-  return topupRequest(alphaServerUrl, coinToTopup.txid, coinToTopup.vout, args)
+  const factoryUrl = getFactoryUrl(network)
+  return topupRequest(factoryUrl, coinToTopup.txid, coinToTopup.vout, args)
 }
 
 export function finalizeTopupCovenantInput(pset: Pset) {

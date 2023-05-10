@@ -252,7 +252,7 @@ const BorrowParams: NextPage = () => {
       )
 
       // propose contract to alpha factory
-      const resp = await proposeBorrowContract(preparedTx)
+      const resp = await proposeBorrowContract(preparedTx, network)
       if (!resp.partialTransaction) throw new Error('Not accepted by Fuji')
 
       // sign the input & add the signature via custom finalizer
@@ -319,7 +319,10 @@ const BorrowParams: NextPage = () => {
 
       // propose contract to alpha factory
       setStage(ModalStages.NeedsFujiApproval)
-      const { partialTransaction } = await proposeBorrowContract(preparedTx)
+      const { partialTransaction } = await proposeBorrowContract(
+        preparedTx,
+        network,
+      )
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)

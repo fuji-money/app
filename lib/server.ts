@@ -1,5 +1,5 @@
 import { NetworkString } from 'marina-provider'
-import { defaultPayout, oracleURL } from './constants'
+import { defaultPayout, fUSDAssetId, oracleURL } from './constants'
 import { fetchURL } from './fetch'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 
@@ -19,7 +19,7 @@ const assetHashByTicker: Record<string, Record<NetworkString, string>> = {
     testnet: '',
   },
   [TICKERS.fuji]: {
-    liquid: '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806',
+    liquid: fUSDAssetId,
     regtest: '',
     testnet: '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518',
   },
@@ -35,13 +35,36 @@ const assetHashByTicker: Record<string, Record<NetworkString, string>> = {
   },
 }
 
+const assetPrecisionByTicker: Record<string, Record<NetworkString, number>> = {
+  [TICKERS.fbmn]: {
+    liquid: 8,
+    regtest: 8,
+    testnet: 8,
+  },
+  [TICKERS.fuji]: {
+    liquid: 2, // <-- different!
+    regtest: 8,
+    testnet: 8,
+  },
+  [TICKERS.lbtc]: {
+    liquid: 8,
+    regtest: 8,
+    testnet: 8,
+  },
+  [TICKERS.usdt]: {
+    liquid: 8,
+    regtest: 8,
+    testnet: 8,
+  },
+}
+
 const lbtc: Asset = {
   icon: '/images/assets/lbtc.svg',
-  id: '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d',
+  id: '',
   isSynthetic: false,
   isAvailable: false,
   name: 'Liquid BTC',
-  precision: 8,
+  precision: 0,
   quantity: 0,
   ratio: 150,
   ticker: TICKERS.lbtc,
@@ -54,7 +77,7 @@ const usdt: Asset = {
   isSynthetic: false,
   isAvailable: false,
   name: 'Tether USD',
-  precision: 8,
+  precision: 0,
   quantity: 0,
   ratio: 150,
   ticker: TICKERS.usdt,
@@ -63,11 +86,11 @@ const usdt: Asset = {
 
 const fuji: Asset = {
   icon: '/images/assets/fusd.svg',
-  id: '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806',
+  id: '',
   isSynthetic: true,
   isAvailable: true,
   name: 'FUJI USD',
-  precision: 2,
+  precision: 0,
   quantity: 0,
   ticker: TICKERS.fuji,
   value: 1,
@@ -79,7 +102,7 @@ const fbmn: Asset = {
   isSynthetic: true,
   isAvailable: false,
   name: 'FUJI BMN',
-  precision: 8,
+  precision: 0,
   quantity: 0,
   ticker: TICKERS.fbmn,
   value: 309415.05,
@@ -87,15 +110,16 @@ const fbmn: Asset = {
 
 const assets: Asset[] = [lbtc, usdt, fuji, fbmn]
 
-const assetsWithNetworkHash = (network: NetworkString) =>
+const assetsWithNetworkAttr = (network: NetworkString) =>
   assets.map((asset) => ({
     ...asset,
     id: assetHashByTicker[asset.ticker][network],
+    precision: assetPrecisionByTicker[asset.ticker][network],
   }))
 
 export const apiAssets = async (network: NetworkString): Promise<Asset[]> => {
   lbtc.value = await getBTCvalue()
-  return assetsWithNetworkHash(network)
+  return assetsWithNetworkAttr(network)
 }
 
 export const findAssetByTicker = async (
@@ -176,9 +200,11 @@ export const apiOffers = async (network: NetworkString): Promise<Offer[]> => [
 // STOCKS
 
 export const apiStocks = (network: NetworkString): Stock[] =>
-  assetsWithNetworkHash(network)
+  assetsWithNetworkAttr(network)
     .filter((asset) => asset.isSynthetic)
     .map((asset) => ({ asset, delta: 0.159 }))
+
+// UTILS
 
 export const getBTCvalue = async (): Promise<number> => {
   const data = await fetchURL(oracleURL)

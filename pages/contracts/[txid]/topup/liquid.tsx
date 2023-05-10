@@ -84,7 +84,10 @@ const ContractTopupLiquid: NextPage = () => {
       setStage(ModalStages.NeedsFujiApproval)
 
       // propose contract to alpha factory
-      const { partialTransaction } = await proposeTopupContract(preparedTx)
+      const { partialTransaction } = await proposeTopupContract(
+        preparedTx,
+        network,
+      )
       if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
       // user now must sign transaction on marina
