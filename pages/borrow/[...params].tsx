@@ -326,7 +326,6 @@ const BorrowParams: NextPage = () => {
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
-      console.log('partialTx', partialTransaction)
       const signedTransaction = await signTx(partialTransaction)
 
       // finalize and broadcast transaction

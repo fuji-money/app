@@ -19,7 +19,6 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([])
 
   useEffect(() => {
-    console.log('changed')
     setFilteredContracts(
       contracts.filter((contract) =>
         showActive ? !contractIsClosed(contract) : contractIsClosed(contract),
