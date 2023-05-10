@@ -30,13 +30,10 @@ export async function checkContractOutspend(
   contract: Contract,
   network: NetworkString,
 ) {
-  console.log('a')
   const covenantAddress = await getContractCovenantAddress(contract, network)
-  console.log('b', covenantAddress)
   const [hist] = await chainSource.fetchHistories([
     address.toOutputScript(covenantAddress),
   ])
-  console.log('c')
   if (!hist || hist.length === 0) return // tx not found, not even on mempool
   if (hist.length === 1) return { spent: false }
   const { height, tx_hash } = hist[1] // spending tx

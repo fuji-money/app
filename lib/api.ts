@@ -20,7 +20,6 @@ export async function fetchAssets(network: NetworkString): Promise<Asset[]> {
   const assets = await fetchURL(`/api/${network}/assets`)
   const balances = await getBalances()
   const promises = assets.map(async (asset: Asset) => {
-    console.log('circulation', await getAssetCirculation(asset, network))
     asset.quantity = getAssetBalance(asset, balances)
     asset.mint = {
       actual: await getAssetCirculation(asset, network),

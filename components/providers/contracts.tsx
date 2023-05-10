@@ -331,7 +331,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         fetchOracles(network).then((data) => setOracles(data))
         // run only on first render for each network
         if (!firstRender.current.includes(network)) {
-          console.log('first run for', network)
           migrateOldContracts()
           fixMissingXPubKeyOnOldContracts()
           firstRender.current.push(network)
@@ -344,7 +343,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   }, [network, xPubKey])
 
   useEffect(() => {
-    console.log('contracts', contracts.length, network)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network])
 
