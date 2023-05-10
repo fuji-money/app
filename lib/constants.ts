@@ -28,11 +28,21 @@ export const fUSDAssetId =
 export const oracleURL =
   process.env.NEXT_PUBLIC_ORACLE_URL ||
   'https://oracle.fuji.money/oracle/BTCUSD' // TODO - remove alternative url
+
 export const factoryUrlMainnet =
   process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev-factory.fuji.money'
+
 export const factoryUrlTestnet =
   process.env.NEXT_PUBLIC_FACTORY_URL_TESTNET ||
   'https://alpha-factory.fuji.money'
+
+export const assetExplorerUrlMainnet =
+  process.env.NEXT_PUBLIC_ASSET_EXPLORER_URL ||
+  'https://blockstream.info/liquid/api/asset/'
+
+export const assetExplorerUrlTestnet =
+  process.env.NEXT_PUBLIC_ASSET_EXPLORER_URL_TESTNET ||
+  'https://blockstream.info/liquid/api/asset/'
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx

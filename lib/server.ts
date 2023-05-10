@@ -206,7 +206,7 @@ export const apiStocks = (network: NetworkString): Stock[] =>
 
 // UTILS
 
-export const getBTCvalue = async (): Promise<number> => {
+const getBTCvalue = async (): Promise<number> => {
   const data = await fetchURL(oracleURL)
   return data ? Number(data.lastPrice) : 0
 }
