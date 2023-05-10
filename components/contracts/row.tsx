@@ -13,13 +13,13 @@ interface ContractRowProps {
 }
 
 const ContractRow = ({ contract }: ContractRowProps) => {
-  const { quantity, ticker } = contract.synthetic
+  const { quantity, ticker, precision } = contract.synthetic
   return (
     <div className="is-box has-pink-border row">
       <div className="columns level">
         <div className="column is-2 is-flex is-justify-content-space-between">
           <p className="my-auto has-text-weight-bold is-size-6">
-            {fromSatoshis(quantity)} {ticker}
+            {fromSatoshis(quantity, precision)} {ticker}
           </p>
           <PrettyState contract={contract} />
         </div>

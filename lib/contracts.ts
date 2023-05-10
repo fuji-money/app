@@ -11,7 +11,7 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { getIonioInstance } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { hex64LEToNumber } from './utils'
+import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
 
@@ -119,8 +119,12 @@ export const contractIsClosed = (contract: Contract): boolean => {
 export const getContractRatio = (contract?: Contract): number => {
   if (!contract) return 0
   const { collateral, synthetic } = contract
-  const collateralAmount = Decimal.mul(collateral.value, collateral.quantity)
-  const syntheticAmount = Decimal.mul(synthetic.value, synthetic.quantity)
+  // need to calculate in units, not in satoshis, since each asset
+  // can have different precisions
+  const colUnits = fromSatoshis(collateral.quantity, collateral.precision)
+  const synUnits = fromSatoshis(synthetic.quantity, synthetic.precision)
+  const collateralAmount = Decimal.mul(colUnits, collateral.value)
+  const syntheticAmount = Decimal.mul(synUnits, synthetic.value)
   return collateralAmount.div(syntheticAmount).mul(100).toNumber()
 }
 
@@ -161,12 +165,14 @@ export const getCollateralQuantity = (
   ratio: number,
 ): number => {
   const { collateral, synthetic } = contract
-  return Decimal.ceil(
-    Decimal.mul(synthetic.quantity, synthetic.value)
-      .mul(ratio)
-      .div(100)
-      .div(collateral.value),
-  ).toNumber()
+  const synUnits = fromSatoshis(synthetic.quantity, synthetic.precision)
+  const syntheticAmount = Decimal.mul(synUnits, synthetic.value)
+  const colUnits = Decimal.mul(syntheticAmount, ratio)
+    .div(100)
+    .div(collateral.value)
+    .toNumber()
+  const collateralAmount = toSatoshis(colUnits, collateral.precision)
+  return collateralAmount
 }
 
 // get contract payout

@@ -37,7 +37,7 @@ const assetHashByTicker: Record<string, Record<NetworkString, string>> = {
 
 const lbtc: Asset = {
   icon: '/images/assets/lbtc.svg',
-  id: '',
+  id: '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d',
   isSynthetic: false,
   isAvailable: false,
   name: 'Liquid BTC',
@@ -63,11 +63,11 @@ const usdt: Asset = {
 
 const fuji: Asset = {
   icon: '/images/assets/fusd.svg',
-  id: '',
+  id: '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806',
   isSynthetic: true,
   isAvailable: true,
   name: 'FUJI USD',
-  precision: 8,
+  precision: 2,
   quantity: 0,
   ticker: TICKERS.fuji,
   value: 1,

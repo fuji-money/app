@@ -1,9 +1,4 @@
 import { Contract, Oracle } from 'lib/types'
-import {
-  getCollateralQuantity,
-  getContractPayoutAmount,
-  getContractPriceLevel,
-} from 'lib/contracts'
 import Ratio from 'components/borrow/ratio'
 import Summary from './summary'
 import Oracles from 'components/oracles'

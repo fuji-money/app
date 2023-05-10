@@ -31,7 +31,7 @@ const Synthetic = ({ asset, setSyntheticQuantity }: SyntheticProps) => {
             onChange={setSyntheticQuantity}
             placeholder="0.00"
             type="number"
-            value={fromSatoshis(asset.quantity) || ''}
+            value={fromSatoshis(asset.quantity, asset.precision) || ''}
             autoFocus
           />
         </div>
