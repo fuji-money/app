@@ -29,15 +29,24 @@ const BorrowInfo = ({ contract }: BorrowInfoProps) => {
           <div className="level-item has-text-right">
             <div className="has-text-right">
               <p>
-                {prettyQuantity(synthetic.quantity)} {synthetic.ticker}
+                {prettyQuantity(synthetic.quantity, synthetic.precision)}{' '}
+                {synthetic.ticker}
               </p>
-              <p>{prettyNumber(collateral.value, 2)} USD</p>
+              <p>{prettyNumber(collateral.value, 2, 2)} USD</p>
               <p>{prettyNumber(priceLevel)} USD</p>
               <p>
-                {prettyQuantity(collateral.quantity, 8)} {collateral.ticker}
+                {prettyQuantity(
+                  collateral.quantity,
+                  collateral.precision,
+                  collateral.precision,
+                )}{' '}
+                {collateral.ticker}
               </p>
               <p>
-                {prettyNumber(fromSatoshis(payoutAmount), 8)}{' '}
+                {prettyNumber(
+                  fromSatoshis(payoutAmount, collateral.precision),
+                  collateral.precision,
+                )}{' '}
                 {collateral.ticker}
               </p>
               <p>{prettyExpirationDate(contract.expirationDate)}</p>

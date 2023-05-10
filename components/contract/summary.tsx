@@ -8,18 +8,27 @@ interface SummaryProps {
 }
 
 const Summary = ({ contract }: SummaryProps) => {
+  const { collateral, synthetic, priceLevel, expirationDate } = contract
   return (
     <table className="has-text-weight-bold mx-auto">
       <tbody>
         <tr>
           <td>Borrow</td>
-          <td>{prettyNumber(fromSatoshis(contract.synthetic.quantity))}</td>
-          <td>{contract.synthetic.ticker}</td>
+          <td>
+            {prettyNumber(
+              fromSatoshis(synthetic.quantity, synthetic.precision),
+            )}
+          </td>
+          <td>{synthetic.ticker}</td>
         </tr>
         <tr>
           <td>Collateral</td>
-          <td>{prettyNumber(fromSatoshis(contract.collateral.quantity))}</td>
-          <td>{contract.collateral.ticker}</td>
+          <td>
+            {prettyNumber(
+              fromSatoshis(collateral.quantity, collateral.precision),
+            )}
+          </td>
+          <td>{collateral.ticker}</td>
         </tr>
         <tr>
           <td>Ratio</td>
@@ -28,12 +37,12 @@ const Summary = ({ contract }: SummaryProps) => {
         </tr>
         <tr>
           <td>Liquidation price</td>
-          <td>{prettyNumber(contract.priceLevel)}</td>
+          <td>{prettyNumber(priceLevel)}</td>
           <td>USD</td>
         </tr>
         <tr>
           <td>Expiration date</td>
-          <td>{prettyExpirationDate(contract.expirationDate)}</td>
+          <td>{prettyExpirationDate(expirationDate)}</td>
         </tr>
       </tbody>
       <style jsx>{`

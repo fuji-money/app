@@ -1,4 +1,4 @@
-import { prettyNumber, prettyPercentage } from 'lib/pretty'
+import { prettyPercentage } from 'lib/pretty'
 import Image from 'next/image'
 import { Stock } from 'lib/types'
 

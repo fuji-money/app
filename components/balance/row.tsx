@@ -23,7 +23,9 @@ const BalanceRow = ({ asset }: BalanceRowProps) => {
         </div>
         <span className="ml-5">{asset.ticker}</span>
       </td>
-      <td>{prettyQuantity(getAssetBalance(asset, balances))}</td>
+      <td>
+        {prettyQuantity(getAssetBalance(asset, balances), asset.precision)}
+      </td>
       <style jsx>{`
         td:nth-child(2) {
           text-align: right;

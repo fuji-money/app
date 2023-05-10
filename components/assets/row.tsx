@@ -30,7 +30,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           <div className="is-purple my-auto">
             <p className="is-size-6 mb-0">{asset.name}</p>
             <p className="is-size-6 mb-0 has-text-weight-bold">
-              {prettyQuantity(balance)} {asset.ticker}
+              {prettyQuantity(balance, asset.precision)} {asset.ticker}
             </p>
           </div>
         </div>

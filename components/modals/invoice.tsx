@@ -37,7 +37,10 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
     if (!invoice) return invalidWithWarning('')
     // needs a try catch because a invalid invoice throws when decoding
     try {
-      if (toSatoshis(getInvoiceValue(invoice)) !== invoiceAmount) {
+      if (
+        toSatoshis(getInvoiceValue(invoice), collateral.precision) !==
+        invoiceAmount
+      ) {
         return invalidWithWarning('Invalid amount on invoice')
       }
       if (getInvoiceExpireDate(invoice) < Date.now()) {
@@ -51,31 +54,32 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   }
 
   const Separator = () => <p className="mx-3"> &ndash; </p>
-  const pn = (n: number) => prettyNumber(fromSatoshis(n), 8)
+  const pn = (n: number, precision: number) =>
+    prettyNumber(fromSatoshis(n, precision), 0, precision)
 
   return (
     <Modal id={ModalIds.Invoice}>
       <h3 className="mt-4">Enter BOLT11 Lightning Invoice</h3>
       <p className="has-text-weight-semibold mb-4">
-        Amount: {pn(invoiceAmount)}*
+        Amount: {pn(invoiceAmount, collateral.precision)}*
       </p>
       <div className="is-size-7 is-flex is-justify-content-center mb-4">
         <p>
           * Collateral amount
           <br />
-          {pn(collateral.quantity)}
+          {pn(collateral.quantity, collateral.precision)}
         </p>
         <Separator />
         <p>
           Boltz fees
           <br />
-          {pn(boltzFees)}
+          {pn(boltzFees, collateral.precision)}
         </p>
         <Separator />
         <p>
           Transaction fee
           <br />
-          {pn(feeAmount)}
+          {pn(feeAmount, collateral.precision)}
         </p>
       </div>
       <textarea

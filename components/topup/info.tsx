@@ -31,16 +31,24 @@ const TopupInfo = ({ newContract, oldContract }: TopupInfoProps) => {
           <div className="level-item has-text-right">
             <div className="has-text-right">
               <p>
-                {prettyQuantity(synthetic.quantity)} {synthetic.ticker}
+                {prettyQuantity(synthetic.quantity, synthetic.precision)}{' '}
+                {synthetic.ticker}
               </p>
-              <p>{prettyNumber(collateral.value, 2)} USD</p>
-              <p>{prettyNumber(newPriceLevel)} USD</p>
+              <p>{prettyNumber(collateral.value, 2, 2)} USD</p>
+              <p>{prettyNumber(newPriceLevel, 0, 2)} USD</p>
               <p>
-                {prettyQuantity(newContract.collateral.quantity, 8)}{' '}
+                {prettyQuantity(
+                  newContract.collateral.quantity,
+                  newContract.collateral.precision,
+                )}{' '}
                 {collateral.ticker}
               </p>
               <p>
-                {prettyNumber(fromSatoshis(newPayoutAmount), 8)}{' '}
+                {prettyNumber(
+                  fromSatoshis(newPayoutAmount, collateral.precision),
+                  0,
+                  collateral.precision,
+                )}{' '}
                 {collateral.ticker}
               </p>
               <p>{prettyExpirationDate(newContract.expirationDate)}</p>

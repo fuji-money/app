@@ -45,7 +45,7 @@ const OfferRow = ({ offer }: OfferRowProps) => {
         </div>
         <div className="column is-2">
           <p className="amount is-gradient">
-            US$ {prettyNumber(offer.synthetic.value)}
+            US$ {prettyNumber(offer.synthetic.value, 2, 2)}
           </p>
         </div>
         <div className="column is-4 has-text-right">

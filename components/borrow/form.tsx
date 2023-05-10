@@ -30,7 +30,11 @@ const BorrowForm = ({
   const { collateral, synthetic } = contract
 
   const setSyntheticQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let quantity = toSatoshis(parseFloat(e.target.value))
+    let quantity = toSatoshis(
+      parseFloat(e.target.value),
+      contract.synthetic.precision,
+    )
+    console.log('quantity', quantity)
     const synthetic = { ...contract.synthetic, quantity }
     quantity = getCollateralQuantity({ ...contract, synthetic }, ratio)
     const collateral = { ...contract.collateral, quantity }

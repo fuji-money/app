@@ -10,7 +10,11 @@ interface InvestmentRowProps {
 const InvestmentRow = ({ investment }: InvestmentRowProps) => {
   const { asset, delta, quantity } = investment
   const deltaClass = delta < 0 ? 'delta red' : 'delta green'
-  const invested = prettyNumber(fromSatoshis(quantity) * asset.value, 2, 2)
+  const invested = prettyNumber(
+    fromSatoshis(quantity, asset.precision) * asset.value,
+    2,
+    2,
+  )
   return (
     <div className="row">
       <div className="columns level">
@@ -26,7 +30,7 @@ const InvestmentRow = ({ investment }: InvestmentRowProps) => {
           <div className="is-purple my-auto">
             <p className="is-size-6 mb-0">{asset.name}</p>
             <p className="is-size-6 mb-0 has-text-weight-bold">
-              {prettyNumber(quantity)} {asset.ticker}
+              {prettyNumber(quantity, 0, asset.precision)} {asset.ticker}
             </p>
           </div>
         </div>
