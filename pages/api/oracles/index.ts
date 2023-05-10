@@ -6,5 +6,5 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Oracle[]>,
 ) {
-  res.status(200).json(await apiOracles())
+  res.status(200).json(apiOracles())
 }
