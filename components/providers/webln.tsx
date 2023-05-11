@@ -3,6 +3,7 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { VoidOrUndefFunc } from 'lib/types'
@@ -37,6 +38,8 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
   const [weblnProvider, setWeblnProvider] = useState<any>()
   const [weblnProviderName, setWeblnProviderName] = useState('')
 
+  const alreadyAsk = useRef(false)
+
   // asks Alby for permission
   const weblnEnableHandler = () => {
     try {
@@ -61,7 +64,10 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
     if (window.webln && network === 'liquid') {
       setWeblnProvider(window.webln)
       if (window.webln.enabled) setweblnIsEnabled(true)
-      else openModal(ModalIds.Webln)
+      else if (!alreadyAsk.current) {
+        openModal(ModalIds.Webln)
+        alreadyAsk.current = true
+      }
     }
   }, [network])
 
