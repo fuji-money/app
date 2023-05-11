@@ -102,6 +102,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
     if (connected) {
+      setLoading(true)
       await checkContractsStatus()
       setContracts(await getContracts(network))
       setActivities(await getActivities())
@@ -324,27 +325,33 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    async function run() {
+    async function runOnceForEachNetwork() {
       if (connected && network && xPubKey) {
-        reloadContracts()
-        await syncContractsWithMarina()
-        fetchOracles(network).then((data) => setOracles(data))
         // run only on first render for each network
         if (!firstRender.current.includes(network)) {
           migrateOldContracts()
           fixMissingXPubKeyOnOldContracts()
+          reloadContracts()
+          await syncContractsWithMarina()
+          fetchOracles(network).then((data) => setOracles(data))
           firstRender.current.push(network)
           return setMarinaListener() // return the close listener function
         }
       }
     }
-    run()
+    runOnceForEachNetwork()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network, xPubKey])
 
   useEffect(() => {
+    async function runOnChainSourceChange() {
+      reloadContracts()
+      await syncContractsWithMarina()
+      fetchOracles(network).then((data) => setOracles(data))
+    }
+    runOnChainSourceChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network])
+  }, [chainSource.network])
 
   return (
     <ContractsContext.Provider
