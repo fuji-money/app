@@ -12,7 +12,6 @@ import {
 } from 'lib/constants'
 import { numberToHex64LE, hex64LEToBase64LE } from './utils'
 import {
-  payments,
   address,
   script,
   witnessStackToScriptWitness,
@@ -46,7 +45,6 @@ import {
 import artifact from 'lib/fuji.ionio.json'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { getContractPayoutAmount } from './contracts'
 import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
@@ -379,8 +377,7 @@ export async function prepareRedeemTx(
   if (collateral.quantity < feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
-  const address =
-    swapAddress || (await marina.getNextAddress()).confidentialAddress
+  const address = swapAddress || (await getNextAddress()).confidentialAddress
 
   // get ionio instance
   let ionioInstance = await getIonioInstance(contract, network)
