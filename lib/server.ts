@@ -110,7 +110,7 @@ const fbmn: Asset = {
 
 const assets: Asset[] = [lbtc, usdt, fuji, fbmn]
 
-const assetsWithNetworkAttr = (network: NetworkString) =>
+const assetsWithNetworkAttr = (network: NetworkString): Asset[] =>
   assets.map((asset) => ({
     ...asset,
     id: assetHashByTicker[asset.ticker][network],

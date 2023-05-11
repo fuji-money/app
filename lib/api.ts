@@ -3,8 +3,31 @@ import { fetchURL } from './fetch'
 import { getAssetBalance, getBalances } from './marina'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
 import { assetExplorerUrlMainnet, assetExplorerUrlTestnet } from './constants'
-import Decimal from 'decimal.js'
 import { fromSatoshis } from './utils'
+import { TICKERS } from './server'
+
+const mintLimitByTicker: Record<string, Record<NetworkString, number>> = {
+  [TICKERS.fbmn]: {
+    liquid: 0,
+    regtest: 0,
+    testnet: 0,
+  },
+  [TICKERS.fuji]: {
+    liquid: 2100,
+    regtest: 0,
+    testnet: 0,
+  },
+  [TICKERS.lbtc]: {
+    liquid: 0,
+    regtest: 0,
+    testnet: 0,
+  },
+  [TICKERS.usdt]: {
+    liquid: 0,
+    regtest: 0,
+    testnet: 0,
+  },
+}
 
 export async function fetchAsset(
   tickerOrId: string,
@@ -23,7 +46,7 @@ export async function fetchAssets(network: NetworkString): Promise<Asset[]> {
     asset.quantity = getAssetBalance(asset, balances)
     asset.mint = {
       actual: await getAssetCirculation(asset, network),
-      max: 4200,
+      max: mintLimitByTicker[asset.ticker][network],
     } // TODO, replace with factory query
     return asset
   })

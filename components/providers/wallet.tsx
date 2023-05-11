@@ -94,7 +94,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       chainSource
         .close()
         .then(() => {
-          console.log('setting new ')
           setChainSource(new WsElectrumChainSource(network))
         })
         .catch(console.error)

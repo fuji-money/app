@@ -42,7 +42,7 @@ export const assetExplorerUrlMainnet =
 
 export const assetExplorerUrlTestnet =
   process.env.NEXT_PUBLIC_ASSET_EXPLORER_URL_TESTNET ||
-  'https://blockstream.info/liquid/api/asset/'
+  'https://blockstream.info/liquidtestnet/api/asset/'
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx
