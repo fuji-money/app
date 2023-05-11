@@ -137,7 +137,8 @@ export const findAssetByTicker = async (
 
 const oraclePubkeyById: Record<string, Record<NetworkString, string>> = {
   id0: {
-    liquid: '',
+    liquid:
+      '0xc304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e',
     regtest: '',
     testnet:
       '0xc304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e',
