@@ -31,13 +31,13 @@ const AssetRow = ({ asset }: AssetRowProps) => {
             </p>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-4">
           {asset.mint?.max ? <ProgressBar asset={asset} /> : ''}
         </div>
         <div className="column is-1">
           {asset.mint?.max ? <LeftToMint asset={asset} /> : ''}
         </div>
-        <div className="column is-5 has-text-right">
+        <div className="column is-4 has-text-right">
           {disabled ? (
             <p className="is-size-6 has-text-weight-bold has-text-right mr-3">
               Coming soon
