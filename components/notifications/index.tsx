@@ -13,6 +13,7 @@ import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
+import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 
 interface NotificationsProps {
   contract: Contract
@@ -77,8 +78,14 @@ const Notifications = ({
   return (
     <>
       {ratioUnsafe && <RatioUnsafeNotification />}
-      {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
-      {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
+      {LightningEnabledTasks.Borrow ? (
+        <>
+          {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
+          {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
+        </>
+      ) : (
+        <>{notEnoughFunds && <NotEnoughFundsNotification oob={true} />}</>
+      )}
       {!connected && <ConnectWalletNotification />}
       {belowDustLimit && <BelowDustLimitNotification />}
       {collateralTooLow && <LowCollateralAmountNotification />}

@@ -4,6 +4,7 @@ import { fetchAsset } from 'lib/api'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
+import { LightningEnabledTasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
 import Router from 'next/router'
 import { useContext, useEffect, useState } from 'react'
@@ -25,8 +26,12 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
       const funds = getAssetBalance(asset, balances)
       const needed = contract.collateral.quantity
       const enoughFundsOnMarina = connected && funds > needed
-      const outOfBounds = swapDepositAmountOutOfBounds(needed)
-      setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
+      if (LightningEnabledTasks.Borrow) {
+        const outOfBounds = swapDepositAmountOutOfBounds(needed)
+        setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
+      } else {
+        setEnoughFunds(enoughFundsOnMarina)
+      }
     })
   })
 
