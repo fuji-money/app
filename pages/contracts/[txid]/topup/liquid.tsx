@@ -4,7 +4,7 @@ import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
-import { marinaMainAccountID, feeAmount } from 'lib/constants'
+import { feeAmount } from 'lib/constants'
 import {
   saveContractToStorage,
   markContractTopup,
