@@ -8,19 +8,21 @@ import Topup from 'components/topup'
 import { ContractsContext } from 'components/providers/contracts'
 import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
+import { WalletContext } from 'components/providers/wallet'
 
 const ContractTopup: NextPage = () => {
-  const [loading, setLoading] = useState(true)
-
+  const { network } = useContext(WalletContext)
   const { newContract, setNewContract, setOldContract } =
     useContext(ContractsContext)
+
+  const [loading, setLoading] = useState(true)
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      getContract(txid).then((contract) => {
+      getContract(txid, network).then((contract) => {
         if (contract) {
           if (!newContract) setNewContract(contract)
           setOldContract(contract)

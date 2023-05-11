@@ -8,8 +8,10 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import NotAllowed from 'components/messages/notAllowed'
+import { WalletContext } from 'components/providers/wallet'
 
 const ContractRedeemChannel: NextPage = () => {
+  const { network } = useContext(WalletContext)
   const { newContract, setNewContract } = useContext(ContractsContext)
   const [loading, setLoading] = useState(true)
 
@@ -18,7 +20,7 @@ const ContractRedeemChannel: NextPage = () => {
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      getContract(txid).then((contract) => {
+      getContract(txid, network).then((contract) => {
         if (contract) setNewContract(contract)
         setLoading(false)
       })
