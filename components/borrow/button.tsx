@@ -19,7 +19,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { setNewContract } = useContext(ContractsContext)
   const { balances, connected, network } = useContext(WalletContext)
   const [enoughFunds, setEnoughFunds] = useState(false)
-  const { collateral, oracles, payoutAmount, synthetic } = contract
+  const { collateral, oracles, synthetic } = contract
 
   useEffect(() => {
     fetchAsset(contract.collateral.ticker, network).then((asset) => {
