@@ -90,6 +90,7 @@ const getAssetCirculation = async (
   asset: Asset,
   network: NetworkString,
 ): Promise<number> => {
+  if (!asset.id) return 0
   const assetExplorerUrl =
     network === 'liquid' ? assetExplorerUrlMainnet : assetExplorerUrlTestnet
   const data = await fetchURL(`${assetExplorerUrl}${asset.id}`)
