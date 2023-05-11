@@ -17,7 +17,7 @@ export const EnabledTasks: Record<string, boolean> = {
 }
 
 export const LightningEnabledTasks: Record<string, boolean> = {
-  [Tasks.Borrow]: true,
+  [Tasks.Borrow]: false,
   [Tasks.Exchange]: false,
   [Tasks.Multiply]: false,
   [Tasks.Redeem]: false,
