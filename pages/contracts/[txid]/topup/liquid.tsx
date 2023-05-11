@@ -25,7 +25,7 @@ import NotAllowed from 'components/messages/notAllowed'
 import { selectCoins } from 'lib/selection'
 import { Pset } from 'liquidjs-lib'
 import { finalizeTx } from 'lib/transaction'
-import { broadcastTx } from 'lib/marina'
+import { broadcastTx, getMainAccountCoins } from 'lib/marina'
 
 const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
@@ -61,7 +61,7 @@ const ContractTopupLiquid: NextPage = () => {
     openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
-      const utxos = await marina.getCoins([marinaMainAccountID])
+      const utxos = await getMainAccountCoins()
       // validate we have necessary utxos
       const collateralUtxos = selectCoins(
         utxos,

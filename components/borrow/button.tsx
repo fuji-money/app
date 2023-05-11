@@ -55,7 +55,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   return (
     <div className="has-text-centered">
       <button
-        className="button is-primary is-solid-pink is-cta"
+        className="button is-primary is-cta"
         disabled={!enabled}
         onClick={handleClick}
       >

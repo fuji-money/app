@@ -35,7 +35,10 @@ const ConnectButton = () => {
     <>
       {marina && (
         <>
-          <button onClick={toggle} className="button is-primary my-auto mr-4">
+          <button
+            onClick={toggle}
+            className="button is-primary is-solid-pink my-auto mr-4"
+          >
             {connected ? 'Disconnect' : 'Connect wallet'}
           </button>
           <AccountModal />
