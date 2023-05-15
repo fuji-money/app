@@ -57,6 +57,14 @@ import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 
+const transformedArtifact = replaceArtifactConstructorWithArguments(
+  artifact as Artifact,
+  artifact.constructorInputs.map((ci) => {
+    const newName = ci.name === 'borrowerPublicKey' ? 'fuji' : ci.name
+    return templateString(newName)
+  }),
+)
+
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
 }
@@ -76,16 +84,19 @@ export async function getIonioInstance(
     params.borrowAsset,
     params.borrowAmount,
     params.treasuryPublicKey,
-    params.expirationTimeout,
+    expirationTimeout,
     params.borrowerPublicKey,
     params.oraclePublicKey,
     params.priceLevel,
     params.setupTimestamp,
-    params.assetPair,
+    assetPair,
   ]
+  if (constructorParams.findIndex((a) => a === undefined) !== -1) {
+    throw new Error('missing contract params')
+  }
 
   return new IonioContract(
-    artifact as Artifact,
+    transformedArtifact,
     constructorParams,
     getNetwork(network),
     { ecc, zkp: await zkpLib() },
@@ -116,18 +127,10 @@ async function getCovenantOutput(contract: Contract): Promise<{
     assetPair,
   }
 
-  const tranformedArtifact = replaceArtifactConstructorWithArguments(
-    artifact as Artifact,
-    artifact.constructorInputs.map((ci) => {
-      const newName = ci.name === 'borrowerPublicKey' ? 'fuji' : ci.name
-      return templateString(newName)
-    }),
-  )
-
   // get needed addresses
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress({
-    artifact: tranformedArtifact as Artifact,
+    artifact: transformedArtifact,
     args: contractParams,
   })
 
