@@ -15,7 +15,6 @@ export function getContractsFromStorage(): Contract[] {
     c.contractParams.expirationTimeout = expirationTimeout
     return c
   })
-  console.log('contracts', contracts)
   return contracts
 }
 

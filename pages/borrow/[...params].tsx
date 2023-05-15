@@ -330,7 +330,6 @@ const BorrowParams: NextPage = () => {
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      console.log('pset', pset)
       finalizeAndBroadcast(pset, newContract, preparedTx)
     } catch (error) {
       setData(extractError(error))

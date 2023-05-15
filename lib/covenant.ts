@@ -84,7 +84,6 @@ export async function getIonioInstance(
     params.assetPair,
   ]
 
-  console.log('constructorParams', constructorParams)
   return new IonioContract(
     artifact as Artifact,
     constructorParams,

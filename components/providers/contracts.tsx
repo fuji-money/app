@@ -117,7 +117,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
   const notConfirmed = async (contract: Contract) => {
-    console.log('notConfirmed', contract)
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(contract, network),
