@@ -38,7 +38,7 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
   const [weblnProvider, setWeblnProvider] = useState<any>()
   const [weblnProviderName, setWeblnProviderName] = useState('')
 
-  const alreadyAsk = useRef(false)
+  const alreadyAsk = useRef(true) // TODO
 
   // asks Alby for permission
   const weblnEnableHandler = () => {

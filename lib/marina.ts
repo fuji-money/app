@@ -32,6 +32,7 @@ export async function getBalances(): Promise<Balance[]> {
 }
 
 export function getAssetBalance(asset: Asset, balances: Balance[]): number {
+  console.log('balances', balances, asset.id)
   const found = balances.find((a) => a.asset.assetHash === asset.id)
   if (!found || !found.amount) return 0
   return found.amount

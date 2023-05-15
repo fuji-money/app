@@ -1,3 +1,5 @@
+import { encodeExpirationTimeout } from './utils'
+
 export const minBorrowRatio = 150
 export const maxBorrowRatio = 400
 export const minMultiplyRatio = 130
@@ -14,7 +16,7 @@ export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 export const defaultNetwork = 'liquid'
 
 // covenant
-export const issuerPubKey =
+export const treasuryPublicKey =
   process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||
   '03e6fbc4bcd62026a3d5a13ab8fd5b72008ff38907b2ee64de45e25263a418c377'
 export const oraclePubKey =
@@ -34,7 +36,7 @@ export const factoryUrlMainnet =
 
 export const factoryUrlTestnet =
   process.env.NEXT_PUBLIC_FACTORY_URL_TESTNET ||
-  'https://alpha-factory.fuji.money'
+  'https://stage-factory.fuji.money'
 
 export const assetExplorerUrlMainnet =
   process.env.NEXT_PUBLIC_ASSET_EXPLORER_URL ||
@@ -43,6 +45,11 @@ export const assetExplorerUrlMainnet =
 export const assetExplorerUrlTestnet =
   process.env.NEXT_PUBLIC_ASSET_EXPLORER_URL_TESTNET ||
   'https://blockstream.info/liquidtestnet/api/asset/'
+
+const seconds3months = 3 * 30 * 24 * 60 * 60 // 3 months
+export const expirationSeconds = seconds3months - (seconds3months % 512)
+export const expirationTimeout = encodeExpirationTimeout(expirationSeconds)
+export const assetPair = Buffer.from('USD')
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx

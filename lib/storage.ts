@@ -1,5 +1,6 @@
 import { NetworkString } from 'marina-provider'
 import { Activity, Contract, SwapInfo } from './types'
+import { assetPair, expirationSeconds, expirationTimeout } from './constants'
 
 // contracts
 
@@ -9,7 +10,13 @@ export function getContractsFromStorage(): Contract[] {
   if (typeof window === 'undefined') return []
   const storedContracts = localStorage.getItem(localStorageContractsKey)
   if (!storedContracts) return []
-  return JSON.parse(storedContracts)
+  const contracts = JSON.parse(storedContracts).map((c: Required<Contract>) => {
+    c.contractParams.assetPair = assetPair
+    c.contractParams.expirationTimeout = expirationTimeout
+    return c
+  })
+  console.log('contracts', contracts)
+  return contracts
 }
 
 export function getMyContractsFromStorage(
@@ -23,7 +30,17 @@ export function getMyContractsFromStorage(
 
 export function saveContractsToStorage(contracts: Contract[]): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(localStorageContractsKey, JSON.stringify(contracts))
+  // store contracts without buffers for better reading by the user
+  const contractsWithoutBuffers = contracts.map((c: any) => {
+    const params = c.contractParams
+    if (params?.assetPair) params.assetPair = assetPair.toString()
+    if (params?.expirationTimeout) params.expirationTimeout = expirationSeconds
+    return c
+  })
+  localStorage.setItem(
+    localStorageContractsKey,
+    JSON.stringify(contractsWithoutBuffers),
+  )
 }
 
 export function addContractToStorage(contract: Contract): void {

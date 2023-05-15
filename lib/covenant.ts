@@ -5,10 +5,13 @@ import {
   factoryUrlMainnet,
   factoryUrlTestnet,
   feeAmount,
-  issuerPubKey,
+  treasuryPublicKey,
   marinaFujiAccountID,
   minDustLimit,
   oraclePubKey,
+  assetPair,
+  expirationTimeout,
+  expirationSeconds,
 } from 'lib/constants'
 import { numberToHex64LE, hex64LEToBase64LE } from './utils'
 import {
@@ -44,7 +47,12 @@ import {
 } from './marina'
 import artifact from 'lib/fuji.ionio.json'
 import * as ecc from 'tiny-secp256k1'
-import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
+import {
+  Artifact,
+  Contract as IonioContract,
+  replaceArtifactConstructorWithArguments,
+  templateString,
+} from '@ionio-lang/ionio'
 import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
@@ -63,16 +71,20 @@ export async function getIonioInstance(
   // get ionio instance
   const params = contract.contractParams
   if (!params) throw new Error('missing contract params')
+  // constructor params, must be on same order as artifact
   const constructorParams = [
     params.borrowAsset,
     params.borrowAmount,
+    params.treasuryPublicKey,
+    params.expirationTimeout,
     params.borrowerPublicKey,
     params.oraclePublicKey,
-    params.issuerPublicKey,
     params.priceLevel,
     params.setupTimestamp,
+    params.assetPair,
   ]
 
+  console.log('constructorParams', constructorParams)
   return new IonioContract(
     artifact as Artifact,
     constructorParams,
@@ -93,20 +105,30 @@ async function getCovenantOutput(contract: Contract): Promise<{
   // set contract params
   const timestamp = Date.now()
   const oraclePk = Buffer.from(oraclePubKey, 'hex')
-  const issuerPk = Buffer.from(issuerPubKey, 'hex')
-  const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
+  const treasuryPk = Buffer.from(treasuryPublicKey, 'hex')
+  const contractParams = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
     oraclePublicKey: `0x${oraclePk.slice(1).toString('hex')}`,
-    issuerPublicKey: `0x${issuerPk.slice(1).toString('hex')}`,
+    treasuryPublicKey: `0x${treasuryPk.slice(1).toString('hex')}`,
     priceLevel: numberToHex64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHex64LE(timestamp),
+    expirationTimeout,
+    assetPair,
   }
+
+  const tranformedArtifact = replaceArtifactConstructorWithArguments(
+    artifact as Artifact,
+    artifact.constructorInputs.map((ci) => {
+      const newName = ci.name === 'borrowerPublicKey' ? 'fuji' : ci.name
+      return templateString(newName)
+    }),
+  )
 
   // get needed addresses
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress({
-    artifact: artifact as Artifact,
+    artifact: tranformedArtifact as Artifact,
     args: contractParams,
   })
 
@@ -126,6 +148,8 @@ async function getCovenantOutput(contract: Contract): Promise<{
   return {
     contractParams: {
       ...contractParams,
+      assetPair,
+      expirationTimeout,
       borrowerPublicKey: `0x${(await getPublicKey(covenantAddress))
         .subarray(1)
         .toString('hex')}`,
@@ -294,11 +318,11 @@ export async function proposeBorrowContract(
   const {
     borrowAsset,
     borrowAmount,
-    oraclePublicKey,
-    issuerPublicKey,
     borrowerPublicKey,
+    oraclePublicKey,
     priceLevel,
     setupTimestamp,
+    treasuryPublicKey,
   } = contractParams
 
   const blindersOfCollateralInputs: OwnedInput[] = []
@@ -339,13 +363,15 @@ export async function proposeBorrowContract(
     covenantOutputIndexInTransaction: 0,
     borrowerAddress: borrowerAddress.confidentialAddress,
     contractParams: {
+      assetPair,
       borrowAsset,
       borrowAmount,
-      issuerPublicKey,
-      oraclePublicKey,
       borrowerPublicKey,
+      expirationTimeout: expirationSeconds,
+      oraclePublicKey,
       priceLevel: hex64LEToBase64LE(priceLevel),
       setupTimestamp: hex64LEToBase64LE(setupTimestamp),
+      treasuryPublicKey,
     },
     blindersOfCollateralInputs,
     partialTransaction: pset.toBase64(),
@@ -725,11 +751,11 @@ export async function proposeTopupContract(
   const {
     borrowAsset,
     borrowAmount,
-    issuerPublicKey,
-    oraclePublicKey,
     borrowerPublicKey,
+    oraclePublicKey,
     priceLevel,
     setupTimestamp,
+    treasuryPublicKey,
   } = contractParams
 
   const blindersOfCollateralInputs: OwnedInput[] = []
@@ -776,11 +802,13 @@ export async function proposeTopupContract(
     contractParams: {
       borrowAsset,
       borrowAmount,
-      issuerPublicKey,
+      treasuryPublicKey,
       oraclePublicKey,
       borrowerPublicKey,
       priceLevel: hex64LEToBase64LE(priceLevel),
       setupTimestamp: hex64LEToBase64LE(setupTimestamp),
+      expirationTimeout,
+      assetPair,
     },
     blindersOfCollateralInputs,
     blindersOfSynthInputs,

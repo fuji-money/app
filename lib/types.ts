@@ -58,14 +58,15 @@ export type OracleAttestation = {
 }
 
 export type ContractParams = {
-  // contract constructor
+  assetPair: Buffer
   borrowAsset: string
   borrowAmount: number
-  issuerPublicKey: string
   borrowerPublicKey: string
+  expirationTimeout: Buffer | number
   oraclePublicKey: string
   priceLevel: string
   setupTimestamp: string
+  treasuryPublicKey: string
 }
 
 export enum ContractStatus {

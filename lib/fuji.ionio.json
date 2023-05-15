@@ -10,15 +10,19 @@
       "type": "value"
     },
     {
-      "name": "fuji",
+      "name": "treasuryPublicKey",
+      "type": "xonlypubkey"
+    },
+    {
+      "name": "expirationTimeout",
+      "type": "bytes"
+    },
+    {
+      "name": "borrowerPublicKey",
       "type": "xonlypubkey"
     },
     {
       "name": "oraclePublicKey",
-      "type": "xonlypubkey"
-    },
-    {
-      "name": "issuerPublicKey",
       "type": "xonlypubkey"
     },
     {
@@ -28,9 +32,143 @@
     {
       "name": "setupTimestamp",
       "type": "bytes"
+    },
+    {
+      "name": "assetPair",
+      "type": "bytes"
     }
   ],
   "functions": [
+    {
+      "name": "claim",
+      "functionInputs": [
+        {
+          "name": "treasurySig",
+          "type": "sig"
+        }
+      ],
+      "require": [
+        {
+          "type": "output",
+          "atIndex": 0,
+          "expected": {
+            "script": {
+              "version": -1,
+              "program": "0x6a"
+            },
+            "value": "$borrowAmount",
+            "asset": "$borrowAsset",
+            "nonce": ""
+          }
+        }
+      ],
+      "asm": [
+        "$expirationTimeout",
+        "OP_CHECKSEQUENCEVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTASSET",
+        "OP_1",
+        "OP_EQUALVERIFY",
+        "$borrowAsset",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTVALUE",
+        "OP_1",
+        "OP_EQUALVERIFY",
+        "$borrowAmount",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTSCRIPTPUBKEY",
+        "OP_1NEGATE",
+        "OP_EQUALVERIFY",
+        "0x6a",
+        "OP_SHA256",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTNONCE",
+        "OP_0",
+        "OP_EQUALVERIFY",
+        "$treasuryPublicKey",
+        "OP_CHECKSIG"
+      ]
+    },
+    {
+      "name": "liquidate",
+      "functionInputs": [
+        {
+          "name": "currentPrice",
+          "type": "bytes"
+        },
+        {
+          "name": "timestamp",
+          "type": "bytes"
+        },
+        {
+          "name": "oracleSig",
+          "type": "datasig"
+        },
+        {
+          "name": "treasurySig",
+          "type": "sig"
+        }
+      ],
+      "require": [
+        {
+          "type": "output",
+          "atIndex": 0,
+          "expected": {
+            "script": {
+              "version": -1,
+              "program": "0x6a"
+            },
+            "value": "$borrowAmount",
+            "asset": "$borrowAsset",
+            "nonce": ""
+          }
+        }
+      ],
+      "asm": [
+        "OP_DUP",
+        "$priceLevel",
+        "OP_LESSTHAN64",
+        "OP_VERIFY",
+        "OP_OVER",
+        "$setupTimestamp",
+        "OP_GREATERTHANOREQUAL64",
+        "OP_VERIFY",
+        "OP_CAT",
+        "$assetPair",
+        "OP_CAT",
+        "OP_SHA256",
+        "$oraclePublicKey",
+        "OP_CHECKSIGFROMSTACKVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTASSET",
+        "OP_1",
+        "OP_EQUALVERIFY",
+        "$borrowAsset",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTVALUE",
+        "OP_1",
+        "OP_EQUALVERIFY",
+        "$borrowAmount",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTSCRIPTPUBKEY",
+        "OP_1NEGATE",
+        "OP_EQUALVERIFY",
+        "0x6a",
+        "OP_SHA256",
+        "OP_EQUALVERIFY",
+        "OP_0",
+        "OP_INSPECTOUTPUTNONCE",
+        "OP_0",
+        "OP_EQUALVERIFY",
+        "$treasuryPublicKey",
+        "OP_CHECKSIG"
+      ]
+    },
     {
       "name": "redeem",
       "functionInputs": [
@@ -61,14 +199,12 @@
         "OP_EQUALVERIFY",
         "$borrowAsset",
         "OP_EQUALVERIFY",
-
         "OP_0",
         "OP_INSPECTOUTPUTVALUE",
         "OP_1",
         "OP_EQUALVERIFY",
         "$borrowAmount",
         "OP_EQUALVERIFY",
-
         "OP_0",
         "OP_INSPECTOUTPUTSCRIPTPUBKEY",
         "OP_1NEGATE",
@@ -76,95 +212,50 @@
         "0x6a",
         "OP_SHA256",
         "OP_EQUALVERIFY",
-
         "OP_0",
         "OP_INSPECTOUTPUTNONCE",
         "OP_0",
         "OP_EQUALVERIFY",
-
-        "$fuji",
+        "$borrowerPublicKey",
         "OP_CHECKSIG"
       ]
     },
     {
-      "name": "liquidate",
+      "name": "renew",
       "functionInputs": [
         {
-          "name": "currentPrice",
-          "type": "bytes"
-        },
-        {
-          "name": "timestamp",
-          "type": "bytes"
-        },
-        {
-          "name": "oracleSig",
-          "type": "datasig"
-        },
-        {
-          "name": "issuerSig",
+          "name": "treasurySig",
           "type": "sig"
         }
       ],
-      "require": [
-        {
-          "type": "output",
-          "atIndex": 0,
-          "expected": {
-            "script": {
-              "version": -1,
-              "program": "0x6a"
-            },
-            "value": "$borrowAmount",
-            "asset": "$borrowAsset",
-            "nonce": ""
-          }
-        }
-      ],
+      "require": [],
       "asm": [
+        "OP_PUSHCURRENTINPUTINDEX",
         "OP_DUP",
-        "$priceLevel",
-        "OP_LESSTHAN64",
-        "OP_VERIFY",
-
-        "OP_OVER",
-        "$setupTimestamp",
-        "OP_GREATERTHANOREQUAL64",
-        "OP_VERIFY",
-
-        "OP_CAT",
-        "OP_SHA256",
-        "$oraclePublicKey",
-        "OP_CHECKSIGFROMSTACKVERIFY",
-
-        "OP_0",
-        "OP_INSPECTOUTPUTASSET",
+        "OP_DUP",
+        "OP_INSPECTINPUTASSET",
         "OP_1",
         "OP_EQUALVERIFY",
-        "$borrowAsset",
+        "OP_0",
+        "OP_INSPECTINPUTASSET",
+        "OP_1",
         "OP_EQUALVERIFY",
-
+        "OP_EQUALVERIFY",
+        "OP_INSPECTOUTPUTVALUE",
+        "OP_1",
+        "OP_EQUALVERIFY",
         "OP_0",
         "OP_INSPECTOUTPUTVALUE",
         "OP_1",
         "OP_EQUALVERIFY",
-        "$borrowAmount",
         "OP_EQUALVERIFY",
-
+        "OP_INSPECTOUTPUTSCRIPTPUBKEY",
         "OP_0",
         "OP_INSPECTOUTPUTSCRIPTPUBKEY",
-        "OP_1NEGATE",
+        "OP_ROT",
         "OP_EQUALVERIFY",
-        "0x6a",
-        "OP_SHA256",
         "OP_EQUALVERIFY",
-
-        "OP_0",
-        "OP_INSPECTOUTPUTNONCE",
-        "OP_0",
-        "OP_EQUALVERIFY",
-
-        "$issuerPublicKey",
+        "$treasuryPublicKey",
         "OP_CHECKSIG"
       ]
     }

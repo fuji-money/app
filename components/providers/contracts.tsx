@@ -35,7 +35,6 @@ import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
 import { hex64LEToNumber, numberToHex64LE, toXpub } from 'lib/utils'
-import Decimal from 'decimal.js'
 import { address } from 'liquidjs-lib'
 
 function computeOldXPub(xpub: string): string {
@@ -110,6 +109,24 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
+  // check if a contract is confirmed by its transaction history
+  // https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
+  // In summary:
+  //   unknown => hist.length == 0
+  //   mempool => hist.length == 1 && hist[0].height == 0
+  //   confirm => hist.length > 0 && hist[0].height != 0
+  //   spent   => hist.length == 2
+  const notConfirmed = async (contract: Contract) => {
+    console.log('notConfirmed', contract)
+    const [hist] = await chainSource.fetchHistories([
+      address.toOutputScript(
+        await getContractCovenantAddress(contract, network),
+      ),
+    ])
+    const confirmed = hist.length > 0 && hist[0].height !== 0
+    return !confirmed
+  }
+
   // check contract status
   // for each contract in storage:
   // - check for creation tx (to confirm)
@@ -118,23 +135,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     // function to check if contract has fuji coin
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
-
-    // check if a contract is confirmed by its transaction history
-    // https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
-    // In summary:
-    //   unknown => hist.length == 0
-    //   mempool => hist.length == 1 && hist[0].height == 0
-    //   confirm => hist.length > 0 && hist[0].height != 0
-    //   spent   => hist.length == 2
-    const notConfirmed = async (contract: Contract) => {
-      const [hist] = await chainSource.fetchHistories([
-        address.toOutputScript(
-          await getContractCovenantAddress(contract, network),
-        ),
-      ])
-      const confirmed = hist.length > 0 && hist[0].height !== 0
-      return !confirmed
-    }
 
     // iterate through contracts in storage
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
@@ -191,42 +191,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
-  // it ensures that contract are all updated to the latest format
-  const migrateOldContracts = () => {
-    // migrate old contracts to new format
-    getContractsFromStorage().map((contract) => {
-      if (!contract.contractParams) return
-      const { contractParams } = contract
-      // new contractParams format
-      if ((contract as any)['borrowerPubKey']) {
-        contract.contractParams = {
-          ...contractParams,
-          borrowerPublicKey: (contract as any)['borrowerPubKey'],
-          issuerPublicKey: (contract as any)['contractParams']['issuerPk'],
-          oraclePublicKey: (contract as any)['contractParams']['oraclePk'],
-        }
-        delete (contract as any)['borrowerPubKey']
-        delete (contract as any)['contractParams']['issuerPk']
-        delete (contract as any)['contractParams']['oraclePk']
-        updateContractOnStorage(contract)
-      }
-      // store priceLevel and setupTimestamp as hex64LE
-      // previous version had those as "123" (number as string)
-      if (contractParams.priceLevel.match(/^\d(?!x)/)) {
-        contract.contractParams.priceLevel = numberToHex64LE(
-          Number(contractParams.priceLevel),
-        )
-        updateContractOnStorage(contract)
-      }
-      if (contractParams.setupTimestamp.match(/^\d(?!x)/)) {
-        contract.contractParams.setupTimestamp = numberToHex64LE(
-          Number(contractParams.setupTimestamp),
-        )
-        updateContractOnStorage(contract)
-      }
-    })
-  }
-
   // Marina could know about contracts that local storage doesn't
   // This could happen if the user is using more than one device
   // In this case, we will add the unknown contracts into storage
@@ -253,40 +217,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         createNewContract(contract, timestamp)
       }
     }
-  }
-
-  // temporary fix:
-  // 1. fix missing xPubKey on old contracts and store on local storage
-  // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
-  // 3. update xPubKey to neutered xPubKey
-  // 4. add vout to contract
-  const fixMissingXPubKeyOnOldContracts = () => {
-    // get non neutered xPubKey
-    const oldXPubKey = computeOldXPub(xPubKey)
-    // on new Marina version, xPubKey starts with 'xpub' instead of 'zpub'
-    const shouldStartWithXpub = xPubKey.startsWith('xpub')
-    getContractsFromStorage()
-      .filter((contract) => contract.network === network)
-      .map((contract) => {
-        if (!contract.xPubKey) {
-          contract.xPubKey = xPubKey // point 1
-          updateContractOnStorage(contract)
-        } else {
-          if (contract.xPubKey.startsWith('zpub') && shouldStartWithXpub) {
-            contract.xPubKey = toXpub(contract.xPubKey) // point 2
-            updateContractOnStorage(contract)
-          } else {
-            if (contract.xPubKey === oldXPubKey) {
-              contract.xPubKey = xPubKey // point 3
-              updateContractOnStorage(contract)
-            }
-          }
-        }
-        if (typeof contract.vout == 'undefined') {
-          contract.vout = 0
-          updateContractOnStorage(contract)
-        }
-      })
   }
 
   // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
@@ -329,8 +259,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (connected && network && xPubKey) {
         // run only on first render for each network
         if (!firstRender.current.includes(network)) {
-          migrateOldContracts()
-          fixMissingXPubKeyOnOldContracts()
           reloadContracts()
           await syncContractsWithMarina()
           fetchOracles(network).then((data) => setOracles(data))

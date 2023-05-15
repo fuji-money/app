@@ -1,6 +1,11 @@
 import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { defaultPayout, minDustLimit } from './constants'
+import {
+  assetPair,
+  defaultPayout,
+  expirationTimeout,
+  minDustLimit,
+} from './constants'
 import { fetchAsset, fetchOracle } from './api'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
@@ -77,11 +82,13 @@ export const coinToContract = async (
         quantity: coin.blindingData.value,
       },
       contractParams: {
+        assetPair,
+        expirationTimeout,
         borrowAsset: params[0] as string,
         borrowAmount: params[1] as number,
         borrowerPublicKey: params[2] as string,
         oraclePublicKey: params[3] as string,
-        issuerPublicKey: params[4] as string,
+        treasuryPublicKey: params[4] as string,
         priceLevel: params[5] as string,
         setupTimestamp: params[6] as string,
       },
