@@ -1,23 +1,32 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { fetchAssets } from 'lib/api'
 import { Asset } from 'lib/types'
 import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
 import { WalletContext } from 'components/providers/wallet'
+import { NetworkString } from 'marina-provider'
+import { sleep } from 'lib/utils'
 
 const AssetsList = () => {
-  const [assets, setAssets] = useState<Asset[]>()
   const [loading, setLoading] = useState(true)
   const { network } = useContext(WalletContext)
 
+  const assetsByNetwork = useRef<Record<string, Asset[]>>({})
+
+  const onlySynth = (asset: Asset) => asset.isSynthetic
+
   useEffect(() => {
-    const onlySynth = (asset: Asset) => asset.isSynthetic
-    fetchAssets(network).then((data) => {
-      setAssets(data.filter(onlySynth))
-      setLoading(false)
-    })
+    if (!assetsByNetwork.current[network]) {
+      setLoading(true)
+      fetchAssets(network).then((data) => {
+        assetsByNetwork.current[network] = data.filter(onlySynth)
+        setLoading(false)
+      })
+    }
   }, [network])
+
+  const assets = assetsByNetwork.current[network]
 
   if (loading) return <Spinner />
   if (!assets) return <SomeError>Error getting assets</SomeError>
