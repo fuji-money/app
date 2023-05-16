@@ -5,8 +5,6 @@ import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
 import { WalletContext } from 'components/providers/wallet'
-import { NetworkString } from 'marina-provider'
-import { sleep } from 'lib/utils'
 
 const AssetsList = () => {
   const [loading, setLoading] = useState(true)
