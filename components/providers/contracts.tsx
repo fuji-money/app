@@ -19,29 +19,17 @@ import {
   checkContractOutspend,
   createNewContract,
 } from 'lib/contracts'
-import {
-  getContractsFromStorage,
-  getMyContractsFromStorage,
-  updateContractOnStorage,
-} from 'lib/storage'
+import { getContractsFromStorage, getMyContractsFromStorage } from 'lib/storage'
 import { Activity, Contract, ContractState, Oracle } from 'lib/types'
 import { WalletContext } from './wallet'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getContractsFromMarina, getFujiCoins } from 'lib/marina'
-import BIP32Factory from 'bip32'
-import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
 import { fetchOracles } from 'lib/api'
-import { hex64LEToNumber, numberToHex64LE, toXpub } from 'lib/utils'
+import { hex64LEToNumber } from 'lib/utils'
 import { address } from 'liquidjs-lib'
-
-function computeOldXPub(xpub: string): string {
-  const bip32 = BIP32Factory(ecc)
-  const decoded = bip32.fromBase58(xpub)
-  return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
-}
 
 interface ContractsContextProps {
   activities: Activity[]
