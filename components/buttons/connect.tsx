@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { createFujiAccount, fujiAccountMissing } from 'lib/marina'
 import { closeModal, openModal } from 'lib/utils'
