@@ -30,7 +30,7 @@ export function getMyContractsFromStorage(
 export function saveContractsToStorage(contracts: Contract[]): void {
   if (typeof window === 'undefined') return
   // store contracts without buffers for better reading by the user
-  const contractsWithoutBuffers = contracts.map((c: any) => {
+  const contractsWithoutBuffers = structuredClone(contracts).map((c: any) => {
     const params = c.contractParams
     if (params?.assetPair) params.assetPair = assetPair.toString()
     if (params?.expirationTimeout) params.expirationTimeout = expirationSeconds

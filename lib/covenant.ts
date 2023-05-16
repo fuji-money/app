@@ -45,17 +45,12 @@ import {
   getNextChangeAddress,
   getPublicKey,
 } from './marina'
-import artifact from 'lib/fuji.ionio.json'
 import * as ecc from 'tiny-secp256k1'
-import {
-  Artifact,
-  Contract as IonioContract,
-  replaceArtifactConstructorWithArguments,
-  templateString,
-} from '@ionio-lang/ionio'
+import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
+import { artifact } from './artifact'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
@@ -88,7 +83,10 @@ export async function getIonioInstance(
     artifact as Artifact,
     constructorParams,
     getNetwork(network),
-    { ecc, zkp: await zkpLib() },
+    {
+      ecc,
+      zkp: await zkpLib(),
+    },
   )
 }
 
@@ -116,18 +114,10 @@ async function getCovenantOutput(contract: Contract): Promise<{
     assetPair,
   }
 
-  const tranformedArtifact = replaceArtifactConstructorWithArguments(
-    artifact as Artifact,
-    artifact.constructorInputs.map((ci) => {
-      const newName = ci.name === 'borrowerPublicKey' ? 'fuji' : ci.name
-      return templateString(newName)
-    }),
-  )
-
   // get needed addresses
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress({
-    artifact: tranformedArtifact as Artifact,
+    artifact,
     args: contractParams,
   })
 

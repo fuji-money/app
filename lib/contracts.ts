@@ -261,16 +261,18 @@ export function createNewContract(
   contract: Contract,
   timestamp = Date.now(),
 ): void {
-  addContractToStorage(contract)
-  addActivity(contract, ActivityType.Creation, timestamp)
+  const clone = structuredClone(contract)
+  addContractToStorage(clone)
+  addActivity(clone, ActivityType.Creation, timestamp)
 }
 
 // mark contract as confirmed
 // this happens when we query the explorer and tx is defined
 export function markContractConfirmed(contract: Contract): void {
   if (contract.confirmed) return
-  contract.confirmed = true
-  updateContractOnStorage(contract)
+  const clone = structuredClone(contract)
+  clone.confirmed = true
+  updateContractOnStorage(clone)
 }
 
 // mark contract as redeemed
@@ -284,13 +286,14 @@ export function markContractRedeemed(
   timestamp?: number,
 ): void {
   if (contract.state === ContractState.Redeemed) return
+  const clone = structuredClone(contract)
   const createdAt = timestamp ? timestamp * 1000 : Date.now()
-  contract.state = ContractState.Redeemed
-  updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Redeemed, createdAt)
+  clone.state = ContractState.Redeemed
+  updateContractOnStorage(clone)
+  addActivity(clone, ActivityType.Redeemed, createdAt)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Liquidated)
-  removeActivities(contract, ActivityType.Topup)
+  removeActivities(clone, ActivityType.Liquidated)
+  removeActivities(clone, ActivityType.Topup)
 }
 
 // mark contract as liquidated
@@ -304,12 +307,13 @@ export function markContractLiquidated(
   timestamp?: number,
 ): void {
   if (contract.state === ContractState.Liquidated) return
+  const clone = structuredClone(contract)
   const createdAt = timestamp ? timestamp * 1000 : Date.now()
-  contract.state = ContractState.Liquidated
-  updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Liquidated, createdAt)
+  clone.state = ContractState.Liquidated
+  updateContractOnStorage(clone)
+  addActivity(clone, ActivityType.Liquidated, createdAt)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Redeemed)
+  removeActivities(clone, ActivityType.Redeemed)
 }
 
 // mark contract as open
@@ -320,12 +324,13 @@ export function markContractLiquidated(
 //   - if now is open, it can't be topuped
 export function markContractOpen(contract: Contract): void {
   if (!contract.state) return
-  contract.state = undefined
-  updateContractOnStorage(contract)
+  const clone = structuredClone(contract)
+  clone.state = undefined
+  updateContractOnStorage(clone)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Liquidated)
-  removeActivities(contract, ActivityType.Redeemed)
-  removeActivities(contract, ActivityType.Topup)
+  removeActivities(clone, ActivityType.Liquidated)
+  removeActivities(clone, ActivityType.Redeemed)
+  removeActivities(clone, ActivityType.Topup)
 }
 
 // mark contract as unknown
@@ -337,12 +342,13 @@ export function markContractOpen(contract: Contract): void {
 //   - if now is open, it can't be topuped
 export function markContractUnknown(contract: Contract): void {
   if (contract.state === ContractState.Unknown) return
-  contract.state = ContractState.Unknown
-  updateContractOnStorage(contract)
+  const clone = structuredClone(contract)
+  clone.state = ContractState.Unknown
+  updateContractOnStorage(clone)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Liquidated)
-  removeActivities(contract, ActivityType.Redeemed)
-  removeActivities(contract, ActivityType.Topup)
+  removeActivities(clone, ActivityType.Liquidated)
+  removeActivities(clone, ActivityType.Redeemed)
+  removeActivities(clone, ActivityType.Topup)
 }
 
 // mark contract as topup
@@ -352,9 +358,10 @@ export function markContractTopup(
 ): void {
   if (contract.state === ContractState.Topup) return
   const createdAt = timestamp ? timestamp * 1000 : Date.now()
-  contract.state = ContractState.Topup
-  updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Topup, createdAt)
+  const clone = structuredClone(contract)
+  clone.state = ContractState.Topup
+  updateContractOnStorage(clone)
+  addActivity(clone, ActivityType.Topup, createdAt)
 }
 
 // add additional fields to contract and save to storage
@@ -362,10 +369,11 @@ export async function saveContractToStorage(
   contract: Contract,
   network: NetworkString,
 ): Promise<void> {
-  contract.network = network
-  contract.confirmed = false
-  contract.xPubKey = await getMainAccountXPubKey()
-  createNewContract(contract)
+  const clone = structuredClone(contract)
+  clone.network = network
+  clone.confirmed = false
+  clone.xPubKey = await getMainAccountXPubKey()
+  createNewContract(clone)
 }
 
 export async function getContractCovenantAddress(
