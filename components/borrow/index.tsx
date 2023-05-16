@@ -1,12 +1,15 @@
 import { Contract, Offer, Oracle } from 'lib/types'
 import BorrowForm from './form'
-import Balance from 'components/balance'
 import { useContext, useEffect, useState } from 'react'
 import BorrowInfo from './info'
 import BorrowButton from './button'
 import Title from 'components/title'
 import Notifications from 'components/notifications'
-import { getContractPriceLevel, getContractRatio } from 'lib/contracts'
+import {
+  getContractPriceLevel,
+  getContractRatio,
+  getContractExpirationDate,
+} from 'lib/contracts'
 import { minBorrowRatio } from 'lib/constants'
 import { ContractsContext } from 'components/providers/contracts'
 
@@ -24,7 +27,11 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
   const minRatio = offer.collateral.ratio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer.collateral, startingRatio)
 
-  const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
+  const [contract, setContract] = useState<Contract>({
+    ...offer,
+    expirationDate: getContractExpirationDate(),
+    priceLevel,
+  })
 
   useEffect(() => {
     if (newContract) {

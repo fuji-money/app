@@ -3,6 +3,7 @@ import Decimal from 'decimal.js'
 import {
   assetPair,
   defaultPayout,
+  expirationSeconds,
   expirationTimeout,
   minDustLimit,
 } from './constants'
@@ -76,6 +77,14 @@ export const coinToContract = async (
     const synthetic = await fetchAsset(params[0] as string, network)
     const oracle = await fetchOracle(params[3] as string, network)
     if (!collateral || !synthetic || !oracle) return
+    const borrowAsset = params[0] as string
+    const borrowAmount = params[1] as number
+    const borrowerPublicKey = params[2] as string
+    const oraclePublicKey = params[3] as string
+    const treasuryPublicKey = params[4] as string
+    const priceLevel = params[5] as string
+    const setupTimestamp = params[6] as string
+    const createdAt = hex64LEToNumber(setupTimestamp)
     const contract: Contract = {
       collateral: {
         ...collateral,
@@ -84,15 +93,16 @@ export const coinToContract = async (
       contractParams: {
         assetPair,
         expirationTimeout,
-        borrowAsset: params[0] as string,
-        borrowAmount: params[1] as number,
-        borrowerPublicKey: params[2] as string,
-        oraclePublicKey: params[3] as string,
-        treasuryPublicKey: params[4] as string,
-        priceLevel: params[5] as string,
-        setupTimestamp: params[6] as string,
+        borrowAsset,
+        borrowAmount,
+        borrowerPublicKey,
+        oraclePublicKey,
+        treasuryPublicKey,
+        priceLevel,
+        setupTimestamp,
       },
-      createdAt: hex64LEToNumber(params[6] as string),
+      createdAt: hex64LEToNumber(setupTimestamp),
+      expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
       network: await getNetwork(),
       oracles: [oracle.id],
       payout: defaultPayout,
@@ -381,4 +391,12 @@ export async function getContractCovenantAddress(
   network: NetworkString,
 ) {
   return (await getIonioInstance(contract, network)).address
+}
+
+export function getContractExpirationDate(
+  start = 0,
+  validity = expirationSeconds,
+) {
+  const begins = start || Math.floor(Date.now() / 1000)
+  return new Date((begins + validity) * 1000).getTime()
 }

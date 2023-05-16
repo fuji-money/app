@@ -38,7 +38,6 @@ import {
   fujiAccountMissing,
   getFujiCoins,
   getMainAccountCoins,
-  getMainAccountIDs,
   getMarinaProvider,
   getNextAddress,
   getNextChangeAddress,
