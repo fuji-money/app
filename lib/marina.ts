@@ -1,7 +1,7 @@
 import * as ecc from 'tiny-secp256k1'
 import { BIP32Factory } from 'bip32'
 import { Pset } from 'liquidjs-lib'
-import { Asset, Contract } from './types'
+import { Asset, Contract, ContractParams } from './types'
 import {
   detectProvider,
   MarinaProvider,
@@ -22,6 +22,7 @@ import {
   marinaTestnetMainAccountID,
 } from 'lib/constants'
 import { coinToContract } from './contracts'
+import { artifact } from './artifact'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
@@ -128,6 +129,20 @@ export async function getNextChangeAddress(accountID?: AccountID) {
   const address = await marina.getNextChangeAddress()
   if (id !== mainAccountIDs[0]) await marina.useAccount(mainAccountIDs[0])
   return address
+}
+
+export async function getNextCovenantAddress(
+  contractParams: Omit<ContractParams, 'borrowerPublicKey'>,
+) {
+  const marina = await getMarinaProvider()
+  if (!marina) throw new Error('No Marina provider found')
+  await marina.useAccount(marinaFujiAccountID)
+  const covenantAddress = await marina.getNextAddress({
+    artifact,
+    args: contractParams,
+  })
+  await marina.useAccount((await getMainAccountIDs(false))[0])
+  return covenantAddress
 }
 
 export async function getPublicKey(covenantAddress: Address): Promise<Buffer> {

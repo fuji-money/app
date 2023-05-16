@@ -6,7 +6,6 @@ import {
   factoryUrlTestnet,
   feeAmount,
   treasuryPublicKey,
-  marinaFujiAccountID,
   minDustLimit,
   oraclePubKey,
   assetPair,
@@ -43,10 +42,11 @@ import {
   getMarinaProvider,
   getNextAddress,
   getNextChangeAddress,
+  getNextCovenantAddress,
   getPublicKey,
 } from './marina'
 import * as ecc from 'tiny-secp256k1'
-import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
+import { Contract as IonioContract } from '@ionio-lang/ionio'
 import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
@@ -101,7 +101,7 @@ async function getCovenantOutput(contract: Contract): Promise<{
   const timestamp = Date.now()
   const oraclePk = Buffer.from(oraclePubKey, 'hex')
   const treasuryPk = Buffer.from(treasuryPublicKey, 'hex')
-  const contractParams = {
+  const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
     oraclePublicKey: `0x${oraclePk.slice(1).toString('hex')}`,
@@ -112,15 +112,7 @@ async function getCovenantOutput(contract: Contract): Promise<{
     assetPair,
   }
 
-  // get needed addresses
-  await marina.useAccount(marinaFujiAccountID)
-  const covenantAddress = await marina.getNextAddress({
-    artifact,
-    args: contractParams,
-  })
-
-  // switch back to marina main account
-  await marina.useAccount((await getMainAccountIDs(false))[0])
+  const covenantAddress = await getNextCovenantAddress(contractParams)
 
   // set covenant output
   const { scriptPubKey } = address.fromConfidential(
