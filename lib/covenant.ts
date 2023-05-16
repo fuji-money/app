@@ -50,13 +50,11 @@ import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 import { artifact } from './artifact'
+import { getFactoryUrl } from './api'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
 }
-
-const getFactoryUrl = (network: NetworkString) =>
-  network === 'liquid' ? factoryUrlMainnet : factoryUrlTestnet
 
 export async function getIonioInstance(
   contract: Contract,

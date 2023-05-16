@@ -2,7 +2,12 @@ import { NetworkString } from 'marina-provider'
 import { fetchURL } from './fetch'
 import { getAssetBalance, getBalances } from './marina'
 import { Asset, Investment, Offer, Oracle, Stock } from './types'
-import { assetExplorerUrlMainnet, assetExplorerUrlTestnet } from './constants'
+import {
+  assetExplorerUrlMainnet,
+  assetExplorerUrlTestnet,
+  factoryUrlMainnet,
+  factoryUrlTestnet,
+} from './constants'
 import { fromSatoshis } from './utils'
 import { TICKERS } from './server'
 
@@ -84,6 +89,10 @@ export async function fetchOracles(network: NetworkString): Promise<Oracle[]> {
 
 export async function fetchStocks(network: NetworkString): Promise<Stock[]> {
   return await fetchURL(`/api/${network}/stocks`)
+}
+
+export function getFactoryUrl(network: NetworkString) {
+  return network === 'liquid' ? factoryUrlMainnet : factoryUrlTestnet
 }
 
 const getAssetCirculation = async (
