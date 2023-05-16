@@ -71,23 +71,21 @@ export async function getIonioInstance(
     params.borrowAsset,
     params.borrowAmount,
     params.treasuryPublicKey,
-    params.expirationTimeout,
+    expirationTimeout,
     params.borrowerPublicKey,
     params.oraclePublicKey,
     params.priceLevel,
     params.setupTimestamp,
-    params.assetPair,
+    assetPair,
   ]
+  if (constructorParams.findIndex((a) => a === undefined) !== -1) {
+    throw new Error('missing contract params')
+  }
 
-  return new IonioContract(
-    artifact as Artifact,
-    constructorParams,
-    getNetwork(network),
-    {
-      ecc,
-      zkp: await zkpLib(),
-    },
-  )
+  return new IonioContract(artifact, constructorParams, getNetwork(network), {
+    ecc,
+    zkp: await zkpLib(),
+  })
 }
 
 async function getCovenantOutput(contract: Contract): Promise<{
