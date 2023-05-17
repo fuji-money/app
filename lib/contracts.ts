@@ -65,7 +65,7 @@ export async function checkContractOutspend(
 // transform a fuji coin into a contract
 export const coinToContract = async (
   coin: Utxo,
-  network: NetworkString,
+  assets: Asset[],
 ): Promise<Contract | undefined> => {
   if (
     coin.scriptDetails &&
@@ -73,8 +73,8 @@ export const coinToContract = async (
     coin.blindingData
   ) {
     const params = coin.scriptDetails.params
-    const collateral = populateAsset(coin.blindingData.asset)
-    const synthetic = populateAsset(params[0] as string)
+    const collateral = assets.find((a) => a.id === coin.blindingData?.asset)
+    const synthetic = assets.find((a) => a.id === (params[0] as string))
     if (!collateral || !synthetic) return
     const borrowAsset = params[0] as string
     const borrowAmount = params[1] as number
@@ -166,10 +166,10 @@ export const getContractState = (contract: Contract): ContractState => {
   if (state === ContractState.Unknown) return ContractState.Unknown
   if (state === ContractState.Topup) return ContractState.Topup
   if (!confirmed) return ContractState.Unconfirmed
-  if (!collateral?.ratio) return ContractState.Unknown
+  if (!collateral?.minCollateralRatio) return ContractState.Unknown
   // possible states are safe, unsafe, critical or liquidated (based on ratio)
   const ratio = getContractRatio(contract)
-  return getRatioState(ratio, collateral.ratio)
+  return getRatioState(ratio, collateral.minCollateralRatio)
 }
 
 // calculate collateral needed for this synthetic and ratio
@@ -205,22 +205,23 @@ export const getContractPayoutAmount = (
 // get contract price level
 export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
   if (!asset.value) throw new Error('Asset without value')
-  if (!asset.ratio) throw new Error('Asset without minimum ratio')
+  if (!asset.minCollateralRatio) throw new Error('Asset without minimum ratio')
   return Decimal.ceil(
-    Decimal.mul(asset.value, asset.ratio).div(ratio),
+    Decimal.mul(asset.value, asset.minCollateralRatio).div(ratio),
   ).toNumber()
 }
 
 // get all contacts belonging to this xpub and network
 export async function getContracts(
+  assets: Asset[],
   network: NetworkString,
 ): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const xPubKey = await getMainAccountXPubKey()
   const promises = getMyContractsFromStorage(network, xPubKey).map(
     async (contract: Contract) => {
-      const collateral = populateAsset(contract.collateral.id)
-      const synthetic = populateAsset(contract.synthetic.id)
+      const collateral = assets.find((a) => a.id === contract.collateral.id)
+      const synthetic = assets.find((a) => a.id === contract.synthetic.id)
       if (!collateral)
         throw new Error(
           `Contract with unknown collateral ${contract.collateral.ticker}`,
@@ -247,9 +248,10 @@ export async function getContracts(
 // get contract with txid
 export async function getContract(
   txid: string,
+  assets: Asset[],
   network: NetworkString,
 ): Promise<Contract | undefined> {
-  const contracts = await getContracts(network)
+  const contracts = await getContracts(assets, network)
   return contracts.find((c) => c.txid === txid)
 }
 

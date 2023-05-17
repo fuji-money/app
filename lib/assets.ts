@@ -2,6 +2,7 @@ import { NetworkString } from 'marina-provider'
 import { fUSDAssetId } from './constants'
 import { Asset, ConfigResponseAsset } from './types'
 import { networks } from 'liquidjs-lib'
+import { fromSatoshis } from './utils'
 
 export enum TICKERS {
   fbmn = 'FBMN',
@@ -18,7 +19,7 @@ const lbtc: Asset = {
   name: 'Liquid BTC',
   precision: 8,
   quantity: 0,
-  ratio: 150,
+  minCollateralRatio: 150,
   ticker: TICKERS.lbtc,
   value: 40000,
 }
@@ -31,7 +32,7 @@ const usdt: Asset = {
   name: 'Tether USD',
   precision: 8,
   quantity: 0,
-  ratio: 150,
+  minCollateralRatio: 150,
   ticker: TICKERS.usdt,
   value: 1,
 }
@@ -57,12 +58,24 @@ const assetById: Record<string, Asset> = {
   f3d1ec678811398cd2ae277cbe3849c6f6dbd72c74bc542f7c4b11ff0e820958: usdt, // testnet
 }
 
-export function populateAsset(id: string): Asset {
-  const asset = assetById[id]
-  if (!asset) throw new Error(`Unknown asset id from factory config: ${id}`)
-  return { ...asset, id }
+export function populateAsset(responseAsset: ConfigResponseAsset): Asset {
+  const { assetID, maxCirculatingSupply, minCollateralRatio } = responseAsset
+  const asset = assetById[assetID]
+  if (!asset) throw new Error(`Unknown asset id from config: ${assetID}`)
+  const supply =
+    maxCirculatingSupply === -1
+      ? undefined
+      : fromSatoshis(maxCirculatingSupply, asset.precision)
+  return {
+    ...asset,
+    id: assetID,
+    minCollateralRatio,
+    maxCirculatingSupply: supply,
+  }
 }
 
-export function getLBTC(network: NetworkString) {
-  return populateAsset(networks[network].assetHash)
+export function getLBTC(network: NetworkString): Asset {
+  const id = networks[network].assetHash
+  const asset = assetById[id]
+  return { ...asset, id }
 }

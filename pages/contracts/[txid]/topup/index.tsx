@@ -12,7 +12,7 @@ import { WalletContext } from 'components/providers/wallet'
 
 const ContractTopup: NextPage = () => {
   const { network } = useContext(WalletContext)
-  const { newContract, setNewContract, setOldContract } =
+  const { assets, newContract, setNewContract, setOldContract } =
     useContext(ContractsContext)
 
   const [isLoading, setIsLoading] = useState(true)
@@ -22,7 +22,7 @@ const ContractTopup: NextPage = () => {
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      getContract(txid, network).then((contract) => {
+      getContract(txid, assets, network).then((contract) => {
         if (contract) {
           if (!newContract) setNewContract(contract)
           setOldContract(contract)

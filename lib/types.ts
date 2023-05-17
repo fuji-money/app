@@ -27,18 +27,18 @@ export interface Activity {
 }
 
 export interface Asset {
+  circulating?: number
   icon: string
   id: string
   isSynthetic: boolean
   isAvailable: boolean
+  maxCirculatingSupply?: number
+  minCollateralRatio?: number
   name: string
   precision: number
   quantity: number
-  ratio?: number
   ticker: string
   value: number
-  maxCirculatingSupply?: number
-  circulating?: number
 }
 
 export enum ContractState {

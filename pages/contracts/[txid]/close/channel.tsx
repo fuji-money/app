@@ -12,7 +12,7 @@ import { WalletContext } from 'components/providers/wallet'
 
 const ContractRedeemChannel: NextPage = () => {
   const { network } = useContext(WalletContext)
-  const { newContract, setNewContract } = useContext(ContractsContext)
+  const { assets, newContract, setNewContract } = useContext(ContractsContext)
   const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()
@@ -20,7 +20,7 @@ const ContractRedeemChannel: NextPage = () => {
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      getContract(txid, network).then((contract) => {
+      getContract(txid, assets, network).then((contract) => {
         if (contract) setNewContract(contract)
         setIsLoading(false)
       })

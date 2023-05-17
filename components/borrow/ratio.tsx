@@ -69,7 +69,7 @@ const Ratio = ({
   ratio = minBorrowRatio,
   setContractRatio,
 }: RatioProps) => {
-  const min = minRatio || collateral.ratio || 0
+  const min = minRatio || collateral.minCollateralRatio || 0
   const safe = minRatio ? 0 : min + 50
   const showSafe = safe > 0
   const state = getRatioState(ratio, min, safe)

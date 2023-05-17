@@ -120,7 +120,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (!config) return
 
     const _assets = config.assets
-      .map((asset) => populateAsset(asset.assetID))
+      .map((asset) => populateAsset(asset))
       .concat(getLBTC(network))
 
     for (const a of _assets) {
@@ -152,7 +152,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (connected) {
       setLoading(true)
       await checkContractsStatus()
-      setContracts(await getContracts(network))
+      setContracts(await getContracts(assets, network))
       setActivities(await getActivities())
       setLoading(false)
     }
@@ -245,7 +245,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const syncContractsWithMarina = async () => {
     if (!xPubKey) return
     const storageContracts = getContractsFromStorage()
-    const marinaContracts = await getContractsFromMarina(network)
+    const marinaContracts = await getContractsFromMarina(assets)
 
     // check if contract from marina is on storage
     const notInStorage = (mc: Contract) =>

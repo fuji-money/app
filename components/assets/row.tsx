@@ -17,6 +17,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
   const { balances } = useContext(WalletContext)
   const balance = getAssetBalance(asset, balances)
   const disabled = !(asset.isAvailable && asset.id)
+
   return (
     <div className={`is-box has-pink-border row ${disabled && `disabled`}`}>
       <div className="columns level">
