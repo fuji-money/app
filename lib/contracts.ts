@@ -366,14 +366,9 @@ export function markContractTopup(
 }
 
 // add additional fields to contract and save to storage
-export async function saveContractToStorage(
-  contract: Contract,
-  network: NetworkString,
-): Promise<void> {
+export async function saveContractToStorage(contract: Contract): Promise<void> {
   const clone = structuredClone(contract)
-  clone.network = network
   clone.confirmed = false
-  clone.xPubKey = await getMainAccountXPubKey()
   createNewContract(clone)
 }
 

@@ -12,26 +12,35 @@ import {
 } from 'lib/contracts'
 import { minBorrowRatio } from 'lib/constants'
 import { ContractsContext } from 'components/providers/contracts'
+import { WalletContext } from 'components/providers/wallet'
 
 interface BorrowProps {
   offer: Offer
 }
 
 const Borrow = ({ offer }: BorrowProps) => {
+  const { network, xPubKey } = useContext(WalletContext)
   const { newContract } = useContext(ContractsContext)
 
-  const startingRatio = offer.collateral.minCollateralRatio
-    ? offer.collateral.minCollateralRatio + 50
+  const { collateral, oracles, payout, synthetic } = offer
+
+  const startingRatio = collateral.minCollateralRatio
+    ? collateral.minCollateralRatio + 50
     : 0
   const [ratio, setRatio] = useState(startingRatio)
 
-  const minRatio = offer.collateral.minCollateralRatio || minBorrowRatio
-  const priceLevel = getContractPriceLevel(offer.collateral, startingRatio)
+  const minRatio = collateral.minCollateralRatio || minBorrowRatio
+  const priceLevel = getContractPriceLevel(collateral, startingRatio)
 
   const [contract, setContract] = useState<Contract>({
-    ...offer,
+    collateral,
     expirationDate: getContractExpirationDate(),
+    network,
+    oracles,
+    payout,
+    synthetic,
     priceLevel,
+    xPubKey,
   })
 
   useEffect(() => {

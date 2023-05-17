@@ -250,7 +250,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   useEffect(() => {
     async function runOnAssetsChange() {
-      if (assets[0]) {
+      if (assets.length) {
         await syncContractsWithMarina()
         await reloadContracts()
         return setMarinaListener() // return the close listener function

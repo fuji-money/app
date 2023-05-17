@@ -49,19 +49,11 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const updateNetwork = async () => setNetwork(await getNetwork())
   const updateXPubKey = async () => setXPubKey(await getMainAccountXPubKey())
 
+  const firstRender = useRef(true)
+
   // get marina provider
   useEffect(() => {
-    async function getMarinaProviderAndMaybeSleep() {
-      const marinaProvider = await getMarinaProvider()
-      // in the case user has marina on 'testnet' and defaultNetwork is 'liquid'
-      // there's a race condition where the app starts by getting the config for
-      // 'liquid' and then immediately for 'testnet', but with the risk of 'liquid'
-      // beeing the last to end so state would be 'liquid' instead of 'testnet'
-      if ((await marinaProvider?.getNetwork()) !== defaultNetwork)
-        await sleep(1000)
-      setMarina(marinaProvider)
-    }
-    getMarinaProviderAndMaybeSleep()
+    getMarinaProvider().then((payload) => setMarina(payload))
   }, [])
 
   // update connected state
@@ -92,7 +84,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // update network and add event listener
   useEffect(() => {
     if (connected && marina) {
-      updateNetwork()
+      // in the case user has marina on 'testnet' and defaultNetwork is 'liquid'
+      // there's a race condition where the app starts by getting the config for
+      // 'liquid' and then immediately for 'testnet', but with the risk of 'liquid'
+      // beeing the last to end so the final state would be 'liquid' instead of 'testnet'
+      marina.getNetwork().then((marinaNetwork) => {
+        if (firstRender.current && marinaNetwork !== defaultNetwork) {
+          sleep(2000).then(() => updateNetwork())
+        } else {
+          updateNetwork()
+        }
+      })
       const id = marina.on('NETWORK', updateNetwork)
       return () => marina.off(id)
     }

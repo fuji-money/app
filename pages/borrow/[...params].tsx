@@ -54,7 +54,8 @@ import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, network, updateBalances } = useContext(WalletContext)
+  const { chainSource, network, updateBalances, xPubKey } =
+    useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
   const { config } = useContext(ConfigContext)
@@ -203,10 +204,11 @@ const BorrowParams: NextPage = () => {
     // add contractParams to contract
     const { contractParams } = preparedTx
     newContract.contractParams = { ...contractParams }
+    newContract.xPubKey = xPubKey
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
-    await saveContractToStorage({ ...newContract }, network)
+    await saveContractToStorage({ ...newContract })
 
     // wait for confirmation, mark contract confirmed and reload contracts
     chainSource

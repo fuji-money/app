@@ -238,7 +238,7 @@ const ContractTopupLightning: NextPage = () => {
 
         // add additional fields to contract and save to storage
         // note: save before mark as confirmed (next code block)
-        await saveContractToStorage(newContract, network)
+        await saveContractToStorage(newContract)
 
         // wait for confirmation, mark contract confirmed and reload contracts
         chainSource
