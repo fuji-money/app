@@ -1,7 +1,7 @@
 import { NetworkString } from 'marina-provider'
 import { fetchURL } from './fetch'
-import { Investment, Stock } from './types'
-import { factoryUrlMainnet, factoryUrlTestnet, oracleURL } from './constants'
+import { Investment, Oracle, Stock } from './types'
+import { factoryUrlMainnet, factoryUrlTestnet } from './constants'
 
 export async function fetchInvestments(
   network: NetworkString,
@@ -18,10 +18,12 @@ export function getFactoryUrl(network: NetworkString) {
 }
 
 export async function fetchConfig(network: NetworkString) {
+  console.log('fetchConfig', network, getFactoryUrl(network))
   return await fetchURL(getFactoryUrl(network) + '/contracts/info')
 }
 
-export const getBTCvalue = async (): Promise<number> => {
-  const data = await fetchURL(oracleURL)
+export const getBTCvalue = async (oracle: Oracle): Promise<number> => {
+  if (!oracle.url) return 0
+  const data = await fetchURL(oracle.url)
   return data ? Number(data.lastPrice) : 0
 }

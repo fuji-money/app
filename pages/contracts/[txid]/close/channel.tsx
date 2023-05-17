@@ -9,10 +9,12 @@ import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import NotAllowed from 'components/messages/notAllowed'
 import { WalletContext } from 'components/providers/wallet'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemChannel: NextPage = () => {
   const { network } = useContext(WalletContext)
-  const { assets, newContract, setNewContract } = useContext(ContractsContext)
+  const { assets } = useContext(ConfigContext)
+  const { newContract, setNewContract } = useContext(ContractsContext)
   const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()

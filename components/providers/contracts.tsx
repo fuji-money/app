@@ -23,7 +23,6 @@ import { getContractsFromStorage, getMyContractsFromStorage } from 'lib/storage'
 import {
   Activity,
   Asset,
-  ConfigResponse,
   Contract,
   ContractState,
   Offer,
@@ -34,30 +33,17 @@ import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getContractsFromMarina, getFujiCoins } from 'lib/marina'
-import {
-  assetExplorerUrlMainnet,
-  assetExplorerUrlTestnet,
-  marinaFujiAccountID,
-} from 'lib/constants'
-import { fetchConfig, getBTCvalue } from 'lib/api'
-import { fromSatoshis, hex64LEToNumber, openModal } from 'lib/utils'
-import { address, networks } from 'liquidjs-lib'
-import { getLBTC, populateAsset, TICKERS } from 'lib/assets'
-import { populateOffer } from 'lib/offers'
-import { getOtherOracles, populateOracle } from 'lib/oracles'
-import { fetchURL } from 'lib/fetch'
-import { replaceArtifactConstructorWithArguments } from '@ionio-lang/ionio'
-import { ModalIds } from 'components/modals/modal'
+import { marinaFujiAccountID } from 'lib/constants'
+import { hex64LEToNumber } from 'lib/utils'
+import { address } from 'liquidjs-lib'
+import { ConfigContext } from './config'
 
 interface ContractsContextProps {
   activities: Activity[]
-  assets: Asset[]
   contracts: Contract[]
   loading: boolean
   newContract: Contract | undefined
   oldContract: Contract | undefined
-  offers: Offer[]
-  oracles: Oracle[]
   reloadContracts: () => void
   resetContracts: () => void
   setLoading: (arg0: boolean) => void
@@ -67,13 +53,10 @@ interface ContractsContextProps {
 
 export const ContractsContext = createContext<ContractsContextProps>({
   activities: [],
-  assets: [],
   contracts: [],
   loading: true,
   newContract: undefined,
   oldContract: undefined,
-  offers: [],
-  oracles: [],
   reloadContracts: () => {},
   resetContracts: () => {},
   setLoading: () => {},
@@ -84,17 +67,17 @@ export const ContractsContext = createContext<ContractsContextProps>({
 interface ContractsProviderProps {
   children: ReactNode
 }
+
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
+  const { connected, marina, network, xPubKey, chainSource } =
+    useContext(WalletContext)
+  const { assets, offers, oracles } = useContext(ConfigContext)
+
   const [activities, setActivities] = useState<Activity[]>([])
-  const [assets, setAssets] = useState<Asset[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [newContract, setNewContract] = useState<Contract>()
   const [oldContract, setOldContract] = useState<Contract>()
-  const [offers, setOffers] = useState<Offer[]>([])
-  const [oracles, setOracles] = useState<Oracle[]>([])
-  const { connected, marina, network, xPubKey, chainSource } =
-    useContext(WalletContext)
 
   // save first time app was run
   const firstRun = useRef(Date.now())
@@ -102,48 +85,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const reloadAndMarkLastReload = () => {
     firstRun.current = Date.now()
     reloadContracts()
-  }
-
-  const getAssetCirculation = async (asset: Asset): Promise<number> => {
-    if (!asset.id) return 0
-    const assetExplorerUrl =
-      network === 'liquid' ? assetExplorerUrlMainnet : assetExplorerUrlTestnet
-    const data = await fetchURL(`${assetExplorerUrl}${asset.id}`)
-    if (!data) return 0
-    const { chain_stats, mempool_stats } = data
-    const issued = chain_stats.issued_amount + mempool_stats.issued_amount
-    const burned = chain_stats.burned_amount + mempool_stats.burned_amount
-    return fromSatoshis(issued - burned, asset.precision)
-  }
-
-  const reloadConfig = async () => {
-    const config: ConfigResponse = await fetchConfig(network)
-    if (!config) return
-
-    const _assets = config.assets
-      .map((asset) => populateAsset(asset))
-      .concat(getLBTC(network))
-
-    for (const a of _assets) {
-      if (a.ticker === TICKERS.lbtc) a.value = await getBTCvalue()
-      if (a.maxCirculatingSupply) {
-        a.circulating = await getAssetCirculation(a)
-        if (a.maxCirculatingSupply === a.circulating)
-          openModal(ModalIds.MintLimit)
-      }
-    }
-
-    const _oracles = config.oracles
-      .map((oracle) => populateOracle(oracle))
-      .concat(getOtherOracles())
-
-    const _offers = config.offers.map((offer) =>
-      populateOffer(offer, _assets, _oracles),
-    )
-
-    setAssets(_assets)
-    setOffers(_offers)
-    setOracles(_oracles)
   }
 
   const resetContracts = () => {
@@ -312,8 +253,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       if (connected && network && xPubKey) {
         // run only on first render for each network
         if (!firstRender.current.includes(network)) {
-          reloadConfig()
-          reloadContracts()
           await syncContractsWithMarina()
           firstRender.current.push(network)
           return setMarinaListener() // return the close listener function
@@ -322,29 +261,25 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
     runOnceForEachNetwork()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network, xPubKey])
+  }, [network])
 
   useEffect(() => {
-    async function runOnChainSourceChange() {
-      reloadConfig()
-      reloadContracts()
+    async function runOnAssetsChange() {
+      await reloadContracts()
       await syncContractsWithMarina()
     }
-    runOnChainSourceChange()
+    runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chainSource.network])
+  }, [assets[0]])
 
   return (
     <ContractsContext.Provider
       value={{
         activities,
-        assets,
         contracts,
         loading,
         newContract,
         oldContract,
-        offers,
-        oracles,
         reloadContracts,
         resetContracts,
         setLoading,

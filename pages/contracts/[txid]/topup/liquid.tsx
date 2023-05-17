@@ -26,10 +26,12 @@ import { selectCoins } from 'lib/selection'
 import { Pset } from 'liquidjs-lib'
 import { finalizeTx } from 'lib/transaction'
 import { broadcastTx, getMainAccountCoins } from 'lib/marina'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
+  const { oracles } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -77,6 +79,7 @@ const ContractTopupLiquid: NextPage = () => {
         oldContract,
         network,
         collateralUtxos,
+        oracles[0],
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 

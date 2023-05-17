@@ -4,10 +4,12 @@ import Spinner from 'components/spinner'
 import { prettyNumber, prettyPercentage } from 'lib/pretty'
 import { getAssetBalance } from 'lib/marina'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 const BalanceInFiat = () => {
   const { balances, connected } = useContext(WalletContext)
-  const { assets, loading } = useContext(ContractsContext)
+  const { assets } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
 
   const [balance, setBalance] = useState(0)
 

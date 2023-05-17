@@ -1,3 +1,4 @@
+import { ConfigContext } from 'components/providers/config'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { feeAmount, minDustLimit } from 'lib/constants'
@@ -15,8 +16,10 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
-  const { assets, setNewContract } = useContext(ContractsContext)
-  const { balances, connected, network } = useContext(WalletContext)
+  const { balances, connected } = useContext(WalletContext)
+  const { assets } = useContext(ConfigContext)
+  const { setNewContract } = useContext(ContractsContext)
+
   const [enoughFunds, setEnoughFunds] = useState(false)
   const { collateral, oracles, synthetic } = contract
 

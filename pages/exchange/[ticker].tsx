@@ -9,14 +9,16 @@ import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 const ExchangeTicker: NextPage = () => {
-  const router = useRouter()
-  const { ticker } = router.query
-
-  const { loading, offers } = useContext(ContractsContext)
+  const { offers } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
 
   const [offer, setOffer] = useState<Offer>()
+
+  const router = useRouter()
+  const { ticker } = router.query
 
   useEffect(() => {
     if (ticker && typeof ticker === 'string') {

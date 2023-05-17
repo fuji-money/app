@@ -1,13 +1,10 @@
-import { Contract, ContractParams, ContractResponse } from './types'
+import { Contract, ContractParams, ContractResponse, Oracle } from './types'
 import { Utxo, Address, NetworkString } from 'marina-provider'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import {
-  factoryUrlMainnet,
-  factoryUrlTestnet,
   feeAmount,
   treasuryPublicKey,
   minDustLimit,
-  oraclePubKey,
   assetPair,
   expirationTimeout,
   expirationSeconds,
@@ -85,7 +82,10 @@ export async function getIonioInstance(
   })
 }
 
-async function getCovenantOutput(contract: Contract): Promise<{
+async function getCovenantOutput(
+  contract: Contract,
+  oracle: Oracle,
+): Promise<{
   contractParams: ContractParams
   covenantOutput: UpdaterOutput
   covenantAddress: Address
@@ -96,12 +96,11 @@ async function getCovenantOutput(contract: Contract): Promise<{
 
   // set contract params
   const timestamp = Date.now()
-  const oraclePk = Buffer.from(oraclePubKey, 'hex')
   const treasuryPk = Buffer.from(treasuryPublicKey, 'hex')
   const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
-    oraclePublicKey: `0x${oraclePk.toString('hex')}`,
+    oraclePublicKey: `0x${oracle.pubkey}`,
     treasuryPublicKey: `0x${treasuryPk.slice(1).toString('hex')}`,
     priceLevel: numberToHex64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHex64LE(timestamp),
@@ -150,6 +149,7 @@ export async function prepareBorrowTxWithClaimTx(
   contract: Contract,
   utxos: Utxo[],
   redeemScript: string, // must be associated with the first utxo
+  oracle: Oracle,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -173,7 +173,10 @@ export async function prepareBorrowTxWithClaimTx(
   const updater = new Updater(pset)
 
   // get covenant
-  const { contractParams, covenantOutput } = await getCovenantOutput(contract)
+  const { contractParams, covenantOutput } = await getCovenantOutput(
+    contract,
+    oracle,
+  )
   updater
     .addInputs([
       {
@@ -199,6 +202,7 @@ export async function prepareBorrowTxWithClaimTx(
 
 export async function prepareBorrowTx(
   contract: Contract,
+  oracle: Oracle,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -231,7 +235,10 @@ export async function prepareBorrowTx(
   const updater = new Updater(pset)
 
   // get covenant params
-  const { contractParams, covenantOutput } = await getCovenantOutput(contract)
+  const { contractParams, covenantOutput } = await getCovenantOutput(
+    contract,
+    oracle,
+  )
 
   // add collateral inputs
   updater
@@ -506,6 +513,7 @@ export async function prepareTopupTx(
   oldContract: Contract,
   network: NetworkString,
   collateralUtxos: (Utxo & { redeemScript?: string })[],
+  oracle: Oracle,
 ): Promise<PreparedTopupTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -544,6 +552,7 @@ export async function prepareTopupTx(
   // get new covenant params
   const { contractParams, covenantAddress } = await getCovenantOutput(
     newContract,
+    oracle,
   )
 
   // find coin for this contract

@@ -13,7 +13,7 @@ import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
 import { LightningEnabledTasks } from 'lib/tasks'
-import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 interface NotificationsProps {
   contract: Contract
@@ -28,6 +28,9 @@ const Notifications = ({
   ratio,
   topup,
 }: NotificationsProps) => {
+  const { balances, connected } = useContext(WalletContext)
+  const { assets } = useContext(ConfigContext)
+
   const [notEnoughFunds, setNotEnoughFunds] = useState(false)
   const [notEnoughOracles, setNotEnoughOracles] = useState(false)
   const [ratioTooLow, setRatioTooLow] = useState(false)
@@ -35,9 +38,6 @@ const Notifications = ({
   const [belowDustLimit, setBelowDustLimit] = useState(false)
   const [collateralTooLow, setCollateralTooLow] = useState(false)
   const [outOfBounds, setOutOfBounds] = useState(false)
-
-  const { balances, connected, network } = useContext(WalletContext)
-  const { assets, loading } = useContext(ContractsContext)
 
   const { collateral, oracles, payoutAmount } = contract
   const spendQuantity =

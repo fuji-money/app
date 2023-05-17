@@ -7,14 +7,16 @@ import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 const MultiplyAsset: NextPage = () => {
-  const router = useRouter()
-  const { asset } = router.query
-
-  const { loading, offers } = useContext(ContractsContext)
+  const { offers } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
 
   const [offer, setOffer] = useState<Offer>()
+
+  const router = useRouter()
+  const { asset } = router.query
 
   useEffect(() => {
     if (asset === 'btc-long') {

@@ -1,4 +1,4 @@
-import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 import { Contract, Oracle } from 'lib/types'
 import { useContext } from 'react'
 
@@ -8,7 +8,7 @@ interface OraclesProps {
 }
 
 export default function Oracles({ contract, setContract }: OraclesProps) {
-  const { oracles } = useContext(ContractsContext)
+  const { oracles } = useContext(ConfigContext)
 
   const hasOracle = (id = '') => contract.oracles.includes(id)
 

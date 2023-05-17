@@ -4,9 +4,11 @@ import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 const AssetsList = () => {
-  const { loading, assets } = useContext(ContractsContext)
+  const { assets } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
 
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
 

@@ -217,6 +217,7 @@ export async function getContracts(
   network: NetworkString,
 ): Promise<Contract[]> {
   if (typeof window === 'undefined' || assets.length === 0) return []
+  console.log('assets getContracts', assets)
   const xPubKey = await getMainAccountXPubKey()
   const promises = getMyContractsFromStorage(network, xPubKey).map(
     async (contract: Contract) => {

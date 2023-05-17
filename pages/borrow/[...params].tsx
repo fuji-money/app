@@ -51,19 +51,15 @@ import { addSwapToStorage } from 'lib/storage'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
+import { ConfigContext } from 'components/providers/config'
 
 const BorrowParams: NextPage = () => {
   const { chainSource, network, updateBalances } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const {
-    loading,
-    newContract,
-    offers,
-    oracles,
-    reloadContracts,
-    resetContracts,
-  } = useContext(ContractsContext)
+  const { offers, oracles } = useContext(ConfigContext)
+  const { loading, newContract, reloadContracts, resetContracts } =
+    useContext(ContractsContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
@@ -251,6 +247,7 @@ const BorrowParams: NextPage = () => {
         newContract,
         utxos,
         redeemScript,
+        oracles[0],
       )
 
       // propose contract to alpha factory
@@ -316,7 +313,7 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.NeedsCoins)
 
       // prepare borrow transaction
-      const preparedTx = await prepareBorrowTx(newContract)
+      const preparedTx = await prepareBorrowTx(newContract, oracles[0])
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory

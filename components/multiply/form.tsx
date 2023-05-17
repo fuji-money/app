@@ -15,6 +15,7 @@ import { ModalIds } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -27,7 +28,9 @@ const MultiplyForm = ({
   setContract,
   setDeposit,
 }: MultiplyFormProps) => {
-  const { assets, loading, oracles } = useContext(ContractsContext)
+  const { assets, oracles } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
+
   const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)

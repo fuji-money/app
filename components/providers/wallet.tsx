@@ -8,8 +8,6 @@ import {
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
-import { artifact } from 'lib/artifact'
-import artifactJSON from 'lib/fuji.ionio.json'
 
 interface WalletContextProps {
   balances: Balance[]
@@ -91,7 +89,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // when network changes, connect to respective electrum server
   useEffect(() => {
-    if (chainSource.network !== network) {
+    if (network && chainSource.network !== network) {
       chainSource
         .close()
         .then(() => {

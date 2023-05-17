@@ -3,10 +3,12 @@ import { WalletContext } from 'components/providers/wallet'
 import BalanceRow from './row'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 const BalanceTable = () => {
   const { connected } = useContext(WalletContext)
-  const { assets, loading } = useContext(ContractsContext)
+  const { assets } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
 
   if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
   if (loading) return <Spinner />

@@ -1,4 +1,3 @@
-import { oraclePubKey } from './constants'
 import { ConfigResponseOracle, Oracle } from './types'
 
 const fuji: Oracle = {
@@ -14,10 +13,6 @@ const bitfinex: Oracle = {
 const blockstream: Oracle = {
   name: 'Blockstream',
   disabled: true,
-}
-
-export const oracleByPubKey = {
-  [oraclePubKey]: fuji,
 }
 
 export function populateOracle(responseOracle: ConfigResponseOracle): Oracle {

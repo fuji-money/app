@@ -2,7 +2,6 @@ import { Contract } from 'lib/types'
 import Channel from 'components/channel'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
-import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
 import { ModalStages } from 'components/modals/modal'
@@ -26,7 +25,6 @@ const MultiplyDeposit = ({
 }: MultiplyDepositProps) => {
   const { network } = useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
-  const { reloadContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')
   const [invoice, setInvoice] = useState('')

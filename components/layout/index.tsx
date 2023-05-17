@@ -10,6 +10,7 @@ import { ContractsProvider } from 'components/providers/contracts'
 import WeblnModal from 'components/modals/webln'
 import { WeblnProvider } from 'components/providers/webln'
 import MintLimitModal from 'components/modals/mintLimit'
+import { ConfigProvider } from 'components/providers/config'
 
 interface LayoutProps {
   children: ReactNode
@@ -28,23 +29,25 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <WalletProvider>
       <WeblnProvider>
-        <ContractsProvider>
-          <UseDesktopBanner />
-          <div className="is-hidden-touch">
-            <Banner />
-            <Navbar />
-            <main>
-              <div className="container">
-                <Breadcrumbs />
-              </div>
-              <div className="container">{children}</div>
-            </main>
-            <Footer />
-            <TradeModal />
-            <WeblnModal />
-            <MintLimitModal />
-          </div>
-        </ContractsProvider>
+        <ConfigProvider>
+          <ContractsProvider>
+            <UseDesktopBanner />
+            <div className="is-hidden-touch">
+              <Banner />
+              <Navbar />
+              <main>
+                <div className="container">
+                  <Breadcrumbs />
+                </div>
+                <div className="container">{children}</div>
+              </main>
+              <Footer />
+              <TradeModal />
+              <WeblnModal />
+              <MintLimitModal />
+            </div>
+          </ContractsProvider>
+        </ConfigProvider>
       </WeblnProvider>
     </WalletProvider>
   )

@@ -9,10 +9,12 @@ import { ContractsContext } from 'components/providers/contracts'
 import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import { WalletContext } from 'components/providers/wallet'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractTopup: NextPage = () => {
   const { network } = useContext(WalletContext)
-  const { assets, newContract, setNewContract, setOldContract } =
+  const { assets } = useContext(ConfigContext)
+  const { newContract, setNewContract, setOldContract } =
     useContext(ContractsContext)
 
   const [isLoading, setIsLoading] = useState(true)

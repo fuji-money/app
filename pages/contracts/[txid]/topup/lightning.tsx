@@ -43,11 +43,13 @@ import { Outcome } from 'lib/types'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { broadcastTx } from 'lib/marina'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractTopupLightning: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
+  const { oracles } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -169,6 +171,7 @@ const ContractTopupLightning: NextPage = () => {
           oldContract,
           network,
           collateralUtxos,
+          oracles[0],
         )
 
         // propose contract to alpha factory

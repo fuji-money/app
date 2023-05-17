@@ -15,21 +15,13 @@ export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 
 export const defaultNetwork = 'liquid'
 
-// covenant
 export const treasuryPublicKey =
   process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||
   '03e6fbc4bcd62026a3d5a13ab8fd5b72008ff38907b2ee64de45e25263a418c377'
-export const oraclePubKey =
-  process.env.NEXT_PUBLIC_FUJI_LABS_ORACLE_PUBKEY ||
-  'c304c3b5805eecff054c319c545dc6ac2ad44eb70f79dd9570e284c5a62c0f9e' // TODO
 
 export const fUSDAssetId =
   process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
   '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806'
-
-export const oracleURL =
-  process.env.NEXT_PUBLIC_ORACLE_URL ||
-  'https://oracle.fuji.money/oracle/BTCUSD' // TODO - remove alternative url
 
 export const factoryUrlMainnet =
   process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev-factory.fuji.money'
