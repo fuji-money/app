@@ -7,7 +7,7 @@ interface EmptyStateProps {
 
 const EmptyState = ({ children }: EmptyStateProps) => {
   return (
-    <div className="empty-state">
+    <div className="empty-state is-box has-pink-border">
       <div className="cloud-1">
         <Image
           src="/images/cloud-1.svg"

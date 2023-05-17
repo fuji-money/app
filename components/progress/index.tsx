@@ -2,13 +2,16 @@ import { prettyNumber } from 'lib/pretty'
 import { Asset } from 'lib/types'
 
 const ProgressBar = ({ asset }: { asset: Asset }) => {
-  if (!asset.mint) return <></>
-  const { actual, max } = asset.mint
-  const percentFilledBarWidth = (actual * 100) / max
+  const { circulating, maxCirculatingSupply } = asset
+  if (!circulating || !maxCirculatingSupply) return <></>
+  const percentFilledBarWidth = (circulating * 100) / maxCirculatingSupply
   const percentEmptyBarWidth = 100 - percentFilledBarWidth
   const [yellow, purple] = ['#ffede3', '#6b1d9c']
-  const minted = actual ? prettyNumber(actual, 0, 3) : ''
-  const remaining = max - actual ? prettyNumber(max - actual, 0, 3) : ''
+  const minted = circulating ? prettyNumber(circulating, 0, 3) : ''
+  const remaining =
+    maxCirculatingSupply - circulating
+      ? prettyNumber(maxCirculatingSupply - circulating, 0, 3)
+      : ''
   return (
     <div className="progress-container is-flex">
       <div className="filled">

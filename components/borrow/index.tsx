@@ -15,10 +15,9 @@ import { ContractsContext } from 'components/providers/contracts'
 
 interface BorrowProps {
   offer: Offer
-  oracles: Oracle[]
 }
 
-const Borrow = ({ offer, oracles }: BorrowProps) => {
+const Borrow = ({ offer }: BorrowProps) => {
   const { newContract } = useContext(ContractsContext)
 
   const startingRatio = offer.collateral.ratio ? offer.collateral.ratio + 50 : 0
@@ -50,7 +49,6 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
               <BorrowForm
                 contract={contract}
                 minRatio={minRatio}
-                oracles={oracles}
                 ratio={ratio}
                 setContract={setContract}
                 setRatio={setRatio}

@@ -1,4 +1,4 @@
-import { ActivityType, Asset, Contract, ContractState } from './types'
+import { ActivityType, Asset, Contract, ContractState, Oracle } from './types'
 import Decimal from 'decimal.js'
 import {
   assetPair,
@@ -7,7 +7,6 @@ import {
   expirationTimeout,
   minDustLimit,
 } from './constants'
-import { fetchAsset, fetchOracle } from './api'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
@@ -20,6 +19,7 @@ import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
+import { populateAsset } from './assets'
 
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
@@ -73,10 +73,9 @@ export const coinToContract = async (
     coin.blindingData
   ) {
     const params = coin.scriptDetails.params
-    const collateral = await fetchAsset(coin.blindingData.asset, network)
-    const synthetic = await fetchAsset(params[0] as string, network)
-    const oracle = await fetchOracle(params[3] as string, network)
-    if (!collateral || !synthetic || !oracle) return
+    const collateral = populateAsset(coin.blindingData.asset)
+    const synthetic = populateAsset(params[0] as string)
+    if (!collateral || !synthetic) return
     const borrowAsset = params[0] as string
     const borrowAmount = params[1] as number
     const borrowerPublicKey = params[2] as string
@@ -104,7 +103,7 @@ export const coinToContract = async (
       createdAt: hex64LEToNumber(setupTimestamp),
       expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
       network: await getNetwork(),
-      oracles: [oracle.id],
+      oracles: [oraclePublicKey],
       payout: defaultPayout,
       priceLevel: hex64LEToNumber(params[5] as string),
       synthetic: {
@@ -218,22 +217,10 @@ export async function getContracts(
 ): Promise<Contract[]> {
   if (typeof window === 'undefined') return []
   const xPubKey = await getMainAccountXPubKey()
-  // cache assets for performance issues
-  const assetCache = new Map<string, Asset>()
-  const allTickers = new Set<string>()
-  getMyContractsFromStorage(network, xPubKey).map(
-    ({ collateral, synthetic }) => {
-      allTickers.add(collateral.ticker)
-      allTickers.add(synthetic.ticker)
-    },
-  )
-  for (const ticker of Array.from(allTickers.values())) {
-    assetCache.set(ticker, await fetchAsset(ticker, network))
-  }
   const promises = getMyContractsFromStorage(network, xPubKey).map(
     async (contract: Contract) => {
-      const collateral = assetCache.get(contract.collateral.ticker)
-      const synthetic = assetCache.get(contract.synthetic.ticker)
+      const collateral = populateAsset(contract.collateral.id)
+      const synthetic = populateAsset(contract.synthetic.id)
       if (!collateral)
         throw new Error(
           `Contract with unknown collateral ${contract.collateral.ticker}`,

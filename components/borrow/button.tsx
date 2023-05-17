@@ -1,6 +1,5 @@
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
-import { fetchAsset } from 'lib/api'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
@@ -16,24 +15,25 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
-  const { setNewContract } = useContext(ContractsContext)
+  const { assets, setNewContract } = useContext(ContractsContext)
   const { balances, connected, network } = useContext(WalletContext)
   const [enoughFunds, setEnoughFunds] = useState(false)
   const { collateral, oracles, synthetic } = contract
 
   useEffect(() => {
-    fetchAsset(contract.collateral.ticker, network).then((asset) => {
-      const funds = getAssetBalance(asset, balances)
-      const needed = contract.collateral.quantity
-      const enoughFundsOnMarina = connected && funds > needed
-      if (LightningEnabledTasks.Borrow) {
-        const outOfBounds = swapDepositAmountOutOfBounds(needed)
-        setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
-      } else {
-        setEnoughFunds(enoughFundsOnMarina)
-      }
-    })
-  })
+    const asset = assets.find((a) => a.ticker === contract.collateral.ticker)
+    if (!asset) return
+    const funds = getAssetBalance(asset, balances)
+    const needed = contract.collateral.quantity
+    const enoughFundsOnMarina = connected && funds > needed
+    if (LightningEnabledTasks.Borrow) {
+      const outOfBounds = swapDepositAmountOutOfBounds(needed)
+      setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
+    } else {
+      setEnoughFunds(enoughFundsOnMarina)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleClick = () => {
     setNewContract(contract)

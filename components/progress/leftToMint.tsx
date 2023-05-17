@@ -2,7 +2,7 @@ import { prettyNumber } from 'lib/pretty'
 import { Asset } from 'lib/types'
 
 const LeftToMint = ({ asset }: { asset: Asset }) => {
-  const amount = (asset.mint?.max ?? 0) - (asset.mint?.actual ?? 0)
+  const amount = (asset.maxCirculatingSupply ?? 0) - (asset.circulating ?? 0)
   return (
     <>
       <p className="has-text-weight-bold is-size-8">Left to mint</p>

@@ -32,10 +32,10 @@ const AssetRow = ({ asset }: AssetRowProps) => {
           </div>
         </div>
         <div className="column is-4">
-          {asset.mint?.max ? <ProgressBar asset={asset} /> : ''}
+          {asset.maxCirculatingSupply ? <ProgressBar asset={asset} /> : ''}
         </div>
         <div className="column is-1">
-          {asset.mint?.max ? <LeftToMint asset={asset} /> : ''}
+          {asset.maxCirculatingSupply ? <LeftToMint asset={asset} /> : ''}
         </div>
         <div className="column is-4 has-text-right">
           {disabled ? (

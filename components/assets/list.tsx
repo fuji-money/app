@@ -1,38 +1,26 @@
-import { useContext, useEffect, useRef, useState } from 'react'
-import { fetchAssets } from 'lib/api'
+import { useContext, useEffect, useState } from 'react'
 import { Asset } from 'lib/types'
 import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
-import { WalletContext } from 'components/providers/wallet'
+import { ContractsContext } from 'components/providers/contracts'
 
 const AssetsList = () => {
-  const [loading, setLoading] = useState(true)
-  const { network } = useContext(WalletContext)
+  const { loading, assets } = useContext(ContractsContext)
 
-  const assetsByNetwork = useRef<Record<string, Asset[]>>({})
-
-  const onlySynth = (asset: Asset) => asset.isSynthetic
+  const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
 
   useEffect(() => {
-    if (!assetsByNetwork.current[network]) {
-      setLoading(true)
-      fetchAssets(network).then((data) => {
-        assetsByNetwork.current[network] = data.filter(onlySynth)
-        setLoading(false)
-      })
-    }
-  }, [network])
-
-  const assets = assetsByNetwork.current[network]
+    setFilteredAssets(assets.filter((asset: Asset) => asset.isSynthetic))
+  }, [assets])
 
   if (loading) return <Spinner />
-  if (!assets) return <SomeError>Error getting assets</SomeError>
+  if (!filteredAssets) return <SomeError>Error getting assets</SomeError>
 
   return (
     <div className="assets-list">
-      {assets &&
-        assets.map((asset: Asset, index: number) => (
+      {filteredAssets &&
+        filteredAssets.map((asset: Asset, index: number) => (
           <AssetRow key={index} asset={asset} />
         ))}
     </div>

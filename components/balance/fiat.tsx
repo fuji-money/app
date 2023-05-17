@@ -1,34 +1,31 @@
 import { useContext, useEffect, useState } from 'react'
-import { fetchAssets } from 'lib/api'
 import { WalletContext } from 'components/providers/wallet'
 import Spinner from 'components/spinner'
 import { prettyNumber, prettyPercentage } from 'lib/pretty'
 import { getAssetBalance } from 'lib/marina'
+import { ContractsContext } from 'components/providers/contracts'
 
 const BalanceInFiat = () => {
+  const { balances, connected } = useContext(WalletContext)
+  const { assets, loading } = useContext(ContractsContext)
+
   const [balance, setBalance] = useState(0)
-  const [isLoading, setLoading] = useState(false)
-  const { balances, connected, network } = useContext(WalletContext)
 
   const delta = -2345.67
   const calcDelta = () => prettyPercentage(delta / balance)
   const deltaClass = delta < 0 ? 'delta red' : 'delta green'
 
   useEffect(() => {
-    setLoading(true)
-    fetchAssets(network).then((data) => {
-      setBalance(
-        data.reduce((prev, asset) => {
-          const quantity = getAssetBalance(asset, balances)
-          return prev + quantity * asset.value
-        }, 0),
-      )
-      setLoading(false)
-    })
-  }, [balances, connected, network])
+    setBalance(
+      assets.reduce((prev, asset) => {
+        const quantity = getAssetBalance(asset, balances)
+        return prev + quantity * asset.value
+      }, 0),
+    )
+  }, [assets, balances])
 
   if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
 
   return (
     <>

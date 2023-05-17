@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useEffect, useState } from 'react'
+import { createContext, ReactNode, useEffect, useRef, useState } from 'react'
 import {
   getBalances,
   getMarinaProvider,
@@ -8,6 +8,8 @@ import {
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
+import { artifact } from 'lib/artifact'
+import artifactJSON from 'lib/fuji.ionio.json'
 
 interface WalletContextProps {
   balances: Balance[]
@@ -51,7 +53,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // get marina provider
   useEffect(() => {
     getMarinaProvider().then((payload) => setMarina(payload))
-  })
+  }, [])
 
   // update connected state
   useEffect(() => {
@@ -76,8 +78,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         marina.off(onEnabledId)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [marina])
+  }, [marina, network])
 
   // update network and add event listener
   useEffect(() => {
@@ -98,7 +99,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         })
         .catch(console.error)
     }
-  }, [network, chainSource])
+  }, [chainSource, network])
 
   // update balances and add event listener
   useEffect(() => {
@@ -123,7 +124,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         }
       })
     }
-  }, [connected, marina, network])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, network])
 
   return (
     <WalletContext.Provider

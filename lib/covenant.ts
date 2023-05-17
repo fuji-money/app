@@ -101,7 +101,7 @@ async function getCovenantOutput(contract: Contract): Promise<{
   const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
-    oraclePublicKey: `0x${oraclePk.slice(1).toString('hex')}`,
+    oraclePublicKey: `0x${oraclePk.toString('hex')}`,
     treasuryPublicKey: `0x${treasuryPk.slice(1).toString('hex')}`,
     priceLevel: numberToHex64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHex64LE(timestamp),

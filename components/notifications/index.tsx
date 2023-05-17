@@ -1,5 +1,4 @@
 import { Contract } from 'lib/types'
-import { fetchAsset } from 'lib/api'
 import { useContext, useEffect, useState } from 'react'
 import NotEnoughFundsNotification from 'components/notifications/notEnoughFunds'
 import NotEnoughOraclesNotification from 'components/notifications/notEnoughOracles'
@@ -13,7 +12,8 @@ import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
-import { LightningEnabledTasks, Tasks } from 'lib/tasks'
+import { LightningEnabledTasks } from 'lib/tasks'
+import { ContractsContext } from 'components/providers/contracts'
 
 interface NotificationsProps {
   contract: Contract
@@ -37,26 +37,21 @@ const Notifications = ({
   const [outOfBounds, setOutOfBounds] = useState(false)
 
   const { balances, connected, network } = useContext(WalletContext)
+  const { assets, loading } = useContext(ContractsContext)
 
   const { collateral, oracles, payoutAmount } = contract
   const spendQuantity =
     typeof topup === 'undefined' ? collateral.quantity : topup
 
   useEffect(() => {
-    fetchAsset(collateral.ticker, network).then((asset) => {
-      const balance = getAssetBalance(asset, balances)
-      setNotEnoughFunds(connected && spendQuantity > balance)
-      setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
-      setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
-    })
-  }, [
-    balances,
-    connected,
-    collateral.ticker,
-    network,
-    payoutAmount,
-    spendQuantity,
-  ])
+    const asset = assets.find((a) => a.ticker === contract.collateral.ticker)
+    if (!asset) return
+    const balance = getAssetBalance(asset, balances)
+    setNotEnoughFunds(connected && spendQuantity > balance)
+    setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
+    setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     setRatioTooLow(ratio < minRatio)

@@ -31,13 +31,14 @@ export interface Asset {
   id: string
   isSynthetic: boolean
   isAvailable: boolean
-  mint?: { actual: number; max: number }
   name: string
   precision: number
   quantity: number
   ratio?: number
   ticker: string
   value: number
+  maxCirculatingSupply?: number
+  circulating?: number
 }
 
 export enum ContractState {
@@ -128,10 +129,10 @@ export interface Offer {
 }
 
 export interface Oracle {
-  id: string
   name: string
   disabled: boolean
   pubkey?: string
+  url?: string
 }
 
 export interface Stock {
@@ -187,4 +188,31 @@ export interface BlockHeader {
   previousBlockHash: string
   timestamp: number
   version: number
+}
+
+// Config response
+export interface ConfigResponseAsset {
+  assetID: string
+  tokenID: string
+  entropy: string
+  minCollateralRatio: number
+  maxCirculatingSupply: number
+}
+
+export interface ConfigResponseOffer {
+  id: string
+  collateralAsset: string
+  syntheticAsset: string
+}
+
+export interface ConfigResponseOracle {
+  url: string
+  xOnlyPublicKey: string
+}
+
+export interface ConfigResponse {
+  assets: [ConfigResponseAsset]
+  offers: [ConfigResponseOffer]
+  oracles: [ConfigResponseOracle]
+  xOnlyIssuerPublicKey: string
 }

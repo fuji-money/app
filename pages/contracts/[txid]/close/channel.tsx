@@ -13,7 +13,7 @@ import { WalletContext } from 'components/providers/wallet'
 const ContractRedeemChannel: NextPage = () => {
   const { network } = useContext(WalletContext)
   const { newContract, setNewContract } = useContext(ContractsContext)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()
   const { txid } = router.query
@@ -22,14 +22,14 @@ const ContractRedeemChannel: NextPage = () => {
     if (txid && typeof txid === 'string') {
       getContract(txid, network).then((contract) => {
         if (contract) setNewContract(contract)
-        setLoading(false)
+        setIsLoading(false)
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
-  if (loading) return <Spinner />
+  if (isLoading) return <Spinner />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   return <Channel contract={newContract} task={Tasks.Redeem} />

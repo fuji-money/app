@@ -1,25 +1,15 @@
-import { useContext, useEffect, useState } from 'react'
-import { fetchAssets } from 'lib/api'
-import { Asset } from 'lib/types'
+import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import BalanceRow from './row'
 import Spinner from 'components/spinner'
+import { ContractsContext } from 'components/providers/contracts'
 
 const BalanceTable = () => {
-  const [assets, setAssets] = useState<Asset[]>()
-  const [isLoading, setLoading] = useState(false)
-  const { connected, network } = useContext(WalletContext)
-
-  useEffect(() => {
-    setLoading(true)
-    fetchAssets(network).then((data) => {
-      setAssets(data)
-      setLoading(false)
-    })
-  }, [connected, network])
+  const { connected } = useContext(WalletContext)
+  const { assets, loading } = useContext(ContractsContext)
 
   if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
 
   return (
     <table className="table is-fullwidth">

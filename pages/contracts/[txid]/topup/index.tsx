@@ -15,7 +15,7 @@ const ContractTopup: NextPage = () => {
   const { newContract, setNewContract, setOldContract } =
     useContext(ContractsContext)
 
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
   const router = useRouter()
   const { txid } = router.query
@@ -27,14 +27,14 @@ const ContractTopup: NextPage = () => {
           if (!newContract) setNewContract(contract)
           setOldContract(contract)
         }
-        setLoading(false)
+        setIsLoading(false)
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
-  if (loading) return <Spinner />
+  if (isLoading) return <Spinner />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   return <Topup />

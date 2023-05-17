@@ -56,11 +56,7 @@ const TopupForm = ({
       <p className="is-size-6 ml-5 mb-4">
         Gravida sed gravida in rhoncus enim. Nullam vitae at.
       </p>
-      <Oracles
-        contract={newContract}
-        oracles={oracles}
-        setContract={setNewContract}
-      />
+      <Oracles contract={newContract} setContract={setNewContract} />
     </div>
   )
 }

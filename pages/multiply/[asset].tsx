@@ -3,32 +3,32 @@ import { useContext, useEffect, useState } from 'react'
 import Multiply from 'components/multiply'
 import { useRouter } from 'next/router'
 import { Offer } from 'lib/types'
-import { fetchOffer } from 'lib/api'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
-import { WalletContext } from 'components/providers/wallet'
-import { TICKERS } from 'lib/server'
+import { TICKERS } from 'lib/assets'
+import { ContractsContext } from 'components/providers/contracts'
 
 const MultiplyAsset: NextPage = () => {
   const router = useRouter()
   const { asset } = router.query
 
-  const { network } = useContext(WalletContext)
+  const { loading, offers } = useContext(ContractsContext)
 
   const [offer, setOffer] = useState<Offer>()
-  const [isLoading, setLoading] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
     if (asset === 'btc-long') {
-      fetchOffer(TICKERS.fuji, TICKERS.lbtc, network).then((data) => {
-        setOffer(data)
-        setLoading(false)
-      })
+      setOffer(
+        offers.find(
+          (offer) =>
+            offer.collateral.ticker === TICKERS.lbtc &&
+            offer.synthetic.ticker === TICKERS.fuji,
+        ),
+      )
     }
-  }, [asset, network])
+  }, [asset, offers])
 
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!offer) return <SomeError>Error getting offer</SomeError>
 
   return <Multiply offer={offer} />

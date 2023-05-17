@@ -10,7 +10,7 @@ import Balance from 'components/balance'
 import Title from 'components/title'
 import { operationFromTask } from 'lib/utils'
 import { LightningEnabledTasks } from 'lib/tasks'
-import { TICKERS } from 'lib/server'
+import { TICKERS } from 'lib/assets'
 
 interface ChannelButtonProps {
   name: string

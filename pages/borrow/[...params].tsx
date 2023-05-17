@@ -4,7 +4,6 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
-import { fetchOffers } from 'lib/api'
 import { Asset, Contract, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
@@ -57,11 +56,15 @@ const BorrowParams: NextPage = () => {
   const { chainSource, network, updateBalances } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { newContract, oracles, reloadContracts, resetContracts } =
-    useContext(ContractsContext)
+  const {
+    loading,
+    newContract,
+    offers,
+    oracles,
+    reloadContracts,
+    resetContracts,
+  } = useContext(ContractsContext)
 
-  const [offers, setOffers] = useState<Offer[]>()
-  const [loading, setLoading] = useState(true)
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [invoice, setInvoice] = useState('')
@@ -222,7 +225,6 @@ const BorrowParams: NextPage = () => {
     setData(newContract.txid)
     setResult(Outcome.Success)
     setStage(ModalStages.ShowResult)
-    reloadContracts()
   }
 
   // handle payment through lightning invoice
@@ -338,15 +340,6 @@ const BorrowParams: NextPage = () => {
     }
   }
 
-  useEffect(() => {
-    if (oracles) {
-      fetchOffers(network).then((data) => {
-        setOffers(data)
-        setLoading(false)
-      })
-    }
-  }, [network, oracles])
-
   if (!EnabledTasks[Tasks.Borrow]) return <NotAllowed />
   if (loading) return <Spinner />
   if (!offers) return <SomeError>Error getting offers</SomeError>
@@ -382,7 +375,7 @@ const BorrowParams: NextPage = () => {
           </SomeError>
         )
       // ok, proceed
-      return <Borrow offer={offer} oracles={oracles} />
+      return <Borrow offer={offer} />
     case 3:
       if (!newContract) return <SomeError>Contract not found</SomeError>
       switch (params[2]) {
