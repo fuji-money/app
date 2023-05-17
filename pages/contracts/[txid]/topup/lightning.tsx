@@ -49,7 +49,7 @@ const ContractTopupLightning: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
-  const { oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -58,6 +58,8 @@ const ContractTopupLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+
+  const { oracles } = config
 
   const resetModal = () => {
     resetContracts()

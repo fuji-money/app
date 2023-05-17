@@ -16,13 +16,15 @@ import SomeError from 'components/layout/error'
 import { ConfigContext } from 'components/providers/config'
 
 const Topup = () => {
-  const { oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, oldContract, setNewContract } =
     useContext(ContractsContext)
 
   const [ratio, setRatio] = useState(
     getContractRatio(newContract ?? oldContract),
   )
+
+  const { oracles } = config
 
   useEffect(() => {
     if (newContract) {

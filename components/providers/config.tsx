@@ -5,27 +5,28 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { Asset, ConfigResponse, Offer, Oracle } from 'lib/types'
+import { Config, ConfigResponse } from 'lib/types'
 import { WalletContext } from './wallet'
-import { assetExplorerUrlMainnet, assetExplorerUrlTestnet } from 'lib/constants'
 import { fetchConfig, getBTCvalue } from 'lib/api'
-import { fromSatoshis, openModal } from 'lib/utils'
-import { getLBTC, populateAsset, TICKERS } from 'lib/assets'
+import { openModal } from 'lib/utils'
+import {
+  getAssetCirculation,
+  getLBTC,
+  populateAsset,
+  TICKERS,
+} from 'lib/assets'
 import { populateOffer } from 'lib/offers'
 import { populateOracle } from 'lib/oracles'
-import { fetchURL } from 'lib/fetch'
 import { ModalIds } from 'components/modals/modal'
 
 interface ConfigContextProps {
-  assets: Asset[]
-  offers: Offer[]
-  oracles: Oracle[]
+  config: Config
 }
 
+const emptyConfig = { assets: [], offers: [], oracles: [] }
+
 export const ConfigContext = createContext<ConfigContextProps>({
-  assets: [],
-  offers: [],
-  oracles: [],
+  config: emptyConfig,
 })
 
 interface ConfigProviderProps {
@@ -35,52 +36,38 @@ interface ConfigProviderProps {
 export const ConfigProvider = ({ children }: ConfigProviderProps) => {
   const { network } = useContext(WalletContext)
 
-  const [assets, setAssets] = useState<Asset[]>([])
-  const [offers, setOffers] = useState<Offer[]>([])
-  const [oracles, setOracles] = useState<Oracle[]>([])
-
-  const getAssetCirculation = async (asset: Asset): Promise<number> => {
-    if (!asset.id) return 0
-    const assetExplorerUrl =
-      network === 'liquid' ? assetExplorerUrlMainnet : assetExplorerUrlTestnet
-    const data = await fetchURL(`${assetExplorerUrl}${asset.id}`)
-    if (!data) return 0
-    const { chain_stats, mempool_stats } = data
-    const issued = chain_stats.issued_amount + mempool_stats.issued_amount
-    const burned = chain_stats.burned_amount + mempool_stats.burned_amount
-    return fromSatoshis(issued - burned, asset.precision)
-  }
+  const [config, setConfig] = useState<Config>(emptyConfig)
 
   const reloadConfig = async () => {
-    console.log('network', network)
+    // fetch config from factory
     const config: ConfigResponse = await fetchConfig(network)
     if (!config) return
 
-    const _assets = config.assets
+    // populate oracles with name
+    const oracles = config.oracles.map((oracle) => populateOracle(oracle))
+
+    // populate assets with all different attributes
+    const assets = config.assets
       .map((asset) => populateAsset(asset))
       .concat(getLBTC(network))
 
-    const _oracles = config.oracles.map((oracle) => populateOracle(oracle))
-
-    for (const asset of _assets) {
+    // add value to lbtc and check if asset has reached circulation limit
+    for (const asset of assets) {
       if (asset.ticker === TICKERS.lbtc)
-        asset.value = await getBTCvalue(_oracles[0])
+        asset.value = await getBTCvalue(oracles[0])
       if (asset.maxCirculatingSupply) {
-        asset.circulating = await getAssetCirculation(asset)
+        asset.circulating = await getAssetCirculation(asset, network)
         if (asset.maxCirculatingSupply === asset.circulating)
           openModal(ModalIds.MintLimit)
       }
     }
 
-    const _offers = config.offers.map((offer) =>
-      populateOffer(offer, _assets, _oracles),
+    // populate offers with assets and oracles
+    const offers = config.offers.map((offer) =>
+      populateOffer(offer, assets, oracles),
     )
 
-    setAssets(_assets)
-    setOffers(_offers)
-    setOracles(_oracles)
-
-    console.log('end of network', network, _assets)
+    setConfig({ assets, offers, oracles })
   }
 
   useEffect(() => {
@@ -89,13 +76,7 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
   }, [network])
 
   return (
-    <ConfigContext.Provider
-      value={{
-        assets,
-        offers,
-        oracles,
-      }}
-    >
+    <ConfigContext.Provider value={{ config }}>
       {children}
     </ConfigContext.Provider>
   )

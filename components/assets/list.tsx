@@ -7,10 +7,12 @@ import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 const AssetsList = () => {
-  const { assets } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
+
+  const { assets } = config
 
   useEffect(() => {
     setFilteredAssets(assets.filter((asset: Asset) => asset.isSynthetic))

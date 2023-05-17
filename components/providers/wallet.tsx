@@ -8,6 +8,7 @@ import {
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
+import { sleep } from 'lib/utils'
 
 interface WalletContextProps {
   balances: Balance[]
@@ -50,7 +51,17 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // get marina provider
   useEffect(() => {
-    getMarinaProvider().then((payload) => setMarina(payload))
+    async function getMarinaProviderAndMaybeSleep() {
+      const marinaProvider = await getMarinaProvider()
+      // in the case user has marina on 'testnet' and defaultNetwork is 'liquid'
+      // there's a race condition where the app starts by getting the config for
+      // 'liquid' and then immediately for 'testnet', but with the risk of 'liquid'
+      // beeing the last to end so state would be 'liquid' instead of 'testnet'
+      if ((await marinaProvider?.getNetwork()) !== defaultNetwork)
+        await sleep(1000)
+      setMarina(marinaProvider)
+    }
+    getMarinaProviderAndMaybeSleep()
   }, [])
 
   // update connected state

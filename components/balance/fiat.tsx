@@ -8,10 +8,12 @@ import { ConfigContext } from 'components/providers/config'
 
 const BalanceInFiat = () => {
   const { balances, connected } = useContext(WalletContext)
-  const { assets } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
   const [balance, setBalance] = useState(0)
+
+  const { assets } = config
 
   const delta = -2345.67
   const calcDelta = () => prettyPercentage(delta / balance)

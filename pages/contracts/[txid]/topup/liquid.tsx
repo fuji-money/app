@@ -31,13 +31,15 @@ import { ConfigContext } from 'components/providers/config'
 const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
-  const { oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+
+  const { oracles } = config
 
   const resetModal = () => {
     resetContracts()

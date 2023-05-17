@@ -9,8 +9,10 @@ import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 const Borrow: NextPage = () => {
-  const { offers } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading, resetContracts } = useContext(ContractsContext)
+
+  const { offers } = config
 
   resetContracts()
 

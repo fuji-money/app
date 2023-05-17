@@ -29,7 +29,7 @@ const Notifications = ({
   topup,
 }: NotificationsProps) => {
   const { balances, connected } = useContext(WalletContext)
-  const { assets } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
 
   const [notEnoughFunds, setNotEnoughFunds] = useState(false)
   const [notEnoughOracles, setNotEnoughOracles] = useState(false)
@@ -38,6 +38,8 @@ const Notifications = ({
   const [belowDustLimit, setBelowDustLimit] = useState(false)
   const [collateralTooLow, setCollateralTooLow] = useState(false)
   const [outOfBounds, setOutOfBounds] = useState(false)
+
+  const { assets } = config
 
   const { collateral, oracles, payoutAmount } = contract
   const spendQuantity =

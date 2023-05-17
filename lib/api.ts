@@ -18,7 +18,6 @@ export function getFactoryUrl(network: NetworkString) {
 }
 
 export async function fetchConfig(network: NetworkString) {
-  console.log('fetchConfig', network, getFactoryUrl(network))
   return await fetchURL(getFactoryUrl(network) + '/contracts/info')
 }
 

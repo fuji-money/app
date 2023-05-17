@@ -78,11 +78,13 @@ export const coinToContract = async (
     if (!collateral || !synthetic) return
     const borrowAsset = params[0] as string
     const borrowAmount = params[1] as number
-    const borrowerPublicKey = params[2] as string
-    const oraclePublicKey = params[3] as string
-    const treasuryPublicKey = params[4] as string
-    const priceLevel = params[5] as string
-    const setupTimestamp = params[6] as string
+    const treasuryPublicKey = params[2] as string
+    const expirationTimeout = params[3] as string
+    const borrowerPublicKey = params[4] as string
+    const oraclePublicKey = params[5] as string
+    const priceLevel = params[6] as string
+    const setupTimestamp = params[7] as string
+    const assetPair = params[8] as string
     const createdAt = hex64LEToNumber(setupTimestamp)
     const contract: Contract = {
       collateral: {
@@ -100,15 +102,15 @@ export const coinToContract = async (
         priceLevel,
         setupTimestamp,
       },
-      createdAt: hex64LEToNumber(setupTimestamp),
+      createdAt,
       expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
       network: await getNetwork(),
       oracles: [oraclePublicKey],
       payout: defaultPayout,
-      priceLevel: hex64LEToNumber(params[5] as string),
+      priceLevel: hex64LEToNumber(priceLevel),
       synthetic: {
         ...synthetic,
-        quantity: params[1] as number,
+        quantity: borrowAmount as number,
       },
       txid: coin.txid,
       vout: coin.vout,
@@ -217,7 +219,6 @@ export async function getContracts(
   network: NetworkString,
 ): Promise<Contract[]> {
   if (typeof window === 'undefined' || assets.length === 0) return []
-  console.log('assets getContracts', assets)
   const xPubKey = await getMainAccountXPubKey()
   const promises = getMyContractsFromStorage(network, xPubKey).map(
     async (contract: Contract) => {

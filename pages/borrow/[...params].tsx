@@ -57,7 +57,7 @@ const BorrowParams: NextPage = () => {
   const { chainSource, network, updateBalances } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { offers, oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -69,6 +69,8 @@ const BorrowParams: NextPage = () => {
 
   const router = useRouter()
   const { params } = router.query
+
+  const { offers, oracles } = config
 
   const resetModal = () => {
     resetContracts()

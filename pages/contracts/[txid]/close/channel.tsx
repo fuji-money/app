@@ -13,9 +13,11 @@ import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemChannel: NextPage = () => {
   const { network } = useContext(WalletContext)
-  const { assets } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, setNewContract } = useContext(ContractsContext)
   const [isLoading, setIsLoading] = useState(true)
+
+  const { assets } = config
 
   const router = useRouter()
   const { txid } = router.query

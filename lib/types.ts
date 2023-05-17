@@ -59,11 +59,11 @@ export type OracleAttestation = {
 }
 
 export type ContractParams = {
-  assetPair: Buffer
+  assetPair: string
   borrowAsset: string
   borrowAmount: number
   borrowerPublicKey: string
-  expirationTimeout: Buffer | number
+  expirationTimeout: string
   oraclePublicKey: string
   priceLevel: string
   setupTimestamp: string
@@ -215,4 +215,10 @@ export interface ConfigResponse {
   offers: [ConfigResponseOffer]
   oracles: [ConfigResponseOracle]
   xOnlyIssuerPublicKey: string
+}
+
+export interface Config {
+  assets: Asset[]
+  offers: Offer[]
+  oracles: Oracle[]
 }

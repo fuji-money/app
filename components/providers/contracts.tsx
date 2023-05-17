@@ -71,13 +71,15 @@ interface ContractsProviderProps {
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { connected, marina, network, xPubKey, chainSource } =
     useContext(WalletContext)
-  const { assets, offers, oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [newContract, setNewContract] = useState<Contract>()
   const [oldContract, setOldContract] = useState<Contract>()
+
+  const { assets } = config
 
   // save first time app was run
   const firstRun = useRef(Date.now())
@@ -246,27 +248,13 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     return () => {}
   }
 
-  const firstRender = useRef<NetworkString[]>([])
-
-  useEffect(() => {
-    async function runOnceForEachNetwork() {
-      if (connected && network && xPubKey) {
-        // run only on first render for each network
-        if (!firstRender.current.includes(network)) {
-          await syncContractsWithMarina()
-          firstRender.current.push(network)
-          return setMarinaListener() // return the close listener function
-        }
-      }
-    }
-    runOnceForEachNetwork()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network])
-
   useEffect(() => {
     async function runOnAssetsChange() {
-      await reloadContracts()
-      await syncContractsWithMarina()
+      if (assets[0]) {
+        await syncContractsWithMarina()
+        await reloadContracts()
+        return setMarinaListener() // return the close listener function
+      }
     }
     runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps

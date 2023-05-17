@@ -123,8 +123,6 @@ async function getCovenantOutput(
   return {
     contractParams: {
       ...contractParams,
-      assetPair,
-      expirationTimeout,
       borrowerPublicKey: `0x${(await getPublicKey(covenantAddress))
         .subarray(1)
         .toString('hex')}`,
@@ -346,7 +344,7 @@ export async function proposeBorrowContract(
     covenantOutputIndexInTransaction: 0,
     borrowerAddress: borrowerAddress.confidentialAddress,
     contractParams: {
-      assetPair,
+      assetPair: Buffer.from(assetPair.substring(2), 'hex'),
       borrowAsset,
       borrowAmount,
       borrowerPublicKey,
@@ -398,7 +396,7 @@ export async function prepareRedeemTx(
   )
   if (!coinToRedeem)
     throw new Error(
-      'Contract cannot be found in the connected wallet.' +
+      'Contract cannot be found in the connected wallet. ' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
@@ -792,8 +790,8 @@ export async function proposeTopupContract(
       borrowerPublicKey,
       priceLevel: hex64LEToBase64LE(priceLevel),
       setupTimestamp: hex64LEToBase64LE(setupTimestamp),
-      expirationTimeout,
-      assetPair,
+      expirationTimeout: expirationSeconds,
+      assetPair: Buffer.from(assetPair.substring(2), 'hex'),
     },
     blindersOfCollateralInputs,
     blindersOfSynthInputs,

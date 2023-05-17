@@ -8,7 +8,9 @@ interface OraclesProps {
 }
 
 export default function Oracles({ contract, setContract }: OraclesProps) {
-  const { oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
+
+  const { oracles } = config
 
   const hasOracle = (id = '') => contract.oracles.includes(id)
 

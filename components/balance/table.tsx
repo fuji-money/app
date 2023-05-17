@@ -7,8 +7,10 @@ import { ConfigContext } from 'components/providers/config'
 
 const BalanceTable = () => {
   const { connected } = useContext(WalletContext)
-  const { assets } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
+
+  const { assets } = config
 
   if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
   if (loading) return <Spinner />

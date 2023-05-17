@@ -17,11 +17,13 @@ interface BorrowButtonProps {
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { balances, connected } = useContext(WalletContext)
-  const { assets } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { setNewContract } = useContext(ContractsContext)
 
   const [enoughFunds, setEnoughFunds] = useState(false)
   const { collateral, oracles, synthetic } = contract
+
+  const { assets } = config
 
   useEffect(() => {
     const asset = assets.find((a) => a.ticker === contract.collateral.ticker)

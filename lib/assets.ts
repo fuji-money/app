@@ -1,8 +1,13 @@
 import { NetworkString } from 'marina-provider'
-import { fUSDAssetId } from './constants'
+import {
+  assetExplorerUrlMainnet,
+  assetExplorerUrlTestnet,
+  fUSDAssetId,
+} from './constants'
 import { Asset, ConfigResponseAsset } from './types'
 import { networks } from 'liquidjs-lib'
 import { fromSatoshis } from './utils'
+import { fetchURL } from './fetch'
 
 export enum TICKERS {
   fbmn = 'FBMN',
@@ -78,4 +83,19 @@ export function getLBTC(network: NetworkString): Asset {
   const id = networks[network].assetHash
   const asset = assetById[id]
   return { ...asset, id }
+}
+
+export async function getAssetCirculation(
+  asset: Asset,
+  network: NetworkString,
+): Promise<number> {
+  if (!asset.id) return 0
+  const assetExplorerUrl =
+    network === 'liquid' ? assetExplorerUrlMainnet : assetExplorerUrlTestnet
+  const data = await fetchURL(`${assetExplorerUrl}${asset.id}`)
+  if (!data) return 0
+  const { chain_stats, mempool_stats } = data
+  const issued = chain_stats.issued_amount + mempool_stats.issued_amount
+  const burned = chain_stats.burned_amount + mempool_stats.burned_amount
+  return fromSatoshis(issued - burned, asset.precision)
 }

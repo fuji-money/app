@@ -12,10 +12,12 @@ import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 const ExchangeTicker: NextPage = () => {
-  const { offers } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
   const [offer, setOffer] = useState<Offer>()
+
+  const { offers } = config
 
   const router = useRouter()
   const { ticker } = router.query

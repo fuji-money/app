@@ -28,7 +28,7 @@ const MultiplyForm = ({
   setContract,
   setDeposit,
 }: MultiplyFormProps) => {
-  const { assets, oracles } = useContext(ConfigContext)
+  const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
   const [lbtc, setLbtc] = useState<Asset>()
@@ -38,6 +38,8 @@ const MultiplyForm = ({
   const [multiplier, setMultiplier] = useState(0)
   const [quantity, setQuantity] = useState(0)
   const [ratio, setRatio] = useState(maxMultiplyRatio)
+
+  const { assets, oracles } = config
 
   useEffect(() => {
     setLbtc(assets.find((asset) => asset.ticker === TICKERS.lbtc))
