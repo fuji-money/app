@@ -9,6 +9,7 @@ import Banner from 'components/banner'
 import { ContractsProvider } from 'components/providers/contracts'
 import WeblnModal from 'components/modals/webln'
 import { WeblnProvider } from 'components/providers/webln'
+import MintLimitModal from 'components/modals/mintLimit'
 
 interface LayoutProps {
   children: ReactNode
@@ -41,6 +42,7 @@ export default function Layout({ children }: LayoutProps) {
             <Footer />
             <TradeModal />
             <WeblnModal />
+            <MintLimitModal />
           </div>
         </ContractsProvider>
       </WeblnProvider>

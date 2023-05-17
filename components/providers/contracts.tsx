@@ -40,13 +40,14 @@ import {
   marinaFujiAccountID,
 } from 'lib/constants'
 import { fetchConfig, getBTCvalue } from 'lib/api'
-import { fromSatoshis, hex64LEToNumber } from 'lib/utils'
+import { fromSatoshis, hex64LEToNumber, openModal } from 'lib/utils'
 import { address, networks } from 'liquidjs-lib'
 import { getLBTC, populateAsset, TICKERS } from 'lib/assets'
 import { populateOffer } from 'lib/offers'
 import { getOtherOracles, populateOracle } from 'lib/oracles'
 import { fetchURL } from 'lib/fetch'
 import { replaceArtifactConstructorWithArguments } from '@ionio-lang/ionio'
+import { ModalIds } from 'components/modals/modal'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -125,7 +126,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
     for (const a of _assets) {
       if (a.ticker === TICKERS.lbtc) a.value = await getBTCvalue()
-      if (a.maxCirculatingSupply) a.circulating = await getAssetCirculation(a)
+      if (a.maxCirculatingSupply) {
+        a.circulating = await getAssetCirculation(a)
+        if (a.maxCirculatingSupply === a.circulating)
+          openModal(ModalIds.MintLimit)
+      }
     }
 
     const _oracles = config.oracles
