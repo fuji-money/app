@@ -69,7 +69,7 @@ interface ContractsProviderProps {
 }
 
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
-  const { connected, marina, network, xPubKey, chainSource } =
+  const { chainSource, connected, marina, network, xPubKey, warmingUp } =
     useContext(WalletContext)
   const { config } = useContext(ConfigContext)
 
@@ -248,17 +248,22 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     return () => {}
   }
 
+  const firstRender = useRef<NetworkString[]>([])
+
   useEffect(() => {
     async function runOnAssetsChange() {
-      if (assets.length) {
-        await syncContractsWithMarina()
+      if (!warmingUp && assets.length) {
+        if (!firstRender.current.includes(network)) {
+          await syncContractsWithMarina()
+          firstRender.current.push(network)
+        }
         await reloadContracts()
         return setMarinaListener() // return the close listener function
       }
     }
     runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets[0]])
+  }, [assets, warmingUp])
 
   return (
     <ContractsContext.Provider

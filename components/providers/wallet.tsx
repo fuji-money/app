@@ -19,6 +19,7 @@ interface WalletContextProps {
   setConnected: (arg0: boolean) => void
   updateBalances: () => void
   xPubKey: string
+  warmingUp: boolean
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -30,6 +31,7 @@ export const WalletContext = createContext<WalletContextProps>({
   setConnected: () => {},
   updateBalances: () => {},
   xPubKey: '',
+  warmingUp: true,
 })
 
 interface WalletProviderProps {
@@ -44,16 +46,18 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [marina, setMarina] = useState<MarinaProvider>()
   const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
   const [xPubKey, setXPubKey] = useState('')
+  const [warmingUp, setWarmingUp] = useState(true)
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
   const updateXPubKey = async () => setXPubKey(await getMainAccountXPubKey())
 
-  const firstRender = useRef(true)
-
   // get marina provider
   useEffect(() => {
-    getMarinaProvider().then((payload) => setMarina(payload))
+    getMarinaProvider().then((marinaProvider) => {
+      if (!marinaProvider) setWarmingUp(false)
+      else setMarina(marinaProvider)
+    })
   }, [])
 
   // update connected state
@@ -84,17 +88,11 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // update network and add event listener
   useEffect(() => {
     if (connected && marina) {
-      // in the case user has marina on 'testnet' and defaultNetwork is 'liquid'
-      // there's a race condition where the app starts by getting the config for
-      // 'liquid' and then immediately for 'testnet', but with the risk of 'liquid'
-      // beeing the last to end so the final state would be 'liquid' instead of 'testnet'
-      marina.getNetwork().then((marinaNetwork) => {
-        if (firstRender.current && marinaNetwork !== defaultNetwork) {
-          sleep(2000).then(() => updateNetwork())
-        } else {
-          updateNetwork()
-        }
-      })
+      updateNetwork()
+      // give time for network change to propagate across components
+      // if user has marina on 'testnet' and app default is 'liquid'
+      // a race condition could ocurr
+      sleep(1000).then(() => setWarmingUp(false))
       const id = marina.on('NETWORK', updateNetwork)
       return () => marina.off(id)
     }
@@ -149,6 +147,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         setConnected,
         updateBalances,
         xPubKey,
+        warmingUp,
       }}
     >
       {children}
