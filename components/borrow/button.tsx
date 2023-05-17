@@ -45,6 +45,12 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     Router.push(`${Router.router?.asPath}/channel`)
   }
 
+  const { circulating, quantity, maxCirculatingSupply } = synthetic
+  const enoughMintSupply =
+    !maxCirculatingSupply || maxCirculatingSupply === -1
+      ? true
+      : maxCirculatingSupply >= (circulating ?? 0 + quantity)
+
   const enabled =
     connected &&
     enoughFunds &&
@@ -55,7 +61,8 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     synthetic.value > 0 &&
     oracles &&
     oracles.length > 0 &&
-    collateral.quantity > feeAmount + minDustLimit
+    collateral.quantity > feeAmount + minDustLimit &&
+    enoughMintSupply
 
   return (
     <div className="has-text-centered">
