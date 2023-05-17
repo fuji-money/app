@@ -48,8 +48,10 @@ export const assetExplorerUrlTestnet =
 
 const seconds3months = 3 * 30 * 24 * 60 * 60 // 3 months
 export const expirationSeconds = seconds3months - (seconds3months % 512)
-export const expirationTimeout = encodeExpirationTimeout(expirationSeconds)
-export const assetPair = Buffer.from('USD')
+export const expirationTimeout = `0x${encodeExpirationTimeout(
+  expirationSeconds,
+).toString('hex')}`
+export const assetPair = `0x${Buffer.from('USD').toString('hex')}`
 
 export const minDustLimit = 500
 export const feeAmount = 500 // fee for regular liquid tx

@@ -29,7 +29,10 @@ export type ProposeContractArgs = {
   borrowerAddress: string
   collateralAmount: number
   collateralAsset: string
-  contractParams: ContractParams
+  contractParams: Omit<ContractParams, 'expirationTimeout' | 'assetPair'> & {
+    expirationTimeout: number
+    assetPair: Buffer
+  }
   attestation: OracleAttestation
   covenantOutputIndexInTransaction: number
   blindersOfCollateralInputs: OwnedInput[]

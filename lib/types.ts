@@ -59,11 +59,11 @@ export type OracleAttestation = {
 }
 
 export type ContractParams = {
-  assetPair: Buffer
+  assetPair: string
   borrowAsset: string
   borrowAmount: number
   borrowerPublicKey: string
-  expirationTimeout: Buffer | number
+  expirationTimeout: string
   oraclePublicKey: string
   priceLevel: string
   setupTimestamp: string
