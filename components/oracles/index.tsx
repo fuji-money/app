@@ -1,30 +1,33 @@
+import { ConfigContext } from 'components/providers/config'
 import { Contract, Oracle } from 'lib/types'
+import { useContext } from 'react'
 
 interface OraclesProps {
   contract: Contract
-  oracles: Oracle[]
   setContract: (arg0: Contract) => void
 }
 
-export default function Oracles({
-  contract,
-  oracles,
-  setContract,
-}: OraclesProps) {
-  const hasOracle = (id: string) => contract.oracles.includes(id)
-  const handleClick = ({ id, disabled }: Oracle) => {
-    if (disabled) return
-    const newOracles = hasOracle(id)
-      ? contract.oracles.filter((o) => o != id)
-      : [...contract.oracles, id]
+export default function Oracles({ contract, setContract }: OraclesProps) {
+  const { config } = useContext(ConfigContext)
+
+  const { oracles } = config
+
+  const hasOracle = (id = '') => contract.oracles.includes(id)
+
+  const handleClick = ({ pubkey, disabled }: Oracle) => {
+    if (disabled || !pubkey) return
+    const newOracles = hasOracle(pubkey)
+      ? contract.oracles.filter((opk) => opk != pubkey)
+      : [...contract.oracles, pubkey]
     setContract({ ...contract, oracles: newOracles })
   }
+
   return (
     <div>
       {oracles.map((oracle, index) => (
         <p
           key={index}
-          className={hasOracle(oracle.id) ? 'selected' : ''}
+          className={hasOracle(oracle.pubkey) ? 'selected' : ''}
           onClick={() => handleClick(oracle)}
         >
           {oracle.name}

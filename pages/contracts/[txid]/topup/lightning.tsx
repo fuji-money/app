@@ -43,11 +43,13 @@ import { Outcome } from 'lib/types'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { broadcastTx } from 'lib/marina'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractTopupLightning: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -56,6 +58,8 @@ const ContractTopupLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+
+  const { oracles } = config
 
   const resetModal = () => {
     resetContracts()
@@ -169,10 +173,14 @@ const ContractTopupLightning: NextPage = () => {
           oldContract,
           network,
           collateralUtxos,
+          oracles[0],
         )
 
         // propose contract to alpha factory
-        const { partialTransaction } = await proposeTopupContract(preparedTx)
+        const { partialTransaction } = await proposeTopupContract(
+          preparedTx,
+          network,
+        )
         if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
         // sign collateral input with ephemeral key pair
@@ -230,7 +238,7 @@ const ContractTopupLightning: NextPage = () => {
 
         // add additional fields to contract and save to storage
         // note: save before mark as confirmed (next code block)
-        await saveContractToStorage(newContract, network)
+        await saveContractToStorage(newContract)
 
         // wait for confirmation, mark contract confirmed and reload contracts
         chainSource

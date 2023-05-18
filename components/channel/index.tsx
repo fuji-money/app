@@ -3,13 +3,14 @@ import { Contract } from 'lib/types'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
-import OutOfBounds from 'components/messages/outOfBounds'
+import OutOfBoundsMessage from 'components/messages/outOfBounds'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Balance from 'components/balance'
 import Title from 'components/title'
 import { operationFromTask } from 'lib/utils'
 import { LightningEnabledTasks } from 'lib/tasks'
+import { TICKERS } from 'lib/assets'
 
 interface ChannelButtonProps {
   name: string
@@ -33,7 +34,9 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
   const lightningOutOfBounds =
     LightningEnabledTasks[task] && swapDepositAmountOutOfBounds(quantity)
   const lightningButtonEnabled =
-    LightningEnabledTasks[task] && ticker === 'L-BTC' && !lightningOutOfBounds
+    LightningEnabledTasks[task] &&
+    ticker === TICKERS.lbtc &&
+    !lightningOutOfBounds
 
   const ChannelButton = ({ name, enabled = true }: ChannelButtonProps) => {
     const channelId = name.toLowerCase()
@@ -81,7 +84,9 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
                   enabled={lightningButtonEnabled}
                 />
               </div>
-              {lightningOutOfBounds && <OutOfBounds amount={quantity} />}
+              {lightningOutOfBounds && (
+                <OutOfBoundsMessage asset={collateral} quantity={quantity} />
+              )}
             </div>
           </div>
           <div className="column is-4">

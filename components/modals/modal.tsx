@@ -14,6 +14,7 @@ export enum ModalIds {
   InvoiceDeposit = 'invoice-deposit-modal',
   LiquidationPrice = 'liquidation-price-modal',
   MarinaDeposit = 'marina-deposit-modal',
+  MintLimit = 'mint-limit-modal',
   Redeem = 'redeem-modal',
   Trade = 'trade-modal',
   Wallets = 'wallets-modal',

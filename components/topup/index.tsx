@@ -13,14 +13,18 @@ import Notifications from 'components/notifications'
 import TopupInfo from './info'
 import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
+import { ConfigContext } from 'components/providers/config'
 
 const Topup = () => {
-  const { newContract, oldContract, oracles, setNewContract } =
+  const { config } = useContext(ConfigContext)
+  const { newContract, oldContract, setNewContract } =
     useContext(ContractsContext)
 
   const [ratio, setRatio] = useState(
     getContractRatio(newContract ?? oldContract),
   )
+
+  const { oracles } = config
 
   useEffect(() => {
     if (newContract) {

@@ -13,7 +13,7 @@ const BorrowButton = ({
   synthetic,
   text = 'Mint',
 }: BorrowButtonProps) => {
-  const cN = 'button is-primary is-solid-pink'
+  const cN = 'button is-primary'
   const enabled = EnabledTasks[Tasks.Borrow]
   if (!enabled) {
     return (

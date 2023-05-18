@@ -1,30 +1,47 @@
 import { Contract, Offer, Oracle } from 'lib/types'
 import BorrowForm from './form'
-import Balance from 'components/balance'
 import { useContext, useEffect, useState } from 'react'
 import BorrowInfo from './info'
 import BorrowButton from './button'
 import Title from 'components/title'
 import Notifications from 'components/notifications'
-import { getContractPriceLevel, getContractRatio } from 'lib/contracts'
+import {
+  getContractPriceLevel,
+  getContractRatio,
+  getContractExpirationDate,
+} from 'lib/contracts'
 import { minBorrowRatio } from 'lib/constants'
 import { ContractsContext } from 'components/providers/contracts'
+import { WalletContext } from 'components/providers/wallet'
 
 interface BorrowProps {
   offer: Offer
-  oracles: Oracle[]
 }
 
-const Borrow = ({ offer, oracles }: BorrowProps) => {
+const Borrow = ({ offer }: BorrowProps) => {
+  const { network, xPubKey } = useContext(WalletContext)
   const { newContract } = useContext(ContractsContext)
 
-  const startingRatio = offer.collateral.ratio ? offer.collateral.ratio + 50 : 0
+  const { collateral, oracles, payout, synthetic } = offer
+
+  const startingRatio = collateral.minCollateralRatio
+    ? collateral.minCollateralRatio + 50
+    : 0
   const [ratio, setRatio] = useState(startingRatio)
 
-  const minRatio = offer.collateral.ratio || minBorrowRatio
-  const priceLevel = getContractPriceLevel(offer.collateral, startingRatio)
+  const minRatio = collateral.minCollateralRatio || minBorrowRatio
+  const priceLevel = getContractPriceLevel(collateral, startingRatio)
 
-  const [contract, setContract] = useState<Contract>({ ...offer, priceLevel })
+  const [contract, setContract] = useState<Contract>({
+    collateral,
+    expirationDate: getContractExpirationDate(),
+    network,
+    oracles,
+    payout,
+    synthetic,
+    priceLevel,
+    xPubKey,
+  })
 
   useEffect(() => {
     if (newContract) {
@@ -43,7 +60,6 @@ const Borrow = ({ offer, oracles }: BorrowProps) => {
               <BorrowForm
                 contract={contract}
                 minRatio={minRatio}
-                oracles={oracles}
                 ratio={ratio}
                 setContract={setContract}
                 setRatio={setRatio}

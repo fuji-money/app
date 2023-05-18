@@ -22,7 +22,7 @@ const TopupButton = ({ minRatio, oracles, ratio, topup }: TopupButtonProps) => {
   return (
     <div className="has-text-centered">
       <button
-        className="button is-primary is-solid-pink is-cta"
+        className="button is-primary is-cta"
         disabled={!enabled}
         onClick={() => Router.push(`${Router.router?.asPath}/channel`)}
       >

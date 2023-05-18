@@ -1,17 +1,16 @@
-import { Contract, ContractParams, ContractResponse } from './types'
+import { Contract, ContractParams, ContractResponse, Oracle } from './types'
 import { Utxo, Address, NetworkString } from 'marina-provider'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import {
-  alphaServerUrl,
   feeAmount,
-  issuerPubKey,
-  marinaFujiAccountID,
+  treasuryPublicKey,
   minDustLimit,
-  oraclePubKey,
+  assetPair,
+  expirationTimeout,
+  expirationSeconds,
 } from 'lib/constants'
 import { numberToHex64LE, hex64LEToBase64LE } from './utils'
 import {
-  payments,
   address,
   script,
   witnessStackToScriptWitness,
@@ -36,19 +35,19 @@ import {
   fujiAccountMissing,
   getFujiCoins,
   getMainAccountCoins,
-  getMainAccountIDs,
   getMarinaProvider,
   getNextAddress,
   getNextChangeAddress,
+  getNextCovenantAddress,
   getPublicKey,
 } from './marina'
-import artifact from 'lib/fuji.ionio.json'
 import * as ecc from 'tiny-secp256k1'
-import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { getContractPayoutAmount } from './contracts'
+import { Contract as IonioContract } from '@ionio-lang/ionio'
 import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
+import { artifact } from './artifact'
+import { getFactoryUrl } from './api'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
@@ -61,25 +60,32 @@ export async function getIonioInstance(
   // get ionio instance
   const params = contract.contractParams
   if (!params) throw new Error('missing contract params')
+  // constructor params, must be on same order as artifact
   const constructorParams = [
     params.borrowAsset,
     params.borrowAmount,
+    params.treasuryPublicKey,
+    expirationTimeout,
     params.borrowerPublicKey,
     params.oraclePublicKey,
-    params.issuerPublicKey,
     params.priceLevel,
     params.setupTimestamp,
+    assetPair,
   ]
+  if (constructorParams.findIndex((a) => a === undefined) !== -1) {
+    throw new Error('missing contract params')
+  }
 
-  return new IonioContract(
-    artifact as Artifact,
-    constructorParams,
-    getNetwork(network),
-    { ecc, zkp: await zkpLib() },
-  )
+  return new IonioContract(artifact, constructorParams, getNetwork(network), {
+    ecc,
+    zkp: await zkpLib(),
+  })
 }
 
-async function getCovenantOutput(contract: Contract): Promise<{
+async function getCovenantOutput(
+  contract: Contract,
+  oracle: Oracle,
+): Promise<{
   contractParams: ContractParams
   covenantOutput: UpdaterOutput
   covenantAddress: Address
@@ -90,26 +96,19 @@ async function getCovenantOutput(contract: Contract): Promise<{
 
   // set contract params
   const timestamp = Date.now()
-  const oraclePk = Buffer.from(oraclePubKey, 'hex')
-  const issuerPk = Buffer.from(issuerPubKey, 'hex')
+  const treasuryPk = Buffer.from(treasuryPublicKey, 'hex')
   const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
-    oraclePublicKey: `0x${oraclePk.slice(1).toString('hex')}`,
-    issuerPublicKey: `0x${issuerPk.slice(1).toString('hex')}`,
+    oraclePublicKey: `0x${oracle.pubkey}`,
+    treasuryPublicKey: `0x${treasuryPk.slice(1).toString('hex')}`,
     priceLevel: numberToHex64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHex64LE(timestamp),
+    expirationTimeout,
+    assetPair,
   }
 
-  // get needed addresses
-  await marina.useAccount(marinaFujiAccountID)
-  const covenantAddress = await marina.getNextAddress({
-    artifact: artifact as Artifact,
-    args: contractParams,
-  })
-
-  // switch back to marina main account
-  await marina.useAccount((await getMainAccountIDs(false))[0])
+  const covenantAddress = await getNextCovenantAddress(contractParams)
 
   // set covenant output
   const { scriptPubKey } = address.fromConfidential(
@@ -148,6 +147,7 @@ export async function prepareBorrowTxWithClaimTx(
   contract: Contract,
   utxos: Utxo[],
   redeemScript: string, // must be associated with the first utxo
+  oracle: Oracle,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -171,7 +171,10 @@ export async function prepareBorrowTxWithClaimTx(
   const updater = new Updater(pset)
 
   // get covenant
-  const { contractParams, covenantOutput } = await getCovenantOutput(contract)
+  const { contractParams, covenantOutput } = await getCovenantOutput(
+    contract,
+    oracle,
+  )
   updater
     .addInputs([
       {
@@ -197,6 +200,7 @@ export async function prepareBorrowTxWithClaimTx(
 
 export async function prepareBorrowTx(
   contract: Contract,
+  oracle: Oracle,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -229,7 +233,10 @@ export async function prepareBorrowTx(
   const updater = new Updater(pset)
 
   // get covenant params
-  const { contractParams, covenantOutput } = await getCovenantOutput(contract)
+  const { contractParams, covenantOutput } = await getCovenantOutput(
+    contract,
+    oracle,
+  )
 
   // add collateral inputs
   updater
@@ -277,23 +284,26 @@ export async function prepareBorrowTx(
   }
 }
 
-export async function proposeBorrowContract({
-  borrowerAddress,
-  contractParams,
-  collateralAsset,
-  collateralAmount,
-  collateralUtxos,
-  pset,
-}: PreparedBorrowTx): Promise<ContractResponse> {
+export async function proposeBorrowContract(
+  {
+    borrowerAddress,
+    contractParams,
+    collateralAsset,
+    collateralAmount,
+    collateralUtxos,
+    pset,
+  }: PreparedBorrowTx,
+  network: NetworkString,
+): Promise<ContractResponse> {
   // deconstruct contractParams
   const {
     borrowAsset,
     borrowAmount,
-    oraclePublicKey,
-    issuerPublicKey,
     borrowerPublicKey,
+    oraclePublicKey,
     priceLevel,
     setupTimestamp,
+    treasuryPublicKey,
   } = contractParams
 
   const blindersOfCollateralInputs: OwnedInput[] = []
@@ -334,20 +344,23 @@ export async function proposeBorrowContract({
     covenantOutputIndexInTransaction: 0,
     borrowerAddress: borrowerAddress.confidentialAddress,
     contractParams: {
+      assetPair: Buffer.from(assetPair.substring(2), 'hex'),
       borrowAsset,
       borrowAmount,
-      issuerPublicKey,
-      oraclePublicKey,
       borrowerPublicKey,
+      expirationTimeout: expirationSeconds,
+      oraclePublicKey,
       priceLevel: hex64LEToBase64LE(priceLevel),
       setupTimestamp: hex64LEToBase64LE(setupTimestamp),
+      treasuryPublicKey,
     },
     blindersOfCollateralInputs,
     partialTransaction: pset.toBase64(),
   }
 
   // post and return
-  return contractsRequest(alphaServerUrl, args)
+  const factoryUrl = getFactoryUrl(network)
+  return contractsRequest(factoryUrl, args)
 }
 
 // redeem
@@ -371,8 +384,7 @@ export async function prepareRedeemTx(
   if (collateral.quantity < feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
-  const address =
-    swapAddress || (await marina.getNextAddress()).confidentialAddress
+  const address = swapAddress || (await getNextAddress()).confidentialAddress
 
   // get ionio instance
   let ionioInstance = await getIonioInstance(contract, network)
@@ -384,7 +396,7 @@ export async function prepareRedeemTx(
   )
   if (!coinToRedeem)
     throw new Error(
-      'Contract cannot be found in the connected wallet.' +
+      'Contract cannot be found in the connected wallet. ' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
@@ -499,6 +511,7 @@ export async function prepareTopupTx(
   oldContract: Contract,
   network: NetworkString,
   collateralUtxos: (Utxo & { redeemScript?: string })[],
+  oracle: Oracle,
 ): Promise<PreparedTopupTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -537,6 +550,7 @@ export async function prepareTopupTx(
   // get new covenant params
   const { contractParams, covenantAddress } = await getCovenantOutput(
     newContract,
+    oracle,
   )
 
   // find coin for this contract
@@ -704,24 +718,27 @@ export async function prepareTopupTx(
   }
 }
 
-export async function proposeTopupContract({
-  borrowerAddress,
-  coinToTopup,
-  contractParams,
-  pset,
-  collateralAmount,
-  collateralAsset,
-  collateralAndSynthUtxos,
-}: PreparedTopupTx): Promise<ContractResponse> {
+export async function proposeTopupContract(
+  {
+    borrowerAddress,
+    coinToTopup,
+    contractParams,
+    pset,
+    collateralAmount,
+    collateralAsset,
+    collateralAndSynthUtxos,
+  }: PreparedTopupTx,
+  network: NetworkString,
+): Promise<ContractResponse> {
   // deconstruct contractParams
   const {
     borrowAsset,
     borrowAmount,
-    issuerPublicKey,
-    oraclePublicKey,
     borrowerPublicKey,
+    oraclePublicKey,
     priceLevel,
     setupTimestamp,
+    treasuryPublicKey,
   } = contractParams
 
   const blindersOfCollateralInputs: OwnedInput[] = []
@@ -768,11 +785,13 @@ export async function proposeTopupContract({
     contractParams: {
       borrowAsset,
       borrowAmount,
-      issuerPublicKey,
+      treasuryPublicKey,
       oraclePublicKey,
       borrowerPublicKey,
       priceLevel: hex64LEToBase64LE(priceLevel),
       setupTimestamp: hex64LEToBase64LE(setupTimestamp),
+      expirationTimeout: expirationSeconds,
+      assetPair: Buffer.from(assetPair.substring(2), 'hex'),
     },
     blindersOfCollateralInputs,
     blindersOfSynthInputs,
@@ -780,7 +799,8 @@ export async function proposeTopupContract({
   }
 
   // post and return
-  return topupRequest(alphaServerUrl, coinToTopup.txid, coinToTopup.vout, args)
+  const factoryUrl = getFactoryUrl(network)
+  return topupRequest(factoryUrl, coinToTopup.txid, coinToTopup.vout, args)
 }
 
 export function finalizeTopupCovenantInput(pset: Pset) {

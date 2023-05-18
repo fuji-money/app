@@ -8,26 +8,32 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import NotAllowed from 'components/messages/notAllowed'
+import { WalletContext } from 'components/providers/wallet'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemChannel: NextPage = () => {
+  const { network } = useContext(WalletContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, setNewContract } = useContext(ContractsContext)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const { assets } = config
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      getContract(txid).then((contract) => {
+      getContract(txid, assets, network).then((contract) => {
         if (contract) setNewContract(contract)
-        setLoading(false)
+        setIsLoading(false)
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
-  if (loading) return <Spinner />
+  if (isLoading) return <Spinner />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   return <Channel contract={newContract} task={Tasks.Redeem} />

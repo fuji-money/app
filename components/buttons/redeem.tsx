@@ -14,7 +14,7 @@ const RedeemButton = ({
   size,
   text = 'Close',
 }: RedeemButtonProps) => {
-  const cN = `button is-primary is-solid-pink ml-3 ${
+  const cN = `button is-primary ml-3 ${
     size === 'small' && 'is-small is-rounded'
   }`
 

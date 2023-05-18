@@ -1,18 +1,21 @@
 import MultiplyButton from './button'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'
 import { openModal } from 'lib/utils'
 import MultiplyModals from 'components/modals/multiply'
 import Collateral from './collateral'
-import { fetchAsset, fetchOracles } from 'lib/api'
-import { Asset, Contract, Oracle } from 'lib/types'
+import { Asset, Contract } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
 import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
 import { ModalIds } from 'components/modals/modal'
+import { WalletContext } from 'components/providers/wallet'
+import { TICKERS } from 'lib/assets'
+import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -25,26 +28,22 @@ const MultiplyForm = ({
   setContract,
   setDeposit,
 }: MultiplyFormProps) => {
+  const { config } = useContext(ConfigContext)
+  const { loading } = useContext(ContractsContext)
+
   const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
-  const [isLoading, setLoading] = useState(false)
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const [multiplier, setMultiplier] = useState(0)
   const [quantity, setQuantity] = useState(0)
-  const [oracles, setOracles] = useState<Oracle[]>()
   const [ratio, setRatio] = useState(maxMultiplyRatio)
 
+  const { assets, oracles } = config
+
   useEffect(() => {
-    setLoading(true)
-    fetchOracles().then((data) => {
-      setOracles(data)
-      fetchAsset('L-BTC').then((data) => {
-        setLbtc(data)
-        setLoading(false)
-      })
-    })
-  }, [])
+    setLbtc(assets.find((asset) => asset.ticker === TICKERS.lbtc))
+  }, [assets])
 
   useEffect(() => {
     if (lbtc) {
@@ -63,7 +62,7 @@ const MultiplyForm = ({
     }
   }, [contract, lbtc, quantity, ratio, setContract])
 
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
@@ -159,11 +158,7 @@ const MultiplyForm = ({
           <p className="has-text-weight-bold mt-5 mb-4">
             Choose oracle providers
           </p>
-          <Oracles
-            contract={contract}
-            oracles={oracles}
-            setContract={setContract}
-          />
+          <Oracles contract={contract} setContract={setContract} />
           <p className="has-text-centered mt-6 mb-4">
             <MultiplyButton setDeposit={setDeposit} />
           </p>

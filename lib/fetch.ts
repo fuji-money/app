@@ -29,7 +29,10 @@ export type ProposeContractArgs = {
   borrowerAddress: string
   collateralAmount: number
   collateralAsset: string
-  contractParams: ContractParams
+  contractParams: Omit<ContractParams, 'expirationTimeout' | 'assetPair'> & {
+    expirationTimeout: number
+    assetPair: Buffer
+  }
   attestation: OracleAttestation
   covenantOutputIndexInTransaction: number
   blindersOfCollateralInputs: OwnedInput[]
@@ -60,23 +63,23 @@ function encodeBufferAsBase64(args: Record<string, any>): Record<string, any> {
 }
 
 export function contractsRequest(
-  alphaServerURL: string,
+  factoryURL: string,
   args: ProposeContractArgs,
 ) {
   return postData<ContractResponse>(
-    `${alphaServerURL}/contracts`,
+    `${factoryURL}/contracts`,
     encodeBufferAsBase64(args),
   )
 }
 
 export function topupRequest(
-  alphaServerURL: string,
+  factoryURL: string,
   txid: string,
   vout: number,
   args: TopupContractArgs,
 ) {
   return postData<ContractResponse>(
-    `${alphaServerURL}/contracts/${txid}:${vout}/topup`,
+    `${factoryURL}/contracts/${txid}:${vout}/topup`,
     encodeBufferAsBase64(args),
   )
 }

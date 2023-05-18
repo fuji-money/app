@@ -19,30 +19,17 @@ import {
   checkContractOutspend,
   createNewContract,
 } from 'lib/contracts'
-import {
-  getContractsFromStorage,
-  getMyContractsFromStorage,
-  updateContractOnStorage,
-} from 'lib/storage'
-import { Activity, Contract, ContractState, Oracle } from 'lib/types'
+import { getContractsFromStorage, getMyContractsFromStorage } from 'lib/storage'
+import { Activity, Contract, ContractState } from 'lib/types'
 import { WalletContext } from './wallet'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { getContractsFromMarina, getFujiCoins } from 'lib/marina'
-import BIP32Factory from 'bip32'
-import * as ecc from 'tiny-secp256k1'
 import { marinaFujiAccountID } from 'lib/constants'
-import { fetchOracles } from 'lib/api'
-import { hex64LEToNumber, numberToHex64LE, toXpub } from 'lib/utils'
-import Decimal from 'decimal.js'
+import { hex64LEToNumber } from 'lib/utils'
 import { address } from 'liquidjs-lib'
-
-function computeOldXPub(xpub: string): string {
-  const bip32 = BIP32Factory(ecc)
-  const decoded = bip32.fromBase58(xpub)
-  return bip32.fromPublicKey(decoded.publicKey, decoded.chainCode).toBase58()
-}
+import { ConfigContext } from './config'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -50,7 +37,6 @@ interface ContractsContextProps {
   loading: boolean
   newContract: Contract | undefined
   oldContract: Contract | undefined
-  oracles: Oracle[]
   reloadContracts: () => void
   resetContracts: () => void
   setLoading: (arg0: boolean) => void
@@ -64,7 +50,6 @@ export const ContractsContext = createContext<ContractsContextProps>({
   loading: true,
   newContract: undefined,
   oldContract: undefined,
-  oracles: [],
   reloadContracts: () => {},
   resetContracts: () => {},
   setLoading: () => {},
@@ -75,15 +60,19 @@ export const ContractsContext = createContext<ContractsContextProps>({
 interface ContractsProviderProps {
   children: ReactNode
 }
+
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
+  const { chainSource, connected, marina, network, xPubKey, warmingUp } =
+    useContext(WalletContext)
+  const { config } = useContext(ConfigContext)
+
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [newContract, setNewContract] = useState<Contract>()
   const [oldContract, setOldContract] = useState<Contract>()
-  const [oracles, setOracles] = useState<Oracle[]>([])
-  const { connected, marina, network, xPubKey, chainSource } =
-    useContext(WalletContext)
+
+  const { assets } = config
 
   // save first time app was run
   const firstRun = useRef(Date.now())
@@ -102,11 +91,29 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
     if (connected) {
+      setLoading(true)
       await checkContractsStatus()
-      setContracts(await getContracts())
+      setContracts(await getContracts(assets, network))
       setActivities(await getActivities())
       setLoading(false)
     }
+  }
+
+  // check if a contract is confirmed by its transaction history
+  // https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
+  // In summary:
+  //   unknown => hist.length == 0
+  //   mempool => hist.length == 1 && hist[0].height == 0
+  //   confirm => hist.length > 0 && hist[0].height != 0
+  //   spent   => hist.length == 2
+  const notConfirmed = async (contract: Contract) => {
+    const [hist] = await chainSource.fetchHistories([
+      address.toOutputScript(
+        await getContractCovenantAddress(contract, network),
+      ),
+    ])
+    const confirmed = hist.length > 0 && hist[0].height !== 0
+    return !confirmed
   }
 
   // check contract status
@@ -117,23 +124,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     // function to check if contract has fuji coin
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
-
-    // check if a contract is confirmed by its transaction history
-    // https://electrumx.readthedocs.io/en/latest/protocol-methods.html#blockchain-scripthash-get-history
-    // In summary:
-    //   unknown => hist.length == 0
-    //   mempool => hist.length == 1 && hist[0].height == 0
-    //   confirm => hist.length > 0 && hist[0].height != 0
-    //   spent   => hist.length == 2
-    const notConfirmed = async (contract: Contract) => {
-      const [hist] = await chainSource.fetchHistories([
-        address.toOutputScript(
-          await getContractCovenantAddress(contract, network),
-        ),
-      ])
-      const confirmed = hist.length > 0 && hist[0].height !== 0
-      return !confirmed
-    }
 
     // iterate through contracts in storage
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
@@ -190,49 +180,13 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
   }
 
-  // it ensures that contract are all updated to the latest format
-  const migrateOldContracts = () => {
-    // migrate old contracts to new format
-    getContractsFromStorage().map((contract) => {
-      if (!contract.contractParams) return
-      const { contractParams } = contract
-      // new contractParams format
-      if ((contract as any)['borrowerPubKey']) {
-        contract.contractParams = {
-          ...contractParams,
-          borrowerPublicKey: (contract as any)['borrowerPubKey'],
-          issuerPublicKey: (contract as any)['contractParams']['issuerPk'],
-          oraclePublicKey: (contract as any)['contractParams']['oraclePk'],
-        }
-        delete (contract as any)['borrowerPubKey']
-        delete (contract as any)['contractParams']['issuerPk']
-        delete (contract as any)['contractParams']['oraclePk']
-        updateContractOnStorage(contract)
-      }
-      // store priceLevel and setupTimestamp as hex64LE
-      // previous version had those as "123" (number as string)
-      if (contractParams.priceLevel.match(/^\d(?!x)/)) {
-        contract.contractParams.priceLevel = numberToHex64LE(
-          Number(contractParams.priceLevel),
-        )
-        updateContractOnStorage(contract)
-      }
-      if (contractParams.setupTimestamp.match(/^\d(?!x)/)) {
-        contract.contractParams.setupTimestamp = numberToHex64LE(
-          Number(contractParams.setupTimestamp),
-        )
-        updateContractOnStorage(contract)
-      }
-    })
-  }
-
   // Marina could know about contracts that local storage doesn't
   // This could happen if the user is using more than one device
   // In this case, we will add the unknown contracts into storage
   const syncContractsWithMarina = async () => {
     if (!xPubKey) return
     const storageContracts = getContractsFromStorage()
-    const marinaContracts = await getContractsFromMarina()
+    const marinaContracts = await getContractsFromMarina(assets)
 
     // check if contract from marina is on storage
     const notInStorage = (mc: Contract) =>
@@ -252,40 +206,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         createNewContract(contract, timestamp)
       }
     }
-  }
-
-  // temporary fix:
-  // 1. fix missing xPubKey on old contracts and store on local storage
-  // 2. update old xPubKey ('zpub...') to new xPubKey ('xpub...')
-  // 3. update xPubKey to neutered xPubKey
-  // 4. add vout to contract
-  const fixMissingXPubKeyOnOldContracts = () => {
-    // get non neutered xPubKey
-    const oldXPubKey = computeOldXPub(xPubKey)
-    // on new Marina version, xPubKey starts with 'xpub' instead of 'zpub'
-    const shouldStartWithXpub = xPubKey.startsWith('xpub')
-    getContractsFromStorage()
-      .filter((contract) => contract.network === network)
-      .map((contract) => {
-        if (!contract.xPubKey) {
-          contract.xPubKey = xPubKey // point 1
-          updateContractOnStorage(contract)
-        } else {
-          if (contract.xPubKey.startsWith('zpub') && shouldStartWithXpub) {
-            contract.xPubKey = toXpub(contract.xPubKey) // point 2
-            updateContractOnStorage(contract)
-          } else {
-            if (contract.xPubKey === oldXPubKey) {
-              contract.xPubKey = xPubKey // point 3
-              updateContractOnStorage(contract)
-            }
-          }
-        }
-        if (typeof contract.vout == 'undefined') {
-          contract.vout = 0
-          updateContractOnStorage(contract)
-        }
-      })
   }
 
   // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
@@ -324,23 +244,20 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const firstRender = useRef<NetworkString[]>([])
 
   useEffect(() => {
-    async function run() {
-      if (connected && network && xPubKey) {
-        // run only on first render for each network
+    async function runOnAssetsChange() {
+      if (!warmingUp && assets.length) {
         if (!firstRender.current.includes(network)) {
-          migrateOldContracts()
-          fixMissingXPubKeyOnOldContracts()
           await syncContractsWithMarina()
-          reloadContracts()
-          fetchOracles().then((data) => setOracles(data))
           firstRender.current.push(network)
-          return setMarinaListener() // return the close listener function
         }
+        await reloadContracts()
+        setLoading(false)
+        return setMarinaListener() // return the close listener function
       }
     }
-    run()
+    runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [xPubKey])
+  }, [assets, warmingUp])
 
   return (
     <ContractsContext.Provider
@@ -350,7 +267,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         loading,
         newContract,
         oldContract,
-        oracles,
         reloadContracts,
         resetContracts,
         setLoading,

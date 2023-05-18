@@ -1,22 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { fetchStocks } from 'lib/api'
 import { Stock } from 'lib/types'
 import SomeError from 'components/layout/error'
 import StockRow from './row'
 import Spinner from 'components/spinner'
+import { WalletContext } from 'components/providers/wallet'
+import { ContractsContext } from 'components/providers/contracts'
 
 const StocksList = () => {
+  const { network } = useContext(WalletContext)
+  const { loading } = useContext(ContractsContext)
   const [stocks, setStocks] = useState<Stock[]>()
-  const [isLoading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchStocks().then((data) => {
+    fetchStocks(network).then((data) => {
       setStocks(data)
-      setLoading(false)
     })
-  }, [])
+  }, [network])
 
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!stocks) return <SomeError>Error getting stocks</SomeError>
 
   return (

@@ -50,8 +50,8 @@ export const getInvoiceTag = (invoice: string, tag: string): TagData => {
 // return value in given invoice
 export const getInvoiceValue = (invoice: string): number => {
   const { satoshis, millisatoshis } = bolt11.decode(invoice)
-  if (satoshis) return fromSatoshis(satoshis)
-  if (millisatoshis) return fromSatoshis(Number(millisatoshis) / 1000)
+  if (satoshis) return fromSatoshis(satoshis, 8)
+  if (millisatoshis) return fromSatoshis(Number(millisatoshis) / 1000, 8)
   return 0
 }
 

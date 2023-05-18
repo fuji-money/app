@@ -4,7 +4,7 @@ import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { WalletContext } from 'components/providers/wallet'
-import { marinaMainAccountID, feeAmount } from 'lib/constants'
+import { feeAmount } from 'lib/constants'
 import {
   saveContractToStorage,
   markContractTopup,
@@ -25,17 +25,21 @@ import NotAllowed from 'components/messages/notAllowed'
 import { selectCoins } from 'lib/selection'
 import { Pset } from 'liquidjs-lib'
 import { finalizeTx } from 'lib/transaction'
-import { broadcastTx } from 'lib/marina'
+import { broadcastTx, getMainAccountCoins } from 'lib/marina'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+
+  const { oracles } = config
 
   const resetModal = () => {
     resetContracts()
@@ -61,7 +65,7 @@ const ContractTopupLiquid: NextPage = () => {
     openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
-      const utxos = await marina.getCoins([marinaMainAccountID])
+      const utxos = await getMainAccountCoins()
       // validate we have necessary utxos
       const collateralUtxos = selectCoins(
         utxos,
@@ -77,6 +81,7 @@ const ContractTopupLiquid: NextPage = () => {
         oldContract,
         network,
         collateralUtxos,
+        oracles[0],
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
@@ -84,7 +89,10 @@ const ContractTopupLiquid: NextPage = () => {
       setStage(ModalStages.NeedsFujiApproval)
 
       // propose contract to alpha factory
-      const { partialTransaction } = await proposeTopupContract(preparedTx)
+      const { partialTransaction } = await proposeTopupContract(
+        preparedTx,
+        network,
+      )
       if (!partialTransaction) throw new Error('Not accepted by Fuji')
 
       // user now must sign transaction on marina
@@ -116,7 +124,7 @@ const ContractTopupLiquid: NextPage = () => {
 
       // add additional fields to contract and save to storage
       // note: save before mark as confirmed (next code block)
-      await saveContractToStorage(newContract, network)
+      await saveContractToStorage(newContract)
 
       // wait for confirmation, mark contract confirmed and reload contracts
       chainSource

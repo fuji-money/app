@@ -1,5 +1,4 @@
 import { Contract } from 'lib/types'
-import { fetchAsset } from 'lib/api'
 import { useContext, useEffect, useState } from 'react'
 import NotEnoughFundsNotification from 'components/notifications/notEnoughFunds'
 import NotEnoughOraclesNotification from 'components/notifications/notEnoughOracles'
@@ -13,6 +12,10 @@ import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
+import { LightningEnabledTasks } from 'lib/tasks'
+import { ConfigContext } from 'components/providers/config'
+import MintLimitReachedNotification from './mintLimitReached'
+import { fromSatoshis } from 'lib/utils'
 
 interface NotificationsProps {
   contract: Contract
@@ -27,37 +30,54 @@ const Notifications = ({
   ratio,
   topup,
 }: NotificationsProps) => {
+  const { balances, connected } = useContext(WalletContext)
+  const { config } = useContext(ConfigContext)
+
+  const [belowDustLimit, setBelowDustLimit] = useState(false)
+  const [collateralTooLow, setCollateralTooLow] = useState(false)
+  const [outOfBounds, setOutOfBounds] = useState(false)
+  const [mintLimitReached, setMintLimitReached] = useState(false)
   const [notEnoughFunds, setNotEnoughFunds] = useState(false)
   const [notEnoughOracles, setNotEnoughOracles] = useState(false)
   const [ratioTooLow, setRatioTooLow] = useState(false)
   const [ratioUnsafe, setRatioUnsafe] = useState(false)
-  const [belowDustLimit, setBelowDustLimit] = useState(false)
-  const [collateralTooLow, setCollateralTooLow] = useState(false)
-  const [outOfBounds, setOutOfBounds] = useState(false)
 
-  const { balances, connected } = useContext(WalletContext)
+  const { assets } = config
 
-  const { collateral, oracles, payout, payoutAmount } = contract
+  const { collateral, oracles, payoutAmount, synthetic } = contract
   const spendQuantity =
     typeof topup === 'undefined' ? collateral.quantity : topup
 
   useEffect(() => {
-    fetchAsset(collateral.ticker).then((asset) => {
-      const balance = getAssetBalance(asset, balances)
-      setNotEnoughFunds(connected && spendQuantity > balance)
-      setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
-      setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
-    })
-  }, [balances, connected, collateral.ticker, payoutAmount, spendQuantity])
+    const asset = assets.find((a) => a.ticker === collateral.ticker)
+    if (!asset) return
+    const balance = getAssetBalance(asset, balances)
+    setNotEnoughFunds(connected && spendQuantity > balance)
+    setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
+    setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract.synthetic.quantity])
+
+  useEffect(() => {
+    const asset = assets.find((a) => a.ticker === synthetic.ticker)
+    if (!asset) return
+    if (asset.maxCirculatingSupply) {
+      const cur = asset.circulating ?? 0
+      const max = asset.maxCirculatingSupply
+      const qty = fromSatoshis(synthetic.quantity, asset.precision)
+      setMintLimitReached(cur === max || cur + qty > max)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract.synthetic.quantity])
 
   useEffect(() => {
     setRatioTooLow(ratio < minRatio)
   }, [minRatio, ratio])
 
   useEffect(() => {
-    const safeLimit = (collateral.ratio || 0) + 50
+    const safeLimit = (collateral.minCollateralRatio || 0) + 50
     setRatioUnsafe(ratio < safeLimit)
-  }, [collateral.ratio, ratio])
+  }, [collateral.minCollateralRatio, ratio])
 
   useEffect(() => {
     setNotEnoughOracles(oracles?.length === 0)
@@ -70,13 +90,20 @@ const Notifications = ({
   return (
     <>
       {ratioUnsafe && <RatioUnsafeNotification />}
-      {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
-      {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
+      {LightningEnabledTasks.Borrow ? (
+        <>
+          {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
+          {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
+        </>
+      ) : (
+        <>{notEnoughFunds && <NotEnoughFundsNotification oob={true} />}</>
+      )}
       {!connected && <ConnectWalletNotification />}
       {belowDustLimit && <BelowDustLimitNotification />}
       {collateralTooLow && <LowCollateralAmountNotification />}
       {notEnoughOracles && <NotEnoughOraclesNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
+      {mintLimitReached && <MintLimitReachedNotification />}
     </>
   )
 }

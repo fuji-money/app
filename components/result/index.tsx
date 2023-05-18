@@ -19,11 +19,12 @@ interface SuccessProps {
 }
 
 const Success = ({ contract, task, txid }: SuccessProps) => {
-  const { resetContracts } = useContext(ContractsContext)
+  const { reloadContracts, resetContracts } = useContext(ContractsContext)
 
   const handleClick = () => {
     closeAllModals()
     resetContracts()
+    reloadContracts()
   }
 
   // Twitter message

@@ -8,31 +8,37 @@ import Topup from 'components/topup'
 import { ContractsContext } from 'components/providers/contracts'
 import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
+import { WalletContext } from 'components/providers/wallet'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractTopup: NextPage = () => {
-  const [loading, setLoading] = useState(true)
-
+  const { network } = useContext(WalletContext)
+  const { config } = useContext(ConfigContext)
   const { newContract, setNewContract, setOldContract } =
     useContext(ContractsContext)
+
+  const [isLoading, setIsLoading] = useState(true)
+
+  const { assets } = config
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
     if (txid && typeof txid === 'string') {
-      getContract(txid).then((contract) => {
+      getContract(txid, assets, network).then((contract) => {
         if (contract) {
           if (!newContract) setNewContract(contract)
           setOldContract(contract)
         }
-        setLoading(false)
+        setIsLoading(false)
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 
   if (!EnabledTasks[Tasks.Topup]) return <NotAllowed />
-  if (loading) return <Spinner />
+  if (isLoading) return <Spinner />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   return <Topup />

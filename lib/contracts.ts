@@ -1,7 +1,12 @@
-import { ActivityType, Asset, Contract, ContractState } from './types'
+import { ActivityType, Asset, Contract, ContractState, Oracle } from './types'
 import Decimal from 'decimal.js'
-import { defaultPayout, minDustLimit } from './constants'
-import { fetchAsset, fetchOracle } from './api'
+import {
+  assetPair,
+  defaultPayout,
+  expirationSeconds,
+  expirationTimeout,
+  minDustLimit,
+} from './constants'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
@@ -11,9 +16,10 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { getIonioInstance } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { hex64LEToNumber } from './utils'
+import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
+import { populateAsset } from './assets'
 
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
@@ -59,6 +65,7 @@ export async function checkContractOutspend(
 // transform a fuji coin into a contract
 export const coinToContract = async (
   coin: Utxo,
+  assets: Asset[],
 ): Promise<Contract | undefined> => {
   if (
     coin.scriptDetails &&
@@ -66,32 +73,44 @@ export const coinToContract = async (
     coin.blindingData
   ) {
     const params = coin.scriptDetails.params
-    const collateral = await fetchAsset(coin.blindingData.asset)
-    const synthetic = await fetchAsset(params[0] as string)
-    const oracle = await fetchOracle(params[3] as string)
-    if (!collateral || !synthetic || !oracle) return
+    const collateral = assets.find((a) => a.id === coin.blindingData?.asset)
+    const synthetic = assets.find((a) => a.id === (params[0] as string))
+    if (!collateral || !synthetic) return
+    const borrowAsset = params[0] as string
+    const borrowAmount = params[1] as number
+    const treasuryPublicKey = params[2] as string
+    const expirationTimeout = params[3] as string
+    const borrowerPublicKey = params[4] as string
+    const oraclePublicKey = params[5] as string
+    const priceLevel = params[6] as string
+    const setupTimestamp = params[7] as string
+    const assetPair = params[8] as string
+    const createdAt = hex64LEToNumber(setupTimestamp)
     const contract: Contract = {
       collateral: {
         ...collateral,
         quantity: coin.blindingData.value,
       },
       contractParams: {
-        borrowAsset: params[0] as string,
-        borrowAmount: params[1] as number,
-        borrowerPublicKey: params[2] as string,
-        oraclePublicKey: params[3] as string,
-        issuerPublicKey: params[4] as string,
-        priceLevel: params[5] as string,
-        setupTimestamp: params[6] as string,
+        assetPair,
+        expirationTimeout,
+        borrowAsset,
+        borrowAmount,
+        borrowerPublicKey,
+        oraclePublicKey,
+        treasuryPublicKey,
+        priceLevel,
+        setupTimestamp,
       },
-      createdAt: hex64LEToNumber(params[6] as string),
+      createdAt,
+      expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
       network: await getNetwork(),
-      oracles: [oracle.id],
+      oracles: [oraclePublicKey],
       payout: defaultPayout,
-      priceLevel: hex64LEToNumber(params[5] as string),
+      priceLevel: hex64LEToNumber(priceLevel),
       synthetic: {
         ...synthetic,
-        quantity: params[1] as number,
+        quantity: borrowAmount as number,
       },
       txid: coin.txid,
       vout: coin.vout,
@@ -115,8 +134,12 @@ export const contractIsClosed = (contract: Contract): boolean => {
 export const getContractRatio = (contract?: Contract): number => {
   if (!contract) return 0
   const { collateral, synthetic } = contract
-  const collateralAmount = Decimal.mul(collateral.value, collateral.quantity)
-  const syntheticAmount = Decimal.mul(synthetic.value, synthetic.quantity)
+  // need to calculate in units, not in satoshis, since each asset
+  // can have different precisions
+  const colUnits = fromSatoshis(collateral.quantity, collateral.precision)
+  const synUnits = fromSatoshis(synthetic.quantity, synthetic.precision)
+  const collateralAmount = Decimal.mul(colUnits, collateral.value)
+  const syntheticAmount = Decimal.mul(synUnits, synthetic.value)
   return collateralAmount.div(syntheticAmount).mul(100).toNumber()
 }
 
@@ -145,10 +168,10 @@ export const getContractState = (contract: Contract): ContractState => {
   if (state === ContractState.Unknown) return ContractState.Unknown
   if (state === ContractState.Topup) return ContractState.Topup
   if (!confirmed) return ContractState.Unconfirmed
-  if (!collateral?.ratio) return ContractState.Unknown
+  if (!collateral?.minCollateralRatio) return ContractState.Unknown
   // possible states are safe, unsafe, critical or liquidated (based on ratio)
   const ratio = getContractRatio(contract)
-  return getRatioState(ratio, collateral.ratio)
+  return getRatioState(ratio, collateral.minCollateralRatio)
 }
 
 // calculate collateral needed for this synthetic and ratio
@@ -157,12 +180,14 @@ export const getCollateralQuantity = (
   ratio: number,
 ): number => {
   const { collateral, synthetic } = contract
-  return Decimal.ceil(
-    Decimal.mul(synthetic.quantity, synthetic.value)
-      .mul(ratio)
-      .div(100)
-      .div(collateral.value),
-  ).toNumber()
+  const synUnits = fromSatoshis(synthetic.quantity, synthetic.precision)
+  const syntheticAmount = Decimal.mul(synUnits, synthetic.value)
+  const colUnits = Decimal.mul(syntheticAmount, ratio)
+    .div(100)
+    .div(collateral.value)
+    .toNumber()
+  const collateralAmount = toSatoshis(colUnits, collateral.precision)
+  return collateralAmount
 }
 
 // get contract payout
@@ -182,59 +207,46 @@ export const getContractPayoutAmount = (
 // get contract price level
 export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
   if (!asset.value) throw new Error('Asset without value')
-  if (!asset.ratio) throw new Error('Asset without minimum ratio')
+  if (!asset.minCollateralRatio) throw new Error('Asset without minimum ratio')
   return Decimal.ceil(
-    Decimal.mul(asset.value, asset.ratio).div(ratio),
+    Decimal.mul(asset.value, asset.minCollateralRatio).div(ratio),
   ).toNumber()
 }
 
 // get all contacts belonging to this xpub and network
-export async function getContracts(): Promise<Contract[]> {
-  if (typeof window === 'undefined') return []
-  const network = await getNetwork()
+export async function getContracts(
+  assets: Asset[],
+  network: NetworkString,
+): Promise<Contract[]> {
+  if (typeof window === 'undefined' || assets.length === 0) return []
   const xPubKey = await getMainAccountXPubKey()
-  // cache assets for performance issues
-  const assetCache = new Map<string, Asset>()
-  const allTickers = new Set<string>()
-  getMyContractsFromStorage(network, xPubKey).map(
-    ({ collateral, synthetic }) => {
-      allTickers.add(collateral.ticker)
-      allTickers.add(synthetic.ticker)
-    },
-  )
-  for (const ticker of Array.from(allTickers.values())) {
-    assetCache.set(ticker, await fetchAsset(ticker))
+  const contracts: Contract[] = []
+  for (const contract of getMyContractsFromStorage(network, xPubKey)) {
+    const collateral = assets.find((a) => a.id === contract.collateral.id)
+    const synthetic = assets.find((a) => a.id === contract.synthetic.id)
+    if (!collateral) continue
+    if (!synthetic) continue
+    contract.collateral = {
+      ...collateral,
+      quantity: contract.collateral.quantity,
+    }
+    contract.synthetic = {
+      ...synthetic,
+      quantity: contract.synthetic.quantity,
+    }
+    contract.state = getContractState(contract)
+    contracts.push(contract)
   }
-  const promises = getMyContractsFromStorage(network, xPubKey).map(
-    async (contract: Contract) => {
-      const collateral = assetCache.get(contract.collateral.ticker)
-      const synthetic = assetCache.get(contract.synthetic.ticker)
-      if (!collateral)
-        throw new Error(
-          `Contract with unknown collateral ${contract.collateral.ticker}`,
-        )
-      if (!synthetic)
-        throw new Error(
-          `Contract with unknown synthetic ${contract.synthetic.ticker}`,
-        )
-      contract.collateral = {
-        ...collateral,
-        quantity: contract.collateral.quantity,
-      }
-      contract.synthetic = {
-        ...synthetic,
-        quantity: contract.synthetic.quantity,
-      }
-      contract.state = getContractState(contract)
-      return contract
-    },
-  )
-  return Promise.all(promises)
+  return contracts
 }
 
 // get contract with txid
-export async function getContract(txid: string): Promise<Contract | undefined> {
-  const contracts = await getContracts()
+export async function getContract(
+  txid: string,
+  assets: Asset[],
+  network: NetworkString,
+): Promise<Contract | undefined> {
+  const contracts = await getContracts(assets, network)
   return contracts.find((c) => c.txid === txid)
 }
 
@@ -243,16 +255,18 @@ export function createNewContract(
   contract: Contract,
   timestamp = Date.now(),
 ): void {
-  addContractToStorage(contract)
-  addActivity(contract, ActivityType.Creation, timestamp)
+  const clone = structuredClone(contract)
+  addContractToStorage(clone)
+  addActivity(clone, ActivityType.Creation, timestamp)
 }
 
 // mark contract as confirmed
 // this happens when we query the explorer and tx is defined
 export function markContractConfirmed(contract: Contract): void {
   if (contract.confirmed) return
-  contract.confirmed = true
-  updateContractOnStorage(contract)
+  const clone = structuredClone(contract)
+  clone.confirmed = true
+  updateContractOnStorage(clone)
 }
 
 // mark contract as redeemed
@@ -266,13 +280,14 @@ export function markContractRedeemed(
   timestamp?: number,
 ): void {
   if (contract.state === ContractState.Redeemed) return
+  const clone = structuredClone(contract)
   const createdAt = timestamp ? timestamp * 1000 : Date.now()
-  contract.state = ContractState.Redeemed
-  updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Redeemed, createdAt)
+  clone.state = ContractState.Redeemed
+  updateContractOnStorage(clone)
+  addActivity(clone, ActivityType.Redeemed, createdAt)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Liquidated)
-  removeActivities(contract, ActivityType.Topup)
+  removeActivities(clone, ActivityType.Liquidated)
+  removeActivities(clone, ActivityType.Topup)
 }
 
 // mark contract as liquidated
@@ -286,12 +301,13 @@ export function markContractLiquidated(
   timestamp?: number,
 ): void {
   if (contract.state === ContractState.Liquidated) return
+  const clone = structuredClone(contract)
   const createdAt = timestamp ? timestamp * 1000 : Date.now()
-  contract.state = ContractState.Liquidated
-  updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Liquidated, createdAt)
+  clone.state = ContractState.Liquidated
+  updateContractOnStorage(clone)
+  addActivity(clone, ActivityType.Liquidated, createdAt)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Redeemed)
+  removeActivities(clone, ActivityType.Redeemed)
 }
 
 // mark contract as open
@@ -302,12 +318,13 @@ export function markContractLiquidated(
 //   - if now is open, it can't be topuped
 export function markContractOpen(contract: Contract): void {
   if (!contract.state) return
-  contract.state = undefined
-  updateContractOnStorage(contract)
+  const clone = structuredClone(contract)
+  clone.state = undefined
+  updateContractOnStorage(clone)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Liquidated)
-  removeActivities(contract, ActivityType.Redeemed)
-  removeActivities(contract, ActivityType.Topup)
+  removeActivities(clone, ActivityType.Liquidated)
+  removeActivities(clone, ActivityType.Redeemed)
+  removeActivities(clone, ActivityType.Topup)
 }
 
 // mark contract as unknown
@@ -319,12 +336,13 @@ export function markContractOpen(contract: Contract): void {
 //   - if now is open, it can't be topuped
 export function markContractUnknown(contract: Contract): void {
   if (contract.state === ContractState.Unknown) return
-  contract.state = ContractState.Unknown
-  updateContractOnStorage(contract)
+  const clone = structuredClone(contract)
+  clone.state = ContractState.Unknown
+  updateContractOnStorage(clone)
   // contract could have wrong activities due to network failures, etc.
-  removeActivities(contract, ActivityType.Liquidated)
-  removeActivities(contract, ActivityType.Redeemed)
-  removeActivities(contract, ActivityType.Topup)
+  removeActivities(clone, ActivityType.Liquidated)
+  removeActivities(clone, ActivityType.Redeemed)
+  removeActivities(clone, ActivityType.Topup)
 }
 
 // mark contract as topup
@@ -334,20 +352,17 @@ export function markContractTopup(
 ): void {
   if (contract.state === ContractState.Topup) return
   const createdAt = timestamp ? timestamp * 1000 : Date.now()
-  contract.state = ContractState.Topup
-  updateContractOnStorage(contract)
-  addActivity(contract, ActivityType.Topup, createdAt)
+  const clone = structuredClone(contract)
+  clone.state = ContractState.Topup
+  updateContractOnStorage(clone)
+  addActivity(clone, ActivityType.Topup, createdAt)
 }
 
 // add additional fields to contract and save to storage
-export async function saveContractToStorage(
-  contract: Contract,
-  network: NetworkString,
-): Promise<void> {
-  contract.network = network
-  contract.confirmed = false
-  contract.xPubKey = await getMainAccountXPubKey()
-  createNewContract(contract)
+export async function saveContractToStorage(contract: Contract): Promise<void> {
+  const clone = structuredClone(contract)
+  clone.confirmed = false
+  createNewContract(clone)
 }
 
 export async function getContractCovenantAddress(
@@ -355,4 +370,12 @@ export async function getContractCovenantAddress(
   network: NetworkString,
 ) {
   return (await getIonioInstance(contract, network)).address
+}
+
+export function getContractExpirationDate(
+  start = 0,
+  validity = expirationSeconds,
+) {
+  const begins = start || Math.floor(Date.now() / 1000)
+  return new Date((begins + validity) * 1000).getTime()
 }

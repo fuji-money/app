@@ -27,7 +27,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
     return <EmptyState>No activities yet</EmptyState>
 
   return (
-    <div className="activity-list">
+    <div className="activity-list is-box has-pink-border">
       {filteredActivities &&
         filteredActivities.map((activity: Activity, index: number) => (
           <ActivityRow key={index} activity={activity} />

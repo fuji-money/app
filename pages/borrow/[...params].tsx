@@ -4,7 +4,6 @@ import { useContext, useEffect, useRef, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
-import { fetchOffers } from 'lib/api'
 import { Asset, Contract, Offer, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
@@ -52,16 +51,17 @@ import { addSwapToStorage } from 'lib/storage'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
+import { ConfigContext } from 'components/providers/config'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, network, updateBalances } = useContext(WalletContext)
+  const { chainSource, network, updateBalances, xPubKey } =
+    useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { newContract, oracles, reloadContracts, resetContracts } =
+  const { config } = useContext(ConfigContext)
+  const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
-  const [offers, setOffers] = useState<Offer[]>()
-  const [loading, setLoading] = useState(true)
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [invoice, setInvoice] = useState('')
@@ -70,6 +70,8 @@ const BorrowParams: NextPage = () => {
 
   const router = useRouter()
   const { params } = router.query
+
+  const { offers, oracles } = config
 
   const resetModal = () => {
     resetContracts()
@@ -202,10 +204,11 @@ const BorrowParams: NextPage = () => {
     // add contractParams to contract
     const { contractParams } = preparedTx
     newContract.contractParams = { ...contractParams }
+    newContract.xPubKey = xPubKey
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
-    await saveContractToStorage(newContract, network)
+    await saveContractToStorage({ ...newContract })
 
     // wait for confirmation, mark contract confirmed and reload contracts
     chainSource
@@ -222,7 +225,6 @@ const BorrowParams: NextPage = () => {
     setData(newContract.txid)
     setResult(Outcome.Success)
     setStage(ModalStages.ShowResult)
-    reloadContracts()
   }
 
   // handle payment through lightning invoice
@@ -249,10 +251,11 @@ const BorrowParams: NextPage = () => {
         newContract,
         utxos,
         redeemScript,
+        oracles[0],
       )
 
       // propose contract to alpha factory
-      const resp = await proposeBorrowContract(preparedTx)
+      const resp = await proposeBorrowContract(preparedTx, network)
       if (!resp.partialTransaction) throw new Error('Not accepted by Fuji')
 
       // sign the input & add the signature via custom finalizer
@@ -314,12 +317,15 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.NeedsCoins)
 
       // prepare borrow transaction
-      const preparedTx = await prepareBorrowTx(newContract)
+      const preparedTx = await prepareBorrowTx(newContract, oracles[0])
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory
       setStage(ModalStages.NeedsFujiApproval)
-      const { partialTransaction } = await proposeBorrowContract(preparedTx)
+      const { partialTransaction } = await proposeBorrowContract(
+        preparedTx,
+        network,
+      )
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
@@ -334,15 +340,6 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.ShowResult)
     }
   }
-
-  useEffect(() => {
-    if (oracles) {
-      fetchOffers().then((data) => {
-        setOffers(data)
-        setLoading(false)
-      })
-    }
-  }, [oracles])
 
   if (!EnabledTasks[Tasks.Borrow]) return <NotAllowed />
   if (loading) return <Spinner />
@@ -379,7 +376,7 @@ const BorrowParams: NextPage = () => {
           </SomeError>
         )
       // ok, proceed
-      return <Borrow offer={offer} oracles={oracles} />
+      return <Borrow offer={offer} />
     case 3:
       if (!newContract) return <SomeError>Contract not found</SomeError>
       switch (params[2]) {

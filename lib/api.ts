@@ -1,47 +1,28 @@
+import { NetworkString } from 'marina-provider'
 import { fetchURL } from './fetch'
-import { getAssetBalance, getBalances } from './marina'
-import { Asset, Investment, Offer, Oracle, Stock } from './types'
+import { Investment, Oracle, Stock } from './types'
+import { factoryUrlMainnet, factoryUrlTestnet } from './constants'
 
-export async function fetchAsset(tickerOrId: string): Promise<Asset> {
-  const asset = await fetchURL(`/api/assets/${tickerOrId}`)
-  const balances = await getBalances()
-  asset.quantity = getAssetBalance(asset, balances)
-  return asset
+export async function fetchInvestments(
+  network: NetworkString,
+): Promise<Investment[]> {
+  return await fetchURL(`/api/${network}/investments`)
 }
 
-export async function fetchAssets(): Promise<Asset[]> {
-  const assets = await fetchURL('/api/assets')
-  const balances = await getBalances()
-  const promises = assets.map(async (asset: Asset) => {
-    asset.quantity = getAssetBalance(asset, balances)
-    return asset
-  })
-  return Promise.all(promises)
+export async function fetchStocks(network: NetworkString): Promise<Stock[]> {
+  return await fetchURL(`/api/${network}/stocks`)
 }
 
-export async function fetchInvestments(): Promise<Investment[]> {
-  return await fetchURL('/api/investments')
+export function getFactoryUrl(network: NetworkString) {
+  return network === 'liquid' ? factoryUrlMainnet : factoryUrlTestnet
 }
 
-export async function fetchOffer(
-  synthetic: string,
-  collateral: string,
-): Promise<Offer> {
-  return await fetchURL(`/api/offers/${synthetic}/${collateral}`)
+export async function fetchConfig(network: NetworkString) {
+  return await fetchURL(getFactoryUrl(network) + '/contracts/info')
 }
 
-export async function fetchOffers(): Promise<Offer[]> {
-  return await fetchURL('/api/offers')
-}
-
-export async function fetchOracle(namePubkeyOrId: string): Promise<Oracle> {
-  return await fetchURL(`/api/oracles/${namePubkeyOrId}`)
-}
-
-export async function fetchOracles(): Promise<Oracle[]> {
-  return await fetchURL('/api/oracles')
-}
-
-export async function fetchStocks(): Promise<Stock[]> {
-  return await fetchURL('/api/stocks')
+export const getBTCvalue = async (oracle: Oracle): Promise<number> => {
+  if (!oracle.url) return 0
+  const data = await fetchURL(oracle.url)
+  return data ? Number(data.lastPrice) : 0
 }

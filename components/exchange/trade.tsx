@@ -23,7 +23,7 @@ const ExchangeTrade = ({ setTrade, synthetic, trade }: ExchangeTradeProps) => {
             {trade} {name}
           </h2>
           <p className="is-size-7 is-grey">
-            1 {ticker} | {prettyNumber(value)} USD
+            1 {ticker} | {prettyNumber(value, 2, 2)} USD
           </p>
         </div>
         <div className="level-right">

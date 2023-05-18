@@ -3,6 +3,7 @@ import { saveAs } from 'file-saver'
 import { localStorageSwapsKey, localStorageContractsKey } from 'lib/storage'
 import { useContext } from 'react'
 import { WeblnContext } from 'components/providers/webln'
+import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 
 const downloadFile = (localStorageKey: string, fileName: string) => {
   const item = localStorage.getItem(localStorageKey)
@@ -56,6 +57,11 @@ const Settings = () => {
   const showEnableWeblnButton =
     weblnProvider && !weblnIsEnabled && weblnEnableHandler
 
+  const showBackupSwapsButton =
+    Object.keys(LightningEnabledTasks).filter(
+      (task) => LightningEnabledTasks[task] === true,
+    ).length > 0
+
   return (
     <div className="dropdown is-hoverable my-auto pt-2">
       <div className="dropdown-trigger p-2">
@@ -71,7 +77,9 @@ const Settings = () => {
       <div className="dropdown-menu">
         <div className="dropdown-content">
           <Item handler={handleContractsBackup} text="Backup contracts" />
-          <Item handler={handleSwapsBackup} text="Backup swaps" />
+          {showBackupSwapsButton && (
+            <Item handler={handleSwapsBackup} text="Backup swaps" />
+          )}
           {showEnableWeblnButton && (
             <Item
               handler={weblnEnableHandler}

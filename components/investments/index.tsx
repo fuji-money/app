@@ -2,22 +2,23 @@ import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
 import { fetchInvestments } from 'lib/api'
 import { Investment } from 'lib/types'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import InvestmentsList from './list'
+import { WalletContext } from 'components/providers/wallet'
+import { ContractsContext } from 'components/providers/contracts'
 
 const Investments = () => {
-  const [isLoading, setIsLoading] = useState(false)
+  const { network } = useContext(WalletContext)
+  const { loading } = useContext(ContractsContext)
   const [investments, setInvestments] = useState<Investment[]>()
 
   useEffect(() => {
-    setIsLoading(true)
-    fetchInvestments().then((data) => {
+    fetchInvestments(network).then((data) => {
       setInvestments(data)
-      setIsLoading(false)
     })
-  }, [])
+  }, [network])
 
-  if (isLoading) return <Spinner />
+  if (loading) return <Spinner />
   if (!investments) return <SomeError>Error fetching investments</SomeError>
 
   return (

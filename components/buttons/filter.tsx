@@ -8,7 +8,7 @@ interface FilterButtonProps {
 }
 
 const FilterButton = ({ ticker, text = 'Mint' }: FilterButtonProps) => {
-  const cN = 'button is-primary is-solid-pink ml-3'
+  const cN = 'button is-primary ml-3'
   const enabled = EnabledTasks[Tasks.Borrow]
   if (!enabled) {
     return (

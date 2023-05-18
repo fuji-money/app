@@ -27,14 +27,16 @@ export interface Activity {
 }
 
 export interface Asset {
+  circulating?: number
   icon: string
   id: string
   isSynthetic: boolean
   isAvailable: boolean
+  maxCirculatingSupply?: number
+  minCollateralRatio?: number
   name: string
   precision: number
   quantity: number
-  ratio?: number
   ticker: string
   value: number
 }
@@ -57,14 +59,15 @@ export type OracleAttestation = {
 }
 
 export type ContractParams = {
-  // contract constructor
+  assetPair: string
   borrowAsset: string
   borrowAmount: number
-  issuerPublicKey: string
   borrowerPublicKey: string
+  expirationTimeout: string
   oraclePublicKey: string
   priceLevel: string
   setupTimestamp: string
+  treasuryPublicKey: string
 }
 
 export enum ContractStatus {
@@ -126,10 +129,10 @@ export interface Offer {
 }
 
 export interface Oracle {
-  id: string
   name: string
   disabled: boolean
   pubkey?: string
+  url?: string
 }
 
 export interface Stock {
@@ -185,4 +188,37 @@ export interface BlockHeader {
   previousBlockHash: string
   timestamp: number
   version: number
+}
+
+// Config response
+export interface ConfigResponseAsset {
+  assetID: string
+  tokenID: string
+  entropy: string
+  minCollateralRatio: number
+  maxCirculatingSupply: number
+}
+
+export interface ConfigResponseOffer {
+  id: string
+  collateralAsset: string
+  syntheticAsset: string
+}
+
+export interface ConfigResponseOracle {
+  url: string
+  xOnlyPublicKey: string
+}
+
+export interface ConfigResponse {
+  assets: [ConfigResponseAsset]
+  offers: [ConfigResponseOffer]
+  oracles: [ConfigResponseOracle]
+  xOnlyIssuerPublicKey: string
+}
+
+export interface Config {
+  assets: Asset[]
+  offers: Offer[]
+  oracles: Oracle[]
 }
