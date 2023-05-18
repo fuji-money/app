@@ -51,7 +51,10 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // get marina provider
   useEffect(() => {
-    getMarinaProvider().then((marinaProvider) => setMarina(marinaProvider))
+    getMarinaProvider().then((marinaProvider) => {
+      setMarina(marinaProvider)
+      updateNetwork()
+    })
   }, [])
 
   // update connected state
@@ -82,7 +85,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // update network and add event listener
   useEffect(() => {
     if (connected && marina) {
-      updateNetwork()
       const id = marina.on('NETWORK', updateNetwork)
       return () => marina.off(id)
     }
