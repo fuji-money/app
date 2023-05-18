@@ -220,31 +220,24 @@ export async function getContracts(
 ): Promise<Contract[]> {
   if (typeof window === 'undefined' || assets.length === 0) return []
   const xPubKey = await getMainAccountXPubKey()
-  const promises = getMyContractsFromStorage(network, xPubKey).map(
-    async (contract: Contract) => {
-      const collateral = assets.find((a) => a.id === contract.collateral.id)
-      const synthetic = assets.find((a) => a.id === contract.synthetic.id)
-      if (!collateral)
-        throw new Error(
-          `Contract with unknown collateral ${contract.collateral.ticker}`,
-        )
-      if (!synthetic)
-        throw new Error(
-          `Contract with unknown synthetic ${contract.synthetic.ticker}`,
-        )
-      contract.collateral = {
-        ...collateral,
-        quantity: contract.collateral.quantity,
-      }
-      contract.synthetic = {
-        ...synthetic,
-        quantity: contract.synthetic.quantity,
-      }
-      contract.state = getContractState(contract)
-      return contract
-    },
-  )
-  return Promise.all(promises)
+  const contracts: Contract[] = []
+  for (const contract of getMyContractsFromStorage(network, xPubKey)) {
+    const collateral = assets.find((a) => a.id === contract.collateral.id)
+    const synthetic = assets.find((a) => a.id === contract.synthetic.id)
+    if (!collateral) continue
+    if (!synthetic) continue
+    contract.collateral = {
+      ...collateral,
+      quantity: contract.collateral.quantity,
+    }
+    contract.synthetic = {
+      ...synthetic,
+      quantity: contract.synthetic.quantity,
+    }
+    contract.state = getContractState(contract)
+    contracts.push(contract)
+  }
+  return contracts
 }
 
 // get contract with txid

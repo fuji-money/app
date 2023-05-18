@@ -92,7 +92,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       // give time for network change to propagate across components
       // if user has marina on 'testnet' and app default is 'liquid'
       // a race condition could ocurr
-      sleep(3000).then(() => setWarmingUp(false))
+      sleep(2000).then(() => setWarmingUp(false))
       const id = marina.on('NETWORK', updateNetwork)
       return () => marina.off(id)
     }
