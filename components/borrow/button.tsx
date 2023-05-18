@@ -6,6 +6,7 @@ import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { LightningEnabledTasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
+import { fromSatoshis } from 'lib/utils'
 import Router from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 
@@ -21,6 +22,8 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { setNewContract } = useContext(ContractsContext)
 
   const [enoughFunds, setEnoughFunds] = useState(false)
+  const [mintLimitReached, setMintLimitReached] = useState(false)
+
   const { collateral, oracles, synthetic } = contract
 
   const { assets } = config
@@ -45,11 +48,14 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     Router.push(`${Router.router?.asPath}/channel`)
   }
 
-  const { circulating, quantity, maxCirculatingSupply } = synthetic
-  const enoughMintSupply =
-    !maxCirculatingSupply || maxCirculatingSupply === -1
-      ? true
-      : maxCirculatingSupply >= (circulating ?? 0 + quantity)
+  useEffect(() => {
+    const { circulating, quantity, maxCirculatingSupply, precision } = synthetic
+    const cur = circulating ?? 0
+    const max = maxCirculatingSupply
+    const qty = fromSatoshis(quantity, precision)
+    setMintLimitReached(!max ? false : cur === max || cur + qty > max)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract.synthetic.quantity])
 
   const enabled =
     connected &&
@@ -62,7 +68,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     oracles &&
     oracles.length > 0 &&
     collateral.quantity > feeAmount + minDustLimit &&
-    enoughMintSupply
+    !mintLimitReached
 
   return (
     <div className="has-text-centered">
