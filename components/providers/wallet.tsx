@@ -134,8 +134,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         }
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, network])
+  }, [connected, marina, network])
 
   return (
     <WalletContext.Provider
