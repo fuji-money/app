@@ -34,11 +34,13 @@ interface ConfigProviderProps {
 }
 
 export const ConfigProvider = ({ children }: ConfigProviderProps) => {
-  const { network, warmingUp } = useContext(WalletContext)
+  const { network } = useContext(WalletContext)
 
   const [config, setConfig] = useState<Config>(emptyConfig)
 
   const reloadConfig = async () => {
+    if (!network) return
+
     // fetch config from factory
     const config: ConfigResponse = await fetchConfig(network)
     if (!config) return
@@ -71,9 +73,9 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
   }
 
   useEffect(() => {
-    if (!warmingUp) reloadConfig()
+    if (network) reloadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network, warmingUp])
+  }, [network])
 
   return (
     <ConfigContext.Provider value={{ config }}>

@@ -62,7 +62,7 @@ interface ContractsProviderProps {
 }
 
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
-  const { chainSource, connected, marina, network, xPubKey, warmingUp } =
+  const { chainSource, connected, marina, network, xPubKey } =
     useContext(WalletContext)
   const { config } = useContext(ConfigContext)
 
@@ -90,7 +90,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
-    if (connected) {
+    if (connected && network) {
       setLoading(true)
       await checkContractsStatus()
       setContracts(await getContracts(assets, network))
@@ -107,6 +107,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
   const notConfirmed = async (contract: Contract) => {
+    if (!network) return
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(contract, network),
@@ -121,6 +122,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // - check for creation tx (to confirm)
   // - check if unspend (for status)
   const checkContractsStatus = async () => {
+    if (!network) return
     // function to check if contract has fuji coin
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
@@ -245,7 +247,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   useEffect(() => {
     async function runOnAssetsChange() {
-      if (!warmingUp && assets.length) {
+      if (network && assets.length) {
         if (!firstRender.current.includes(network)) {
           await syncContractsWithMarina()
           firstRender.current.push(network)
@@ -257,7 +259,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
     runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets, warmingUp])
+  }, [assets])
 
   return (
     <ContractsContext.Provider
