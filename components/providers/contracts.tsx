@@ -20,14 +20,7 @@ import {
   createNewContract,
 } from 'lib/contracts'
 import { getContractsFromStorage, getMyContractsFromStorage } from 'lib/storage'
-import {
-  Activity,
-  Asset,
-  Contract,
-  ContractState,
-  Offer,
-  Oracle,
-} from 'lib/types'
+import { Activity, Contract, ContractState } from 'lib/types'
 import { WalletContext } from './wallet'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { getActivities } from 'lib/activities'
@@ -258,6 +251,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
           firstRender.current.push(network)
         }
         await reloadContracts()
+        setLoading(false)
         return setMarinaListener() // return the close listener function
       }
     }

@@ -96,6 +96,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       const id = marina.on('NETWORK', updateNetwork)
       return () => marina.off(id)
     }
+    if (!connected) setWarmingUp(false)
   }, [connected, marina])
 
   // when network changes, connect to respective electrum server
