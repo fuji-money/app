@@ -76,7 +76,7 @@ const ContractTopupLightning: NextPage = () => {
   if (!newContract) throw new Error('Missing contract')
 
   const handleInvoice = async (): Promise<void> => {
-    if (!marina) return
+    if (!marina || !network) return
     openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {

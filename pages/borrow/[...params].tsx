@@ -89,7 +89,8 @@ const BorrowParams: NextPage = () => {
   const unspentSwap = useRef<ActiveSwap>()
 
   // make a swap via boltz.exchange
-  const makeSwap = async (): Promise<ActiveSwap> => {
+  const makeSwap = async (): Promise<ActiveSwap | undefined> => {
+    if (!network) return
     setStage(ModalStages.NeedsInvoice)
     // we will create a ephemeral key pair:
     // - it will generate a public key to be used with the Boltz swap
@@ -185,6 +186,7 @@ const BorrowParams: NextPage = () => {
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
   ) => {
+    if (!network) return
     // change message to user
     setStage(ModalStages.NeedsFinishing)
     // broadcast transaction
@@ -230,14 +232,15 @@ const BorrowParams: NextPage = () => {
   // handle payment through lightning invoice
   const handleInvoice = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract) return
+    if (!newContract || !network) return
 
     try {
       openModal(ModalIds.InvoiceDeposit)
 
       // if there's an unspent swap, we will use it
-      const { keyPair, preimage, redeemScript, utxos } =
-        unspentSwap.current ?? (await makeSwap())
+      const swap = unspentSwap.current ?? (await makeSwap())
+      if (!swap) return
+      const { keyPair, preimage, redeemScript, utxos } = swap
 
       // save this swap for the case this process fails after the swap
       // we don't users to have to make the swap again
@@ -310,7 +313,7 @@ const BorrowParams: NextPage = () => {
   // handle payment through marina browser extension
   const handleMarina = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract) return
+    if (!newContract || !network) return
 
     try {
       openModal(ModalIds.MarinaDeposit)

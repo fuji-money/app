@@ -39,7 +39,7 @@ const ContractRedeemLightning: NextPage = () => {
   const amount = quantity - payoutAmount
 
   const proceedWithRedeem = async (swapAddress?: string) => {
-    if (!marina) return
+    if (!marina || !network) return
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
@@ -72,7 +72,7 @@ const ContractRedeemLightning: NextPage = () => {
   }
 
   const handleInvoice = async (invoice?: string): Promise<void> => {
-    if (!marina) return
+    if (!marina || !network) return
     if (!invoice || typeof invoice !== 'string')
       return openModal(ModalIds.Invoice)
     closeModal(ModalIds.Invoice)

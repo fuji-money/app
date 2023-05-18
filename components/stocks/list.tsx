@@ -13,9 +13,11 @@ const StocksList = () => {
   const [stocks, setStocks] = useState<Stock[]>()
 
   useEffect(() => {
-    fetchStocks(network).then((data) => {
-      setStocks(data)
-    })
+    if (network) {
+      fetchStocks(network).then((data) => {
+        setStocks(data)
+      })
+    }
   }, [network])
 
   if (loading) return <Spinner />
