@@ -21,24 +21,23 @@ import { ModalIds } from 'components/modals/modal'
 
 interface ConfigContextProps {
   config: Config
+  reloadConfig: () => void
 }
 
 const emptyConfig = { assets: [], offers: [], oracles: [] }
 
 export const ConfigContext = createContext<ConfigContextProps>({
   config: emptyConfig,
+  reloadConfig: () => {},
 })
 
-interface ConfigProviderProps {
-  children: ReactNode
-}
-
-export const ConfigProvider = ({ children }: ConfigProviderProps) => {
+export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useContext(WalletContext)
 
   const [config, setConfig] = useState<Config>(emptyConfig)
 
   const reloadConfig = async () => {
+    // return if network not defined
     if (!network) return
 
     // fetch config from factory
@@ -48,7 +47,7 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
     // populate oracles with name
     const oracles = config.oracles.map((oracle) => populateOracle(oracle))
 
-    // populate assets with all different attributes
+    // populate assets with additional attributes
     const assets = config.assets
       .map((asset) => populateAsset(asset))
       .concat(getLBTC(network))
@@ -78,7 +77,7 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
   }, [network])
 
   return (
-    <ConfigContext.Provider value={{ config }}>
+    <ConfigContext.Provider value={{ config, reloadConfig }}>
       {children}
     </ConfigContext.Provider>
   )

@@ -11,6 +11,7 @@ import { getContractRatio } from 'lib/contracts'
 import { SomethingWentWrong } from 'components/layout/error'
 import { useContext } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
+import { ConfigContext } from 'components/providers/config'
 
 interface SuccessProps {
   contract: Contract
@@ -19,12 +20,13 @@ interface SuccessProps {
 }
 
 const Success = ({ contract, task, txid }: SuccessProps) => {
-  const { reloadContracts, resetContracts } = useContext(ContractsContext)
+  const { reloadConfig } = useContext(ConfigContext)
+  const { resetContracts } = useContext(ContractsContext)
 
   const handleClick = () => {
     closeAllModals()
     resetContracts()
-    reloadContracts()
+    reloadConfig()
   }
 
   // Twitter message

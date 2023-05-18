@@ -64,7 +64,7 @@ interface ContractsProviderProps {
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { chainSource, connected, marina, network, xPubKey } =
     useContext(WalletContext)
-  const { config } = useContext(ConfigContext)
+  const { config, reloadConfig } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -75,11 +75,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { assets } = config
 
   // save first time app was run
-  const firstRun = useRef(Date.now())
+  const lastReload = useRef(Date.now())
 
   const reloadAndMarkLastReload = () => {
-    firstRun.current = Date.now()
+    lastReload.current = Date.now()
     reloadContracts()
+    reloadConfig()
   }
 
   const resetContracts = () => {
@@ -214,7 +215,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
-      accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
+      accountID === marinaFujiAccountID &&
+      Date.now() - lastReload.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
       const listenerFunction = async ({
