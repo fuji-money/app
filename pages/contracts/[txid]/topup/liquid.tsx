@@ -32,7 +32,7 @@ const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { config } = useContext(ConfigContext)
-  const { newContract, oldContract, reloadContracts, resetContracts } =
+  const { newContract, oldContract, resetContracts } =
     useContext(ContractsContext)
 
   const [data, setData] = useState('')
@@ -134,7 +134,6 @@ const ContractTopupLiquid: NextPage = () => {
         )
         .then(() => {
           markContractConfirmed(newContract)
-          reloadContracts()
         })
 
       // mark old contract as topup
@@ -144,7 +143,6 @@ const ContractTopupLiquid: NextPage = () => {
       setData(newContract.txid)
       setResult(Outcome.Success)
       setStage(ModalStages.ShowResult)
-      reloadContracts()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)

@@ -1,10 +1,10 @@
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
-import { Asset, Contract, Offer, Outcome } from 'lib/types'
+import { Asset, Contract, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -58,9 +58,8 @@ const BorrowParams: NextPage = () => {
     useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { config, reloadConfig } = useContext(ConfigContext)
-  const { loading, newContract, reloadContracts, resetContracts } =
-    useContext(ContractsContext)
+  const { config } = useContext(ConfigContext)
+  const { loading, newContract, resetContracts } = useContext(ContractsContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
@@ -220,8 +219,6 @@ const BorrowParams: NextPage = () => {
       )
       .then(() => {
         markContractConfirmed(newContract)
-        reloadConfig()
-        reloadContracts()
       })
 
     // show success
@@ -354,7 +351,6 @@ const BorrowParams: NextPage = () => {
   switch (params.length) {
     case 1:
       // /borrow/fUSD => show list of offers filtered by ticker
-      resetContracts()
       return <Offers offers={offers} ticker={params[0]} />
     case 2:
       // /borrow/fUSD/L-BTC => show form to borrow synthetic
