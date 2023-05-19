@@ -58,7 +58,7 @@ const BorrowParams: NextPage = () => {
     useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { config } = useContext(ConfigContext)
+  const { config, reloadConfig } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -220,6 +220,7 @@ const BorrowParams: NextPage = () => {
       )
       .then(() => {
         markContractConfirmed(newContract)
+        reloadConfig()
         reloadContracts()
       })
 
