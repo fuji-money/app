@@ -92,7 +92,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
     if (connected && network) {
-      setLoading(true)
       await checkContractsStatus()
       setContracts(await getContracts(assets, network))
       setActivities(await getActivities())
