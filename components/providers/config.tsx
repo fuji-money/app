@@ -21,6 +21,7 @@ import { ModalIds } from 'components/modals/modal'
 
 interface ConfigContextProps {
   config: Config
+  loading: boolean
   reloadConfig: () => void
 }
 
@@ -28,6 +29,7 @@ const emptyConfig = { assets: [], offers: [], oracles: [] }
 
 export const ConfigContext = createContext<ConfigContextProps>({
   config: emptyConfig,
+  loading: true,
   reloadConfig: () => {},
 })
 
@@ -35,10 +37,14 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useContext(WalletContext)
 
   const [config, setConfig] = useState<Config>(emptyConfig)
+  const [loading, setLoading] = useState(true)
 
   const reloadConfig = async () => {
     // return if network not defined
-    if (!network) return
+    if (!network) {
+      setLoading(false)
+      return
+    }
 
     // fetch config from factory
     const config: ConfigResponse = await fetchConfig(network)
@@ -69,6 +75,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
     )
 
     setConfig({ assets, offers, oracles })
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -77,7 +84,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   }, [network])
 
   return (
-    <ConfigContext.Provider value={{ config, reloadConfig }}>
+    <ConfigContext.Provider value={{ config, loading, reloadConfig }}>
       {children}
     </ConfigContext.Provider>
   )

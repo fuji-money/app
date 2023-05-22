@@ -3,12 +3,10 @@ import { Asset } from 'lib/types'
 import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
-import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 const AssetsList = () => {
-  const { config } = useContext(ConfigContext)
-  const { loading } = useContext(ContractsContext)
+  const { config, loading } = useContext(ConfigContext)
 
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
 
