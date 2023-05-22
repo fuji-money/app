@@ -32,7 +32,7 @@ const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { config } = useContext(ConfigContext)
-  const { newContract, oldContract, resetContracts } =
+  const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
   const [data, setData] = useState('')
@@ -134,6 +134,7 @@ const ContractTopupLiquid: NextPage = () => {
         )
         .then(() => {
           markContractConfirmed(newContract)
+          reloadContracts()
         })
 
       // mark old contract as topup

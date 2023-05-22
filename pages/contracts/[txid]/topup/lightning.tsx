@@ -50,7 +50,7 @@ const ContractTopupLightning: NextPage = () => {
     useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
   const { config } = useContext(ConfigContext)
-  const { newContract, oldContract, resetContracts } =
+  const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
   const [data, setData] = useState('')
@@ -248,6 +248,7 @@ const ContractTopupLightning: NextPage = () => {
           )
           .then(() => {
             markContractConfirmed(newContract)
+            reloadContracts()
           })
 
         // mark old contract as topup
