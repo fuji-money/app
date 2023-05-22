@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react'
 import {
   getCollateralQuantity,
-  getContractPayoutAmount,
   getContractPriceLevel,
   getContractRatio,
 } from 'lib/contracts'
@@ -31,8 +30,7 @@ const Topup = () => {
       const quantity = getCollateralQuantity(newContract, ratio)
       const collateral = { ...newContract.collateral, quantity }
       const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
-      const payoutAmount = getContractPayoutAmount(newContract, quantity)
-      setNewContract({ ...newContract, collateral, priceLevel, payoutAmount })
+      setNewContract({ ...newContract, collateral, priceLevel })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratio])

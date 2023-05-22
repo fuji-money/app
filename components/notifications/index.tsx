@@ -44,7 +44,7 @@ const Notifications = ({
 
   const { assets } = config
 
-  const { collateral, oracles, payoutAmount, synthetic } = contract
+  const { collateral, oracles, synthetic } = contract
   const spendQuantity =
     typeof topup === 'undefined' ? collateral.quantity : topup
 
@@ -82,10 +82,6 @@ const Notifications = ({
   useEffect(() => {
     setNotEnoughOracles(oracles?.length === 0)
   }, [oracles])
-
-  useEffect(() => {
-    if (payoutAmount) setBelowDustLimit(payoutAmount < minDustLimit)
-  }, [payoutAmount])
 
   return (
     <>

@@ -35,8 +35,6 @@ const ContractRedeemLightning: NextPage = () => {
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   const quantity = newContract.collateral.quantity
-  const payoutAmount = newContract.payoutAmount || 0
-  const amount = quantity - payoutAmount
 
   const proceedWithRedeem = async (swapAddress?: string) => {
     if (!marina || !network) return
@@ -90,7 +88,7 @@ const ContractRedeemLightning: NextPage = () => {
       )
       if (!boltzSwap) throw new Error('Error creating swap')
       const { address, expectedAmount } = boltzSwap
-      if (expectedAmount > amount)
+      if (expectedAmount > quantity)
         throw new Error('Expected amount higher then collateral amount')
       proceedWithRedeem(address)
     } catch (error) {
