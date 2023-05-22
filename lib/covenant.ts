@@ -400,8 +400,8 @@ export async function prepareRedeemTx(
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
-  const utxos = await getMainAccountCoins()
   // validate we have sufficient synthetic funds
+  const utxos = await getMainAccountCoins()
   const syntheticUtxos = selectCoins(utxos, synthetic.id, synthetic.quantity)
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
