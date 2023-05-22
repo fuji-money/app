@@ -260,7 +260,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
     runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets])
+  }, [assets, connected])
 
   return (
     <ContractsContext.Provider
