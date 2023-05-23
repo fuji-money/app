@@ -175,6 +175,7 @@ export async function prepareBorrowTxWithClaimTx(
     contract,
     oracle,
   )
+
   updater
     .addInputs([
       {
@@ -472,20 +473,13 @@ export async function prepareRedeemTx(
 
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
-    const borrowChangeAddress = await getNextChangeAddress()
+    const syntheticChangeAddress = await getNextChangeAddress()
     tx.withRecipient(
-      borrowChangeAddress.confidentialAddress,
+      syntheticChangeAddress.confidentialAddress,
       syntheticChangeAmount,
       synthetic.id,
       0,
     )
-  } else if (swapAddress) {
-    // in a redeem, some inputs (if not all) are confidential.
-    // in the case of a redeem to lightning, if we don't have any change
-    // all outputs will be unconfidential, which would break the protocol.
-    // by adding a confidential op_return with value 0 fixes it.
-    const blindingKey = randomBytes(33).toString('hex')
-    tx.withOpReturn(0, collateral.id, [], blindingKey, 0)
   }
 
   // pay fees

@@ -52,9 +52,10 @@ import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
+import { toBlindingData } from 'liquidjs-lib/src/psbt'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, network, updateBalances, xPubKey } =
+  const { chainSource, marina, network, updateBalances, xPubKey } =
     useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
@@ -92,6 +93,7 @@ const BorrowParams: NextPage = () => {
   const makeSwap = async (): Promise<ActiveSwap | undefined> => {
     if (!network) return
     setStage(ModalStages.NeedsInvoice)
+
     // we will create a ephemeral key pair:
     // - it will generate a public key to be used with the Boltz swap
     // - later we will sign the claim transaction with the private key
@@ -130,6 +132,7 @@ const BorrowParams: NextPage = () => {
 
     // deconstruct swap
     const {
+      blindingKey,
       id,
       invoice,
       lockupAddress,
@@ -167,10 +170,21 @@ const BorrowParams: NextPage = () => {
 
     // fetch utxos for address
     const utxos = await chainSource.listUnspents(lockupAddress)
+    const u = utxos[0]
+    const { asset, assetBlindingFactor, value, valueBlindingFactor } =
+      await toBlindingData(Buffer.from(blindingKey, 'hex'), u.witnessUtxo)
+    u.blindingData = {
+      asset: asset.reverse().toString('hex'),
+      assetBlindingFactor: assetBlindingFactor.toString('hex'),
+      value: parseInt(value, 10),
+      valueBlindingFactor: valueBlindingFactor.toString('hex'),
+    }
+    console.log('utxo', u)
 
     // clear invoice expiration timeout
     clearTimeout(invoiceExpirationTimeout)
 
+    // check if any utxo was returned
     if (utxos.length === 0) throw new Error('error making swap')
 
     // show user (via modal) that payment has arrived
@@ -187,6 +201,7 @@ const BorrowParams: NextPage = () => {
     preparedTx: PreparedBorrowTx,
   ) => {
     if (!network) return
+    console.log('pset', pset)
     // change message to user
     setStage(ModalStages.NeedsFinishing)
     // broadcast transaction

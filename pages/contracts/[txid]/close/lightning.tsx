@@ -42,6 +42,7 @@ const ContractRedeemLightning: NextPage = () => {
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
     const tx = await prepareRedeemTx(newContract, network, swapAddress)
+    console.log('tx.pset', tx.pset)
 
     // ask user to sign transaction
     setStage(ModalStages.NeedsConfirmation)

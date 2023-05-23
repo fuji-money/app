@@ -65,7 +65,9 @@ export const getInvoiceExpireDate = (invoice: string): number => {
 
 export interface SubmarineSwap {
   address: string
+  blindingKey: string
   expectedAmount: number
+  id: string
   redeemScript: string
 }
 
@@ -114,15 +116,18 @@ export const createSubmarineSwap = async (
   const boltz = new Boltz(network)
 
   // create submarine swap
-  const { expectedAmount, address, redeemScript }: SubmarineSwapResponse =
-    await boltz.createSubmarineSwap({
-      invoice,
-      refundPublicKey,
-    })
+  const response: SubmarineSwapResponse = await boltz.createSubmarineSwap({
+    invoice,
+    refundPublicKey,
+  })
+  console.log('response', response)
+  const { address, expectedAmount, id, blindingKey, redeemScript } = response
 
   const submarineSwap: SubmarineSwap = {
     address,
+    blindingKey,
     expectedAmount,
+    id,
     redeemScript,
   }
   if (isValidSubmarineSwap(redeemScript, refundPublicKey)) return submarineSwap
@@ -131,6 +136,7 @@ export const createSubmarineSwap = async (
 // REVERSE SUBMARINE SWAPS (Lightning => LBTC)
 
 export interface ReverseSwap {
+  blindingKey: string
   claimPublicKey: string
   id: string
   invoice: string
@@ -227,19 +233,25 @@ export const createReverseSubmarineSwap = async (
   const claimPublicKey = p.pubkey!.toString('hex')
 
   // create reverse submarine swap
-  const {
-    id,
-    invoice,
-    lockupAddress,
-    redeemScript,
-    timeoutBlockHeight,
-  }: ReverseSubmarineSwapResponse = await boltz.createReverseSubmarineSwap({
+  const response = await boltz.createReverseSubmarineSwap({
     claimPublicKey,
     onchainAmount,
     preimageHash,
   })
 
-  const reverseSwap = {
+  console.log('response', response)
+
+  const {
+    blindingKey,
+    id,
+    invoice,
+    lockupAddress,
+    redeemScript,
+    timeoutBlockHeight,
+  } = response
+
+  const reverseSwap: ReverseSwap = {
+    blindingKey,
     claimPublicKey,
     id,
     invoice,
