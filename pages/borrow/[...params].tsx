@@ -179,7 +179,6 @@ const BorrowParams: NextPage = () => {
       value: parseInt(value, 10),
       valueBlindingFactor: valueBlindingFactor.toString('hex'),
     }
-    console.log('utxo', u)
 
     // clear invoice expiration timeout
     clearTimeout(invoiceExpirationTimeout)
@@ -201,9 +200,10 @@ const BorrowParams: NextPage = () => {
     preparedTx: PreparedBorrowTx,
   ) => {
     if (!network) return
-    console.log('pset', pset)
+
     // change message to user
     setStage(ModalStages.NeedsFinishing)
+
     // broadcast transaction
     const rawHex = finalizeTx(pset)
     console.log('rawHex', rawHex)

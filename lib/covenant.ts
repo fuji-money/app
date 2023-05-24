@@ -43,7 +43,6 @@ import {
 } from './marina'
 import * as ecc from 'tiny-secp256k1'
 import { Contract as IonioContract } from '@ionio-lang/ionio'
-import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 import { artifact } from './artifact'
@@ -426,12 +425,12 @@ export async function prepareRedeemTx(
 
   const unblindData = blindingData
     ? {
-        value: blindingData.value.toString(),
         asset: AssetHash.fromHex(blindingData.asset).bytesWithoutPrefix,
         assetBlindingFactor: Buffer.from(
           blindingData.assetBlindingFactor,
           'hex',
         ),
+        value: blindingData.value.toString(),
         valueBlindingFactor: Buffer.from(
           blindingData.valueBlindingFactor,
           'hex',

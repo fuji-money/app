@@ -3,10 +3,7 @@ import bolt11 from 'bolt11'
 import { address, crypto, script, payments } from 'liquidjs-lib'
 import { fromSatoshis } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
-import Boltz, {
-  ReverseSubmarineSwapResponse,
-  SubmarineSwapResponse,
-} from './boltz'
+import Boltz, { SubmarineSwapResponse } from './boltz'
 import { randomBytes } from 'crypto'
 import Decimal from 'decimal.js'
 import { NetworkString } from 'marina-provider'
@@ -116,12 +113,16 @@ export const createSubmarineSwap = async (
   const boltz = new Boltz(network)
 
   // create submarine swap
-  const response: SubmarineSwapResponse = await boltz.createSubmarineSwap({
+  const {
+    address,
+    expectedAmount,
+    id,
+    blindingKey,
+    redeemScript,
+  }: SubmarineSwapResponse = await boltz.createSubmarineSwap({
     invoice,
     refundPublicKey,
   })
-  console.log('response', response)
-  const { address, expectedAmount, id, blindingKey, redeemScript } = response
 
   const submarineSwap: SubmarineSwap = {
     address,
@@ -233,14 +234,6 @@ export const createReverseSubmarineSwap = async (
   const claimPublicKey = p.pubkey!.toString('hex')
 
   // create reverse submarine swap
-  const response = await boltz.createReverseSubmarineSwap({
-    claimPublicKey,
-    onchainAmount,
-    preimageHash,
-  })
-
-  console.log('response', response)
-
   const {
     blindingKey,
     id,
@@ -248,7 +241,11 @@ export const createReverseSubmarineSwap = async (
     lockupAddress,
     redeemScript,
     timeoutBlockHeight,
-  } = response
+  } = await boltz.createReverseSubmarineSwap({
+    claimPublicKey,
+    onchainAmount,
+    preimageHash,
+  })
 
   const reverseSwap: ReverseSwap = {
     blindingKey,
