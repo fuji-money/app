@@ -81,11 +81,11 @@ export const extractError = (error: any): string => {
 export const operationFromTask = (task: string): string => {
   switch (task) {
     case Tasks.Borrow:
+    case Tasks.Multiply:
+    case Tasks.Topup:
       return 'deposit'
     case Tasks.Redeem:
       return 'receive'
-    case Tasks.Topup:
-      return 'deposit'
     default:
       return 'unknown'
   }

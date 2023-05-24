@@ -1,15 +1,27 @@
+import { ContractsContext } from 'components/providers/contracts'
+import { useContext } from 'react'
+import Router from 'next/router'
+import { Contract } from 'lib/types'
+
 interface MultiplyButtonProps {
-  setDeposit: (arg0: boolean) => void
+  contract: Contract
 }
 
-const MultiplyButton = ({ setDeposit }: MultiplyButtonProps) => {
+const MultiplyButton = ({ contract }: MultiplyButtonProps) => {
+  const { setNewContract } = useContext(ContractsContext)
+
+  const handleClick = () => {
+    setNewContract(contract)
+    Router.push(`${Router.router?.asPath}/channel`)
+  }
+
   const enabled = true
 
   return (
     <button
       className="button is-primary is-cta"
       disabled={!enabled}
-      onClick={() => setDeposit(true)}
+      onClick={handleClick}
     >
       Deposit
     </button>

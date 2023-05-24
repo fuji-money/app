@@ -17,6 +17,7 @@ const Summary = ({ contract }: SummaryProps) => {
           <td>
             {prettyNumber(
               fromSatoshis(synthetic.quantity, synthetic.precision),
+              2,
             )}
           </td>
           <td>{synthetic.ticker}</td>

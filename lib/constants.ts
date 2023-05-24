@@ -13,7 +13,7 @@ export const marinaMainAccountID = 'mainAccount' // m/84'/1776'/0'
 export const marinaTestnetMainAccountID = 'mainAccountTest' // m/84'/1'/0'
 export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 
-export const defaultNetwork = 'liquid'
+export const defaultNetwork = 'testnet'
 
 export const treasuryPublicKey =
   process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||

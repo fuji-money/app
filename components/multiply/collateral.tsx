@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { Asset } from 'lib/types'
+import { toSatoshis } from 'lib/utils'
 
 interface CollateralProps {
   asset: Asset
@@ -7,6 +8,10 @@ interface CollateralProps {
 }
 
 const Collateral = ({ asset, setQuantity }: CollateralProps) => {
+  const handleChange = (e: any) => {
+    setQuantity(toSatoshis(parseFloat(e.target.value), asset.precision))
+  }
+
   return (
     <div className="level has-pink-border has-pink-background">
       <div className="level-left">
@@ -29,7 +34,7 @@ const Collateral = ({ asset, setQuantity }: CollateralProps) => {
             min="0"
             placeholder="0.00"
             type="number"
-            onChange={(e) => setQuantity(parseFloat(e.target.value))}
+            onChange={handleChange}
           />
         </div>
       </div>

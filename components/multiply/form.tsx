@@ -3,10 +3,10 @@ import { useContext, useEffect, useState } from 'react'
 import Range from './range'
 import Snippet from './snippet'
 import Image from 'next/image'
-import { openModal } from 'lib/utils'
+import { fromSatoshis, openModal, toSatoshis } from 'lib/utils'
 import MultiplyModals from 'components/modals/multiply'
 import Collateral from './collateral'
-import { Asset, Contract } from 'lib/types'
+import { Asset, Contract, Offer } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
@@ -18,19 +18,14 @@ import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 interface MultiplyFormProps {
-  contract: Contract
-  setContract: (arg0: Contract) => void
-  setDeposit: (arg0: boolean) => void
+  offer: Offer
 }
 
-const MultiplyForm = ({
-  contract,
-  setContract,
-  setDeposit,
-}: MultiplyFormProps) => {
+const MultiplyForm = ({ offer }: MultiplyFormProps) => {
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
+  const [contract, setContract] = useState<Contract>(offer)
   const [lbtc, setLbtc] = useState<Asset>()
   const [exposure, setExposure] = useState(0)
   const [fujiDebt, setFujiDebt] = useState(0)
@@ -47,13 +42,17 @@ const MultiplyForm = ({
 
   useEffect(() => {
     if (lbtc) {
+      const qtty = fromSatoshis(quantity, lbtc.precision)
       const quoc = (1 / ratio) * 100
-      const debt = (quantity * lbtc.value * quoc) / (1 - quoc)
-      const expo = debt / lbtc.value + quantity
-      const mult = quantity ? expo / quantity : 0
+      const debt = (qtty * lbtc.value * quoc) / (1 - quoc)
+      const expo = debt / lbtc.value + qtty
+      const mult = qtty ? expo / quantity : 0
       const liqp = (lbtc.value / ratio) * minMultiplyRatio
       contract.collateral.quantity = quantity
-      contract.synthetic.quantity = debt
+      contract.synthetic.quantity = toSatoshis(
+        debt,
+        contract.synthetic.precision,
+      )
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
@@ -160,7 +159,7 @@ const MultiplyForm = ({
           </p>
           <Oracles contract={contract} setContract={setContract} />
           <p className="has-text-centered mt-6 mb-4">
-            <MultiplyButton setDeposit={setDeposit} />
+            <MultiplyButton contract={contract} />
           </p>
         </div>
       </div>
