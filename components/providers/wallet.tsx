@@ -8,7 +8,6 @@ import {
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
-import { sleep } from 'lib/utils'
 
 interface WalletContextProps {
   balances: Balance[]

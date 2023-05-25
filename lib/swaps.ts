@@ -7,6 +7,7 @@ import Boltz, { SubmarineSwapResponse } from './boltz'
 import { randomBytes } from 'crypto'
 import Decimal from 'decimal.js'
 import { NetworkString } from 'marina-provider'
+import { bech32 } from 'bech32'
 
 // docs: https://docs.boltz.exchange/en/latest/api/
 
@@ -258,4 +259,41 @@ export const createReverseSubmarineSwap = async (
     timeoutBlockHeight,
   }
   if (isValidReverseSubmarineSwap(reverseSwap)) return reverseSwap
+}
+
+export function parseLNURL(lnurl: string) {
+  if (lnurl.includes('@')) {
+    // Lightning address
+    const urlsplit = lnurl.split('@')
+    return `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`
+  }
+  // LNURL
+  const { words } = bech32.decode(lnurl, 2000)
+  let requestByteArray = bech32.fromWords(words)
+  return Buffer.from(requestByteArray).toString()
+}
+
+export async function fetchInvoiceFromLNURL(
+  lnurl: string,
+  amount_sat: number,
+): Promise<string> {
+  const url = parseLNURL(lnurl)
+  const amount = Math.round(amount_sat * 1000)
+
+  const checkResponse = (resp: Response) => resp.json()
+
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(checkResponse)
+      .then((data) => {
+        if (amount < data.minSendable || amount > data.maxSendable) {
+          return reject('Amount not in LNURL range.')
+        }
+        fetch(`${data.callback}?amount=${amount}`)
+          .then(checkResponse)
+          .then((data) => resolve(data.pr))
+          .catch(reject)
+      })
+      .catch(reject)
+  })
 }
