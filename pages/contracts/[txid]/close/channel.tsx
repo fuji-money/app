@@ -23,7 +23,7 @@ const ContractRedeemChannel: NextPage = () => {
   const { txid } = router.query
 
   useEffect(() => {
-    if (txid && typeof txid === 'string') {
+    if (txid && typeof txid === 'string' && network) {
       getContract(txid, assets, network).then((contract) => {
         if (contract) setNewContract(contract)
         setIsLoading(false)

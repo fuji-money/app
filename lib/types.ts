@@ -103,8 +103,6 @@ export interface Contract {
   expirationDate?: number
   network?: string
   oracles: string[]
-  payout: number
-  payoutAmount?: number
   priceLevel?: number
   state?: ContractState
   synthetic: Asset
@@ -123,7 +121,6 @@ export interface Offer {
   id: string
   collateral: Asset
   oracles: string[]
-  payout: number
   synthetic: Asset
   isAvailable: boolean
 }

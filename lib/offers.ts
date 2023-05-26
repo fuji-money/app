@@ -18,7 +18,6 @@ export function populateOffer(
     id: offer.id,
     collateral,
     oracles: oraclePubkeys,
-    payout: 0,
     synthetic,
     isAvailable: true,
   }

@@ -5,8 +5,6 @@ export const maxBorrowRatio = 400
 export const minMultiplyRatio = 130
 export const maxMultiplyRatio = 330
 
-export const defaultPayout = 0
-
 // marina account IDs
 export const marinaFujiAccountID = 'fuji' // slip13(fuji)
 export const marinaMainAccountID = 'mainAccount' // m/84'/1776'/0'

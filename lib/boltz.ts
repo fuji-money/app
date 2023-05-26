@@ -24,14 +24,18 @@ export type ReverseSubmarineSwapRequest = {
 }
 
 export type SubmarineSwapResponse = {
-  address: string
-  redeemScript: string
   acceptZeroConf: boolean
-  expectedAmount: number
+  address: string
   bip21: string
+  blindingKey: string
+  expectedAmount: number
+  id: string
+  redeemScript: string
+  timeoutBlockHeight: number
 }
 
 export type ReverseSubmarineSwapResponse = {
+  blindingKey: string
   id: string
   invoice: string
   lockupAddress: string

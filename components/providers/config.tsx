@@ -21,24 +21,31 @@ import { ModalIds } from 'components/modals/modal'
 
 interface ConfigContextProps {
   config: Config
+  loading: boolean
+  reloadConfig: () => void
 }
 
 const emptyConfig = { assets: [], offers: [], oracles: [] }
 
 export const ConfigContext = createContext<ConfigContextProps>({
   config: emptyConfig,
+  loading: true,
+  reloadConfig: () => {},
 })
 
-interface ConfigProviderProps {
-  children: ReactNode
-}
-
-export const ConfigProvider = ({ children }: ConfigProviderProps) => {
-  const { network, warmingUp } = useContext(WalletContext)
+export const ConfigProvider = ({ children }: { children: ReactNode }) => {
+  const { network } = useContext(WalletContext)
 
   const [config, setConfig] = useState<Config>(emptyConfig)
+  const [loading, setLoading] = useState(true)
 
   const reloadConfig = async () => {
+    // return if network not defined
+    if (!network) {
+      setLoading(false)
+      return
+    }
+
     // fetch config from factory
     const config: ConfigResponse = await fetchConfig(network)
     if (!config) return
@@ -46,7 +53,7 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
     // populate oracles with name
     const oracles = config.oracles.map((oracle) => populateOracle(oracle))
 
-    // populate assets with all different attributes
+    // populate assets with additional attributes
     const assets = config.assets
       .map((asset) => populateAsset(asset))
       .concat(getLBTC(network))
@@ -68,15 +75,16 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
     )
 
     setConfig({ assets, offers, oracles })
+    setLoading(false)
   }
 
   useEffect(() => {
-    if (!warmingUp) reloadConfig()
+    if (network) reloadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network, warmingUp])
+  }, [network])
 
   return (
-    <ConfigContext.Provider value={{ config }}>
+    <ConfigContext.Provider value={{ config, loading, reloadConfig }}>
       {children}
     </ConfigContext.Provider>
   )

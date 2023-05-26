@@ -1,12 +1,6 @@
 import { ActivityType, Asset, Contract, ContractState, Oracle } from './types'
 import Decimal from 'decimal.js'
-import {
-  assetPair,
-  defaultPayout,
-  expirationSeconds,
-  expirationTimeout,
-  minDustLimit,
-} from './constants'
+import { expirationSeconds, minDustLimit } from './constants'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
@@ -106,7 +100,6 @@ export const coinToContract = async (
       expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
       network: await getNetwork(),
       oracles: [oraclePublicKey],
-      payout: defaultPayout,
       priceLevel: hex64LEToNumber(priceLevel),
       synthetic: {
         ...synthetic,
@@ -115,7 +108,6 @@ export const coinToContract = async (
       txid: coin.txid,
       vout: coin.vout,
     }
-    contract.payoutAmount = getContractPayoutAmount(contract)
     return contract
   }
 }
@@ -188,20 +180,6 @@ export const getCollateralQuantity = (
     .toNumber()
   const collateralAmount = toSatoshis(colUnits, collateral.precision)
   return collateralAmount
-}
-
-// get contract payout
-export const getContractPayoutAmount = (
-  contract: Contract,
-  quantity?: number,
-): number => {
-  if (defaultPayout === 0) return 0
-  const collateralAmount = quantity || contract.collateral.quantity
-  if (!collateralAmount) return 0
-  const payout = contract.payout || defaultPayout
-  return Decimal.ceil(
-    Decimal.mul(collateralAmount, payout).div(100).add(minDustLimit),
-  ).toNumber()
 }
 
 // get contract price level

@@ -13,9 +13,11 @@ const InvestmentsList = () => {
   const [investments, setInvestments] = useState<Investment[]>()
 
   useEffect(() => {
-    fetchInvestments(network).then((data) => {
-      setInvestments(data)
-    })
+    if (network) {
+      fetchInvestments(network).then((data) => {
+        setInvestments(data)
+      })
+    }
   }, [network])
 
   if (loading) return <Spinner />

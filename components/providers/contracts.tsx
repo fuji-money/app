@@ -62,9 +62,9 @@ interface ContractsProviderProps {
 }
 
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
-  const { chainSource, connected, marina, network, xPubKey, warmingUp } =
+  const { chainSource, connected, marina, network, xPubKey } =
     useContext(WalletContext)
-  const { config } = useContext(ConfigContext)
+  const { config, reloadConfig } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -75,11 +75,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { assets } = config
 
   // save first time app was run
-  const firstRun = useRef(Date.now())
+  const lastReload = useRef(Date.now())
 
   const reloadAndMarkLastReload = () => {
-    firstRun.current = Date.now()
+    lastReload.current = Date.now()
     reloadContracts()
+    reloadConfig()
   }
 
   const resetContracts = () => {
@@ -90,8 +91,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
-    if (connected) {
-      setLoading(true)
+    if (connected && network) {
       await checkContractsStatus()
       setContracts(await getContracts(assets, network))
       setActivities(await getActivities())
@@ -107,6 +107,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
   const notConfirmed = async (contract: Contract) => {
+    if (!network) return
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(contract, network),
@@ -121,6 +122,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // - check for creation tx (to confirm)
   // - check if unspend (for status)
   const checkContractsStatus = async () => {
+    if (!network) return
     // function to check if contract has fuji coin
     const fujiCoins = await getFujiCoins()
     const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
@@ -212,7 +214,8 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const setMarinaListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
     const okToReload = (accountID: string) =>
-      accountID === marinaFujiAccountID && Date.now() - firstRun.current > 30000
+      accountID === marinaFujiAccountID &&
+      Date.now() - lastReload.current > 30000
     // add event listeners
     if (connected && marina && xPubKey) {
       const listenerFunction = async ({
@@ -245,7 +248,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   useEffect(() => {
     async function runOnAssetsChange() {
-      if (!warmingUp && assets.length) {
+      if (network && assets.length) {
         if (!firstRender.current.includes(network)) {
           await syncContractsWithMarina()
           firstRender.current.push(network)
@@ -257,7 +260,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     }
     runOnAssetsChange()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets, warmingUp])
+  }, [assets, connected])
 
   return (
     <ContractsContext.Provider

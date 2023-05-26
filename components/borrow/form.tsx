@@ -1,10 +1,6 @@
 import Oracles from 'components/oracles'
-import { Contract, Oracle } from 'lib/types'
-import {
-  getCollateralQuantity,
-  getContractPayoutAmount,
-  getContractPriceLevel,
-} from 'lib/contracts'
+import { Contract } from 'lib/types'
+import { getCollateralQuantity, getContractPriceLevel } from 'lib/contracts'
 import Collateral from './collateral'
 import Ratio from './ratio'
 import Synthetic from './synthetic'
@@ -35,8 +31,7 @@ const BorrowForm = ({
     const synthetic = { ...contract.synthetic, quantity }
     quantity = getCollateralQuantity({ ...contract, synthetic }, ratio)
     const collateral = { ...contract.collateral, quantity }
-    const payoutAmount = getContractPayoutAmount(contract, quantity)
-    setContract({ ...contract, collateral, synthetic, payoutAmount })
+    setContract({ ...contract, collateral, synthetic })
   }
 
   const setContractRatio = (newRatio: number) => {
@@ -45,8 +40,7 @@ const BorrowForm = ({
     const quantity = getCollateralQuantity(contract, ratio)
     const collateral = { ...contract.collateral, quantity }
     const priceLevel = getContractPriceLevel(contract.collateral, ratio)
-    const payoutAmount = getContractPayoutAmount(contract, quantity)
-    setContract({ ...contract, collateral, priceLevel, payoutAmount })
+    setContract({ ...contract, collateral, priceLevel })
   }
 
   return (
