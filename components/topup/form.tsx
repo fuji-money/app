@@ -39,7 +39,7 @@ const TopupForm = ({
         Set your new collateral ratio
       </h3>
       <Ratio
-        collateral={oldContract.collateral}
+        contract={oldContract}
         minRatio={minRatio}
         ratio={ratio}
         setContractRatio={setContractRatio}
