@@ -8,18 +8,16 @@ import {
 import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
-import { sleep } from 'lib/utils'
 
 interface WalletContextProps {
   balances: Balance[]
   chainSource: ChainSource
   connected: boolean
   marina: MarinaProvider | undefined
-  network: NetworkString
+  network: NetworkString | undefined
   setConnected: (arg0: boolean) => void
   updateBalances: () => void
   xPubKey: string
-  warmingUp: boolean
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -27,11 +25,10 @@ export const WalletContext = createContext<WalletContextProps>({
   chainSource: new WsElectrumChainSource(defaultNetwork),
   connected: false,
   marina: undefined,
-  network: defaultNetwork,
+  network: undefined,
   setConnected: () => {},
   updateBalances: () => {},
   xPubKey: '',
-  warmingUp: true,
 })
 
 interface WalletProviderProps {
@@ -44,9 +41,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   )
   const [connected, setConnected] = useState(false)
   const [marina, setMarina] = useState<MarinaProvider>()
-  const [network, setNetwork] = useState<NetworkString>(defaultNetwork)
+  const [network, setNetwork] = useState<NetworkString>()
   const [xPubKey, setXPubKey] = useState('')
-  const [warmingUp, setWarmingUp] = useState(true)
 
   const updateBalances = async () => setBalances(await getBalances())
   const updateNetwork = async () => setNetwork(await getNetwork())
@@ -55,8 +51,8 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // get marina provider
   useEffect(() => {
     getMarinaProvider().then((marinaProvider) => {
-      if (!marinaProvider) setWarmingUp(false)
-      else setMarina(marinaProvider)
+      setMarina(marinaProvider)
+      updateNetwork()
     })
   }, [])
 
@@ -71,7 +67,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   // add event listeners for enable and disable (aka connected)
   useEffect(() => {
-    if (marina) {
+    if (marina && network) {
       const onDisabledId = marina.on('DISABLED', ({ data }) => {
         if (data.network === network) setConnected(false)
       })
@@ -88,15 +84,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   // update network and add event listener
   useEffect(() => {
     if (connected && marina) {
-      updateNetwork()
-      // give time for network change to propagate across components
-      // if user has marina on 'testnet' and app default is 'liquid'
-      // a race condition could ocurr
-      sleep(2000).then(() => setWarmingUp(false))
       const id = marina.on('NETWORK', updateNetwork)
       return () => marina.off(id)
     }
-    if (!connected) setWarmingUp(false)
   }, [connected, marina])
 
   // when network changes, connect to respective electrum server
@@ -147,7 +137,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         setConnected,
         updateBalances,
         xPubKey,
-        warmingUp,
       }}
     >
       {children}

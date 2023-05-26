@@ -10,11 +10,9 @@ import { ConfigContext } from 'components/providers/config'
 
 const Borrow: NextPage = () => {
   const { config } = useContext(ConfigContext)
-  const { loading, resetContracts } = useContext(ContractsContext)
+  const { loading } = useContext(ContractsContext)
 
   const { offers } = config
-
-  resetContracts()
 
   if (!EnabledTasks[Tasks.Borrow]) return <NotAllowed />
   if (loading) return <Spinner />

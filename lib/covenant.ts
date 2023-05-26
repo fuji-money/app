@@ -43,7 +43,6 @@ import {
 } from './marina'
 import * as ecc from 'tiny-secp256k1'
 import { Contract as IonioContract } from '@ionio-lang/ionio'
-import { randomBytes } from 'crypto'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 import { artifact } from './artifact'
@@ -175,6 +174,7 @@ export async function prepareBorrowTxWithClaimTx(
     contract,
     oracle,
   )
+
   updater
     .addInputs([
       {
@@ -400,8 +400,8 @@ export async function prepareRedeemTx(
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
-  const utxos = await getMainAccountCoins()
   // validate we have sufficient synthetic funds
+  const utxos = await getMainAccountCoins()
   const syntheticUtxos = selectCoins(utxos, synthetic.id, synthetic.quantity)
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
 
@@ -425,12 +425,12 @@ export async function prepareRedeemTx(
 
   const unblindData = blindingData
     ? {
-        value: blindingData.value.toString(),
         asset: AssetHash.fromHex(blindingData.asset).bytesWithoutPrefix,
         assetBlindingFactor: Buffer.from(
           blindingData.assetBlindingFactor,
           'hex',
         ),
+        value: blindingData.value.toString(),
         valueBlindingFactor: Buffer.from(
           blindingData.valueBlindingFactor,
           'hex',
@@ -472,20 +472,13 @@ export async function prepareRedeemTx(
 
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
-    const borrowChangeAddress = await getNextChangeAddress()
+    const syntheticChangeAddress = await getNextChangeAddress()
     tx.withRecipient(
-      borrowChangeAddress.confidentialAddress,
+      syntheticChangeAddress.confidentialAddress,
       syntheticChangeAmount,
       synthetic.id,
       0,
     )
-  } else if (swapAddress) {
-    // in a redeem, some inputs (if not all) are confidential.
-    // in the case of a redeem to lightning, if we don't have any change
-    // all outputs will be unconfidential, which would break the protocol.
-    // by adding a confidential op_return with value 0 fixes it.
-    const blindingKey = randomBytes(33).toString('hex')
-    tx.withOpReturn(0, collateral.id, [], blindingKey, 0)
   }
 
   // pay fees

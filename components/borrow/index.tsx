@@ -22,7 +22,7 @@ const Borrow = ({ offer }: BorrowProps) => {
   const { network, xPubKey } = useContext(WalletContext)
   const { newContract } = useContext(ContractsContext)
 
-  const { collateral, oracles, payout, synthetic } = offer
+  const { collateral, oracles, synthetic } = offer
 
   const startingRatio = collateral.minCollateralRatio
     ? collateral.minCollateralRatio + 50
@@ -37,7 +37,6 @@ const Borrow = ({ offer }: BorrowProps) => {
     expirationDate: getContractExpirationDate(),
     network,
     oracles,
-    payout,
     synthetic,
     priceLevel,
     xPubKey,

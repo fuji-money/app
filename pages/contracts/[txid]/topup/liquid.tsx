@@ -61,7 +61,7 @@ const ContractTopupLiquid: NextPage = () => {
     newContract.collateral.quantity - oldContract.collateral.quantity
 
   const handleMarina = async (): Promise<void> => {
-    if (!marina) return
+    if (!marina || !network) return
     openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
@@ -144,7 +144,6 @@ const ContractTopupLiquid: NextPage = () => {
       setData(newContract.txid)
       setResult(Outcome.Success)
       setStage(ModalStages.ShowResult)
-      reloadContracts()
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)

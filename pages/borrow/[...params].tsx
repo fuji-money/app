@@ -1,10 +1,10 @@
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import Borrow from 'components/borrow'
 import SomeError, { SomethingWentWrong } from 'components/layout/error'
 import Offers from 'components/offers'
-import { Asset, Contract, Offer, Outcome } from 'lib/types'
+import { Asset, Contract, Outcome } from 'lib/types'
 import Spinner from 'components/spinner'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
@@ -52,9 +52,10 @@ import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
+import { toBlindingData } from 'liquidjs-lib/src/psbt'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, network, updateBalances, xPubKey } =
+  const { chainSource, marina, network, updateBalances, xPubKey } =
     useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
@@ -89,8 +90,10 @@ const BorrowParams: NextPage = () => {
   const unspentSwap = useRef<ActiveSwap>()
 
   // make a swap via boltz.exchange
-  const makeSwap = async (): Promise<ActiveSwap> => {
+  const makeSwap = async (): Promise<ActiveSwap | undefined> => {
+    if (!network) return
     setStage(ModalStages.NeedsInvoice)
+
     // we will create a ephemeral key pair:
     // - it will generate a public key to be used with the Boltz swap
     // - later we will sign the claim transaction with the private key
@@ -129,6 +132,7 @@ const BorrowParams: NextPage = () => {
 
     // deconstruct swap
     const {
+      blindingKey,
       id,
       invoice,
       lockupAddress,
@@ -166,10 +170,20 @@ const BorrowParams: NextPage = () => {
 
     // fetch utxos for address
     const utxos = await chainSource.listUnspents(lockupAddress)
+    const u = utxos[0]
+    const { asset, assetBlindingFactor, value, valueBlindingFactor } =
+      await toBlindingData(Buffer.from(blindingKey, 'hex'), u.witnessUtxo)
+    u.blindingData = {
+      asset: asset.reverse().toString('hex'),
+      assetBlindingFactor: assetBlindingFactor.toString('hex'),
+      value: parseInt(value, 10),
+      valueBlindingFactor: valueBlindingFactor.toString('hex'),
+    }
 
     // clear invoice expiration timeout
     clearTimeout(invoiceExpirationTimeout)
 
+    // check if any utxo was returned
     if (utxos.length === 0) throw new Error('error making swap')
 
     // show user (via modal) that payment has arrived
@@ -185,8 +199,11 @@ const BorrowParams: NextPage = () => {
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
   ) => {
+    if (!network) return
+
     // change message to user
     setStage(ModalStages.NeedsFinishing)
+
     // broadcast transaction
     const rawHex = finalizeTx(pset)
     console.log('rawHex', rawHex)
@@ -230,14 +247,15 @@ const BorrowParams: NextPage = () => {
   // handle payment through lightning invoice
   const handleInvoice = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract) return
+    if (!newContract || !network) return
 
     try {
       openModal(ModalIds.InvoiceDeposit)
 
       // if there's an unspent swap, we will use it
-      const { keyPair, preimage, redeemScript, utxos } =
-        unspentSwap.current ?? (await makeSwap())
+      const swap = unspentSwap.current ?? (await makeSwap())
+      if (!swap) return
+      const { keyPair, preimage, redeemScript, utxos } = swap
 
       // save this swap for the case this process fails after the swap
       // we don't users to have to make the swap again
@@ -310,7 +328,7 @@ const BorrowParams: NextPage = () => {
   // handle payment through marina browser extension
   const handleMarina = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract) return
+    if (!newContract || !network) return
 
     try {
       openModal(ModalIds.MarinaDeposit)
@@ -350,7 +368,6 @@ const BorrowParams: NextPage = () => {
   switch (params.length) {
     case 1:
       // /borrow/fUSD => show list of offers filtered by ticker
-      resetContracts()
       return <Offers offers={offers} ticker={params[0]} />
     case 2:
       // /borrow/fUSD/L-BTC => show form to borrow synthetic

@@ -1,13 +1,14 @@
 import { feeAmount, swapFeeAmount } from 'lib/constants'
 import { prettyNumber } from 'lib/pretty'
 import {
+  fetchInvoiceFromLNURL,
   getInvoiceExpireDate,
   getInvoiceValue,
   submarineSwapBoltzFees,
 } from 'lib/swaps'
 import { Contract } from 'lib/types'
-import { fromSatoshis, toSatoshis } from 'lib/utils'
-import { useState } from 'react'
+import { extractError, fromSatoshis, toSatoshis } from 'lib/utils'
+import { useEffect, useState } from 'react'
 import Modal, { ModalIds } from './modal'
 
 interface InvoiceModalProps {
@@ -16,6 +17,8 @@ interface InvoiceModalProps {
 }
 
 const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
+  const [invoice, setInvoice] = useState('')
+  const [text, setText] = useState('')
   const [valid, setValid] = useState(false)
   const [warning, setWarning] = useState('')
 
@@ -25,33 +28,51 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   const boltzFees = submarineSwapBoltzFees(amount)
   const invoiceAmount = amount - boltzFees
 
-  const getInvoice = (): string =>
-    (document.getElementById('invoice') as HTMLInputElement).value
+  const handleChange = (e: any) => {
+    const value = e.target.value
+    setText(value ?? '')
+  }
+
+  const invalidWithWarning = (msg: string) => {
+    setWarning(msg)
+    setValid(false)
+  }
 
   const validateInvoice = (): void => {
-    const invalidWithWarning = (msg: string) => {
-      setWarning(msg)
-      setValid(false)
-    }
-    const invoice = getInvoice()
     if (!invoice) return invalidWithWarning('')
     // needs a try catch because a invalid invoice throws when decoding
     try {
-      if (
-        toSatoshis(getInvoiceValue(invoice), collateral.precision) !==
-        invoiceAmount
-      ) {
+      const { precision } = collateral
+      if (toSatoshis(getInvoiceValue(invoice), precision) !== invoiceAmount) {
         return invalidWithWarning('Invalid amount on invoice')
       }
       if (getInvoiceExpireDate(invoice) < Date.now()) {
         return invalidWithWarning('Invalid expire date on invoice')
       }
-    } catch (_) {
+    } catch (ignore) {
       return invalidWithWarning('Invalid invoice')
     }
     setWarning('')
     setValid(true)
   }
+
+  useEffect(() => {
+    async function updateInvoice() {
+      try {
+        setInvoice(
+          text.includes('@') || text.match(/^LNURL/)
+            ? await fetchInvoiceFromLNURL(text, invoiceAmount)
+            : text,
+        )
+      } catch (e) {
+        invalidWithWarning(extractError(e))
+      }
+    }
+    updateInvoice()
+  }, [invoiceAmount, text])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => validateInvoice(), [invoice])
 
   const Separator = () => <p className="mx-3"> &ndash; </p>
   const pn = (n: number, precision: number) =>
@@ -59,7 +80,10 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
 
   return (
     <Modal id={ModalIds.Invoice}>
-      <h3 className="mt-4">Enter BOLT11 Lightning Invoice</h3>
+      <h3 className="mt-4">
+        Enter a BOLT11 Lightning Invoice, <br />
+        a Lightning address or <br />a LNURL pay link
+      </h3>
       <p className="has-text-weight-semibold mb-4">
         Amount: {pn(invoiceAmount, collateral.precision)}*
       </p>
@@ -85,17 +109,17 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
       <textarea
         id="invoice"
         className="textarea"
-        onChange={validateInvoice}
-        placeholder="Paste invoice here"
+        onChange={handleChange}
+        placeholder="Paste invoice, address or lnurl here"
         rows={5}
       ></textarea>
       <p>&nbsp; {warning} &nbsp;</p>
       <button
         className="button is-primary"
         disabled={!valid}
-        onClick={() => handler(getInvoice())}
+        onClick={() => handler(invoice)}
       >
-        Reedem
+        Redeem
       </button>
     </Modal>
   )

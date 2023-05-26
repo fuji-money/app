@@ -33,6 +33,7 @@ const ContractRedeemLiquid: NextPage = () => {
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   async function handleMarina(): Promise<void> {
+    if (!network) return
     openModal(ModalIds.Redeem)
     try {
       // select coins and prepare redeem transaction
