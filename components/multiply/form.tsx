@@ -10,7 +10,7 @@ import { Asset, Contract, Offer } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
-import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
+import { minMultiplyRatio } from 'lib/constants'
 import { ModalIds } from 'components/modals/modal'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
@@ -24,6 +24,10 @@ interface MultiplyFormProps {
 const MultiplyForm = ({ offer }: MultiplyFormProps) => {
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
+  const { assets, oracles } = config
+
+  const minRatio = offer.synthetic.minCollateralRatio || minMultiplyRatio
+  const maxRatio = minRatio + 200
 
   const [contract, setContract] = useState<Contract>(offer)
   const [lbtc, setLbtc] = useState<Asset>()
@@ -32,9 +36,7 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
   const [liquidationPrice, setLiquidationPrice] = useState(0)
   const [multiplier, setMultiplier] = useState(0)
   const [quantity, setQuantity] = useState(0)
-  const [ratio, setRatio] = useState(maxMultiplyRatio)
-
-  const { assets, oracles } = config
+  const [ratio, setRatio] = useState(maxRatio)
 
   useEffect(() => {
     setLbtc(assets.find((asset) => asset.ticker === TICKERS.lbtc))
@@ -48,7 +50,7 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
       const debt = qtty * lbtc.value * quoc
       const expo = debt / lbtc.value + qtty
       const mult = qtty ? expo / quantity : 0
-      const liqp = (lbtc.value * minMultiplyRatio) / ratio
+      const liqp = (lbtc.value * minRatio) / ratio
       collateral.quantity = quantity
       synthetic.quantity = toSatoshis(debt, synthetic.precision)
       setFujiDebt(debt)
@@ -56,16 +58,9 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
       setExposure(expo)
       setLiquidationPrice(liqp)
       setContract(contract)
-      console.log('minMultiplyRatio', minMultiplyRatio)
-      console.log('lbtc.value', lbtc.value)
-      console.log('asset', collateral)
-      console.log('liqp', liqp)
-      console.log(
-        'getContractPriceLevel',
-        getContractPriceLevel(collateral, ratio),
-      )
     }
-  }, [contract, lbtc, quantity, ratio, setContract])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract, lbtc, quantity, ratio])
 
   if (loading) return <Spinner />
   if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>
@@ -155,8 +150,8 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
           <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
           <Range
             liquidationPrice={liquidationPrice}
-            minRatio={minMultiplyRatio}
-            maxRatio={maxMultiplyRatio}
+            minRatio={minRatio}
+            maxRatio={maxRatio}
             ratio={ratio}
             setRatio={setRatio}
           />
