@@ -12,10 +12,10 @@ import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
 import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
 import { ModalIds } from 'components/modals/modal'
-import { WalletContext } from 'components/providers/wallet'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
+import { getContractPriceLevel } from 'lib/contracts'
 
 interface MultiplyFormProps {
   offer: Offer
@@ -42,22 +42,28 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
 
   useEffect(() => {
     if (lbtc) {
+      const { collateral, synthetic } = contract
       const qtty = fromSatoshis(quantity, lbtc.precision)
       const quoc = (1 / ratio) * 100
-      const debt = (qtty * lbtc.value * quoc) / (1 - quoc)
+      const debt = qtty * lbtc.value * quoc
       const expo = debt / lbtc.value + qtty
       const mult = qtty ? expo / quantity : 0
-      const liqp = (lbtc.value / ratio) * minMultiplyRatio
-      contract.collateral.quantity = quantity
-      contract.synthetic.quantity = toSatoshis(
-        debt,
-        contract.synthetic.precision,
-      )
+      const liqp = (lbtc.value * minMultiplyRatio) / ratio
+      collateral.quantity = quantity
+      synthetic.quantity = toSatoshis(debt, synthetic.precision)
       setFujiDebt(debt)
       setMultiplier(mult)
       setExposure(expo)
       setLiquidationPrice(liqp)
       setContract(contract)
+      console.log('minMultiplyRatio', minMultiplyRatio)
+      console.log('lbtc.value', lbtc.value)
+      console.log('asset', collateral)
+      console.log('liqp', liqp)
+      console.log(
+        'getContractPriceLevel',
+        getContractPriceLevel(collateral, ratio),
+      )
     }
   }, [contract, lbtc, quantity, ratio, setContract])
 
