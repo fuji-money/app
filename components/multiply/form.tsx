@@ -15,7 +15,7 @@ import { ModalIds } from 'components/modals/modal'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
-import { getContractPriceLevel } from 'lib/contracts'
+import { getContractExpirationDate } from 'lib/contracts'
 
 interface MultiplyFormProps {
   offer: Offer
@@ -31,12 +31,14 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
 
   const [contract, setContract] = useState<Contract>(offer)
   const [lbtc, setLbtc] = useState<Asset>()
-  const [exposure, setExposure] = useState(0)
-  const [fujiDebt, setFujiDebt] = useState(0)
-  const [liquidationPrice, setLiquidationPrice] = useState(0)
-  const [multiplier, setMultiplier] = useState(0)
-  const [quantity, setQuantity] = useState(0)
-  const [ratio, setRatio] = useState(maxRatio)
+  const [quantitySats, setQuantitySats] = useState(0)
+  const [ratio, setRatio] = useState(200)
+
+  const [values, setValues] = useState({
+    exposure: 0,
+    fujiDebt: 0,
+    multiple: 0,
+  })
 
   useEffect(() => {
     setLbtc(assets.find((asset) => asset.ticker === TICKERS.lbtc))
@@ -44,23 +46,28 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
 
   useEffect(() => {
     if (lbtc) {
-      const { collateral, synthetic } = contract
-      const qtty = fromSatoshis(quantity, lbtc.precision)
-      const quoc = (1 / ratio) * 100
-      const debt = qtty * lbtc.value * quoc
-      const expo = debt / lbtc.value + qtty
-      const mult = qtty ? expo / quantity : 0
+      const quantity = fromSatoshis(quantitySats, lbtc.precision)
+      const quocient = (1 / ratio) * 100
+      const fujiDebt = quantity * lbtc.value * quocient
+      const exposure = fujiDebt / lbtc.value + quantity
+      const multiple = quantity ? exposure / quantity : 0
       const liqp = (lbtc.value * minRatio) / ratio
-      collateral.quantity = quantity
-      synthetic.quantity = toSatoshis(debt, synthetic.precision)
-      setFujiDebt(debt)
-      setMultiplier(mult)
-      setExposure(expo)
-      setLiquidationPrice(liqp)
+      contract.priceLevel = liqp
+      contract.expirationDate = getContractExpirationDate()
+      contract.collateral.quantity = quantitySats
+      contract.synthetic.quantity = toSatoshis(
+        fujiDebt,
+        contract.synthetic.precision,
+      )
       setContract(contract)
+      setValues({
+        exposure,
+        fujiDebt,
+        multiple,
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contract, lbtc, quantity, ratio])
+  }, [lbtc, quantitySats, ratio])
 
   if (loading) return <Spinner />
   if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>
@@ -86,7 +93,7 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
           <p className="is-size-5 is-gradient has-text-weight-bold">US$ 0.00</p>
           <p>
             <span className="is-after">
-              $ {liquidationPrice.toLocaleString()} after
+              $ {contract.priceLevel?.toLocaleString()} after
             </span>
           </p>
         </div>
@@ -114,14 +121,14 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
               <Snippet
                 title="FUJI Debt"
                 value="0.000 FUSD"
-                after={`${fujiDebt.toLocaleString()} after`}
+                after={`${values.fujiDebt.toLocaleString()} after`}
               />
             </div>
             <div className="column is-6">
               <Snippet
                 title="Total L-BTC exposure"
                 value="0.000 L-BTC"
-                after={`${exposure.toLocaleString()} after`}
+                after={`${values.exposure.toLocaleString()} after`}
               />
             </div>
           </div>
@@ -130,7 +137,7 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
               <Snippet
                 title="FUJI debt multiplier"
                 value="0.00x"
-                after={`${multiplier.toLocaleString()}x after`}
+                after={`${values.multiple.toLocaleString()}x after`}
               />
             </div>
           </div>
@@ -146,10 +153,10 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
             ornare. Facilisis id sem quam elementum euismod ante ut.
           </p>
           <p className="has-text-weight-bold mt-6 mb-4">Deposit your L-BTC</p>
-          <Collateral asset={lbtc} setQuantity={setQuantity} />
+          <Collateral asset={lbtc} setQuantity={setQuantitySats} />
           <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
           <Range
-            liquidationPrice={liquidationPrice}
+            liquidationPrice={contract.priceLevel ?? 0}
             minRatio={minRatio}
             maxRatio={maxRatio}
             ratio={ratio}

@@ -2,13 +2,22 @@ import { prettyExpirationDate, prettyNumber, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { getContractRatio } from 'lib/contracts'
 import { fromSatoshis } from 'lib/utils'
+import { Tasks } from 'lib/tasks'
+import { getLBTC } from 'lib/assets'
 
 interface SummaryProps {
   contract: Contract
+  task?: Tasks
 }
 
-const Summary = ({ contract }: SummaryProps) => {
+const Summary = ({ contract, task }: SummaryProps) => {
   const { collateral, synthetic, priceLevel, expirationDate } = contract
+
+  const afterSwap =
+    task === Tasks.Multiply
+      ? (synthetic.quantity * synthetic.value) / collateral.value
+      : undefined
+
   return (
     <table className="has-text-weight-bold mx-auto">
       <tbody>
@@ -17,6 +26,7 @@ const Summary = ({ contract }: SummaryProps) => {
           <td>
             {prettyNumber(
               fromSatoshis(synthetic.quantity, synthetic.precision),
+              0,
               2,
             )}
           </td>
@@ -38,13 +48,22 @@ const Summary = ({ contract }: SummaryProps) => {
         </tr>
         <tr>
           <td>Liquidation price</td>
-          <td>{prettyNumber(priceLevel)}</td>
+          <td>{prettyNumber(priceLevel, 0, 2)}</td>
           <td>USD</td>
         </tr>
         <tr>
           <td>Expiration date</td>
           <td>{prettyExpirationDate(expirationDate)}</td>
         </tr>
+        {afterSwap && (
+          <tr>
+            <td>After swap</td>
+            <td>
+              {prettyNumber(fromSatoshis(afterSwap, collateral.precision))}
+            </td>
+            <td>{collateral.ticker}</td>
+          </tr>
+        )}
       </tbody>
       <style jsx>{`
         table,

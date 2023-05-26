@@ -4,11 +4,12 @@ import Balance from 'components/balance'
 import Title from 'components/title'
 import { operationFromTask } from 'lib/utils'
 import { EnablerButton } from './button'
+import { Tasks } from 'lib/tasks'
 
 interface EnablersLiquidProps {
   contract: Contract
   handleMarina: () => void
-  task: string
+  task: Tasks
 }
 
 const EnablersLiquid = ({
@@ -32,7 +33,7 @@ const EnablersLiquid = ({
                   />
                 </div>
                 <div className="column is-6">
-                  <Summary contract={contract} />
+                  <Summary contract={contract} task={task} />
                 </div>
               </div>
             </div>

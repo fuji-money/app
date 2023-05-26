@@ -18,8 +18,6 @@ const MultiplyLiquid: NextPage = () => {
   const handleMarina = () => {}
   const resetDeposit = () => {}
 
-  console.log('newContract', newContract)
-
   if (!EnabledTasks[Tasks.Multiply]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 

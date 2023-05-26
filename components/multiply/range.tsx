@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 const calcRatio = (value: number, min: number, max: number) =>
   max - value * ((max - min) / 100)
 
+// calculate range value from ratio
+const calcValue = (ratio: number, min: number, max: number) =>
+  ((max - ratio) / (max - min)) * 100
+
 // update range bar colors
 const updateColors = (value: number) => {
   if (typeof window === 'undefined') return // don't run server side
@@ -27,12 +31,15 @@ const Range = ({
   ratio,
   setRatio,
 }: RangeProps) => {
-  const [rangeValue, setRangeValue] = useState(0)
+  const [rangeValue, setRangeValue] = useState(
+    calcValue(200, minRatio, maxRatio),
+  )
 
   useEffect(() => {
     updateColors(rangeValue)
     setRatio(calcRatio(rangeValue, minRatio, maxRatio))
-  }, [minRatio, maxRatio, rangeValue, ratio, setRatio])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeValue])
 
   return (
     <>
