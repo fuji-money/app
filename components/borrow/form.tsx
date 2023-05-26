@@ -39,7 +39,7 @@ const BorrowForm = ({
     setRatio(ratio)
     const quantity = getCollateralQuantity(contract, ratio)
     const collateral = { ...contract.collateral, quantity }
-    const priceLevel = getContractPriceLevel(contract.collateral, ratio)
+    const priceLevel = getContractPriceLevel(contract, ratio)
     setContract({ ...contract, collateral, priceLevel })
   }
 
@@ -64,7 +64,7 @@ const BorrowForm = ({
         Position will be liquidated below the minimum.
       </p>
       <Ratio
-        collateral={collateral}
+        contract={contract}
         ratio={ratio}
         setContractRatio={setContractRatio}
       />

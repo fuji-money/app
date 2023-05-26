@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { prettyPriceLevel, prettyRatio } from 'lib/pretty'
-import { Asset } from 'lib/types'
+import { Contract } from 'lib/types'
 import { getContractPriceLevel, getRatioState } from 'lib/contracts'
 import { maxBorrowRatio, minBorrowRatio } from 'lib/constants'
 
@@ -57,28 +57,30 @@ const updatePriceLevel = (ratio: number) => {
 }
 
 interface RatioProps {
-  collateral: Asset
+  contract: Contract
   minRatio?: number
   ratio?: number
   setContractRatio: (ratio: number) => void
 }
 
 const Ratio = ({
-  collateral,
+  contract,
   minRatio,
   ratio = minBorrowRatio,
   setContractRatio,
 }: RatioProps) => {
-  const min = minRatio || collateral.minCollateralRatio || 0
+  const min = minRatio || contract.synthetic.minCollateralRatio || 0
   const safe = minRatio ? 0 : min + 50
   const showSafe = safe > 0
   const state = getRatioState(ratio, min, safe)
-  const priceLevel = getContractPriceLevel(collateral, ratio)
+  const priceLevel = getContractPriceLevel(contract, ratio)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setContractRatio(Number(e.target.value))
 
-  updateLabels(min, safe)
+  useEffect(() => {
+    updateLabels(min, safe)
+  }, [min, safe])
 
   useEffect(() => {
     updateColors(ratio)

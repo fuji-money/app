@@ -29,7 +29,7 @@ const Topup = () => {
     if (newContract) {
       const quantity = getCollateralQuantity(newContract, ratio)
       const collateral = { ...newContract.collateral, quantity }
-      const priceLevel = getContractPriceLevel(newContract.collateral, ratio)
+      const priceLevel = getContractPriceLevel(newContract, ratio)
       setNewContract({ ...newContract, collateral, priceLevel })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

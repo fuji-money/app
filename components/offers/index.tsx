@@ -12,7 +12,7 @@ const filterOffers = (offers: Offer[] | undefined) => (filter: string) => {
     ({ synthetic, collateral, id }) =>
       collateral.name.match(regexp) ||
       collateral.ticker.match(regexp) ||
-      collateral.minCollateralRatio?.toString().match(regexp) ||
+      synthetic.minCollateralRatio?.toString().match(regexp) ||
       synthetic.name.match(regexp) ||
       synthetic.ticker.match(regexp) ||
       id.match(regexp),
