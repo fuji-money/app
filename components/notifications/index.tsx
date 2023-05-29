@@ -12,7 +12,7 @@ import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
-import { LightningEnabledTasks } from 'lib/tasks'
+import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
@@ -55,8 +55,9 @@ const Notifications = ({
     setNotEnoughFunds(connected && spendQuantity > balance)
     setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
     setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
+    setBelowDustLimit(spendQuantity < minDustLimit)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contract.synthetic.quantity])
+  }, [contract.collateral.quantity])
 
   useEffect(() => {
     const asset = assets.find((a) => a.ticker === synthetic.ticker)
@@ -86,7 +87,7 @@ const Notifications = ({
   return (
     <>
       {ratioUnsafe && <RatioUnsafeNotification />}
-      {LightningEnabledTasks.Borrow ? (
+      {LightningEnabledTasks[Tasks.Borrow] ? (
         <>
           {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
           {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}

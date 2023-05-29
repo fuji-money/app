@@ -16,6 +16,7 @@ import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 import { getContractExpirationDate } from 'lib/contracts'
+import Notifications from 'components/notifications'
 
 interface MultiplyFormProps {
   offer: Offer
@@ -166,10 +167,15 @@ const MultiplyForm = ({ offer }: MultiplyFormProps) => {
             Choose oracle providers
           </p>
           <Oracles contract={contract} setContract={setContract} />
-          <p className="has-text-centered mt-6 mb-4">
-            <MultiplyButton contract={contract} />
-          </p>
         </div>
+        <Notifications contract={contract} ratio={ratio} minRatio={minRatio} />
+        <p className="has-text-centered mt-6 mb-4">
+          <MultiplyButton
+            contract={contract}
+            minRatio={minRatio}
+            ratio={ratio}
+          />
+        </p>
       </div>
       <MultiplyModals />
     </div>

@@ -4,7 +4,7 @@ import { WalletContext } from 'components/providers/wallet'
 import { feeAmount, minDustLimit } from 'lib/constants'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
-import { LightningEnabledTasks } from 'lib/tasks'
+import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
 import Router from 'next/router'
@@ -34,19 +34,14 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     const funds = getAssetBalance(asset, balances)
     const needed = contract.collateral.quantity
     const enoughFundsOnMarina = connected && funds > needed
-    if (LightningEnabledTasks.Borrow) {
+    if (LightningEnabledTasks[Tasks.Borrow]) {
       const outOfBounds = swapDepositAmountOutOfBounds(needed)
       setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
     } else {
       setEnoughFunds(enoughFundsOnMarina)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const handleClick = () => {
-    setNewContract(contract)
-    Router.push(`${Router.router?.asPath}/channel`)
-  }
+  }, [contract.collateral.quantity])
 
   useEffect(() => {
     const { circulating, quantity, maxCirculatingSupply, precision } = synthetic
@@ -56,6 +51,11 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     setMintLimitReached(!max ? false : cur === max || cur + qty > max)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contract.synthetic.quantity])
+
+  const handleClick = () => {
+    setNewContract(contract)
+    Router.push(`${Router.router?.asPath}/channel`)
+  }
 
   const enabled =
     connected &&
