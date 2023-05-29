@@ -47,6 +47,7 @@ import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 import { artifact } from './artifact'
 import { getFactoryUrl } from './api'
+import { confidentialValueToSatoshi } from 'liquidjs-lib/src/confidential'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
@@ -436,7 +437,13 @@ export async function prepareRedeemTx(
           'hex',
         ),
       }
-    : undefined
+    : {
+        asset: AssetHash.fromHex(witnessUtxo.asset.toString('hex'))
+          .bytesWithoutPrefix,
+        assetBlindingFactor: Buffer.alloc(32),
+        value: confidentialValueToSatoshi(witnessUtxo.value).toString(),
+        valueBlindingFactor: Buffer.alloc(32),
+      }
 
   ionioInstance = ionioInstance.from(txid, vout, witnessUtxo, unblindData)
   const tx = ionioInstance.functions.redeem(marinaSigner)
