@@ -1,6 +1,6 @@
-import { ActivityType, Asset, Contract, ContractState, Oracle } from './types'
+import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { expirationSeconds, minDustLimit } from './constants'
+import { expirationSeconds } from './constants'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
@@ -13,7 +13,6 @@ import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
-import { populateAsset } from './assets'
 
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
@@ -189,16 +188,12 @@ export const getSyntheticQuantity = (
 ): number => {
   const { collateral, synthetic } = contract
   const colUnits = fromSatoshis(collateral.quantity, collateral.precision)
-  console.log('colUnits', colUnits)
   const collateralAmount = Decimal.mul(colUnits, collateral.value)
-  console.log('collateralAmount', collateralAmount)
   const syntheticUnits = Decimal.div(collateralAmount, ratio)
     .mul(100)
     .div(synthetic.value)
     .toNumber()
-  console.log('syntheticUnits', syntheticUnits)
   const syntheticAmount = toSatoshis(syntheticUnits, synthetic.precision)
-  console.log('syntheticAmount', syntheticAmount)
   return syntheticAmount
 }
 

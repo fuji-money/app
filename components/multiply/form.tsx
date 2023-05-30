@@ -8,11 +8,7 @@ import Oracles from 'components/oracles'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 import { toSatoshis } from 'lib/utils'
-import {
-  getCollateralQuantity,
-  getContractPriceLevel,
-  getSyntheticQuantity,
-} from 'lib/contracts'
+import { getContractPriceLevel, getSyntheticQuantity } from 'lib/contracts'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -33,8 +29,6 @@ const MultiplyForm = ({
   const { loading } = useContext(ContractsContext)
   const { oracles } = config
 
-  console.log('contract', contract)
-
   const maxRatio = minRatio + 200
 
   const setCollateralQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,10 +36,8 @@ const MultiplyForm = ({
       parseFloat(e.target.value),
       contract.collateral.precision,
     )
-    console.log('called', quantity)
     const collateral = { ...contract.collateral, quantity }
     quantity = getSyntheticQuantity({ ...contract, collateral }, ratio)
-    console.log('getSyntheticQuantity', quantity)
     const synthetic = { ...contract.synthetic, quantity }
     setContract({ ...contract, collateral, synthetic })
   }
@@ -53,10 +45,11 @@ const MultiplyForm = ({
   const setContractRatio = (newRatio: number) => {
     const ratio = newRatio > minRatio ? newRatio : minRatio
     setRatio(ratio)
-    const quantity = getCollateralQuantity(contract, ratio)
-    const collateral = { ...contract.collateral, quantity }
-    const priceLevel = getContractPriceLevel(contract.collateral, ratio)
-    setContract({ ...contract, collateral, priceLevel })
+    const quantity = getSyntheticQuantity(contract, ratio)
+    const synthetic = { ...contract.synthetic, quantity }
+    const newContract = { ...contract, synthetic }
+    const priceLevel = getContractPriceLevel(newContract, ratio)
+    setContract({ ...newContract, priceLevel })
   }
 
   if (loading) return <Spinner />
@@ -64,18 +57,25 @@ const MultiplyForm = ({
 
   return (
     <div className="is-box has-pink-border">
-      <p className="has-text-weight-bold">Configure your vault</p>
-      <p className="is-size-7 mt-5">
-        In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing eget vel
-        ut non duis vitae. Augue mi, bibendum ac imperdiet ipsum sed ornare.
-        Facilisis id sem quam elementum euismod ante ut.
+      <h3 className="mt-4">
+        <span className="stepper">1</span>
+        Deposit your {contract.collateral.ticker}
+      </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        Enter the desired amount of {contract.collateral.ticker} you want to
+        multiply.
       </p>
-      <p className="has-text-weight-bold mt-6 mb-4">Deposit your L-BTC</p>
       <Collateral
         asset={contract.collateral}
         setCollateralQuantity={setCollateralQuantity}
       />
-      <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
+      <h3 className="mt-6">
+        <span className="stepper">2</span>
+        Set a collateral ratio
+      </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        Position will be liquidated below the minimum.
+      </p>
       <Range
         liquidationPrice={contract.priceLevel ?? 0}
         minRatio={minRatio}
@@ -83,7 +83,14 @@ const MultiplyForm = ({
         ratio={ratio}
         setRatio={setContractRatio}
       />
-      <p className="has-text-weight-bold mt-5 mb-4">Choose oracle providers</p>
+      <h3 className="mt-6">
+        <span className="stepper">3</span>
+        Select oracle providers
+      </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        You can choose one or more oracles to use to determine the price of the
+        collateral.
+      </p>
       <Oracles contract={contract} setContract={setContract} />
     </div>
   )

@@ -37,7 +37,7 @@ const Collateral = ({ asset, setCollateralQuantity }: CollateralProps) => {
       <style jsx>{`
         input {
           border: 0;
-          max-width: 100px;
+          max-width: 250px;
         }
         input:focus {
           border-color: inherit;
