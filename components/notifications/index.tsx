@@ -83,6 +83,8 @@ const Notifications = ({
     setNotEnoughOracles(oracles?.length === 0)
   }, [oracles])
 
+  if (!spendQuantity) return <></>
+
   return (
     <>
       {ratioUnsafe && <RatioUnsafeNotification />}
