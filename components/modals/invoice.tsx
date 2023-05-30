@@ -7,10 +7,10 @@ import {
   submarineSwapBoltzFees,
 } from 'lib/swaps'
 import { Contract } from 'lib/types'
-import { extractError, fromSatoshis, sleep, toSatoshis } from 'lib/utils'
+import { extractError, fromSatoshis, toSatoshis } from 'lib/utils'
 import { useEffect, useState } from 'react'
 import Modal, { ModalIds } from './modal'
-import Image from 'next/image'
+import CopyButton from 'components/buttons/copy'
 
 interface InvoiceModalProps {
   contract: Contract
@@ -80,45 +80,15 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   const pn = (n: number, precision: number) =>
     prettyNumber(fromSatoshis(n, precision), precision, precision)
 
-  const copyInvoiceAmount = () => {
-    navigator.clipboard.writeText(pn(invoiceAmount, collateral.precision)).then(
-      () => {
-        const target = document.getElementById('copyInfo')
-        console.log('target', target)
-        if (!target) return false
-        target.style.visibility = 'visible'
-        sleep(1000).then(() => (target.style.visibility = 'hidden'))
-      },
-      (err) => console.error('Could not copy text: ', err),
-    )
-  }
-
   return (
     <Modal id={ModalIds.Invoice}>
       <h3 className="mt-4">
         Enter a BOLT11 Lightning Invoice, <br />
         a Lightning address or <br />a LNURL pay link
       </h3>
-      <p className="has-text-weight-semibold has-text-black">
-        Amount: {pn(invoiceAmount, collateral.precision)}*
-        <span className="image-container ml-3">
-          <Image
-            src="/images/icons/copy.svg"
-            height={20}
-            width={20}
-            alt="copy icon"
-            onClick={copyInvoiceAmount}
-          />
-        </span>
-      </p>
-      <p className="m-1">
-        <span
-          id="copyInfo"
-          className="is-size-7 has-background-warning p-1"
-          style={{ visibility: 'hidden' }}
-        >
-          Copied
-        </span>
+      <p className="has-text-weight-semibold has-text-black mb-4">
+        Amount: {pn(invoiceAmount, collateral.precision)}* &nbsp;
+        <CopyButton text={pn(invoiceAmount, collateral.precision)} />
       </p>
       <div className="is-size-7 is-flex is-justify-content-center mb-4">
         <p>
