@@ -24,7 +24,6 @@ const lbtc: Asset = {
   name: 'Liquid BTC',
   precision: 8,
   quantity: 0,
-  minCollateralRatio: 150,
   ticker: TICKERS.lbtc,
   value: 40000,
 }

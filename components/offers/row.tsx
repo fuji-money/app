@@ -41,7 +41,7 @@ const OfferRow = ({ offer }: OfferRowProps) => {
           <p className="is-gradient">{offer.collateral.ticker}</p>
         </div>
         <div className="column is-2">
-          <p className="is-gradient">{`>${offer.collateral.minCollateralRatio}%`}</p>
+          <p className="is-gradient">{`>${offer.synthetic.minCollateralRatio}%`}</p>
         </div>
         <div className="column is-2">
           <p className="amount is-gradient">
