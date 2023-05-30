@@ -182,6 +182,26 @@ export const getCollateralQuantity = (
   return collateralAmount
 }
 
+// calculate synthetic needed for this collateral and ratio
+export const getSyntheticQuantity = (
+  contract: Contract,
+  ratio: number,
+): number => {
+  const { collateral, synthetic } = contract
+  const colUnits = fromSatoshis(collateral.quantity, collateral.precision)
+  console.log('colUnits', colUnits)
+  const collateralAmount = Decimal.mul(colUnits, collateral.value)
+  console.log('collateralAmount', collateralAmount)
+  const syntheticUnits = Decimal.div(collateralAmount, ratio)
+    .mul(100)
+    .div(synthetic.value)
+    .toNumber()
+  console.log('syntheticUnits', syntheticUnits)
+  const syntheticAmount = toSatoshis(syntheticUnits, synthetic.precision)
+  console.log('syntheticAmount', syntheticAmount)
+  return syntheticAmount
+}
+
 // get contract price level
 export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
   if (!asset.value) throw new Error('Asset without value')

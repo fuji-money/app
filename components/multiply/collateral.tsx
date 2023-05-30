@@ -4,14 +4,10 @@ import { toSatoshis } from 'lib/utils'
 
 interface CollateralProps {
   asset: Asset
-  setQuantity: (arg0: number) => void
+  setCollateralQuantity: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const Collateral = ({ asset, setQuantity }: CollateralProps) => {
-  const handleChange = (e: any) => {
-    setQuantity(toSatoshis(parseFloat(e.target.value), asset.precision))
-  }
-
+const Collateral = ({ asset, setCollateralQuantity }: CollateralProps) => {
   return (
     <div className="level has-pink-border has-pink-background">
       <div className="level-left">
@@ -34,7 +30,7 @@ const Collateral = ({ asset, setQuantity }: CollateralProps) => {
             min="0"
             placeholder="0.00"
             type="number"
-            onChange={handleChange}
+            onChange={setCollateralQuantity}
           />
         </div>
       </div>

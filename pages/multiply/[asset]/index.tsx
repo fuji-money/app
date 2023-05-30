@@ -7,7 +7,7 @@ import Spinner from 'components/spinner'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
-import MultiplyForm from 'components/multiply/form'
+import Multiply from 'components/multiply'
 
 const MultiplyAsset: NextPage = () => {
   const { config } = useContext(ConfigContext)
@@ -35,7 +35,7 @@ const MultiplyAsset: NextPage = () => {
   if (loading) return <Spinner />
   if (!offer) return <SomeError>Error getting offer</SomeError>
 
-  return <MultiplyForm offer={offer} />
+  return <Multiply offer={offer} />
 }
 
 export default MultiplyAsset
