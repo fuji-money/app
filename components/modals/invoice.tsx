@@ -10,6 +10,7 @@ import { Contract } from 'lib/types'
 import { extractError, fromSatoshis, toSatoshis } from 'lib/utils'
 import { useEffect, useState } from 'react'
 import Modal, { ModalIds } from './modal'
+import CopyButton from 'components/buttons/copy'
 
 interface InvoiceModalProps {
   contract: Contract
@@ -75,8 +76,9 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   useEffect(() => validateInvoice(), [invoice])
 
   const Separator = () => <p className="mx-3"> &ndash; </p>
+
   const pn = (n: number, precision: number) =>
-    prettyNumber(fromSatoshis(n, precision), 0, precision)
+    prettyNumber(fromSatoshis(n, precision), precision, precision)
 
   return (
     <Modal id={ModalIds.Invoice}>
@@ -84,8 +86,9 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
         Enter a BOLT11 Lightning Invoice, <br />
         a Lightning address or <br />a LNURL pay link
       </h3>
-      <p className="has-text-weight-semibold mb-4">
-        Amount: {pn(invoiceAmount, collateral.precision)}*
+      <p className="has-text-weight-semibold has-text-black mb-4">
+        Amount: {pn(invoiceAmount, collateral.precision)}* &nbsp;
+        <CopyButton text={pn(invoiceAmount, collateral.precision)} />
       </p>
       <div className="is-size-7 is-flex is-justify-content-center mb-4">
         <p>
