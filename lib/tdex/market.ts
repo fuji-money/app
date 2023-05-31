@@ -93,7 +93,6 @@ export function getBestMarket(
   markets: TDEXMarket[],
   pair: AssetPair,
 ): TDEXMarket | undefined {
-  console.log('markets', markets)
   const validMarkets = markets
     // find markets for this pair
     .filter(

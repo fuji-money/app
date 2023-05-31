@@ -18,8 +18,8 @@ const MultiplyInfo = ({ contract, values }: MultiplyInfoProps) => {
               <p>Current reference price</p>
               <p>Liquidation price level</p>
               <p>Collateral amount</p>
-              <p>Collateral exposure</p>
-              <p>Collateral multiple</p>
+              <p>{collateral.ticker} exposure</p>
+              <p>{collateral.ticker} multiple</p>
               <p>Expiration date</p>
             </div>
           </div>

@@ -19,6 +19,7 @@ import {
 } from 'lib/tdex/market'
 import { getProvidersFromRegistry } from 'lib/tdex/registry'
 import { WalletContext } from 'components/providers/wallet'
+import { fetchTradePreview } from 'lib/tdex/preview'
 
 interface MultiplyProps {
   offer: Offer
@@ -41,7 +42,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
     dest: offer.collateral,
   }
 
-  const [markets, setMarkets] = useState<TDEXMarket[]>([])
+  const [market, setMarket] = useState<TDEXMarket>()
 
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {
@@ -56,8 +57,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
             })
           }
         }
-        setMarkets(markets.filter(isTDEXMarket))
-        console.log('getBestMarket', getBestMarket(markets, assetPair))
+        setMarket(getBestMarket(markets.filter(isTDEXMarket), assetPair))
       } catch (err) {
         console.error(err)
       }
@@ -68,21 +68,24 @@ const Multiply = ({ offer }: MultiplyProps) => {
 
   // update multiply values (exposure and multiply)
   useEffect(() => {
-    let exposure = 0
-    let multiple = 0
-    const { collateral, synthetic } = contract
-    if (collateral.value) {
-      const quantity = fromSatoshis(collateral.quantity, collateral.precision)
-      const fujiDebt = fromSatoshis(synthetic.quantity, synthetic.precision)
-      exposure = fujiDebt / collateral.value + quantity
-      multiple = quantity ? exposure / quantity : 0
+    if (market && contract.synthetic.quantity) {
+      let exposure = 0
+      let multiple = 0
+      const { collateral, synthetic } = contract
+      fetchTradePreview(synthetic, market, assetPair)
+        .then((preview) => {
+          const { quantity } = collateral
+          const tdexAmount = parseInt(preview[0].amount, 10)
+          exposure = tdexAmount + quantity
+          multiple = quantity ? exposure / quantity : 0
+        })
+        .catch()
+        .finally(() => {
+          setValues({ exposure, multiple })
+        })
     }
-    setValues({
-      exposure: toSatoshis(exposure, collateral.precision),
-      multiple,
-    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contract.collateral.quantity, ratio])
+  }, [contract.synthetic.quantity])
 
   if (loading) return <Spinner />
   if (!oracles) return <SomeError>Error getting oracles</SomeError>

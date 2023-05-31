@@ -8,24 +8,16 @@ import {
 import { getTradeType } from './market'
 import { Asset } from 'lib/types'
 
-interface TradePreviewProps {
-  amount: number
-  market: TDEXMarket
-  pair: AssetPair
-  asset: Asset
-}
-
-export async function fetchTradePreview({
-  amount,
-  market,
-  pair,
-  asset,
-}: TradePreviewProps) {
+export async function fetchTradePreview(
+  asset: Asset,
+  market: TDEXMarket,
+  pair: AssetPair,
+) {
   const { dest, from } = pair
   const otherCoin = asset.id === from.id ? dest : from
   const type = getTradeType(market, pair)
   const trade: TDEXTradePreview = {
-    amount: amount.toString(),
+    amount: asset.quantity.toString(),
     asset: asset.id,
     feeAsset: otherCoin.id,
     market,
