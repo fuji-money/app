@@ -12,7 +12,7 @@ import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
-import { LightningEnabledTasks } from 'lib/tasks'
+import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
@@ -83,10 +83,12 @@ const Notifications = ({
     setNotEnoughOracles(oracles?.length === 0)
   }, [oracles])
 
+  if (!spendQuantity) return <></>
+
   return (
     <>
       {ratioUnsafe && <RatioUnsafeNotification />}
-      {LightningEnabledTasks.Borrow ? (
+      {LightningEnabledTasks[Tasks.Borrow] ? (
         <>
           {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
           {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}

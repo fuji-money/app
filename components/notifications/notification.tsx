@@ -34,14 +34,14 @@ interface NotificationProps {
 
 const Notification = ({ label, type }: NotificationProps) => {
   return (
-    <p className={type}>
+    <p className={`${type} is-size-7`}>
       <Icon type={type} />
       {label}
       <style jsx>{`
         p {
           border-radius: 3px;
           margin-bottom: 1rem;
-          padding: 1rem;
+          padding: 0.5rem;
         }
         .warning {
           background-color: #ffe8d3;
