@@ -3,7 +3,6 @@ import {
   ReactNode,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react'
 import { Config, ConfigResponse } from 'lib/types'
@@ -23,16 +22,17 @@ import { Artifact } from '@ionio-lang/ionio'
 import { getArtifact } from 'lib/artifact'
 
 interface ConfigContextProps {
-  artifact: Artifact | undefined
+  artifact: Artifact
   config: Config
   loading: boolean
   reloadConfig: () => void
 }
 
+const emptyArtifact = { contractName: '', constructorInputs: [], functions: [] }
 const emptyConfig = { assets: [], offers: [], oracles: [] }
 
 export const ConfigContext = createContext<ConfigContextProps>({
-  artifact: undefined,
+  artifact: emptyArtifact,
   config: emptyConfig,
   loading: true,
   reloadConfig: () => {},
@@ -41,9 +41,9 @@ export const ConfigContext = createContext<ConfigContextProps>({
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useContext(WalletContext)
 
+  const [artifact, setArtifact] = useState<Artifact>(emptyArtifact)
   const [config, setConfig] = useState<Config>(emptyConfig)
   const [loading, setLoading] = useState(true)
-  const [artifact, setArtifact] = useState<Artifact>()
 
   const reloadConfig = async () => {
     // return if network not defined

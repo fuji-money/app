@@ -31,7 +31,7 @@ import { ConfigContext } from 'components/providers/config'
 const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
-  const { config } = useContext(ConfigContext)
+  const { artifact, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -77,6 +77,7 @@ const ContractTopupLiquid: NextPage = () => {
 
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(
+        artifact,
         newContract,
         oldContract,
         network,
@@ -130,7 +131,7 @@ const ContractTopupLiquid: NextPage = () => {
       chainSource
         .waitForConfirmation(
           newContract.txid,
-          await getContractCovenantAddress(newContract, network),
+          await getContractCovenantAddress(artifact, newContract, network),
         )
         .then(() => {
           markContractConfirmed(newContract)

@@ -46,7 +46,6 @@ import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 import { getFactoryUrl } from './api'
-import { artifact } from './artifact'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
@@ -109,7 +108,7 @@ async function getCovenantOutput(
     assetPair,
   }
 
-  const covenantAddress = await getNextCovenantAddress(contractParams, artifact)
+  const covenantAddress = await getNextCovenantAddress(artifact, contractParams)
 
   // set covenant output
   const { scriptPubKey } = address.fromConfidential(
@@ -145,6 +144,7 @@ export interface PreparedBorrowTx {
 }
 
 export async function prepareBorrowTxWithClaimTx(
+  artifact: Artifact,
   contract: Contract,
   utxos: Utxo[],
   redeemScript: string, // must be associated with the first utxo
@@ -202,6 +202,7 @@ export async function prepareBorrowTxWithClaimTx(
 }
 
 export async function prepareBorrowTx(
+  artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
 ): Promise<PreparedBorrowTx> {
@@ -369,6 +370,7 @@ export async function proposeBorrowContract(
 
 // redeem
 export async function prepareRedeemTx(
+  artifact: Artifact,
   contract: Contract,
   network: NetworkString,
   swapAddress?: string,
@@ -504,6 +506,7 @@ export interface PreparedTopupTx {
 }
 
 export async function prepareTopupTx(
+  artifact: Artifact,
   newContract: Contract,
   oldContract: Contract,
   network: NetworkString,
@@ -826,7 +829,10 @@ export function finalizeTopupCovenantInput(pset: Pset) {
 
 // other
 
-export function getFuncNameFromScriptHexOfLeaf(witness: string): string {
+export function getFuncNameFromScriptHexOfLeaf(
+  artifact: Artifact,
+  witness: string,
+): string {
   const mapWitnessLengthToState: Record<number, string> = {}
   artifact.functions.map(({ name, asm }) => {
     // 27: 'topup'

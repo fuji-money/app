@@ -55,11 +55,11 @@ import { ConfigContext } from 'components/providers/config'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, marina, network, updateBalances, xPubKey } =
+  const { chainSource, network, updateBalances, xPubKey } =
     useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { config } = useContext(ConfigContext)
+  const { artifact, config } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -231,7 +231,7 @@ const BorrowParams: NextPage = () => {
     chainSource
       .waitForConfirmation(
         newContract.txid,
-        await getContractCovenantAddress(newContract, network),
+        await getContractCovenantAddress(artifact, newContract, network),
       )
       .then(() => {
         markContractConfirmed(newContract)
@@ -266,6 +266,7 @@ const BorrowParams: NextPage = () => {
 
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
+        artifact,
         newContract,
         utxos,
         redeemScript,
@@ -335,7 +336,11 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.NeedsCoins)
 
       // prepare borrow transaction
-      const preparedTx = await prepareBorrowTx(newContract, oracles[0])
+      const preparedTx = await prepareBorrowTx(
+        artifact,
+        newContract,
+        oracles[0],
+      )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
       // propose contract to alpha factory

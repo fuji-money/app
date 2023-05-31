@@ -49,7 +49,7 @@ const ContractTopupLightning: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
-  const { config } = useContext(ConfigContext)
+  const { artifact, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -169,6 +169,7 @@ const ContractTopupLightning: NextPage = () => {
 
         // prepare borrow transaction with claim utxo as input
         const preparedTx = await prepareTopupTx(
+          artifact,
           newContract,
           oldContract,
           network,
@@ -244,7 +245,7 @@ const ContractTopupLightning: NextPage = () => {
         chainSource
           .waitForConfirmation(
             newContract.txid,
-            await getContractCovenantAddress(newContract, network),
+            await getContractCovenantAddress(artifact, newContract, network),
           )
           .then(() => {
             markContractConfirmed(newContract)
