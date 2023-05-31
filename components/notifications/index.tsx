@@ -75,9 +75,9 @@ const Notifications = ({
   }, [minRatio, ratio])
 
   useEffect(() => {
-    const safeLimit = (collateral.minCollateralRatio || 0) + 50
+    const safeLimit = (synthetic.minCollateralRatio ?? 0) + 50
     setRatioUnsafe(ratio < safeLimit)
-  }, [collateral.minCollateralRatio, ratio])
+  }, [synthetic.minCollateralRatio, ratio])
 
   useEffect(() => {
     setNotEnoughOracles(oracles?.length === 0)

@@ -159,16 +159,16 @@ export const getRatioState = (
 
 // get contract state
 export const getContractState = (contract: Contract): ContractState => {
-  const { state, confirmed, collateral } = contract
+  const { confirmed, state, synthetic } = contract
   if (state === ContractState.Liquidated) return ContractState.Liquidated
   if (state === ContractState.Redeemed) return ContractState.Redeemed
   if (state === ContractState.Unknown) return ContractState.Unknown
   if (state === ContractState.Topup) return ContractState.Topup
   if (!confirmed) return ContractState.Unconfirmed
-  if (!collateral?.minCollateralRatio) return ContractState.Unknown
+  if (!synthetic?.minCollateralRatio) return ContractState.Unknown
   // possible states are safe, unsafe, critical or liquidated (based on ratio)
   const ratio = getContractRatio(contract)
-  return getRatioState(ratio, collateral.minCollateralRatio)
+  return getRatioState(ratio, synthetic.minCollateralRatio)
 }
 
 // calculate collateral needed for this synthetic and ratio
@@ -188,11 +188,16 @@ export const getCollateralQuantity = (
 }
 
 // get contract price level
-export const getContractPriceLevel = (asset: Asset, ratio: number): number => {
-  if (!asset.value) throw new Error('Asset without value')
-  if (!asset.minCollateralRatio) throw new Error('Asset without minimum ratio')
+export const getContractPriceLevel = (
+  contract: Contract,
+  ratio: number,
+): number => {
+  const { collateral, synthetic } = contract
+  const minRatio = synthetic.minCollateralRatio
+  if (!collateral.value) throw new Error('Collateral without value')
+  if (!minRatio) throw new Error('Synthetic without minCollateralRatio')
   return Decimal.ceil(
-    Decimal.mul(asset.value, asset.minCollateralRatio).div(ratio),
+    Decimal.mul(collateral.value, minRatio).div(ratio),
   ).toNumber()
 }
 
