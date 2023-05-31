@@ -14,9 +14,11 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { Extractor, Finalizer } from 'liquidjs-lib'
 import { broadcastTx } from 'lib/marina'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemLiquid: NextPage = () => {
   const { network, updateBalances } = useContext(WalletContext)
+  const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -39,7 +41,7 @@ const ContractRedeemLiquid: NextPage = () => {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
       if (!newContract) throw new Error('Contract not found')
-      const tx = await prepareRedeemTx(newContract, network)
+      const tx = await prepareRedeemTx(artifact, newContract, network)
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)

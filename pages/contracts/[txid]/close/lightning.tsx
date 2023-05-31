@@ -16,9 +16,11 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { Extractor, Finalizer } from 'liquidjs-lib'
 import { broadcastTx, getNextAddress, getPublicKey } from 'lib/marina'
+import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemLightning: NextPage = () => {
   const { marina, network, updateBalances } = useContext(WalletContext)
+  const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -41,7 +43,12 @@ const ContractRedeemLightning: NextPage = () => {
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
-    const tx = await prepareRedeemTx(newContract, network, swapAddress)
+    const tx = await prepareRedeemTx(
+      artifact,
+      newContract,
+      network,
+      swapAddress,
+    )
 
     // ask user to sign transaction
     setStage(ModalStages.NeedsConfirmation)

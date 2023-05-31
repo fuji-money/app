@@ -22,7 +22,7 @@ import {
   marinaTestnetMainAccountID,
 } from 'lib/constants'
 import { coinToContract } from './contracts'
-import { artifact } from './artifact'
+import { Artifact } from '@ionio-lang/ionio'
 
 export async function getBalances(): Promise<Balance[]> {
   const marina = await getMarinaProvider()
@@ -132,6 +132,7 @@ export async function getNextChangeAddress(accountID?: AccountID) {
 }
 
 export async function getNextCovenantAddress(
+  artifact: Artifact,
   contractParams: Omit<ContractParams, 'borrowerPublicKey'>,
 ) {
   const marina = await getMarinaProvider()
