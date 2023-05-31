@@ -3,6 +3,7 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { Config, ConfigResponse } from 'lib/types'
@@ -18,8 +19,11 @@ import {
 import { populateOffer } from 'lib/offers'
 import { populateOracle } from 'lib/oracles'
 import { ModalIds } from 'components/modals/modal'
+import { Artifact } from '@ionio-lang/ionio'
+import { getArtifact } from 'lib/artifact'
 
 interface ConfigContextProps {
+  artifact: Artifact | undefined
   config: Config
   loading: boolean
   reloadConfig: () => void
@@ -28,6 +32,7 @@ interface ConfigContextProps {
 const emptyConfig = { assets: [], offers: [], oracles: [] }
 
 export const ConfigContext = createContext<ConfigContextProps>({
+  artifact: undefined,
   config: emptyConfig,
   loading: true,
   reloadConfig: () => {},
@@ -38,6 +43,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
 
   const [config, setConfig] = useState<Config>(emptyConfig)
   const [loading, setLoading] = useState(true)
+  const [artifact, setArtifact] = useState<Artifact>()
 
   const reloadConfig = async () => {
     // return if network not defined
@@ -79,12 +85,17 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
+    getArtifact().then(setArtifact)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     if (network) reloadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network])
 
   return (
-    <ConfigContext.Provider value={{ config, loading, reloadConfig }}>
+    <ConfigContext.Provider value={{ artifact, config, loading, reloadConfig }}>
       {children}
     </ConfigContext.Provider>
   )

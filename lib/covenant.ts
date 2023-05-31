@@ -42,17 +42,18 @@ import {
   getPublicKey,
 } from './marina'
 import * as ecc from 'tiny-secp256k1'
-import { Contract as IonioContract } from '@ionio-lang/ionio'
+import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
-import { artifact } from './artifact'
 import { getFactoryUrl } from './api'
+import { artifact } from './artifact'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
 }
 
 export async function getIonioInstance(
+  artifact: Artifact,
   contract: Contract,
   network: NetworkString,
 ) {
@@ -82,6 +83,7 @@ export async function getIonioInstance(
 }
 
 async function getCovenantOutput(
+  artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
 ): Promise<{
@@ -107,7 +109,7 @@ async function getCovenantOutput(
     assetPair,
   }
 
-  const covenantAddress = await getNextCovenantAddress(contractParams)
+  const covenantAddress = await getNextCovenantAddress(contractParams, artifact)
 
   // set covenant output
   const { scriptPubKey } = address.fromConfidential(
@@ -171,6 +173,7 @@ export async function prepareBorrowTxWithClaimTx(
 
   // get covenant
   const { contractParams, covenantOutput } = await getCovenantOutput(
+    artifact,
     contract,
     oracle,
   )
@@ -234,6 +237,7 @@ export async function prepareBorrowTx(
 
   // get covenant params
   const { contractParams, covenantOutput } = await getCovenantOutput(
+    artifact,
     contract,
     oracle,
   )
@@ -387,7 +391,7 @@ export async function prepareRedeemTx(
   const address = swapAddress || (await getNextAddress()).confidentialAddress
 
   // get ionio instance
-  let ionioInstance = await getIonioInstance(contract, network)
+  let ionioInstance = await getIonioInstance(artifact, contract, network)
 
   // find coin for this contract
   const collateralCoins = await getFujiCoins()
@@ -542,6 +546,7 @@ export async function prepareTopupTx(
 
   // get new covenant params
   const { contractParams, covenantAddress } = await getCovenantOutput(
+    artifact,
     newContract,
     oracle,
   )
@@ -561,7 +566,7 @@ export async function prepareTopupTx(
   if (!witnessUtxo) throw new Error('Invalid witnessUtxo')
 
   // get ionio instance
-  let ionioInstance = await getIonioInstance(oldContract, network)
+  let ionioInstance = await getIonioInstance(artifact, oldContract, network)
   ionioInstance = ionioInstance.from(
     txid,
     vout,
