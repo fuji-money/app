@@ -8,7 +8,11 @@ import Oracles from 'components/oracles'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 import { toSatoshis } from 'lib/utils'
-import { getContractPriceLevel, getSyntheticQuantity } from 'lib/contracts'
+import {
+  getContractExpirationDate,
+  getContractPriceLevel,
+  getSyntheticQuantity,
+} from 'lib/contracts'
 
 interface MultiplyFormProps {
   contract: Contract
@@ -31,6 +35,10 @@ const MultiplyForm = ({
 
   const maxRatio = minRatio + 200
 
+  const updateContract = (contract: Contract) => {
+    setContract({ ...contract, expirationDate: getContractExpirationDate() })
+  }
+
   const setCollateralQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
     let quantity = toSatoshis(
       parseFloat(e.target.value),
@@ -39,7 +47,7 @@ const MultiplyForm = ({
     const collateral = { ...contract.collateral, quantity }
     quantity = getSyntheticQuantity({ ...contract, collateral }, ratio)
     const synthetic = { ...contract.synthetic, quantity }
-    setContract({ ...contract, collateral, synthetic })
+    updateContract({ ...contract, collateral, synthetic })
   }
 
   const setContractRatio = (newRatio: number) => {
@@ -49,7 +57,7 @@ const MultiplyForm = ({
     const synthetic = { ...contract.synthetic, quantity }
     const newContract = { ...contract, synthetic }
     const priceLevel = getContractPriceLevel(newContract, ratio)
-    setContract({ ...newContract, priceLevel })
+    updateContract({ ...newContract, priceLevel })
   }
 
   if (loading) return <Spinner />
