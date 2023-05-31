@@ -13,6 +13,7 @@ import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
 import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
+import { Artifact } from '@ionio-lang/ionio'
 
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
@@ -25,11 +26,16 @@ import { address, Transaction } from 'liquidjs-lib'
 // 8. and we get it by deserialing the block header
 // 9. Return the input where the utxo is used
 export async function checkContractOutspend(
+  artifact: Artifact,
   chainSource: ChainSource,
   contract: Contract,
   network: NetworkString,
 ) {
-  const covenantAddress = await getContractCovenantAddress(contract, network)
+  const covenantAddress = await getContractCovenantAddress(
+    artifact,
+    contract,
+    network,
+  )
   const [hist] = await chainSource.fetchHistories([
     address.toOutputScript(covenantAddress),
   ])
@@ -364,10 +370,11 @@ export async function saveContractToStorage(contract: Contract): Promise<void> {
 }
 
 export async function getContractCovenantAddress(
+  artifact: Artifact,
   contract: Contract,
   network: NetworkString,
 ) {
-  return (await getIonioInstance(contract, network)).address
+  return (await getIonioInstance(artifact, contract, network)).address
 }
 
 export function getContractExpirationDate(

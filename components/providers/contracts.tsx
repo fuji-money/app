@@ -64,7 +64,7 @@ interface ContractsProviderProps {
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { chainSource, connected, marina, network, xPubKey } =
     useContext(WalletContext)
-  const { config, reloadConfig } = useContext(ConfigContext)
+  const { artifact, config, reloadConfig } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -110,7 +110,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (!network) return
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
-        await getContractCovenantAddress(contract, network),
+        await getContractCovenantAddress(artifact, contract, network),
       ),
     ])
     const confirmed = hist.length > 0 && hist[0].height !== 0
@@ -138,7 +138,12 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       // if contract is redeemed, topup or liquidated
       if (contractIsClosed(contract)) continue
       // check if contract is already spent
-      const status = await checkContractOutspend(chainSource, contract, network)
+      const status = await checkContractOutspend(
+        artifact,
+        chainSource,
+        contract,
+        network,
+      )
       if (!status) continue
       const { input, spent, timestamp } = status
       if (spent && input) {
@@ -150,7 +155,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         // - topuped (leaf asm will have 27 items)
         const index = input.witness.length - 2
         const leaf = input.witness[index].toString('hex')
-        switch (getFuncNameFromScriptHexOfLeaf(leaf)) {
+        switch (getFuncNameFromScriptHexOfLeaf(artifact, leaf)) {
           case 'liquidate':
             markContractLiquidated(contract, timestamp)
             continue

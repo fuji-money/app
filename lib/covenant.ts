@@ -42,10 +42,9 @@ import {
   getPublicKey,
 } from './marina'
 import * as ecc from 'tiny-secp256k1'
-import { Contract as IonioContract } from '@ionio-lang/ionio'
+import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
-import { artifact } from './artifact'
 import { getFactoryUrl } from './api'
 
 const getNetwork = (str?: NetworkString): Network => {
@@ -53,6 +52,7 @@ const getNetwork = (str?: NetworkString): Network => {
 }
 
 export async function getIonioInstance(
+  artifact: Artifact,
   contract: Contract,
   network: NetworkString,
 ) {
@@ -82,6 +82,7 @@ export async function getIonioInstance(
 }
 
 async function getCovenantOutput(
+  artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
 ): Promise<{
@@ -107,7 +108,7 @@ async function getCovenantOutput(
     assetPair,
   }
 
-  const covenantAddress = await getNextCovenantAddress(contractParams)
+  const covenantAddress = await getNextCovenantAddress(artifact, contractParams)
 
   // set covenant output
   const { scriptPubKey } = address.fromConfidential(
@@ -143,6 +144,7 @@ export interface PreparedBorrowTx {
 }
 
 export async function prepareBorrowTxWithClaimTx(
+  artifact: Artifact,
   contract: Contract,
   utxos: Utxo[],
   redeemScript: string, // must be associated with the first utxo
@@ -171,6 +173,7 @@ export async function prepareBorrowTxWithClaimTx(
 
   // get covenant
   const { contractParams, covenantOutput } = await getCovenantOutput(
+    artifact,
     contract,
     oracle,
   )
@@ -199,6 +202,7 @@ export async function prepareBorrowTxWithClaimTx(
 }
 
 export async function prepareBorrowTx(
+  artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
 ): Promise<PreparedBorrowTx> {
@@ -234,6 +238,7 @@ export async function prepareBorrowTx(
 
   // get covenant params
   const { contractParams, covenantOutput } = await getCovenantOutput(
+    artifact,
     contract,
     oracle,
   )
@@ -365,6 +370,7 @@ export async function proposeBorrowContract(
 
 // redeem
 export async function prepareRedeemTx(
+  artifact: Artifact,
   contract: Contract,
   network: NetworkString,
   swapAddress?: string,
@@ -387,7 +393,7 @@ export async function prepareRedeemTx(
   const address = swapAddress || (await getNextAddress()).confidentialAddress
 
   // get ionio instance
-  let ionioInstance = await getIonioInstance(contract, network)
+  let ionioInstance = await getIonioInstance(artifact, contract, network)
 
   // find coin for this contract
   const collateralCoins = await getFujiCoins()
@@ -500,6 +506,7 @@ export interface PreparedTopupTx {
 }
 
 export async function prepareTopupTx(
+  artifact: Artifact,
   newContract: Contract,
   oldContract: Contract,
   network: NetworkString,
@@ -542,6 +549,7 @@ export async function prepareTopupTx(
 
   // get new covenant params
   const { contractParams, covenantAddress } = await getCovenantOutput(
+    artifact,
     newContract,
     oracle,
   )
@@ -561,7 +569,7 @@ export async function prepareTopupTx(
   if (!witnessUtxo) throw new Error('Invalid witnessUtxo')
 
   // get ionio instance
-  let ionioInstance = await getIonioInstance(oldContract, network)
+  let ionioInstance = await getIonioInstance(artifact, oldContract, network)
   ionioInstance = ionioInstance.from(
     txid,
     vout,
@@ -821,7 +829,10 @@ export function finalizeTopupCovenantInput(pset: Pset) {
 
 // other
 
-export function getFuncNameFromScriptHexOfLeaf(witness: string): string {
+export function getFuncNameFromScriptHexOfLeaf(
+  artifact: Artifact,
+  witness: string,
+): string {
   const mapWitnessLengthToState: Record<number, string> = {}
   artifact.functions.map(({ name, asm }) => {
     // 27: 'topup'
