@@ -32,7 +32,6 @@ const Multiply = ({ offer }: MultiplyProps) => {
   const { oracles } = config
 
   const [contract, setContract] = useState<Contract>(offer)
-  const [values, setValues] = useState({ exposure: 0, multiple: 0 })
   const [ratio, setRatio] = useState(200)
   const [tdexError, setTdexError] = useState(false)
 
@@ -85,7 +84,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
           setTdexError(true)
         })
         .finally(() => {
-          setValues({ exposure, multiple })
+          setContract({ ...contract, exposure })
         })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,7 +108,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
             />
           </div>
           <div className="column is-4">
-            <MultiplyInfo contract={contract} values={values} />
+            <MultiplyInfo contract={contract} />
             <Notifications
               contract={contract}
               minRatio={minRatio}

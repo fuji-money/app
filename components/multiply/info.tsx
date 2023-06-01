@@ -1,20 +1,22 @@
 import { prettyExpirationDate, prettyNumber, prettyQuantity } from 'lib/pretty'
 import { Contract } from 'lib/types'
+import { fromSatoshis } from 'lib/utils'
 
 interface MultiplyInfoProps {
   contract: Contract
-  values: any
 }
 
-const MultiplyInfo = ({ contract, values }: MultiplyInfoProps) => {
-  const { collateral, priceLevel, synthetic } = contract
+const MultiplyInfo = ({ contract }: MultiplyInfoProps) => {
+  const { collateral, exposure, priceLevel, synthetic } = contract
+  const multiple = (exposure ?? 0) / collateral.quantity
+
   return (
     <div className="is-box has-pink-border is-size-7">
       <div className="level">
         <div className="level-left">
           <div className="level-item">
             <div>
-              <p>Borrow amount</p>
+              <p>Fuji debt</p>
               <p>Current reference price</p>
               <p>Liquidation price level</p>
               <p>Collateral amount</p>
@@ -43,13 +45,13 @@ const MultiplyInfo = ({ contract, values }: MultiplyInfoProps) => {
               </p>
               <p>
                 {prettyQuantity(
-                  values?.exposure,
+                  exposure,
                   collateral.precision,
                   collateral.precision,
                 )}{' '}
                 {collateral.ticker}
               </p>
-              <p>{prettyNumber(values?.multiple, 0, 2)}</p>
+              <p>{prettyNumber(multiple, 0, 2)}</p>
               <p>{prettyExpirationDate(contract.expirationDate)}</p>
             </div>
           </div>

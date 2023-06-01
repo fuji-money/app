@@ -33,7 +33,7 @@ const EnablersLiquid = ({
                   />
                 </div>
                 <div className="column is-6">
-                  <Summary contract={contract} task={task} />
+                  <Summary contract={contract} />
                 </div>
               </div>
             </div>

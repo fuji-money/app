@@ -109,6 +109,7 @@ export interface Contract {
   txid?: string
   vout?: number
   xPubKey?: string
+  exposure?: number
 }
 
 export interface Investment {

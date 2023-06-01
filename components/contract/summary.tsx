@@ -2,27 +2,20 @@ import { prettyExpirationDate, prettyNumber, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { getContractRatio } from 'lib/contracts'
 import { fromSatoshis } from 'lib/utils'
-import { Tasks } from 'lib/tasks'
-import { getLBTC } from 'lib/assets'
 
 interface SummaryProps {
   contract: Contract
-  task?: Tasks
 }
 
-const Summary = ({ contract, task }: SummaryProps) => {
-  const { collateral, synthetic, priceLevel, expirationDate } = contract
-
-  const afterSwap =
-    task === Tasks.Multiply
-      ? (synthetic.quantity * synthetic.value) / collateral.value
-      : undefined
+const Summary = ({ contract }: SummaryProps) => {
+  const { collateral, expirationDate, exposure, priceLevel, synthetic } =
+    contract
 
   return (
     <table className="has-text-weight-bold mx-auto">
       <tbody>
         <tr>
-          <td>Borrow</td>
+          <td>{exposure ? 'Fuji debt' : 'Borrow'}</td>
           <td>
             {prettyNumber(
               fromSatoshis(synthetic.quantity, synthetic.precision),
@@ -51,19 +44,26 @@ const Summary = ({ contract, task }: SummaryProps) => {
           <td>{prettyNumber(priceLevel, 0, 2)}</td>
           <td>USD</td>
         </tr>
-        <tr>
-          <td>Expiration date</td>
-          <td>{prettyExpirationDate(expirationDate)}</td>
-        </tr>
-        {afterSwap && (
+        {exposure && (
           <tr>
-            <td>After swap</td>
+            <td>Exposure</td>
             <td>
-              {prettyNumber(fromSatoshis(afterSwap, collateral.precision))}
+              {prettyNumber(fromSatoshis(exposure, collateral.precision))}
             </td>
             <td>{collateral.ticker}</td>
           </tr>
         )}
+        {exposure && (
+          <tr>
+            <td>Multiple</td>
+            <td>{prettyNumber((exposure ?? 0) / collateral.quantity, 0, 2)}</td>
+            <td>{collateral.ticker}</td>
+          </tr>
+        )}
+        <tr>
+          <td>Expiration date</td>
+          <td>{prettyExpirationDate(expirationDate)}</td>
+        </tr>
       </tbody>
       <style jsx>{`
         table,
