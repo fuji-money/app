@@ -14,9 +14,15 @@ interface MultiplyButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
+  tdexError: boolean
 }
 
-const MultiplyButton = ({ contract, minRatio, ratio }: MultiplyButtonProps) => {
+const MultiplyButton = ({
+  contract,
+  minRatio,
+  ratio,
+  tdexError,
+}: MultiplyButtonProps) => {
   const { balances, connected } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { setNewContract } = useContext(ContractsContext)
@@ -67,7 +73,8 @@ const MultiplyButton = ({ contract, minRatio, ratio }: MultiplyButtonProps) => {
     oracles &&
     oracles.length > 0 &&
     collateral.quantity > feeAmount + minDustLimit &&
-    !mintLimitReached
+    !mintLimitReached &&
+    !tdexError
 
   return (
     <button

@@ -34,6 +34,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
   const [contract, setContract] = useState<Contract>(offer)
   const [values, setValues] = useState({ exposure: 0, multiple: 0 })
   const [ratio, setRatio] = useState(200)
+  const [tdexError, setTdexError] = useState(false)
 
   const minRatio = offer.synthetic.minCollateralRatio || minMultiplyRatio
 
@@ -78,8 +79,11 @@ const Multiply = ({ offer }: MultiplyProps) => {
           const tdexAmount = parseInt(preview[0].amount, 10)
           exposure = tdexAmount + quantity
           multiple = quantity ? exposure / quantity : 0
+          setTdexError(false)
         })
-        .catch()
+        .catch(() => {
+          setTdexError(true)
+        })
         .finally(() => {
           setValues({ exposure, multiple })
         })
@@ -110,11 +114,13 @@ const Multiply = ({ offer }: MultiplyProps) => {
               contract={contract}
               minRatio={minRatio}
               ratio={ratio}
+              tdexError={tdexError}
             />
             <MultiplyButton
               contract={contract}
               minRatio={minRatio}
               ratio={ratio}
+              tdexError={tdexError}
             />
           </div>
         </div>

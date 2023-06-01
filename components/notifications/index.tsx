@@ -16,11 +16,13 @@ import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
+import TdexErrorNotification from './tdexError'
 
 interface NotificationsProps {
   contract: Contract
   minRatio: number
   ratio: number
+  tdexError?: boolean
   topup?: number
 }
 
@@ -28,6 +30,7 @@ const Notifications = ({
   contract,
   minRatio,
   ratio,
+  tdexError,
   topup,
 }: NotificationsProps) => {
   const { balances, connected } = useContext(WalletContext)
@@ -103,6 +106,7 @@ const Notifications = ({
       {notEnoughOracles && <NotEnoughOraclesNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
       {mintLimitReached && <MintLimitReachedNotification />}
+      {tdexError && <TdexErrorNotification />}
     </>
   )
 }
