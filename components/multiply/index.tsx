@@ -46,23 +46,29 @@ const Multiply = ({ offer }: MultiplyProps) => {
 
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {
-    const asyncFetchAndSetMarkets = async () => {
+    const isForThisPair = (market: TDEXMarket) =>
+      (market.baseAsset === assetPair.from.id &&
+        market.quoteAsset === assetPair.dest.id) ||
+      (market.baseAsset === assetPair.dest.id &&
+        market.quoteAsset === assetPair.from.id)
+
+    const getBestMarketForThisPair = async () => {
       try {
         const markets: TDEXMarket[] = []
         for (const provider of await getProvidersFromRegistry(network)) {
-          for (let market of await fetchMarketsFromProvider(provider)) {
-            markets.push({
-              ...market,
-              price: await getMarketPrice(market),
-            })
+          const providerMarkets = await fetchMarketsFromProvider(provider)
+          for (const market of providerMarkets.filter(isForThisPair)) {
+            const price = await getMarketPrice(market)
+            markets.push({ ...market, price })
           }
         }
-        setMarket(getBestMarket(markets.filter(isTDEXMarket), assetPair))
+        setMarket(getBestMarket(markets, assetPair))
       } catch (err) {
         console.error(err)
       }
     }
-    asyncFetchAndSetMarkets()
+
+    getBestMarketForThisPair()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network])
 
