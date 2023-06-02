@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 
 // calculate ratio from range value
 const calcRatio = (value: number, min: number, max: number) =>
@@ -35,9 +35,14 @@ const Range = ({
     calcValue(200, minRatio, maxRatio),
   )
 
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setRangeValue(parseInt(e.target.value))
+
+  const handleMouseUp = () =>
+    setRatio(calcRatio(rangeValue, minRatio, maxRatio))
+
   useEffect(() => {
     updateColors(rangeValue)
-    setRatio(calcRatio(rangeValue, minRatio, maxRatio))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeValue])
 
@@ -61,7 +66,8 @@ const Range = ({
         max="100"
         type="range"
         value={rangeValue}
-        onChange={(e) => setRangeValue(parseInt(e.target.value))}
+        onChange={handleChange}
+        onMouseUp={handleMouseUp}
       />
       <div className="is-flex is-justify-content-space-between mb-6">
         <p className="is-grey">Decrease risk</p>
