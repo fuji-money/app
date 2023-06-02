@@ -9,6 +9,9 @@ import {
   isTDEXMarketPrice,
 } from './types'
 import axios from 'axios'
+import { assetPair } from 'lib/constants'
+import { getProvidersFromRegistry } from './registry'
+import { NetworkString } from 'marina-provider'
 
 /**
  * Get a list of markets from a given provider
@@ -38,9 +41,9 @@ export async function fetchMarketsFromProvider(
  * @param market
  * @returns an array of markets
  */
-export async function getMarketPrice(
+const getMarketPrice = async (
   market: TDEXMarket,
-): Promise<TDEXMarketPrice | undefined> {
+): Promise<TDEXMarketPrice | undefined> => {
   const url = market.provider.endpoint + '/v2/market/price'
   const opt = { headers: { 'Content-Type': 'application/json' } }
   const res = (await axios.post(url, { market }, opt)).data
@@ -54,10 +57,10 @@ export async function getMarketPrice(
  * @param pair
  * @returns number
  */
-function totalMarketFees(
+const totalMarketFees = (
   market: TDEXMarket,
   pair: AssetPair,
-): number | undefined {
+): number | undefined => {
   // return undefined if market has no price
   if (typeof market.fixedFee === 'undefined') return
   if (typeof market.percentageFee === 'undefined') return
@@ -84,25 +87,46 @@ function totalMarketFees(
 }
 
 /**
- * Find the best market for a given pair
- * @param markets
+ * Get trade type (SELL or BUY)
+ * @param market
  * @param pair
- * @returns market
+ * @returns trade type
  */
-export function getBestMarket(
-  markets: TDEXMarket[],
+export const getTradeType = (
+  market: TDEXMarket,
   pair: AssetPair,
-): TDEXMarket | undefined {
-  const validMarkets = markets
-    // find markets for this pair
-    .filter(
-      (market) =>
-        (market.baseAsset === pair.from.id &&
-          market.quoteAsset === pair.dest.id) ||
-        (market.baseAsset === pair.dest.id &&
-          market.quoteAsset === pair.from.id),
-    )
+): TDEXTradeType => {
+  return market.baseAsset === pair.from.id
+    ? TDEXTradeType.SELL
+    : TDEXTradeType.BUY
+}
 
+/**
+ * Find best market for given asset pair
+ * @param pair
+ * @returns trade type
+ */
+export const findBestMarket = async (
+  network: NetworkString,
+  pair: AssetPair,
+): Promise<TDEXMarket | undefined> => {
+  // filter market by pair
+  const isPairMarket = (market: TDEXMarket) =>
+    (market.baseAsset === pair.from.id && market.quoteAsset === pair.dest.id) ||
+    (market.baseAsset === pair.dest.id && market.quoteAsset === pair.from.id)
+
+  // push all markets for this pair to validMarkets
+  const validMarkets: TDEXMarket[] = []
+  for (const provider of await getProvidersFromRegistry(network)) {
+    const providerMarkets = await fetchMarketsFromProvider(provider)
+    const marketsForThisPair = providerMarkets.filter(isPairMarket)
+    for (const market of marketsForThisPair) {
+      const price = await getMarketPrice(market)
+      validMarkets.push({ ...market, price })
+    }
+  }
+
+  // check number of valid markets
   if (!validMarkets) return
   if (validMarkets.length === 1) return validMarkets[0]
 
@@ -138,19 +162,4 @@ export function getBestMarket(
   }
 
   return bestMarket
-}
-
-/**
- * Get trade type (SELL or BUY)
- * @param market
- * @param pair
- * @returns trade type
- */
-export function getTradeType(
-  market: TDEXMarket,
-  pair: AssetPair,
-): TDEXTradeType {
-  return market.baseAsset === pair.from.id
-    ? TDEXTradeType.SELL
-    : TDEXTradeType.BUY
 }

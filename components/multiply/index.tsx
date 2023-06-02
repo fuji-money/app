@@ -9,17 +9,11 @@ import { ContractsContext } from 'components/providers/contracts'
 import SomeError from 'components/layout/error'
 import { ConfigContext } from 'components/providers/config'
 import Spinner from 'components/spinner'
-import { fromSatoshis, toSatoshis } from 'lib/utils'
 import MultiplyInfo from './info'
-import { AssetPair, TDEXMarket, isTDEXMarket } from 'lib/tdex/types'
-import {
-  fetchMarketsFromProvider,
-  getBestMarket,
-  getMarketPrice,
-} from 'lib/tdex/market'
-import { getProvidersFromRegistry } from 'lib/tdex/registry'
+import { AssetPair, TDEXMarket } from 'lib/tdex/types'
+import { findBestMarket } from 'lib/tdex/market'
 import { WalletContext } from 'components/providers/wallet'
-import { fetchTradePreview } from 'lib/tdex/preview'
+import { fetchTradePreview, getExposure } from 'lib/tdex/preview'
 
 interface MultiplyProps {
   offer: Offer
@@ -46,53 +40,32 @@ const Multiply = ({ offer }: MultiplyProps) => {
 
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {
-    const isForThisPair = (market: TDEXMarket) =>
-      (market.baseAsset === assetPair.from.id &&
-        market.quoteAsset === assetPair.dest.id) ||
-      (market.baseAsset === assetPair.dest.id &&
-        market.quoteAsset === assetPair.from.id)
-
-    const getBestMarketForThisPair = async () => {
-      try {
-        const markets: TDEXMarket[] = []
-        for (const provider of await getProvidersFromRegistry(network)) {
-          const providerMarkets = await fetchMarketsFromProvider(provider)
-          for (const market of providerMarkets.filter(isForThisPair)) {
-            const price = await getMarketPrice(market)
-            markets.push({ ...market, price })
-          }
-        }
-        setMarket(getBestMarket(markets, assetPair))
-      } catch (err) {
-        console.error(err)
-      }
+    if (network) {
+      findBestMarket(network, assetPair)
+        .then((market) => {
+          setMarket(market)
+          setTdexError(false)
+        })
+        .catch((err) => {
+          console.error(err)
+          setTdexError(true)
+        })
     }
-
-    getBestMarketForThisPair()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network])
 
   // update multiply values (exposure and multiply)
   useEffect(() => {
-    if (market && contract.synthetic.quantity) {
-      let exposure = 0
-      let multiple = 0
-      const { collateral, synthetic } = contract
-      fetchTradePreview(synthetic, market, assetPair)
-        .then((preview) => {
-          const { quantity } = collateral
-          const tdexAmount = parseInt(preview[0].amount, 10)
-          exposure = tdexAmount + quantity
-          multiple = quantity ? exposure / quantity : 0
-          setTdexError(false)
-        })
-        .catch(() => {
-          setTdexError(true)
-        })
-        .finally(() => {
-          setContract({ ...contract, exposure })
-        })
-    }
+    getExposure(contract, market)
+      .then((exposure) => {
+        setContract({ ...contract, exposure })
+        setTdexError(false)
+      })
+      .catch((err) => {
+        console.error(err)
+        setTdexError(true)
+      })
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contract.synthetic.quantity])
 

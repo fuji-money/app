@@ -6,7 +6,7 @@ import {
   isTDEXTradePreviewResponse,
 } from './types'
 import { getTradeType } from './market'
-import { Asset } from 'lib/types'
+import { Asset, Contract } from 'lib/types'
 
 export async function fetchTradePreview(
   asset: Asset,
@@ -28,4 +28,20 @@ export async function fetchTradePreview(
   const res = (await axios.post(url, trade, opt)).data.previews
   if (!Array.isArray(res)) throw new Error('Invalid trade/preview response')
   return res.filter(isTDEXTradePreviewResponse)
+}
+
+export const getExposure = async (
+  contract: Contract,
+  market?: TDEXMarket,
+): Promise<number> => {
+  if (market && contract.synthetic.quantity) {
+    const { collateral, synthetic } = contract
+    const assetPair: AssetPair = {
+      from: synthetic,
+      dest: collateral,
+    }
+    const preview = await fetchTradePreview(synthetic, market, assetPair)
+    return Number(preview[0].amount) + collateral.quantity
+  }
+  return 0
 }

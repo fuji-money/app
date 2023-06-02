@@ -85,10 +85,9 @@ const MultiplyForm = ({
         Position will be liquidated below the minimum.
       </p>
       <Range
-        liquidationPrice={contract.priceLevel ?? 0}
+        contract={contract}
         minRatio={minRatio}
         maxRatio={maxRatio}
-        ratio={ratio}
         setRatio={setContractRatio}
       />
       <h3 className="mt-6">

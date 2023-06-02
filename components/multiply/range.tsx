@@ -1,3 +1,5 @@
+import { getContractPriceLevel } from 'lib/contracts'
+import { Contract } from 'lib/types'
 import { ChangeEvent, useEffect, useState } from 'react'
 
 // calculate ratio from range value
@@ -17,26 +19,27 @@ const updateColors = (value: number) => {
 }
 
 interface RangeProps {
-  liquidationPrice: number
+  contract: Contract
   minRatio: number
   maxRatio: number
-  ratio: number
   setRatio: (arg0: number) => void
 }
 
-const Range = ({
-  liquidationPrice,
-  minRatio,
-  maxRatio,
-  ratio,
-  setRatio,
-}: RangeProps) => {
-  const [rangeValue, setRangeValue] = useState(
-    calcValue(200, minRatio, maxRatio),
-  )
+const Range = ({ contract, minRatio, maxRatio, setRatio }: RangeProps) => {
+  const initialRatio = 200
+  const initialRange = calcValue(initialRatio, minRatio, maxRatio)
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
-    setRangeValue(parseInt(e.target.value))
+  const [priceLevel, setPriceLevel] = useState(
+    getContractPriceLevel(contract, initialRatio),
+  )
+  const [rangeValue, setRangeValue] = useState(initialRange)
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newRangeValue = Number(e.target.value)
+    const newRatio = calcRatio(newRangeValue, minRatio, maxRatio)
+    setRangeValue(newRangeValue)
+    setPriceLevel(getContractPriceLevel(contract, newRatio))
+  }
 
   const handleMouseUp = () =>
     setRatio(calcRatio(rangeValue, minRatio, maxRatio))
@@ -46,18 +49,25 @@ const Range = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeValue])
 
+  useEffect(() => {
+    if (contract.priceLevel) setPriceLevel(contract.priceLevel)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract.priceLevel])
+
   return (
     <>
       <div className="is-flex is-justify-content-space-between">
         <div>
           <p className="is-size-7">Liquidation price</p>
           <p className="is-size-5 is-gradient">
-            $ {liquidationPrice.toLocaleString()}
+            $ {priceLevel.toLocaleString()}
           </p>
         </div>
         <div className="has-text-right">
           <p className="is-size-7">Collateral ratio</p>
-          <p className="is-size-5">{ratio}%</p>
+          <p className="is-size-5">
+            {calcRatio(rangeValue, minRatio, maxRatio)}%
+          </p>
         </div>
       </div>
       <input
