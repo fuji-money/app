@@ -52,12 +52,12 @@ const MultiplyForm = ({
 
   const setContractRatio = (newRatio: number) => {
     const ratio = newRatio > minRatio ? newRatio : minRatio
-    setRatio(ratio)
     const quantity = getSyntheticQuantity(contract, ratio)
     const synthetic = { ...contract.synthetic, quantity }
     const newContract = { ...contract, synthetic }
     const priceLevel = getContractPriceLevel(newContract, ratio)
     updateContract({ ...newContract, priceLevel })
+    setRatio(ratio)
   }
 
   if (loading) return <Spinner />
@@ -89,6 +89,7 @@ const MultiplyForm = ({
         minRatio={minRatio}
         maxRatio={maxRatio}
         setRatio={setContractRatio}
+        ratio={ratio}
       />
       <h3 className="mt-6">
         <span className="stepper">3</span>

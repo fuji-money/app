@@ -22,16 +22,20 @@ interface RangeProps {
   contract: Contract
   minRatio: number
   maxRatio: number
+  ratio: number
   setRatio: (arg0: number) => void
 }
 
-const Range = ({ contract, minRatio, maxRatio, setRatio }: RangeProps) => {
-  const initialRatio = 200
-  const initialRange = calcValue(initialRatio, minRatio, maxRatio)
+const Range = ({
+  contract,
+  minRatio,
+  maxRatio,
+  ratio,
+  setRatio,
+}: RangeProps) => {
+  const initialRange = calcValue(ratio, minRatio, maxRatio)
 
-  const [priceLevel, setPriceLevel] = useState(
-    getContractPriceLevel(contract, initialRatio),
-  )
+  const [priceLevel, setPriceLevel] = useState(contract.priceLevel ?? 0)
   const [rangeValue, setRangeValue] = useState(initialRange)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -48,11 +52,6 @@ const Range = ({ contract, minRatio, maxRatio, setRatio }: RangeProps) => {
     updateColors(rangeValue)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rangeValue])
-
-  useEffect(() => {
-    if (contract.priceLevel) setPriceLevel(contract.priceLevel)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contract.priceLevel])
 
   return (
     <>

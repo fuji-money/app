@@ -14,6 +14,7 @@ export enum ModalIds {
   InvoiceDeposit = 'invoice-deposit-modal',
   LiquidationPrice = 'liquidation-price-modal',
   MarinaDeposit = 'marina-deposit-modal',
+  MarinaMultiply = 'marina-multiply-modal',
   MintLimit = 'mint-limit-modal',
   Redeem = 'redeem-modal',
   Trade = 'trade-modal',
@@ -29,6 +30,7 @@ export enum ModalStages {
   NeedsFujiApproval = 'NeedsFujiApproval',
   NeedsInvoice = 'NeedsInvoice',
   NeedsPayment = 'NeedsPayment',
+  NeedsTDEXSwap = 'NeedsTDEXSwap',
   PaymentReceived = 'PaymentReceived',
   ShowResult = 'ShowResult',
 }

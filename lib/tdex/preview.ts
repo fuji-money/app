@@ -3,6 +3,7 @@ import {
   AssetPair,
   TDEXMarket,
   TDEXTradePreview,
+  TDEXTradePreviewResponse,
   isTDEXTradePreviewResponse,
 } from './types'
 import { getTradeType } from './market'
@@ -12,7 +13,7 @@ export async function fetchTradePreview(
   asset: Asset,
   market: TDEXMarket,
   pair: AssetPair,
-) {
+): Promise<TDEXTradePreviewResponse[]> {
   const { dest, from } = pair
   const otherCoin = asset.id === from.id ? dest : from
   const type = getTradeType(market, pair)

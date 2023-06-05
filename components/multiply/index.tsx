@@ -13,7 +13,8 @@ import MultiplyInfo from './info'
 import { AssetPair, TDEXMarket } from 'lib/tdex/types'
 import { findBestMarket } from 'lib/tdex/market'
 import { WalletContext } from 'components/providers/wallet'
-import { fetchTradePreview, getExposure } from 'lib/tdex/preview'
+import { getExposure } from 'lib/tdex/preview'
+import { getContractPriceLevel } from 'lib/contracts'
 
 interface MultiplyProps {
   offer: Offer
@@ -25,8 +26,14 @@ const Multiply = ({ offer }: MultiplyProps) => {
   const { loading } = useContext(ContractsContext)
   const { oracles } = config
 
-  const [contract, setContract] = useState<Contract>(offer)
-  const [ratio, setRatio] = useState(200)
+  const initialRatio = 200
+
+  const [contract, setContract] = useState<Contract>({
+    ...offer,
+    network,
+    priceLevel: getContractPriceLevel(offer, initialRatio),
+  })
+  const [ratio, setRatio] = useState(initialRatio)
   const [tdexError, setTdexError] = useState(false)
 
   const minRatio = offer.synthetic.minCollateralRatio || minMultiplyRatio
