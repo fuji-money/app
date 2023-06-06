@@ -1,5 +1,5 @@
 import type { NextPage } from 'next'
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import { ContractsContext } from 'components/providers/contracts'
@@ -11,7 +11,7 @@ import {
   prepareBorrowTx,
   proposeBorrowContract,
 } from 'lib/covenant'
-import { broadcastTx, signTx } from 'lib/marina'
+import { broadcastTx, getNextAddress, signTx } from 'lib/marina'
 import { Contract, Outcome } from 'lib/types'
 import { openModal, extractError } from 'lib/utils'
 import { Pset } from 'liquidjs-lib'
@@ -24,6 +24,9 @@ import {
 } from 'lib/contracts'
 import { finalizeTx } from 'lib/transaction'
 import MarinaMultiplyModal from 'components/modals/marinaMultiply'
+import { findBestMarket } from 'lib/tdex/market'
+import { TDEXMarket, AssetPair } from 'lib/tdex/types'
+import { proposeTDEXSwap } from 'lib/tdex/swap'
 
 const MultiplyLiquid: NextPage = () => {
   const { chainSource, network, xPubKey } = useContext(WalletContext)
@@ -35,6 +38,21 @@ const MultiplyLiquid: NextPage = () => {
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
 
   const { oracles } = config
+
+  const [market, setMarket] = useState<TDEXMarket>()
+
+  // fetch and set markets (needs to fetch providers)
+  useEffect(() => {
+    if (network && newContract) {
+      const assetPair: AssetPair = {
+        from: newContract.synthetic,
+        dest: newContract.collateral,
+      }
+      findBestMarket(network, assetPair)
+        .then((market) => setMarket(market))
+        .catch((err) => console.error(err))
+    }
+  }, [network, newContract])
 
   // finalize and broadcast proposed transaction
   const finalizeAndBroadcast = async (
@@ -77,7 +95,7 @@ const MultiplyLiquid: NextPage = () => {
 
   const handleMarina = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract || !network) return
+    if (!newContract || !network || !market) return
 
     try {
       openModal(ModalIds.MarinaMultiply)
@@ -98,6 +116,13 @@ const MultiplyLiquid: NextPage = () => {
         network,
       )
 
+      // factory will add fuji output as the next one
+      const fujiVout = preparedTx.pset.outputs.length
+      const fujiAmount =
+        Pset.fromBase64(partialTransaction).outputs[fujiVout].value
+      console.log('fujiIndex', fujiVout)
+      console.log('fujiAmount', fujiAmount)
+
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
       const signedTransaction = await signTx(partialTransaction)
@@ -108,6 +133,11 @@ const MultiplyLiquid: NextPage = () => {
       if (!txid) throw new Error("Broadcast didn't returned a txid")
 
       setStage(ModalStages.NeedsTDEXSwap)
+
+      console.log(
+        'gfgfgf',
+        await proposeTDEXSwap(market, newContract, preparedTx, pset, txid),
+      )
 
       // setData(txid)
       // setResult(Outcome.Success)

@@ -9,7 +9,6 @@ import {
   isTDEXMarketPrice,
 } from './types'
 import axios from 'axios'
-import { assetPair } from 'lib/constants'
 import { getProvidersFromRegistry } from './registry'
 import { NetworkString } from 'marina-provider'
 

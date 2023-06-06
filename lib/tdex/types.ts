@@ -55,7 +55,7 @@ export enum TDEXTradeType {
   SELL = 1,
 }
 
-export interface TDEXTradePreview {
+export interface TDEXPreviewTradeRequest {
   market: TDEXMarket
   type: TDEXTradeType
   amount?: string
@@ -63,7 +63,7 @@ export interface TDEXTradePreview {
   feeAsset?: string
 }
 
-export interface TDEXTradePreviewResponse {
+export interface TDEXPreviewTradeResponse {
   amount: string
   asset: string
   fee: {
@@ -75,9 +75,9 @@ export interface TDEXTradePreviewResponse {
   price: { basePrice: number; quotePrice: number }
 }
 
-export function isTDEXTradePreviewResponse(
+export function isTDEXPreviewTradeResponse(
   resp: any,
-): resp is TDEXTradePreviewResponse {
+): resp is TDEXPreviewTradeResponse {
   return (
     typeof resp === 'object' &&
     typeof resp.amount === 'string' &&
@@ -94,3 +94,22 @@ export function isTDEXTradePreviewResponse(
     typeof resp.price.quotePrice === 'number'
   )
 }
+
+export interface TDEXProposeTradeSwapRequest {
+  id: string
+  amountP: string
+  assetP: string
+  amountR: string
+  assetR: string
+  transaction: string
+}
+
+export interface TDEXProposeTradeRequest {
+  feeAsset: string
+  feeAmount: string
+  market: TDEXMarket
+  swapRequest: TDEXProposeTradeSwapRequest
+  type: TDEXTradeType
+}
+
+export interface TDEXProposeTradeResponse {}

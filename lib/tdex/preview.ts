@@ -2,33 +2,38 @@ import axios from 'axios'
 import {
   AssetPair,
   TDEXMarket,
-  TDEXTradePreview,
-  TDEXTradePreviewResponse,
-  isTDEXTradePreviewResponse,
+  TDEXPreviewTradeRequest,
+  TDEXPreviewTradeResponse,
+  isTDEXPreviewTradeResponse,
 } from './types'
 import { getTradeType } from './market'
 import { Asset, Contract } from 'lib/types'
 
-export async function fetchTradePreview(
-  asset: Asset,
-  market: TDEXMarket,
-  pair: AssetPair,
-): Promise<TDEXTradePreviewResponse[]> {
-  const { dest, from } = pair
-  const otherCoin = asset.id === from.id ? dest : from
-  const type = getTradeType(market, pair)
-  const trade: TDEXTradePreview = {
+interface fetchTradePreviewProps {
+  asset: Asset
+  feeAsset: Asset
+  market: TDEXMarket
+  pair: AssetPair
+}
+
+export async function fetchTradePreview({
+  asset,
+  feeAsset,
+  market,
+  pair,
+}: fetchTradePreviewProps): Promise<TDEXPreviewTradeResponse[]> {
+  const trade: TDEXPreviewTradeRequest = {
     amount: asset.quantity.toString(),
     asset: asset.id,
-    feeAsset: otherCoin.id,
+    feeAsset: feeAsset.id,
     market,
-    type,
+    type: getTradeType(market, pair),
   }
   const url = market.provider.endpoint + '/v2/trade/preview'
   const opt = { headers: { 'Content-Type': 'application/json' } }
   const res = (await axios.post(url, trade, opt)).data.previews
   if (!Array.isArray(res)) throw new Error('Invalid trade/preview response')
-  return res.filter(isTDEXTradePreviewResponse)
+  return res.filter(isTDEXPreviewTradeResponse)
 }
 
 export const getExposure = async (
@@ -37,11 +42,15 @@ export const getExposure = async (
 ): Promise<number> => {
   if (market && contract.synthetic.quantity) {
     const { collateral, synthetic } = contract
-    const assetPair: AssetPair = {
-      from: synthetic,
-      dest: collateral,
-    }
-    const preview = await fetchTradePreview(synthetic, market, assetPair)
+    const preview = await fetchTradePreview({
+      asset: synthetic,
+      feeAsset: collateral,
+      market,
+      pair: {
+        from: synthetic,
+        dest: collateral,
+      },
+    })
     return Number(preview[0].amount) + collateral.quantity
   }
   return 0

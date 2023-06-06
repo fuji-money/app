@@ -174,3 +174,18 @@ export function encodeExpirationTimeout(seconds: number): Buffer {
     SEQUENCE_LOCKTIME_TYPE_FLAG | (seconds >> SEQUENCE_LOCKTIME_GRANULARITY)
   return Buffer.from(asNumber.toString(16), 'hex').reverse()
 }
+
+/**
+ * Generates a random id of a fixed length.
+ * @param length size of the string id.
+ */
+export function makeid(length: number): string {
+  let result = ''
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+  return result
+}

@@ -1,103 +1,136 @@
-import { getMainAccountCoins, getNextChangeAddress } from 'lib/marina'
-import { selectCoins } from 'lib/selection'
-import { Asset } from 'lib/types'
-import {
-  AssetHash,
-  Creator,
-  Transaction,
-  Updater,
-  address,
-  networks,
-} from 'liquidjs-lib'
-import { NetworkString } from 'marina-provider'
-import { TDEXMarket, AssetPair, TDEXTradeType } from './types'
-import { fetchTradePreview } from './preview'
+import axios from 'axios'
+import { getMainAccountCoins, getNextAddress } from 'lib/marina'
+import { Contract } from 'lib/types'
+import { Creator, Pset, Transaction, Updater, address } from 'liquidjs-lib'
+import { Address } from 'marina-provider'
 import { getTradeType } from './market'
+import {
+  TDEXMarket,
+  AssetPair,
+  TDEXProposeTradeRequest,
+  TDEXTradeType,
+  TDEXProposeTradeResponse,
+  TDEXProposeTradeSwapRequest,
+} from './types'
+import { makeid } from 'lib/utils'
+import { PreparedBorrowTx } from 'lib/covenant'
+import { fetchTradePreview } from './preview'
 
-const getAssetsAndAmounts = async (
-  asset: Asset,
-  market: TDEXMarket,
-  pair: AssetPair,
-) => {
-  // get trade type
-  const buy = TDEXTradeType.BUY
-  const tradeType = getTradeType(market, pair)
-
-  // make a preview
-  const preview = await fetchTradePreview(asset, market, pair)
-
-  return {
-    assetToBeSent: tradeType === buy ? market.quoteAsset : market.baseAsset,
-    assetToReceive: tradeType === buy ? market.baseAsset : market.quoteAsset,
-    amountToBeSent: asset.quantity,
-    amountToReceive: Number(preview[0].amount),
-  }
+interface createTradeProposeRequestProps {
+  addressForSwapOutput: Address
+  amountToBeSent: number
+  amountToReceive: number
+  assetToBeSent: string
+  assetToReceive: string
+  feeAmount: string
+  feeAsset: string
+  outpoint: { txid: string; vout: number }
 }
 
-export const createSwapTransaction = async (
-  asset: Asset,
-  market: TDEXMarket,
-  pair: AssetPair,
-  network: NetworkString,
-  addressForSwapOutput: string,
-) => {
-  const inputBlindingKeys: Record<any, any> = {}
-  const outputBlindingKeys: Record<any, any> = {}
-  const changeAmount = 0
-
-  const { assetToBeSent, assetToReceive, amountToBeSent, amountToReceive } =
-    await getAssetsAndAmounts(asset, market, pair)
-
+const createTradeProposeRequest = async ({
+  addressForSwapOutput,
+  amountToBeSent,
+  amountToReceive,
+  assetToBeSent,
+  assetToReceive,
+  feeAmount,
+  feeAsset,
+  outpoint,
+}: createTradeProposeRequestProps): Promise<TDEXProposeTradeSwapRequest> => {
   // build Psbt
   const pset = Creator.newPset()
   const updater = new Updater(pset)
 
   // select and validate we have necessary utxos
   const utxos = await getMainAccountCoins()
-  const selectedUtxos = selectCoins(utxos, assetToBeSent, amountToBeSent)
-  if (selectedUtxos.length === 0) throw new Error('Not enough funds')
+  const utxo = utxos.find(
+    (u) => u.txid === outpoint.txid && u.vout === outpoint.vout,
+  )
+  if (!utxo) throw new Error('Not enough funds')
 
   // receiving script
-  const receivingScript = address
-    .toOutputScript(addressForSwapOutput, networks[network])
-    .toString('hex')
+  const { scriptPubKey, blindingKey } = address.fromConfidential(
+    addressForSwapOutput.confidentialAddress,
+  )
 
   updater
-    .addInputs(
-      selectedUtxos.map((utxo) => ({
+    .addInputs([
+      {
         txid: utxo.txid,
         txIndex: utxo.vout,
         witnessUtxo: utxo.witnessUtxo,
         sighashType: Transaction.SIGHASH_ALL,
-      })),
-    )
-    .addOutputs([
-      {
-        script: Buffer.from(receivingScript, 'hex'),
-        amount: amountToReceive,
-        asset: AssetHash.fromHex(assetToReceive).bytes.toString('hex'),
       },
     ])
-
-  // we update the outputBlindingKeys map after we add the receiving output to the transaction
-  const blindKey = '00' // TODO await this.identity.getBlindingPrivateKey(receivingScript)
-  outputBlindingKeys[receivingScript] = Buffer.from(blindKey, 'hex')
-
-  if (changeAmount > 0) {
-    const changeAddress = await getNextChangeAddress()
-    const { scriptPubKey, blindingKey } = address.fromConfidential(
-      changeAddress.confidentialAddress,
-    )
-    updater.addOutputs([
+    .addOutputs([
       {
         script: scriptPubKey,
-        amount: changeAmount,
-        asset: assetToBeSent,
+        amount: amountToReceive,
+        asset: assetToReceive,
         blinderIndex: 0,
         blindingPublicKey: blindingKey,
       },
     ])
+
+  const swapRequest = {
+    id: makeid(8),
+    amountP: String(amountToBeSent),
+    assetP: assetToBeSent,
+    amountR: String(amountToReceive),
+    assetR: assetToReceive,
+    feeAmount,
+    feeAsset,
+    transaction: pset.toBase64(),
   }
 
-  return { inputBlindingKeys, outputBlindingKeys, pset }
+  return swapRequest
+}
+
+const fetchTradePropose = async (
+  args: TDEXProposeTradeRequest,
+): Promise<TDEXProposeTradeResponse> => {
+  const url = args.market.provider.endpoint + '/v2/trade/propose'
+  const opt = { headers: { 'Content-Type': 'application/json' } }
+  return await axios.post(url, args, opt)
+}
+
+export const proposeTDEXSwap = async (
+  market: TDEXMarket,
+  newContract: Contract,
+  preparedTx: PreparedBorrowTx,
+  pset: Pset,
+  txid: string,
+) => {
+  const { collateral, exposure, synthetic } = newContract
+  const pair = { from: synthetic, dest: collateral }
+  const type = getTradeType(market, pair)
+  const vout = preparedTx.pset.outputs.length
+
+  const preview = await fetchTradePreview({
+    asset: synthetic,
+    feeAsset: collateral,
+    market,
+    pair,
+  })
+
+  const { feeAmount, feeAsset } = preview[0]
+
+  const swapRequest = await createTradeProposeRequest({
+    addressForSwapOutput: await getNextAddress(),
+    amountToBeSent: pset.outputs[vout].value,
+    amountToReceive: exposure ? exposure - collateral.quantity : 0,
+    assetToBeSent: synthetic.id,
+    assetToReceive: collateral.id,
+    feeAmount,
+    feeAsset,
+    outpoint: { txid, vout },
+  })
+
+  return await fetchTradePropose({
+    feeAmount,
+    feeAsset,
+    market,
+    swapRequest,
+    type,
+  })
 }
