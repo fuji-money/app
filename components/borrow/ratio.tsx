@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { prettyPriceLevel, prettyRatio } from 'lib/pretty'
 import { Contract } from 'lib/types'
 import { getContractPriceLevel, getRatioState } from 'lib/contracts'
-import { maxBorrowRatio, minBorrowRatio } from 'lib/constants'
+import { maxBorrowRatio, minBorrowRatio, safeBorrowMargin } from 'lib/constants'
 
 const thumbWidth = 20
 
@@ -70,7 +70,7 @@ const Ratio = ({
   setContractRatio,
 }: RatioProps) => {
   const min = minRatio || contract.synthetic.minCollateralRatio || 0
-  const safe = minRatio ? 0 : min + 50
+  const safe = minRatio ? 0 : min + safeBorrowMargin
   const showSafe = safe > 0
   const state = getRatioState(ratio, min, safe)
   const priceLevel = getContractPriceLevel(contract, ratio)
