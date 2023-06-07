@@ -2,6 +2,7 @@ import { encodeExpirationTimeout } from './utils'
 
 export const minBorrowRatio = 110
 export const maxBorrowRatio = 400
+export const safeBorrowMargin = 50
 export const minMultiplyRatio = 130
 export const maxMultiplyRatio = 330
 

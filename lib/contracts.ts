@@ -1,6 +1,6 @@
 import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
-import { expirationSeconds } from './constants'
+import { expirationSeconds, safeBorrowMargin } from './constants'
 import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
@@ -146,7 +146,7 @@ export const getRatioState = (
   minRatio: number,
   safeRatio?: number,
 ): ContractState => {
-  const _safeRatio = safeRatio || minRatio + 50
+  const _safeRatio = safeRatio || minRatio + safeBorrowMargin
   // first half between min and safe is considered critical
   // second half between min and safe is considered unsafe
   const unsafe = (_safeRatio - minRatio) / 2 + minRatio
