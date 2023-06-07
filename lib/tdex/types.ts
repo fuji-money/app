@@ -95,7 +95,7 @@ export function isTDEXPreviewTradeResponse(
   )
 }
 
-interface TDEXUnblindedInput {
+export interface TDEXUnblindedInput {
   index: number
   asset: string
   amount: string
@@ -105,10 +105,12 @@ interface TDEXUnblindedInput {
 
 export interface TDEXSwapRequest {
   id: string
-  amountP: string
+  amountP: number
   assetP: string
-  amountR: string
+  amountR: number
   assetR: string
+  feeAmount: number
+  feeAsset: string
   transaction: string
   unblindedInputs: TDEXUnblindedInput[]
 }

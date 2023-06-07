@@ -129,7 +129,14 @@ const MultiplyLiquid: NextPage = () => {
 
       console.log(
         'gfgfgf',
-        await proposeTDEXSwap(market, newContract, preparedTx, pset, txid),
+        await proposeTDEXSwap(
+          market,
+          network,
+          newContract,
+          preparedTx,
+          pset,
+          txid,
+        ),
       )
 
       // setData(txid)
