@@ -10,7 +10,7 @@ import {
   getContractRatio,
   getContractExpirationDate,
 } from 'lib/contracts'
-import { minBorrowRatio } from 'lib/constants'
+import { minBorrowRatio, safeBorrowMargin } from 'lib/constants'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 
@@ -24,7 +24,7 @@ const Borrow = ({ offer }: BorrowProps) => {
 
   const { collateral, oracles, synthetic } = offer
 
-  const startingRatio = synthetic.minCollateralRatio ?? 0 + 50
+  const startingRatio = (synthetic.minCollateralRatio ?? 0) + safeBorrowMargin
   const [ratio, setRatio] = useState(startingRatio)
 
   const minRatio = synthetic.minCollateralRatio || minBorrowRatio

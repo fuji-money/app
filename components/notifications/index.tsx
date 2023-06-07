@@ -5,7 +5,7 @@ import NotEnoughOraclesNotification from 'components/notifications/notEnoughOrac
 import RatioTooLowNotification from 'components/notifications/ratioTooLow'
 import RatioUnsafeNotification from 'components/notifications/ratioUnsafe'
 import BelowDustLimitNotification from './belowDustLimit'
-import { feeAmount, minDustLimit } from 'lib/constants'
+import { feeAmount, minDustLimit, safeBorrowMargin } from 'lib/constants'
 import { WalletContext } from 'components/providers/wallet'
 import ConnectWalletNotification from './connectWallet'
 import LowCollateralAmountNotification from './lowCollateralAmount'
@@ -75,7 +75,7 @@ const Notifications = ({
   }, [minRatio, ratio])
 
   useEffect(() => {
-    const safeLimit = (synthetic.minCollateralRatio ?? 0) + 50
+    const safeLimit = (synthetic.minCollateralRatio ?? 0) + safeBorrowMargin
     setRatioUnsafe(ratio < safeLimit)
   }, [synthetic.minCollateralRatio, ratio])
 
