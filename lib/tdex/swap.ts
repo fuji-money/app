@@ -1,16 +1,21 @@
 import axios from 'axios'
 import { getMainAccountCoins, getNextAddress } from 'lib/marina'
 import { Contract } from 'lib/types'
-import { Creator, Pset, Transaction, Updater, address } from 'liquidjs-lib'
+import {
+  AssetHash,
+  Creator,
+  Pset,
+  Transaction,
+  Updater,
+  address,
+} from 'liquidjs-lib'
 import { Address } from 'marina-provider'
 import { getTradeType } from './market'
 import {
   TDEXMarket,
-  AssetPair,
   TDEXProposeTradeRequest,
-  TDEXTradeType,
   TDEXProposeTradeResponse,
-  TDEXProposeTradeSwapRequest,
+  TDEXSwapRequest,
 } from './types'
 import { makeid } from 'lib/utils'
 import { PreparedBorrowTx } from 'lib/covenant'
@@ -22,8 +27,6 @@ interface createTradeProposeRequestProps {
   amountToReceive: number
   assetToBeSent: string
   assetToReceive: string
-  feeAmount: string
-  feeAsset: string
   outpoint: { txid: string; vout: number }
 }
 
@@ -33,10 +36,8 @@ const createTradeProposeRequest = async ({
   amountToReceive,
   assetToBeSent,
   assetToReceive,
-  feeAmount,
-  feeAsset,
   outpoint,
-}: createTradeProposeRequestProps): Promise<TDEXProposeTradeSwapRequest> => {
+}: createTradeProposeRequestProps): Promise<TDEXSwapRequest> => {
   // build Psbt
   const pset = Creator.newPset()
   const updater = new Updater(pset)
@@ -47,6 +48,18 @@ const createTradeProposeRequest = async ({
     (u) => u.txid === outpoint.txid && u.vout === outpoint.vout,
   )
   if (!utxo) throw new Error('Not enough funds')
+  console.log('utxo', utxo)
+
+  const unblindedInputs = []
+  if (utxo.blindingData) {
+    unblindedInputs.push({
+      index: 0,
+      asset: utxo.blindingData.asset,
+      amount: utxo.blindingData.value.toString(),
+      assetBlinder: utxo.blindingData.assetBlindingFactor,
+      amountBlinder: utxo.blindingData.valueBlindingFactor,
+    })
+  }
 
   // receiving script
   const { scriptPubKey, blindingKey } = address.fromConfidential(
@@ -78,9 +91,8 @@ const createTradeProposeRequest = async ({
     assetP: assetToBeSent,
     amountR: String(amountToReceive),
     assetR: assetToReceive,
-    feeAmount,
-    feeAsset,
     transaction: pset.toBase64(),
+    unblindedInputs,
   }
 
   return swapRequest
@@ -121,8 +133,6 @@ export const proposeTDEXSwap = async (
     amountToReceive: exposure ? exposure - collateral.quantity : 0,
     assetToBeSent: synthetic.id,
     assetToReceive: collateral.id,
-    feeAmount,
-    feeAsset,
     outpoint: { txid, vout },
   })
 

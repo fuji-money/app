@@ -95,20 +95,29 @@ export function isTDEXPreviewTradeResponse(
   )
 }
 
-export interface TDEXProposeTradeSwapRequest {
+interface TDEXUnblindedInput {
+  index: number
+  asset: string
+  amount: string
+  assetBlinder: string
+  amountBlinder: string
+}
+
+export interface TDEXSwapRequest {
   id: string
   amountP: string
   assetP: string
   amountR: string
   assetR: string
   transaction: string
+  unblindedInputs: TDEXUnblindedInput[]
 }
 
 export interface TDEXProposeTradeRequest {
   feeAsset: string
   feeAmount: string
   market: TDEXMarket
-  swapRequest: TDEXProposeTradeSwapRequest
+  swapRequest: TDEXSwapRequest
   type: TDEXTradeType
 }
 

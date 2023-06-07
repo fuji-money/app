@@ -116,13 +116,6 @@ const MultiplyLiquid: NextPage = () => {
         network,
       )
 
-      // factory will add fuji output as the next one
-      const fujiVout = preparedTx.pset.outputs.length
-      const fujiAmount =
-        Pset.fromBase64(partialTransaction).outputs[fujiVout].value
-      console.log('fujiIndex', fujiVout)
-      console.log('fujiAmount', fujiAmount)
-
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
       const signedTransaction = await signTx(partialTransaction)
