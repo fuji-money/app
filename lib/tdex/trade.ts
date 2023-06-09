@@ -1,8 +1,8 @@
-import { AssetPair, TDEXMarket } from './types'
+import { AssetPair, TDEXv2Market } from './types'
 import { Utxo } from 'marina-provider'
 
 export async function makeTrade(
-  market: TDEXMarket,
+  market: TDEXv2Market,
   pair: AssetPair,
   utxos: Utxo[],
 ) {

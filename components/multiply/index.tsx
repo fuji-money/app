@@ -10,7 +10,7 @@ import SomeError from 'components/layout/error'
 import { ConfigContext } from 'components/providers/config'
 import Spinner from 'components/spinner'
 import MultiplyInfo from './info'
-import { AssetPair, TDEXMarket } from 'lib/tdex/types'
+import { AssetPair, TDEXv2Market } from 'lib/tdex/types'
 import { findBestMarket } from 'lib/tdex/market'
 import { WalletContext } from 'components/providers/wallet'
 import { getExposure } from 'lib/tdex/preview'
@@ -43,7 +43,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
     dest: offer.collateral,
   }
 
-  const [market, setMarket] = useState<TDEXMarket>()
+  const [market, setMarket] = useState<TDEXv2Market>()
 
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {

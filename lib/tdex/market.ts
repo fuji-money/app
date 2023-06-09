@@ -1,12 +1,12 @@
 import Decimal from 'decimal.js'
 import {
   AssetPair,
-  TDEXMarket,
-  TDEXMarketPrice,
-  TDEXProvider,
-  TDEXTradeType,
-  isTDEXMarket,
-  isTDEXMarketPrice,
+  TDEXv2Market,
+  TDEXv2MarketPrice,
+  TDEXv2Provider,
+  TDEXv2TradeType,
+  isTDEXv2Market,
+  isTDEXv2MarketPrice,
 } from './types'
 import axios from 'axios'
 import { getProvidersFromRegistry } from './registry'
@@ -18,8 +18,8 @@ import { NetworkString } from 'marina-provider'
  * @returns an array of markets
  */
 export async function fetchMarketsFromProvider(
-  provider: TDEXProvider,
-): Promise<TDEXMarket[]> {
+  provider: TDEXv2Provider,
+): Promise<TDEXv2Market[]> {
   const url = provider.endpoint + '/v2/markets'
   const opt = { headers: { 'Content-Type': 'application/json' } }
   const res = (await axios.post(url, {}, opt)).data.markets
@@ -32,7 +32,7 @@ export async function fetchMarketsFromProvider(
       percentageFee: m.fee.percentageFee,
       fixedFee: m.fee.fixedFee,
     }))
-    .filter(isTDEXMarket)
+    .filter(isTDEXv2Market)
 }
 
 /**
@@ -41,12 +41,12 @@ export async function fetchMarketsFromProvider(
  * @returns an array of markets
  */
 const getMarketPrice = async (
-  market: TDEXMarket,
-): Promise<TDEXMarketPrice | undefined> => {
+  market: TDEXv2Market,
+): Promise<TDEXv2MarketPrice | undefined> => {
   const url = market.provider.endpoint + '/v2/market/price'
   const opt = { headers: { 'Content-Type': 'application/json' } }
   const res = (await axios.post(url, { market }, opt)).data
-  return isTDEXMarketPrice(res) ? res : undefined
+  return isTDEXv2MarketPrice(res) ? res : undefined
 }
 
 /**
@@ -57,7 +57,7 @@ const getMarketPrice = async (
  * @returns number
  */
 const totalMarketFees = (
-  market: TDEXMarket,
+  market: TDEXv2Market,
   pair: AssetPair,
 ): number | undefined => {
   // return undefined if market has no price
@@ -92,12 +92,12 @@ const totalMarketFees = (
  * @returns trade type
  */
 export const getTradeType = (
-  market: TDEXMarket,
+  market: TDEXv2Market,
   pair: AssetPair,
-): TDEXTradeType => {
+): TDEXv2TradeType => {
   return market.baseAsset === pair.from.id
-    ? TDEXTradeType.SELL
-    : TDEXTradeType.BUY
+    ? TDEXv2TradeType.SELL
+    : TDEXv2TradeType.BUY
 }
 
 /**
@@ -108,14 +108,14 @@ export const getTradeType = (
 export const findBestMarket = async (
   network: NetworkString,
   pair: AssetPair,
-): Promise<TDEXMarket | undefined> => {
+): Promise<TDEXv2Market | undefined> => {
   // filter market by pair
-  const isPairMarket = (market: TDEXMarket) =>
+  const isPairMarket = (market: TDEXv2Market) =>
     (market.baseAsset === pair.from.id && market.quoteAsset === pair.dest.id) ||
     (market.baseAsset === pair.dest.id && market.quoteAsset === pair.from.id)
 
   // push all markets for this pair to validMarkets
-  const validMarkets: TDEXMarket[] = []
+  const validMarkets: TDEXv2Market[] = []
   for (const provider of await getProvidersFromRegistry(network)) {
     const providerMarkets = await fetchMarketsFromProvider(provider)
     const marketsForThisPair = providerMarkets.filter(isPairMarket)
@@ -134,7 +134,7 @@ export const findBestMarket = async (
   const bestMarket = validMarkets.reduce((prev, curr) => {
     const prevSpotPrice = prev.price?.spotPrice ?? 0
     const currSpotPrice = curr.price?.spotPrice ?? 0
-    return getTradeType(curr, pair) === TDEXTradeType.SELL
+    return getTradeType(curr, pair) === TDEXv2TradeType.SELL
       ? // when selling base asset we want the lowest spot price
         prevSpotPrice < currSpotPrice
         ? prev

@@ -1,5 +1,5 @@
 import { NetworkString } from 'marina-provider'
-import { TDEXProvider, isTDEXProvider } from './types'
+import { TDEXv2Provider, isTDEXv2Provider } from './types'
 import axios from 'axios'
 
 /**
@@ -25,7 +25,7 @@ function getRegistryURL(network: NetworkString): string {
  */
 export async function getProvidersFromRegistry(
   network: NetworkString = 'liquid',
-): Promise<TDEXProvider[]> {
+): Promise<TDEXv2Provider[]> {
   // TODO: remove this after registry is updated
   if (network === 'testnet') {
     return [
@@ -38,5 +38,5 @@ export async function getProvidersFromRegistry(
   // end of TODO
   const res = (await axios.get(getRegistryURL(network))).data
   if (!Array.isArray(res)) throw new Error('Invalid registry response')
-  return res.filter(isTDEXProvider)
+  return res.filter(isTDEXv2Provider)
 }

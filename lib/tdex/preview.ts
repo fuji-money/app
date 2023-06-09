@@ -1,10 +1,10 @@
 import axios from 'axios'
 import {
   AssetPair,
-  TDEXMarket,
-  TDEXPreviewTradeRequest,
-  TDEXPreviewTradeResponse,
-  isTDEXPreviewTradeResponse,
+  TDEXv2Market,
+  TDEXv2PreviewTradeRequest,
+  TDEXv2PreviewTradeResponse,
+  isTDEXv2PreviewTradeResponse,
 } from './types'
 import { getTradeType } from './market'
 import { Asset, Contract } from 'lib/types'
@@ -12,7 +12,7 @@ import { Asset, Contract } from 'lib/types'
 interface fetchTradePreviewProps {
   asset: Asset
   feeAsset: Asset
-  market: TDEXMarket
+  market: TDEXv2Market
   pair: AssetPair
 }
 
@@ -21,8 +21,8 @@ export async function fetchTradePreview({
   feeAsset,
   market,
   pair,
-}: fetchTradePreviewProps): Promise<TDEXPreviewTradeResponse[]> {
-  const trade: TDEXPreviewTradeRequest = {
+}: fetchTradePreviewProps): Promise<TDEXv2PreviewTradeResponse[]> {
+  const trade: TDEXv2PreviewTradeRequest = {
     amount: asset.quantity.toString(),
     asset: asset.id,
     feeAsset: feeAsset.id,
@@ -33,25 +33,28 @@ export async function fetchTradePreview({
   const opt = { headers: { 'Content-Type': 'application/json' } }
   const res = (await axios.post(url, trade, opt)).data.previews
   if (!Array.isArray(res)) throw new Error('Invalid trade/preview response')
-  return res.filter(isTDEXPreviewTradeResponse)
+  return res.filter(isTDEXv2PreviewTradeResponse)
 }
 
 export const getExposure = async (
   contract: Contract,
-  market?: TDEXMarket,
+  market?: TDEXv2Market,
 ): Promise<number> => {
   if (market && contract.synthetic.quantity) {
     const { collateral, synthetic } = contract
-    const preview = await fetchTradePreview({
-      asset: synthetic,
-      feeAsset: collateral,
-      market,
-      pair: {
-        from: synthetic,
-        dest: collateral,
-      },
-    })
-    return Number(preview[0].amount) + collateral.quantity
+    const preview = (
+      await fetchTradePreview({
+        asset: synthetic,
+        feeAsset: collateral,
+        market,
+        pair: {
+          from: synthetic,
+          dest: collateral,
+        },
+      })
+    )[0]
+    const amountToReceive = Number(preview.amount) - Number(preview.feeAmount)
+    return amountToReceive + collateral.quantity
   }
   return 0
 }

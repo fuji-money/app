@@ -11,7 +11,7 @@ import Multiply from 'components/multiply'
 
 const MultiplyAsset: NextPage = () => {
   const { config } = useContext(ConfigContext)
-  const { loading, setNewContract } = useContext(ContractsContext)
+  const { loading } = useContext(ContractsContext)
 
   const [offer, setOffer] = useState<Offer>()
 

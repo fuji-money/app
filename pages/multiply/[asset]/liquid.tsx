@@ -25,7 +25,7 @@ import {
 import { finalizeTx } from 'lib/transaction'
 import MarinaMultiplyModal from 'components/modals/marinaMultiply'
 import { findBestMarket } from 'lib/tdex/market'
-import { TDEXMarket, AssetPair } from 'lib/tdex/types'
+import { TDEXv2Market, AssetPair } from 'lib/tdex/types'
 import { proposeTDEXSwap } from 'lib/tdex/swap'
 
 const MultiplyLiquid: NextPage = () => {
@@ -39,7 +39,7 @@ const MultiplyLiquid: NextPage = () => {
 
   const { oracles } = config
 
-  const [market, setMarket] = useState<TDEXMarket>()
+  const [market, setMarket] = useState<TDEXv2Market>()
 
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {
@@ -127,17 +127,16 @@ const MultiplyLiquid: NextPage = () => {
 
       setStage(ModalStages.NeedsTDEXSwap)
 
-      console.log(
-        'gfgfgf',
-        await proposeTDEXSwap(
-          market,
-          network,
-          newContract,
-          preparedTx,
-          pset,
-          txid,
-        ),
+      const propose = await proposeTDEXSwap(
+        market,
+        network,
+        newContract,
+        preparedTx,
+        pset,
+        txid,
       )
+
+      console.log('propose result', propose)
 
       // setData(txid)
       // setResult(Outcome.Success)

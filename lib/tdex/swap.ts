@@ -1,33 +1,19 @@
 import axios from 'axios'
-import {
-  getMainAccountCoins,
-  getNextAddress,
-  getNextChangeAddress,
-} from 'lib/marina'
+import { getMainAccountCoins, getNextAddress } from 'lib/marina'
 import { Contract } from 'lib/types'
-import {
-  AssetHash,
-  Creator,
-  Pset,
-  Transaction,
-  Updater,
-  address,
-} from 'liquidjs-lib'
-import { Address, NetworkString } from 'marina-provider'
+import { Creator, Pset, Transaction, Updater, address } from 'liquidjs-lib'
+import { NetworkString } from 'marina-provider'
 import { getTradeType } from './market'
 import {
-  TDEXMarket,
-  TDEXProposeTradeRequest,
-  TDEXProposeTradeResponse,
-  TDEXSwapRequest,
-  TDEXUnblindedInput,
+  TDEXv2Market,
+  TDEXv2ProposeTradeRequest,
+  TDEXv2ProposeTradeResponse,
+  TDEXv2SwapRequest,
+  TDEXv2UnblindedInput,
 } from './types'
 import { makeid } from 'lib/utils'
 import { PreparedBorrowTx } from 'lib/covenant'
 import { fetchTradePreview } from './preview'
-import { selectCoins } from 'lib/selection'
-import { feeAmount } from 'lib/constants'
-import { getLBTC } from 'lib/assets'
 
 interface createTradeProposeRequestProps {
   amountToBeSent: number
@@ -36,8 +22,6 @@ interface createTradeProposeRequestProps {
   assetToReceive: string
   network: NetworkString
   outpoint: { txid: string; vout: number }
-  swapFeeAmount: number
-  swapFeeAsset: string
 }
 
 const createTradeProposeRequest = async ({
@@ -45,49 +29,37 @@ const createTradeProposeRequest = async ({
   amountToReceive,
   assetToBeSent,
   assetToReceive,
-  network,
   outpoint,
-  swapFeeAmount,
-  swapFeeAsset,
-}: createTradeProposeRequestProps): Promise<TDEXSwapRequest> => {
+}: createTradeProposeRequestProps): Promise<TDEXv2SwapRequest> => {
   // build Psbt
   const pset = Creator.newPset()
   const updater = new Updater(pset)
-  const unblindedInputs: TDEXUnblindedInput[] = []
+  const unblindedInputs: TDEXv2UnblindedInput[] = []
 
-  // select and validate we have necessary utxos
-  const lbtc = getLBTC(network)
+  // select and validate we have necessary utxo
+  const { txid, vout } = outpoint
   const coins = await getMainAccountCoins()
-  const fujiCoin = coins.find(
-    (u) => u.txid === outpoint.txid && u.vout === outpoint.vout,
-  )
-  const feeCoins = selectCoins(coins, lbtc.id, feeAmount)
+  const utxo = coins.find((u) => u.txid === txid && u.vout === vout)
 
-  if (!fujiCoin) throw new Error('Fuji coin not found')
-  if (!feeCoins) throw new Error('Not enough funds for fees')
+  if (!utxo) throw new Error('Fuji coin not found')
 
-  const utxos = [fujiCoin, ...feeCoins]
-
-  // transaction inputs
-  utxos.forEach((utxo, index) => {
-    updater.addInputs([
-      {
-        txid: utxo.txid,
-        txIndex: utxo.vout,
-        witnessUtxo: utxo.witnessUtxo,
-        sighashType: Transaction.SIGHASH_ALL,
-      },
-    ])
-    if (utxo.blindingData) {
-      unblindedInputs.push({
-        index,
-        asset: utxo.blindingData.asset,
-        amount: utxo.blindingData.value.toString(),
-        assetBlinder: utxo.blindingData.assetBlindingFactor,
-        amountBlinder: utxo.blindingData.valueBlindingFactor,
-      })
-    }
-  })
+  updater.addInputs([
+    {
+      txid: utxo.txid,
+      txIndex: utxo.vout,
+      witnessUtxo: utxo.witnessUtxo,
+      sighashType: Transaction.SIGHASH_ALL,
+    },
+  ])
+  if (utxo.blindingData) {
+    unblindedInputs.push({
+      index: 0,
+      asset: utxo.blindingData.asset,
+      amount: utxo.blindingData.value.toString(),
+      assetBlinder: utxo.blindingData.assetBlindingFactor,
+      amountBlinder: utxo.blindingData.valueBlindingFactor,
+    })
+  }
 
   // receiving script
   const receivingAddress = await getNextAddress()
@@ -105,38 +77,14 @@ const createTradeProposeRequest = async ({
     },
   ])
 
-  // check if there's change (from fee coins)
-  const feeCoinsAmount = feeCoins.reduce(
-    (value, utxo) => value + (utxo.blindingData?.value || 0),
-    0,
-  )
+  console.log('pset aka transaction in swap request', pset)
 
-  const changeAmount = feeCoinsAmount - feeAmount
-
-  if (changeAmount > 0) {
-    const changeAddress = await getNextChangeAddress()
-    const { scriptPubKey, blindingKey } = address.fromConfidential(
-      changeAddress.confidentialAddress,
-    )
-    updater.addOutputs([
-      {
-        script: scriptPubKey,
-        amount: changeAmount,
-        asset: lbtc.id,
-        blinderIndex: 1,
-        blindingPublicKey: blindingKey,
-      },
-    ])
-  }
-
-  const swapRequest: TDEXSwapRequest = {
+  const swapRequest: TDEXv2SwapRequest = {
     id: makeid(8),
-    amountP: amountToBeSent,
+    amountP: amountToBeSent.toString(),
     assetP: assetToBeSent,
-    amountR: amountToReceive,
+    amountR: amountToReceive.toString(),
     assetR: assetToReceive,
-    feeAmount: swapFeeAmount,
-    feeAsset: swapFeeAsset,
     transaction: pset.toBase64(),
     unblindedInputs,
   }
@@ -145,15 +93,16 @@ const createTradeProposeRequest = async ({
 }
 
 const fetchTradePropose = async (
-  args: TDEXProposeTradeRequest,
-): Promise<TDEXProposeTradeResponse> => {
+  args: TDEXv2ProposeTradeRequest,
+): Promise<TDEXv2ProposeTradeResponse> => {
   const url = args.market.provider.endpoint + '/v2/trade/propose'
   const opt = { headers: { 'Content-Type': 'application/json' } }
-  return await axios.post(url, args, opt)
+  const res = await axios.post(url, args, opt)
+  return res.data
 }
 
 export const proposeTDEXSwap = async (
-  market: TDEXMarket,
+  market: TDEXv2Market,
   network: NetworkString,
   newContract: Contract,
   preparedTx: PreparedBorrowTx,
@@ -181,15 +130,19 @@ export const proposeTDEXSwap = async (
     assetToReceive: collateral.id,
     network,
     outpoint: { txid, vout },
-    swapFeeAmount: Number(preview.feeAmount),
-    swapFeeAsset: preview.feeAsset,
   })
 
-  return await fetchTradePropose({
+  const tradeProposeRequest: TDEXv2ProposeTradeRequest = {
     feeAmount: preview.feeAmount,
     feeAsset: preview.feeAsset,
     market,
     swapRequest,
     type,
-  })
+  }
+
+  console.log('outpoint', { txid, vout })
+  console.log('preview', preview)
+  console.log('tradeProposeRequest', tradeProposeRequest)
+
+  return await fetchTradePropose(tradeProposeRequest)
 }

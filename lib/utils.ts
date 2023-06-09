@@ -24,6 +24,14 @@ export function hex64LEToNumber(hex: string): number {
   return readUInt64LE(buf, 0)
 }
 
+// used in tdex
+export function numberToUInt64LE(n: number): string {
+  const num = Decimal.floor(n).toNumber()
+  const buf = Buffer.alloc(8)
+  writeUInt64LE(buf, num, 0)
+  return buf.toString()
+}
+
 // used in contract provider to migrate old contracts
 // used in getCovenantOutput to transform contract.priceLevel (number)
 // into contract.contractParams.priceLevel (hex 64 LE)
