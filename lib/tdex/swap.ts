@@ -2,10 +2,11 @@ import axios from 'axios'
 import { getMainAccountCoins, getNextAddress } from 'lib/marina'
 import { Contract } from 'lib/types'
 import { Creator, Pset, Transaction, Updater, address } from 'liquidjs-lib'
-import { NetworkString } from 'marina-provider'
 import { getTradeType } from './market'
 import {
+  TDEXv2CompleteTradeRequest,
   TDEXv2Market,
+  TDEXv2PreviewTradeResponse,
   TDEXv2ProposeTradeRequest,
   TDEXv2ProposeTradeResponse,
   TDEXv2SwapRequest,
@@ -16,20 +17,15 @@ import { PreparedBorrowTx } from 'lib/covenant'
 import { fetchTradePreview } from './preview'
 
 interface createTradeProposeRequestProps {
-  amountToBeSent: number
-  amountToReceive: number
-  assetToBeSent: string
-  assetToReceive: string
-  network: NetworkString
+  contract: Contract
   outpoint: { txid: string; vout: number }
+  preview: TDEXv2PreviewTradeResponse
 }
 
 const createTradeProposeRequest = async ({
-  amountToBeSent,
-  amountToReceive,
-  assetToBeSent,
-  assetToReceive,
+  contract,
   outpoint,
+  preview,
 }: createTradeProposeRequestProps): Promise<TDEXv2SwapRequest> => {
   // build Psbt
   const pset = Creator.newPset()
@@ -70,8 +66,8 @@ const createTradeProposeRequest = async ({
   updater.addOutputs([
     {
       script: scriptPubKey,
-      amount: amountToReceive,
-      asset: assetToReceive,
+      amount: Number(preview.amount) - Number(preview.feeAmount),
+      asset: preview.asset,
       blinderIndex: 0,
       blindingPublicKey: blindingKey,
     },
@@ -79,12 +75,14 @@ const createTradeProposeRequest = async ({
 
   console.log('pset aka transaction in swap request', pset)
 
+  const { synthetic } = contract
+
   const swapRequest: TDEXv2SwapRequest = {
     id: makeid(8),
-    amountP: amountToBeSent.toString(),
-    assetP: assetToBeSent,
-    amountR: amountToReceive.toString(),
-    assetR: assetToReceive,
+    amountP: synthetic.quantity.toString(),
+    assetP: synthetic.id,
+    amountR: preview.amount.toString(),
+    assetR: preview.asset,
     transaction: pset.toBase64(),
     unblindedInputs,
   }
@@ -92,57 +90,60 @@ const createTradeProposeRequest = async ({
   return swapRequest
 }
 
-const fetchTradePropose = async (
-  args: TDEXv2ProposeTradeRequest,
-): Promise<TDEXv2ProposeTradeResponse> => {
-  const url = args.market.provider.endpoint + '/v2/trade/propose'
-  const opt = { headers: { 'Content-Type': 'application/json' } }
-  const res = await axios.post(url, args, opt)
-  return res.data
-}
-
 export const proposeTDEXSwap = async (
   market: TDEXv2Market,
-  network: NetworkString,
   newContract: Contract,
-  preparedTx: PreparedBorrowTx,
-  psetFromBorrow: Pset,
-  txid: string,
+  outpoint: { txid: string; vout: number },
 ) => {
-  const { collateral, exposure, synthetic } = newContract
+  const { collateral, synthetic } = newContract
   const pair = { from: synthetic, dest: collateral }
   const type = getTradeType(market, pair)
-  const vout = preparedTx.pset.outputs.length
 
   const preview = (
     await fetchTradePreview({
       asset: synthetic,
       feeAsset: collateral,
       market,
-      pair,
+      type,
     })
   )[0]
 
   const swapRequest = await createTradeProposeRequest({
-    amountToBeSent: psetFromBorrow.outputs[vout].value,
-    amountToReceive: exposure ? exposure - collateral.quantity : 0,
-    assetToBeSent: synthetic.id,
-    assetToReceive: collateral.id,
-    network,
-    outpoint: { txid, vout },
+    contract: newContract,
+    outpoint,
+    preview,
   })
 
   const tradeProposeRequest: TDEXv2ProposeTradeRequest = {
     feeAmount: preview.feeAmount,
     feeAsset: preview.feeAsset,
-    market,
+    market: { baseAsset: market.baseAsset, quoteAsset: market.quoteAsset },
     swapRequest,
     type,
   }
 
-  console.log('outpoint', { txid, vout })
+  console.log('outpoint', outpoint)
   console.log('preview', preview)
   console.log('tradeProposeRequest', tradeProposeRequest)
 
-  return await fetchTradePropose(tradeProposeRequest)
+  const url = market.provider.endpoint + '/v2/trade/propose'
+  const opt = { headers: { 'Content-Type': 'application/json' } }
+  const res = await axios.post(url, tradeProposeRequest, opt)
+  return res.data
+}
+
+export const completeTDEXSwap = async (
+  acceptId: string,
+  market: TDEXv2Market,
+  transaction: string,
+) => {
+  const completeTradeRequest: TDEXv2CompleteTradeRequest = {
+    id: makeid(8),
+    acceptId,
+    transaction,
+  }
+  const url = market.provider.endpoint + '/v2/trade/complete'
+  const opt = { headers: { 'Content-Type': 'application/json' } }
+  const res = await axios.post(url, completeTradeRequest, opt)
+  return res.data
 }

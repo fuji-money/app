@@ -116,7 +116,7 @@ export interface TDEXv2SwapRequest {
 export interface TDEXv2ProposeTradeRequest {
   feeAmount: string
   feeAsset: string
-  market: TDEXv2Market
+  market: Pick<TDEXv2Market, 'baseAsset' | 'quoteAsset'>
   swapRequest: TDEXv2SwapRequest
   type: TDEXv2TradeType
 }
@@ -140,3 +140,11 @@ export interface TDEXv2ProposeTradeResponse {
   swapFail: TDEXv2SwapFail
   expiryTimeUnix: string
 }
+
+export interface TDEXv2CompleteTradeRequest {
+  id: string
+  acceptId: string
+  transaction: string
+}
+
+export interface TDEXv2CompleteTradeResponse {}

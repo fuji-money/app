@@ -11,7 +11,7 @@ import {
   prepareBorrowTx,
   proposeBorrowContract,
 } from 'lib/covenant'
-import { broadcastTx, getNextAddress, signTx } from 'lib/marina'
+import { broadcastTx, signTx } from 'lib/marina'
 import { Contract, Outcome } from 'lib/types'
 import { openModal, extractError } from 'lib/utils'
 import { Pset } from 'liquidjs-lib'
@@ -26,7 +26,7 @@ import { finalizeTx } from 'lib/transaction'
 import MarinaMultiplyModal from 'components/modals/marinaMultiply'
 import { findBestMarket } from 'lib/tdex/market'
 import { TDEXv2Market, AssetPair } from 'lib/tdex/types'
-import { proposeTDEXSwap } from 'lib/tdex/swap'
+import { completeTDEXSwap, proposeTDEXSwap } from 'lib/tdex/swap'
 
 const MultiplyLiquid: NextPage = () => {
   const { chainSource, network, xPubKey } = useContext(WalletContext)
@@ -125,22 +125,29 @@ const MultiplyLiquid: NextPage = () => {
       const txid = await finalizeAndBroadcast(pset, newContract, preparedTx)
       if (!txid) throw new Error("Broadcast didn't returned a txid")
 
+      // where we can find this fuji coin
+      const outpoint = { txid, vout: preparedTx.pset.outputs.length }
+
       setStage(ModalStages.NeedsTDEXSwap)
 
-      const propose = await proposeTDEXSwap(
-        market,
-        network,
-        newContract,
-        preparedTx,
-        pset,
-        txid,
-      )
-
+      const propose = await proposeTDEXSwap(market, newContract, outpoint)
+      if (!propose.swapAccept) throw new Error('TDEX swap not accepted')
       console.log('propose result', propose)
 
-      // setData(txid)
-      // setResult(Outcome.Success)
-      // setStage(ModalStages.ShowResult)
+      setStage(ModalStages.NeedsConfirmation)
+
+      const signedTx = await signTx(propose.swapAccept.transaction)
+      console.log('signedTx', signedTx)
+
+      setStage(ModalStages.NeedsFinishing)
+      console.log(
+        'complete',
+        await completeTDEXSwap(propose.swapAccept.id, market, signedTx),
+      )
+
+      setData(txid)
+      setResult(Outcome.Success)
+      setStage(ModalStages.ShowResult)
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)

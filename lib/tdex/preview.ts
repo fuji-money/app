@@ -1,33 +1,33 @@
 import axios from 'axios'
 import {
-  AssetPair,
   TDEXv2Market,
   TDEXv2PreviewTradeRequest,
   TDEXv2PreviewTradeResponse,
+  TDEXv2TradeType,
   isTDEXv2PreviewTradeResponse,
 } from './types'
-import { getTradeType } from './market'
 import { Asset, Contract } from 'lib/types'
+import { getTradeType } from './market'
 
 interface fetchTradePreviewProps {
   asset: Asset
   feeAsset: Asset
   market: TDEXv2Market
-  pair: AssetPair
+  type: TDEXv2TradeType
 }
 
 export async function fetchTradePreview({
   asset,
   feeAsset,
   market,
-  pair,
+  type,
 }: fetchTradePreviewProps): Promise<TDEXv2PreviewTradeResponse[]> {
   const trade: TDEXv2PreviewTradeRequest = {
     amount: asset.quantity.toString(),
     asset: asset.id,
     feeAsset: feeAsset.id,
     market,
-    type: getTradeType(market, pair),
+    type,
   }
   const url = market.provider.endpoint + '/v2/trade/preview'
   const opt = { headers: { 'Content-Type': 'application/json' } }
@@ -42,15 +42,13 @@ export const getExposure = async (
 ): Promise<number> => {
   if (market && contract.synthetic.quantity) {
     const { collateral, synthetic } = contract
+    const pair = { from: synthetic, dest: collateral }
     const preview = (
       await fetchTradePreview({
         asset: synthetic,
         feeAsset: collateral,
         market,
-        pair: {
-          from: synthetic,
-          dest: collateral,
-        },
+        type: getTradeType(market, pair),
       })
     )[0]
     const amountToReceive = Number(preview.amount) - Number(preview.feeAmount)
