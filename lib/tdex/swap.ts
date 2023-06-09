@@ -5,6 +5,7 @@ import { Creator, Pset, Transaction, Updater, address } from 'liquidjs-lib'
 import { getTradeType } from './market'
 import {
   TDEXv2CompleteTradeRequest,
+  TDEXv2CompleteTradeResponse,
   TDEXv2Market,
   TDEXv2PreviewTradeResponse,
   TDEXv2ProposeTradeRequest,
@@ -136,7 +137,7 @@ export const completeTDEXSwap = async (
   acceptId: string,
   market: TDEXv2Market,
   transaction: string,
-) => {
+): Promise<TDEXv2CompleteTradeResponse> => {
   const completeTradeRequest: TDEXv2CompleteTradeRequest = {
     id: makeid(8),
     acceptId,

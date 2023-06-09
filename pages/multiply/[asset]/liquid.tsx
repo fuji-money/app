@@ -140,12 +140,16 @@ const MultiplyLiquid: NextPage = () => {
       console.log('signedTx', signedTx)
 
       setStage(ModalStages.NeedsFinishing)
-      console.log(
-        'complete',
-        await completeTDEXSwap(propose.swapAccept.id, market, signedTx),
-      )
 
-      setData(txid)
+      const completeResponse = await completeTDEXSwap(
+        propose.swapAccept.id,
+        market,
+        signedTx,
+      )
+      console.log('completeResponse', completeResponse)
+      if (!completeResponse.txid) throw new Error('Error completing TDEX swap')
+
+      setData(completeResponse.txid)
       setResult(Outcome.Success)
       setStage(ModalStages.ShowResult)
     } catch (error) {

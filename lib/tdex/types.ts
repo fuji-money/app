@@ -147,4 +147,7 @@ export interface TDEXv2CompleteTradeRequest {
   transaction: string
 }
 
-export interface TDEXv2CompleteTradeResponse {}
+export interface TDEXv2CompleteTradeResponse {
+  txid: string
+  swapFail: TDEXv2SwapFail
+}
