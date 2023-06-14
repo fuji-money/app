@@ -2,6 +2,7 @@ import b58 from 'bs58check'
 import Decimal from 'decimal.js'
 import { readUInt64LE, writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
 import { Tasks } from './tasks'
+import { Utxo } from 'marina-provider'
 
 // The 3 following function are need to transform encoding
 // for contractParams.priceLevel and contractParams.setupTimestamp:
@@ -197,3 +198,10 @@ export function makeid(length: number): string {
   }
   return result
 }
+
+/**
+ * Returns value for a given utxo
+ * @param utxo Utxo
+ * @returns number
+ */
+export const utxoValue = (utxo: Utxo): number => utxo.blindingData?.value || 0

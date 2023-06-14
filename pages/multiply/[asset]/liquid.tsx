@@ -26,7 +26,8 @@ import { finalizeTx } from 'lib/transaction'
 import MarinaMultiplyModal from 'components/modals/marinaMultiply'
 import { findBestMarket } from 'lib/tdex/market'
 import { TDEXv2Market, AssetPair } from 'lib/tdex/types'
-import { completeTDEXSwap, proposeTDEXSwap } from 'lib/tdex/swap'
+import { completeTrade, proposeTrade } from 'lib/tdex/trade'
+import { Outpoint } from 'lib/types'
 
 const MultiplyLiquid: NextPage = () => {
   const { chainSource, network, xPubKey } = useContext(WalletContext)
@@ -67,7 +68,6 @@ const MultiplyLiquid: NextPage = () => {
 
     // broadcast transaction
     const rawHex = finalizeTx(pset)
-    console.log('rawHex', rawHex)
     const { txid } = await broadcastTx(rawHex)
     if (!txid) throw new Error('No txid returned')
     newContract.txid = txid
@@ -123,30 +123,24 @@ const MultiplyLiquid: NextPage = () => {
       // finalize and broadcast borrow transaction
       const pset = Pset.fromBase64(signedTransaction)
       const txid = await finalizeAndBroadcast(pset, newContract, preparedTx)
-      if (!txid) throw new Error("Broadcast didn't returned a txid")
+      if (!txid) throw new Error('Error broadcasting transaction')
 
       // where we can find this fuji coin
-      const outpoint = { txid, vout: preparedTx.pset.outputs.length }
+      const outpoint: Outpoint = { txid, vout: preparedTx.pset.outputs.length }
 
       setStage(ModalStages.NeedsTDEXSwap)
 
-      const propose = await proposeTDEXSwap(market, newContract, outpoint)
+      const pair = { from: newContract.synthetic, dest: newContract.collateral }
+      const propose = await proposeTrade(market, pair, outpoint)
       if (!propose.swapAccept) throw new Error('TDEX swap not accepted')
-      console.log('propose result', propose)
 
       setStage(ModalStages.NeedsConfirmation)
 
       const signedTx = await signTx(propose.swapAccept.transaction)
-      console.log('signedTx', signedTx)
 
       setStage(ModalStages.NeedsFinishing)
 
-      const completeResponse = await completeTDEXSwap(
-        propose.swapAccept.id,
-        market,
-        signedTx,
-      )
-      console.log('completeResponse', completeResponse)
+      const completeResponse = await completeTrade(propose, market, signedTx)
       if (!completeResponse.txid) throw new Error('Error completing TDEX swap')
 
       setData(completeResponse.txid)

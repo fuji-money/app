@@ -136,18 +136,34 @@ export interface TDEXv2SwapFail {
 }
 
 export interface TDEXv2ProposeTradeResponse {
-  swapAccept: TDEXv2SwapAccept
-  swapFail: TDEXv2SwapFail
+  swapAccept: TDEXv2SwapAccept | null
+  swapFail: TDEXv2SwapFail | null
   expiryTimeUnix: string
 }
 
+export function isTDEXv2ProposeTradeResponse(
+  resp: any,
+): resp is TDEXv2PreviewTradeResponse {
+  return typeof resp === 'object' && typeof resp.expiryTimeUnix === 'string'
+}
+
 export interface TDEXv2CompleteTradeRequest {
-  id: string
-  acceptId: string
-  transaction: string
+  swapComplete: {
+    acceptId: string
+    transaction: string
+  }
 }
 
 export interface TDEXv2CompleteTradeResponse {
   txid: string
   swapFail: TDEXv2SwapFail
+}
+
+export function isTDEXv2CompleteTradeResponse(
+  resp: any,
+): resp is TDEXv2CompleteTradeResponse {
+  return (
+    typeof resp === 'object' &&
+    (typeof resp.txid === 'string' || typeof resp.swapFail === 'object')
+  )
 }

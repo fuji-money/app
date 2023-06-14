@@ -38,7 +38,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         />
         <meta property="og:type" content="website" />
         <meta content="summary_large_image" name="twitter:card" />
-        <link rel="shortcut icon" href="/images/favicon.png" />
+        <link rel="shortcut icon" href="/favicon.png" />
       </Head>
       <Component {...pageProps} />
     </Layout>

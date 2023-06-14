@@ -9,19 +9,12 @@ import {
 import { Asset, Contract } from 'lib/types'
 import { getTradeType } from './market'
 
-interface fetchTradePreviewProps {
-  asset: Asset
-  feeAsset: Asset
-  market: TDEXv2Market
-  type: TDEXv2TradeType
-}
-
-export async function fetchTradePreview({
-  asset,
-  feeAsset,
-  market,
-  type,
-}: fetchTradePreviewProps): Promise<TDEXv2PreviewTradeResponse[]> {
+const fetchTradePreview = async (
+  asset: Asset,
+  feeAsset: Asset,
+  market: TDEXv2Market,
+  type: TDEXv2TradeType,
+): Promise<TDEXv2PreviewTradeResponse[]> => {
   const trade: TDEXv2PreviewTradeRequest = {
     amount: asset.quantity.toString(),
     asset: asset.id,
@@ -36,6 +29,17 @@ export async function fetchTradePreview({
   return res.filter(isTDEXv2PreviewTradeResponse)
 }
 
+export const tradePreview = async (
+  asset: Asset,
+  feeAsset: Asset,
+  market: TDEXv2Market,
+  type: TDEXv2TradeType,
+): Promise<TDEXv2PreviewTradeResponse> => {
+  const previews = await fetchTradePreview(asset, feeAsset, market, type)
+  if (!previews || !previews[0]) throw new Error('Error on preview')
+  return previews[0]
+}
+
 export const getExposure = async (
   contract: Contract,
   market?: TDEXv2Market,
@@ -43,14 +47,9 @@ export const getExposure = async (
   if (market && contract.synthetic.quantity) {
     const { collateral, synthetic } = contract
     const pair = { from: synthetic, dest: collateral }
-    const preview = (
-      await fetchTradePreview({
-        asset: synthetic,
-        feeAsset: collateral,
-        market,
-        type: getTradeType(market, pair),
-      })
-    )[0]
+    const type = getTradeType(market, pair)
+    const [asset, feeAsset] = [synthetic, collateral]
+    const preview = await tradePreview(asset, feeAsset, market, type)
     const amountToReceive = Number(preview.amount) - Number(preview.feeAmount)
     return amountToReceive + collateral.quantity
   }

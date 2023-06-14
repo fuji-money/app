@@ -206,7 +206,6 @@ const BorrowParams: NextPage = () => {
 
     // broadcast transaction
     const rawHex = finalizeTx(pset)
-    console.log('rawHex', rawHex)
     const { txid } = await broadcastTx(rawHex)
     newContract.txid = txid
     if (!newContract.txid) throw new Error('No txid returned')

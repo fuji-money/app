@@ -220,3 +220,8 @@ export interface Config {
   offers: Offer[]
   oracles: Oracle[]
 }
+
+export interface Outpoint {
+  txid: string
+  vout: number
+}
