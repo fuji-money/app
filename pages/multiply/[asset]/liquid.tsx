@@ -23,11 +23,11 @@ import {
   markContractConfirmed,
 } from 'lib/contracts'
 import { finalizeTx } from 'lib/transaction'
-import MarinaMultiplyModal from 'components/modals/marinaMultiply'
 import { findBestMarket } from 'lib/tdex/market'
 import { TDEXv2Market, AssetPair } from 'lib/tdex/types'
 import { completeTrade, proposeTrade } from 'lib/tdex/trade'
 import { Outpoint } from 'lib/types'
+import MarinaDepositModal from 'components/modals/marinaDeposit'
 
 const MultiplyLiquid: NextPage = () => {
   const { chainSource, network, xPubKey } = useContext(WalletContext)
@@ -37,10 +37,9 @@ const MultiplyLiquid: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+  const [market, setMarket] = useState<TDEXv2Market>()
 
   const { oracles } = config
-
-  const [market, setMarket] = useState<TDEXv2Market>()
 
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {
@@ -98,7 +97,7 @@ const MultiplyLiquid: NextPage = () => {
     if (!newContract || !network || !market) return
 
     try {
-      openModal(ModalIds.MarinaMultiply)
+      openModal(ModalIds.MarinaDeposit)
       setStage(ModalStages.NeedsCoins)
 
       // prepare borrow transaction
@@ -165,7 +164,7 @@ const MultiplyLiquid: NextPage = () => {
         handleMarina={handleMarina}
         task={Tasks.Multiply}
       />
-      <MarinaMultiplyModal
+      <MarinaDepositModal
         contract={newContract}
         data={data}
         result={result}

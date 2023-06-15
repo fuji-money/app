@@ -56,6 +56,7 @@ const makePset = async (
   const unblindedInputs: TDEXv2UnblindedInput[] = []
 
   // select coins to pay swap
+  console.log('outpoint', outpoint)
   const coins = await getMainAccountCoins()
   const utxos = outpoint
     ? coins.filter((c) => c.txid === outpoint.txid && c.vout === outpoint.vout)
@@ -125,6 +126,7 @@ const makePset = async (
     ])
   }
 
+  console.log({ pset, unblindedInputs })
   return { pset, unblindedInputs }
 }
 
@@ -152,6 +154,7 @@ const createSwapRequest = async (
     unblindedInputs,
   }
 
+  console.log('swapRequest', swapRequest)
   return swapRequest
 }
 

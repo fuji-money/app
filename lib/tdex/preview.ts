@@ -37,6 +37,7 @@ export const tradePreview = async (
 ): Promise<TDEXv2PreviewTradeResponse> => {
   const previews = await fetchTradePreview(asset, feeAsset, market, type)
   if (!previews || !previews[0]) throw new Error('Error on preview')
+  console.log('preview', previews[0])
   return previews[0]
 }
 

@@ -160,6 +160,16 @@ const InvoiceDepositModal = ({
         />
       )
       break
+    case ModalStages.NeedsTDEXSwap:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="TDEX swap" />
+          <p>Creating swap:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Broadcasting transaction" />
+        </>
+      )
     default:
       break
   }
