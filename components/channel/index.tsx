@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { Contract } from 'lib/types'
-import { swapDepositAmountOutOfBounds } from 'lib/swaps'
+import { lightningSwapAmountOutOfBounds } from 'lib/swaps'
 import { WalletContext } from 'components/providers/wallet'
 import { useContext } from 'react'
 import OutOfBoundsMessage from 'components/messages/outOfBounds'
@@ -32,7 +32,8 @@ const Channel = ({ amount, contract, task }: ChannelProps) => {
   const quantity = amount || collateral.quantity
 
   const lightningOutOfBounds =
-    LightningEnabledTasks[task] && swapDepositAmountOutOfBounds(quantity)
+    LightningEnabledTasks[task] && lightningSwapAmountOutOfBounds(quantity)
+
   const lightningButtonEnabled =
     LightningEnabledTasks[task] &&
     ticker === TICKERS.lbtc &&

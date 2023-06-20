@@ -10,7 +10,7 @@ import { WalletContext } from 'components/providers/wallet'
 import ConnectWalletNotification from './connectWallet'
 import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
-import { swapDepositAmountOutOfBounds } from 'lib/swaps'
+import { lightningSwapAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
 import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
@@ -56,7 +56,7 @@ const Notifications = ({
     if (!asset) return
     const balance = getAssetBalance(asset, balances)
     setNotEnoughFunds(connected && spendQuantity > balance)
-    setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
+    setOutOfBounds(lightningSwapAmountOutOfBounds(spendQuantity))
     setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
     setBelowDustLimit(spendQuantity < minDustLimit)
     // eslint-disable-next-line react-hooks/exhaustive-deps

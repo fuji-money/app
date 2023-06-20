@@ -21,7 +21,7 @@ export const DEPOSIT_LIGHTNING_LIMITS = {
 // UTILS
 
 // check if amount is out of bounds for lightning swap
-export const swapDepositAmountOutOfBounds = (amount = 0): boolean =>
+export const lightningSwapAmountOutOfBounds = (amount = 0): boolean =>
   amount > DEPOSIT_LIGHTNING_LIMITS.maximal ||
   amount < DEPOSIT_LIGHTNING_LIMITS.minimal
 
