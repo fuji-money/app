@@ -257,7 +257,7 @@ const BorrowParams: NextPage = () => {
       const { keyPair, preimage, redeemScript, utxos } = swap
 
       // save this swap for the case this process fails after the swap
-      // we don't users to have to make the swap again
+      // we don't want users to have to make the swap again
       unspentSwap.current = { keyPair, preimage, redeemScript, utxos }
 
       // inform user we asking permission to mint

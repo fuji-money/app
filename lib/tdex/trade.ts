@@ -49,6 +49,7 @@ const makePset = async (
   pair: AssetPair,
   preview: TDEXv2PreviewTradeResponse,
   outpoint?: Outpoint,
+  confidentialAddress?: string,
 ): Promise<{ pset: Pset; unblindedInputs: TDEXv2UnblindedInput[] }> => {
   // build Pset
   const pset = Creator.newPset()
@@ -96,7 +97,7 @@ const makePset = async (
 
   // address to receive the other asset
   const receivingAddress = address.fromConfidential(
-    (await getNextAddress()).confidentialAddress,
+    confidentialAddress ?? (await getNextAddress()).confidentialAddress,
   )
 
   updater.addOutputs([
@@ -140,8 +141,14 @@ const createSwapRequest = async (
   pair: AssetPair,
   preview: TDEXv2PreviewTradeResponse,
   outpoint?: Outpoint,
+  confidentialAddress?: string,
 ): Promise<TDEXv2SwapRequest> => {
-  const { pset, unblindedInputs } = await makePset(pair, preview, outpoint)
+  const { pset, unblindedInputs } = await makePset(
+    pair,
+    preview,
+    outpoint,
+    confidentialAddress,
+  )
 
   // create swapRequest object and return it
   const swapRequest: TDEXv2SwapRequest = {
@@ -168,6 +175,7 @@ export const proposeTrade = async (
   market: TDEXv2Market,
   pair: AssetPair,
   outpoint?: Outpoint,
+  confidentialAddress?: string,
 ): Promise<TDEXv2ProposeTradeResponse> => {
   // validate pair
   const { dest, from } = pair
@@ -182,7 +190,12 @@ export const proposeTrade = async (
     feeAmount: preview.feeAmount,
     feeAsset: preview.feeAsset,
     market: { baseAsset: market.baseAsset, quoteAsset: market.quoteAsset },
-    swapRequest: await createSwapRequest(pair, preview, outpoint),
+    swapRequest: await createSwapRequest(
+      pair,
+      preview,
+      outpoint,
+      confidentialAddress,
+    ),
     type: getTradeType(market, pair),
   }
 

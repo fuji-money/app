@@ -10,8 +10,12 @@ import InvoiceModal from 'components/modals/invoice'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { ConfigContext } from 'components/providers/config'
 import { WalletContext } from 'components/providers/wallet'
-import { findBestMarket } from 'lib/tdex/market'
-import { AssetPair, TDEXv2Market } from 'lib/tdex/types'
+import { findBestMarket, getTradeType } from 'lib/tdex/market'
+import {
+  AssetPair,
+  TDEXv2Market,
+  TDEXv2PreviewTradeResponse,
+} from 'lib/tdex/types'
 import oracles from 'components/oracles'
 import {
   PreparedBorrowTx,
@@ -19,7 +23,7 @@ import {
   proposeBorrowContract,
 } from 'lib/covenant'
 import { Contract, Outcome, Outpoint } from 'lib/types'
-import { openModal, extractError, sleep } from 'lib/utils'
+import { openModal, extractError, sleep, closeModal } from 'lib/utils'
 import {
   Pset,
   Signer,
@@ -49,6 +53,7 @@ import { randomBytes } from 'crypto'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { proposeTrade, completeTrade } from 'lib/tdex/trade'
+import { tradePreview } from 'lib/tdex/preview'
 
 const MultiplyLightning: NextPage = () => {
   const { chainSource, network, xPubKey } = useContext(WalletContext)
@@ -58,11 +63,12 @@ const MultiplyLightning: NextPage = () => {
   const [data, setData] = useState('')
   const [invoice, setInvoice] = useState('')
   const [market, setMarket] = useState<TDEXv2Market>()
+  const [preview, setPreview] = useState<TDEXv2PreviewTradeResponse>()
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
   const [useWebln, setUseWebln] = useState(false)
 
-  const { offers, oracles } = config
+  const { oracles } = config
 
   interface ActiveSwap {
     keyPair: any
@@ -77,12 +83,21 @@ const MultiplyLightning: NextPage = () => {
   // fetch and set markets (needs to fetch providers)
   useEffect(() => {
     if (network && newContract) {
-      const assetPair: AssetPair = {
+      const pair: AssetPair = {
         from: newContract.synthetic,
         dest: newContract.collateral,
       }
-      findBestMarket(network, assetPair)
-        .then((market) => setMarket(market))
+      findBestMarket(network, pair)
+        .then((market) => {
+          setMarket(market)
+          if (market) {
+            const { from, dest } = pair
+            const type = getTradeType(market, pair)
+            tradePreview(from, dest, market, type)
+              .then((preview) => setPreview(preview))
+              .catch((err) => console.error(err))
+          }
+        })
         .catch((err) => console.error(err))
     }
   }, [network, newContract])
@@ -239,9 +254,12 @@ const MultiplyLightning: NextPage = () => {
     return txid
   }
 
-  const handleInvoice = async (): Promise<void> => {
+  const handleInvoice = async (ourInvoice?: string): Promise<void> => {
     // nothing to do if no new contract
     if (!newContract || !network || !market) return
+    // if (!ourInvoice || typeof ourInvoice !== 'string')
+    //   return openModal(ModalIds.Invoice)
+    // closeModal(ModalIds.Invoice)
 
     try {
       openModal(ModalIds.InvoiceDeposit)
@@ -252,7 +270,7 @@ const MultiplyLightning: NextPage = () => {
       const { keyPair, preimage, redeemScript, utxos } = swap
 
       // save this swap for the case this process fails after the swap
-      // we don't users to have to make the swap again
+      // we don't want users to have to make the swap again
       unspentSwap.current = { keyPair, preimage, redeemScript, utxos }
 
       // inform user we asking permission to mint
@@ -337,6 +355,13 @@ const MultiplyLightning: NextPage = () => {
 
   if (!EnabledTasks[Tasks.Multiply]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
+  if (!newContract.exposure) return <SomeError>Invalid contract</SomeError>
+
+  const quantity = Number(
+    newContract.exposure -
+      newContract.collateral.quantity -
+      Number(preview?.feeAmount ?? 0),
+  )
 
   return (
     <>
@@ -357,7 +382,11 @@ const MultiplyLightning: NextPage = () => {
         task={Tasks.Multiply}
         useWebln={useWebln}
       />
-      <InvoiceModal contract={newContract} handler={handleInvoice} />
+      <InvoiceModal
+        contract={newContract}
+        handler={handleInvoice}
+        quantity={quantity}
+      />
     </>
   )
 }

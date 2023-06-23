@@ -15,9 +15,10 @@ import CopyButton from 'components/buttons/copy'
 interface InvoiceModalProps {
   contract: Contract
   handler: (arg0: string) => void
+  quantity?: number
 }
 
-const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
+const InvoiceModal = ({ contract, handler, quantity }: InvoiceModalProps) => {
   const [invoice, setInvoice] = useState('')
   const [text, setText] = useState('')
   const [valid, setValid] = useState(false)
@@ -25,7 +26,8 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
 
   const { collateral } = contract
 
-  const amount = collateral.quantity - swapFeeAmount
+  const initialAmount = quantity ?? collateral.quantity
+  const amount = initialAmount - swapFeeAmount
   const boltzFees = submarineSwapBoltzFees(amount)
   const invoiceAmount = amount - boltzFees
 
@@ -92,9 +94,9 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
       </p>
       <div className="is-size-7 is-flex is-justify-content-center mb-4">
         <p>
-          * Collateral amount
+          * Amount
           <br />
-          {pn(collateral.quantity, collateral.precision)}
+          {pn(initialAmount, collateral.precision)}
         </p>
         <Separator />
         <p>
