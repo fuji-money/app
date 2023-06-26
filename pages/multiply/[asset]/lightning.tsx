@@ -16,7 +16,6 @@ import {
   TDEXv2Market,
   TDEXv2PreviewTradeResponse,
 } from 'lib/tdex/types'
-import oracles from 'components/oracles'
 import {
   PreparedBorrowTx,
   prepareBorrowTxWithClaimTx,
@@ -40,11 +39,12 @@ import {
   getContractCovenantAddress,
   markContractConfirmed,
 } from 'lib/contracts'
-import { broadcastTx, signTx } from 'lib/marina'
+import { broadcastTx, getNextAddress, getPublicKey, signTx } from 'lib/marina'
 import { addSwapToStorage } from 'lib/storage'
 import {
   ReverseSwap,
   createReverseSubmarineSwap,
+  createSubmarineSwap,
   getInvoiceExpireDate,
 } from 'lib/swaps'
 import { finalizeTx } from 'lib/transaction'
@@ -254,12 +254,12 @@ const MultiplyLightning: NextPage = () => {
     return txid
   }
 
-  const handleInvoice = async (ourInvoice?: string): Promise<void> => {
+  const handleInvoice = async (receivingInvoice?: string): Promise<void> => {
     // nothing to do if no new contract
     if (!newContract || !network || !market) return
-    // if (!ourInvoice || typeof ourInvoice !== 'string')
-    //   return openModal(ModalIds.Invoice)
-    // closeModal(ModalIds.Invoice)
+    if (!receivingInvoice || typeof receivingInvoice !== 'string')
+      return openModal(ModalIds.Invoice)
+    closeModal(ModalIds.Invoice)
 
     try {
       openModal(ModalIds.InvoiceDeposit)
@@ -324,10 +324,28 @@ const MultiplyLightning: NextPage = () => {
       // where we can find this fuji coin
       const outpoint: Outpoint = { txid, vout: preparedTx.pset.outputs.length }
 
+      // submarine swap
+      setStage(ModalStages.NeedsAddress)
+      const refundPublicKey = (
+        await getPublicKey(await getNextAddress())
+      ).toString('hex')
+      // create swap with Boltz.exchange
+      const boltzSwap = await createSubmarineSwap(
+        receivingInvoice,
+        network,
+        refundPublicKey,
+      )
+      if (!boltzSwap) throw new Error('Error creating swap')
+
       setStage(ModalStages.NeedsTDEXSwap)
 
       const pair = { from: newContract.synthetic, dest: newContract.collateral }
-      const propose = await proposeTrade(market, pair, outpoint)
+      const propose = await proposeTrade(
+        market,
+        pair,
+        outpoint,
+        boltzSwap.address,
+      )
       if (!propose.swapAccept) throw new Error('TDEX swap not accepted')
 
       setStage(ModalStages.NeedsConfirmation)
@@ -357,7 +375,7 @@ const MultiplyLightning: NextPage = () => {
   if (!newContract) return <SomeError>Contract not found</SomeError>
   if (!newContract.exposure) return <SomeError>Invalid contract</SomeError>
 
-  const quantity = Number(
+  const receivingQuantity = Number(
     newContract.exposure -
       newContract.collateral.quantity -
       Number(preview?.feeAmount ?? 0),
@@ -385,7 +403,7 @@ const MultiplyLightning: NextPage = () => {
       <InvoiceModal
         contract={newContract}
         handler={handleInvoice}
-        quantity={quantity}
+        quantity={receivingQuantity}
       />
     </>
   )

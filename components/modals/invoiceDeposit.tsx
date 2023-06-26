@@ -167,7 +167,17 @@ const InvoiceDepositModal = ({
           <MainMessage text="TDEX swap" />
           <p>Creating swap:</p>
           <ContractSummary />
-          <SecondaryMessage text="Broadcasting transaction" />
+          <SecondaryMessage text="Waiting for TDEX swap to complete" />
+        </>
+      )
+    case ModalStages.NeedsAddress:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Submarine swap" />
+          <p>Requesting submarine swap to Boltz:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for submarine swap request" />
         </>
       )
     default:
