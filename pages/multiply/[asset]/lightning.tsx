@@ -108,7 +108,7 @@ const MultiplyLightning: NextPage = () => {
     }
   }, [network, newContract])
 
-  const makeSwap = async (): Promise<ActiveSwap | undefined> => {
+  const makeReverseSwap = async (): Promise<ActiveSwap | undefined> => {
     if (!network) return
     setStage(ModalStages.NeedsInvoice)
 
@@ -232,9 +232,6 @@ const MultiplyLightning: NextPage = () => {
       }
     })
 
-    // change message to user
-    setStage(ModalStages.NeedsFinishing)
-
     // broadcast transaction
     const rawHex = finalizeTx(pset)
     const { txid } = await broadcastTx(rawHex)
@@ -297,7 +294,7 @@ const MultiplyLightning: NextPage = () => {
       // 2. make a reverse submarine swap
       openModal(ModalIds.PayWithLightning)
       // if there's an unspent swap, we will use it
-      const activeSwap = unspentSwap.current ?? (await makeSwap())
+      const activeSwap = unspentSwap.current ?? (await makeReverseSwap())
       if (!activeSwap) throw new Error('Error generating submarine swap')
       // save this swap for the case this process fails after the swap
       // we don't want users to have to make the swap again
@@ -326,7 +323,7 @@ const MultiplyLightning: NextPage = () => {
       if (!resp.partialTransaction) throw new Error('Not accepted by Fuji')
 
       // 6. broadcast borrow/mint transaction (will result in a fuji utxo)
-      setStage(ModalStages.Broadcasting)
+      setStage(ModalStages.NeedsFinishing)
       const txid = await finalizeAndBroadcast(
         resp,
         newContract,

@@ -22,7 +22,6 @@ export enum ModalIds {
 }
 
 export enum ModalStages {
-  Broadcasting = 'Broadcasting',
   NeedsAddress = 'NeedAddress',
   NeedsCoins = 'NeedsCoins',
   NeedsConfirmation = 'NeedsConfirmation',

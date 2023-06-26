@@ -73,14 +73,25 @@ const PayWithLightningModal = ({
   let ModalContent = () => <></>
 
   switch (stage) {
-    case ModalStages.Broadcasting:
+    case ModalStages.NeedsAddress:
       ModalContent = () => (
         <>
           <Spinner />
-          <MainMessage text="Broadcasting" />
-          <p>Broadcasting transaction:</p>
+          <MainMessage text="Making swap" />
+          <p>Requesting submarine swap:</p>
           <ContractSummary />
-          <SecondaryMessage text="Broadcasting mint transaction" />
+          <SecondaryMessage text="Waiting for address from submarine swap" />
+        </>
+      )
+      break
+    case ModalStages.NeedsConfirmation:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Approve transaction" />
+          <p>Confirm contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Accept and unlock this transaction in your Marina wallet" />
         </>
       )
       break
@@ -110,7 +121,7 @@ const PayWithLightningModal = ({
       ModalContent = () => (
         <>
           <Spinner />
-          <MainMessage text="Making swap" />
+          <MainMessage text="Making reverse swap" />
           <p>Deposit to contract:</p>
           <ContractSummary />
           <SecondaryMessage text="Waiting for invoice" />
