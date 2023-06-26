@@ -277,7 +277,7 @@ const MultiplyLightning: NextPage = () => {
   // 2. make a reverse submarine swap (LN => LBTC) to get invoice
   // 3. show invoice from 2. in qrcode format and string (with copy)
   // 4. wait for ln payment (will result in one or more utxos)
-  // 5. use utxos to fund mint operation with factory
+  // 5. use utxos from 4. to fund mint operation with factory
   // 6. broadcast borrow/mint transaction (will result in a fuji utxo)
   // 7. make a submarine swap (LBTC => LN) with invoice from 1. (will result an address)
   // 8. propose a TDEX trade (FUSD => LBTC) with following params:
