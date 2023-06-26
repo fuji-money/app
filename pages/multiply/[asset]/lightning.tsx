@@ -5,8 +5,8 @@ import { EnabledTasks, Tasks } from 'lib/tasks'
 import { ContractsContext } from 'components/providers/contracts'
 import NotAllowed from 'components/messages/notAllowed'
 import EnablersLightning from 'components/enablers/lightning'
-import InvoiceDepositModal from 'components/modals/invoiceDeposit'
-import InvoiceModal from 'components/modals/invoice'
+import PayWithLightningModal from 'components/modals/payWithLightning'
+import ReceiveWithLightningModal from 'components/modals/receiveWithLightning'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import { ConfigContext } from 'components/providers/config'
 import { WalletContext } from 'components/providers/wallet'
@@ -21,7 +21,7 @@ import {
   prepareBorrowTxWithClaimTx,
   proposeBorrowContract,
 } from 'lib/covenant'
-import { Contract, Outcome, Outpoint } from 'lib/types'
+import { Contract, ContractResponse, Outcome, Outpoint } from 'lib/types'
 import { openModal, extractError, sleep, closeModal } from 'lib/utils'
 import {
   Pset,
@@ -208,11 +208,40 @@ const MultiplyLightning: NextPage = () => {
 
   // finalize and broadcast proposed transaction
   const finalizeAndBroadcast = async (
-    pset: Pset,
+    resp: ContractResponse,
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
+    swap: ActiveSwap,
   ): Promise<string | undefined> => {
     if (!network) return
+
+    // sign the input & add the signature via custom finalizer
+    const pset = Pset.fromBase64(resp.partialTransaction)
+    const signer = new Signer(pset)
+    const toSign = signer.pset.getInputPreimage(0, Transaction.SIGHASH_ALL)
+    const sig: BIP174SigningData = {
+      partialSig: {
+        pubkey: swap.keyPair.publicKey,
+        signature: bscript.signature.encode(
+          swap.keyPair.sign(toSign),
+          Transaction.SIGHASH_ALL,
+        ),
+      },
+    }
+
+    signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
+    const finalizer = new Finalizer(pset)
+
+    finalizer.finalizeInput(0, (inputIndex, pset) => {
+      return {
+        finalScriptSig: undefined,
+        finalScriptWitness: witnessStackToScriptWitness([
+          pset.inputs![inputIndex].partialSigs![0].signature,
+          swap.preimage,
+          Buffer.from(swap.redeemScript, 'hex'),
+        ]),
+      }
+    })
 
     // change message to user
     setStage(ModalStages.NeedsFinishing)
@@ -255,76 +284,51 @@ const MultiplyLightning: NextPage = () => {
   }
 
   const handleInvoice = async (receivingInvoice?: string): Promise<void> => {
-    // nothing to do if no new contract
+    // nothing to do if no new contract, network or market
     if (!newContract || !network || !market) return
+
+    // show modal to user to collect receiving invoice
     if (!receivingInvoice || typeof receivingInvoice !== 'string')
-      return openModal(ModalIds.Invoice)
-    closeModal(ModalIds.Invoice)
+      return openModal(ModalIds.ReceiveWithLightning)
+
+    closeModal(ModalIds.ReceiveWithLightning)
 
     try {
-      openModal(ModalIds.InvoiceDeposit)
-
+      openModal(ModalIds.PayWithLightning)
       // if there's an unspent swap, we will use it
       const swap = unspentSwap.current ?? (await makeSwap())
       if (!swap) return
-      const { keyPair, preimage, redeemScript, utxos } = swap
-
       // save this swap for the case this process fails after the swap
       // we don't want users to have to make the swap again
-      unspentSwap.current = { keyPair, preimage, redeemScript, utxos }
+      unspentSwap.current = swap
 
       // inform user we asking permission to mint
       setStage(ModalStages.NeedsFujiApproval)
-
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
         artifact,
         newContract,
-        utxos,
-        redeemScript,
+        swap.utxos,
+        swap.redeemScript,
         oracles[0],
       )
-
       // propose contract to alpha factory
       const resp = await proposeBorrowContract(preparedTx, network)
       if (!resp.partialTransaction) throw new Error('Not accepted by Fuji')
 
-      // sign the input & add the signature via custom finalizer
-      const pset = Pset.fromBase64(resp.partialTransaction)
-      const signer = new Signer(pset)
-      const toSign = signer.pset.getInputPreimage(0, Transaction.SIGHASH_ALL)
-      const sig: BIP174SigningData = {
-        partialSig: {
-          pubkey: keyPair.publicKey,
-          signature: bscript.signature.encode(
-            keyPair.sign(toSign),
-            Transaction.SIGHASH_ALL,
-          ),
-        },
-      }
-
-      signer.addSignature(0, sig, Pset.ECDSASigValidator(ecc))
-      const finalizer = new Finalizer(pset)
-
-      finalizer.finalizeInput(0, (inputIndex, pset) => {
-        return {
-          finalScriptSig: undefined,
-          finalScriptWitness: witnessStackToScriptWitness([
-            pset.inputs![inputIndex].partialSigs![0].signature,
-            preimage,
-            Buffer.from(redeemScript, 'hex'),
-          ]),
-        }
-      })
-
       // finalize and broadcast transaction
-      const txid = await finalizeAndBroadcast(pset, newContract, preparedTx)
+      setStage(ModalStages.Broadcasting)
+      const txid = await finalizeAndBroadcast(
+        resp,
+        newContract,
+        preparedTx,
+        swap,
+      )
       if (!txid) throw new Error('Error broadcasting transaction')
-
       // where we can find this fuji coin
       const outpoint: Outpoint = { txid, vout: preparedTx.pset.outputs.length }
 
-      // submarine swap
+      // make submarine swap to receive exposure
       setStage(ModalStages.NeedsAddress)
       const refundPublicKey = (
         await getPublicKey(await getNextAddress())
@@ -337,8 +341,8 @@ const MultiplyLightning: NextPage = () => {
       )
       if (!boltzSwap) throw new Error('Error creating swap')
 
+      // propose TDEX trade
       setStage(ModalStages.NeedsTDEXSwap)
-
       const pair = { from: newContract.synthetic, dest: newContract.collateral }
       const propose = await proposeTrade(
         market,
@@ -348,12 +352,12 @@ const MultiplyLightning: NextPage = () => {
       )
       if (!propose.swapAccept) throw new Error('TDEX swap not accepted')
 
+      // sign TDEX trade transaction
       setStage(ModalStages.NeedsConfirmation)
-
       const signedTx = await signTx(propose.swapAccept.transaction)
 
+      // complete TDEX trade
       setStage(ModalStages.NeedsFinishing)
-
       const completeResponse = await completeTrade(propose, market, signedTx)
       if (!completeResponse.txid) throw new Error('Error completing TDEX swap')
 
@@ -389,7 +393,7 @@ const MultiplyLightning: NextPage = () => {
         handleInvoice={handleInvoice}
         task={Tasks.Multiply}
       />
-      <InvoiceDepositModal
+      <PayWithLightningModal
         contract={newContract}
         data={data}
         invoice={invoice}
@@ -400,7 +404,7 @@ const MultiplyLightning: NextPage = () => {
         task={Tasks.Multiply}
         useWebln={useWebln}
       />
-      <InvoiceModal
+      <ReceiveWithLightningModal
         contract={newContract}
         handler={handleInvoice}
         quantity={receivingQuantity}

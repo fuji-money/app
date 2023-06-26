@@ -10,11 +10,11 @@ const closeModals = () => {
 export enum ModalIds {
   Account = 'account-modal',
   CurrentPrice = 'current-price-modal',
-  Invoice = 'invoice-modal',
-  InvoiceDeposit = 'invoice-deposit-modal',
+  ReceiveWithLightning = 'receive-with-lightning-modal',
   LiquidationPrice = 'liquidation-price-modal',
   MarinaDeposit = 'marina-deposit-modal',
   MintLimit = 'mint-limit-modal',
+  PayWithLightning = 'pay-with-lightning-modal',
   Redeem = 'redeem-modal',
   Trade = 'trade-modal',
   Wallets = 'wallets-modal',
@@ -22,6 +22,7 @@ export enum ModalIds {
 }
 
 export enum ModalStages {
+  Broadcasting = 'Broadcasting',
   NeedsAddress = 'NeedAddress',
   NeedsCoins = 'NeedsCoins',
   NeedsConfirmation = 'NeedsConfirmation',

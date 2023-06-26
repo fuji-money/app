@@ -10,7 +10,7 @@ import Summary from 'components/contract/summary'
 import Image from 'next/image'
 import { WeblnContext } from 'components/providers/webln'
 
-interface InvoiceDepositModalProps {
+interface PayWithLightningModalProps {
   contract: Contract
   data: string
   invoice: string
@@ -22,7 +22,7 @@ interface InvoiceDepositModalProps {
   useWebln: boolean
 }
 
-const InvoiceDepositModal = ({
+const PayWithLightningModal = ({
   contract,
   data,
   invoice,
@@ -32,7 +32,7 @@ const InvoiceDepositModal = ({
   stage,
   task,
   useWebln,
-}: InvoiceDepositModalProps) => {
+}: PayWithLightningModalProps) => {
   const { weblnCanEnable, weblnProvider } = useContext(WeblnContext)
   const [buttonText, setButtonText] = useState('Copy')
 
@@ -73,6 +73,39 @@ const InvoiceDepositModal = ({
   let ModalContent = () => <></>
 
   switch (stage) {
+    case ModalStages.Broadcasting:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Broadcasting" />
+          <p>Broadcasting transaction:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Broadcasting mint transaction" />
+        </>
+      )
+      break
+    case ModalStages.NeedsFinishing:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Finishing" />
+          <p>Creating contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Broadcasting transaction" />
+        </>
+      )
+      break
+    case ModalStages.NeedsFujiApproval:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Preparing transaction" />
+          <p>Preparing contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for Fuji approval" />
+        </>
+      )
+      break
     case ModalStages.NeedsInvoice:
       ModalContent = () => (
         <>
@@ -112,6 +145,17 @@ const InvoiceDepositModal = ({
             </>
           )
       break
+    case ModalStages.NeedsTDEXSwap:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="TDEX swap" />
+          <p>Creating swap:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for TDEX swap to complete" />
+        </>
+      )
+      break
     case ModalStages.PaymentReceived:
       ModalContent = () => (
         <>
@@ -127,28 +171,6 @@ const InvoiceDepositModal = ({
         </>
       )
       break
-    case ModalStages.NeedsFujiApproval:
-      ModalContent = () => (
-        <>
-          <Spinner />
-          <MainMessage text="Preparing transaction" />
-          <p>Preparing contract:</p>
-          <ContractSummary />
-          <SecondaryMessage text="Waiting for Fuji approval" />
-        </>
-      )
-      break
-    case ModalStages.NeedsFinishing:
-      ModalContent = () => (
-        <>
-          <Spinner />
-          <MainMessage text="Finishing" />
-          <p>Creating contract:</p>
-          <ContractSummary />
-          <SecondaryMessage text="Broadcasting transaction" />
-        </>
-      )
-      break
     case ModalStages.ShowResult:
       ModalContent = () => (
         <Result
@@ -160,35 +182,15 @@ const InvoiceDepositModal = ({
         />
       )
       break
-    case ModalStages.NeedsTDEXSwap:
-      ModalContent = () => (
-        <>
-          <Spinner />
-          <MainMessage text="TDEX swap" />
-          <p>Creating swap:</p>
-          <ContractSummary />
-          <SecondaryMessage text="Waiting for TDEX swap to complete" />
-        </>
-      )
-    case ModalStages.NeedsAddress:
-      ModalContent = () => (
-        <>
-          <Spinner />
-          <MainMessage text="Submarine swap" />
-          <p>Requesting submarine swap to Boltz:</p>
-          <ContractSummary />
-          <SecondaryMessage text="Waiting for submarine swap request" />
-        </>
-      )
     default:
       break
   }
 
   return (
-    <Modal id={ModalIds.InvoiceDeposit} reset={reset}>
+    <Modal id={ModalIds.PayWithLightning} reset={reset}>
       <ModalContent />
     </Modal>
   )
 }
 
-export default InvoiceDepositModal
+export default PayWithLightningModal
