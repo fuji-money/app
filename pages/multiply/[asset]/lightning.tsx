@@ -51,9 +51,11 @@ import { finalizeTx } from 'lib/transaction'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
 import { randomBytes } from 'crypto'
 import ECPairFactory from 'ecpair'
+import { ECPairInterface } from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { proposeTrade, completeTrade } from 'lib/tdex/trade'
 import { tradePreview } from 'lib/tdex/preview'
+import { Unspent } from 'lib/chainsource.port'
 
 const MultiplyLightning: NextPage = () => {
   const { chainSource, network, xPubKey } = useContext(WalletContext)
@@ -71,10 +73,14 @@ const MultiplyLightning: NextPage = () => {
   const { oracles } = config
 
   interface ActiveSwap {
-    keyPair: any
+    keyPair: ECPairInterface
+    swap: ReverseSwap
+  }
+
+  interface PaidSwap {
     preimage: Buffer
     redeemScript: string
-    utxos: Utxo[]
+    utxos: Unspent[]
   }
 
   // store swap here while is not spent
@@ -121,14 +127,14 @@ const MultiplyLightning: NextPage = () => {
     const onchainAmount = newContract.collateral.quantity + feeAmount
 
     // create swap with Boltz.exchange
-    const boltzSwap: ReverseSwap | undefined = await createReverseSubmarineSwap(
+    const swap: ReverseSwap | undefined = await createReverseSubmarineSwap(
       keyPair.publicKey,
       network,
       onchainAmount,
     )
 
     // check if swap was successful
-    if (!boltzSwap) {
+    if (!swap) {
       // save used keys on storage
       addSwapToStorage({
         boltzRefund: {
@@ -142,49 +148,28 @@ const MultiplyLightning: NextPage = () => {
       throw new Error('Error creating swap')
     }
 
-    // deconstruct swap
-    const {
-      blindingKey,
-      id,
-      invoice,
-      lockupAddress,
-      preimage,
-      redeemScript,
-      timeoutBlockHeight,
-    } = boltzSwap
+    return { keyPair, swap }
+  }
 
-    // save ephemeral key on storage
-    addSwapToStorage({
-      boltzRefund: {
-        id,
-        privateKey: privateKey.toString('hex'),
-        redeemScript,
-        timeoutBlockHeight,
-      },
-      contractId: newContract.txid || '',
-      publicKey: keyPair.publicKey.toString('hex'),
-      status: Outcome.Success,
-      task: Tasks.Borrow,
-    })
-
-    // show lightning invoice to user
-    setInvoice(invoice)
-    setStage(ModalStages.NeedsPayment)
+  const waitForSwapPayment = async (
+    swap: ReverseSwap,
+  ): Promise<PaidSwap | undefined> => {
+    if (!network) return
 
     // prepare timeout handler
-    const invoiceExpireDate = Number(getInvoiceExpireDate(invoice))
+    const invoiceExpireDate = Number(getInvoiceExpireDate(swap.invoice))
     const invoiceExpirationTimeout = setTimeout(() => {
       throw new Error('invoice expired')
     }, invoiceExpireDate - Date.now())
 
     // wait for tx to be available (mempool or confirmed)
-    await chainSource.waitForAddressReceivesTx(lockupAddress)
+    await chainSource.waitForAddressReceivesTx(swap.lockupAddress)
 
     // fetch utxos for address
-    const utxos = await chainSource.listUnspents(lockupAddress)
+    const utxos = await chainSource.listUnspents(swap.lockupAddress)
     const u = utxos[0]
     const { asset, assetBlindingFactor, value, valueBlindingFactor } =
-      await toBlindingData(Buffer.from(blindingKey, 'hex'), u.witnessUtxo)
+      await toBlindingData(Buffer.from(swap.blindingKey, 'hex'), u.witnessUtxo)
 
     u.blindingData = {
       asset: asset.reverse().toString('hex'),
@@ -203,7 +188,11 @@ const MultiplyLightning: NextPage = () => {
     setStage(ModalStages.PaymentReceived)
     await sleep(2000) // give him time to see the green mark
 
-    return { keyPair, preimage, redeemScript, utxos }
+    return {
+      preimage: swap.preimage,
+      redeemScript: swap.redeemScript,
+      utxos,
+    }
   }
 
   // finalize and broadcast proposed transaction
@@ -211,7 +200,7 @@ const MultiplyLightning: NextPage = () => {
     resp: ContractResponse,
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
-    swap: ActiveSwap,
+    activeSwap: ActiveSwap,
   ): Promise<string | undefined> => {
     if (!network) return
 
@@ -221,9 +210,9 @@ const MultiplyLightning: NextPage = () => {
     const toSign = signer.pset.getInputPreimage(0, Transaction.SIGHASH_ALL)
     const sig: BIP174SigningData = {
       partialSig: {
-        pubkey: swap.keyPair.publicKey,
+        pubkey: activeSwap.keyPair.publicKey,
         signature: bscript.signature.encode(
-          swap.keyPair.sign(toSign),
+          activeSwap.keyPair.sign(toSign),
           Transaction.SIGHASH_ALL,
         ),
       },
@@ -237,8 +226,8 @@ const MultiplyLightning: NextPage = () => {
         finalScriptSig: undefined,
         finalScriptWitness: witnessStackToScriptWitness([
           pset.inputs![inputIndex].partialSigs![0].signature,
-          swap.preimage,
-          Buffer.from(swap.redeemScript, 'hex'),
+          activeSwap.swap.preimage,
+          Buffer.from(activeSwap.swap.redeemScript, 'hex'),
         ]),
       }
     })
@@ -283,52 +272,72 @@ const MultiplyLightning: NextPage = () => {
     return txid
   }
 
+  // when multiplying with lightning, we need to:
+  // 1. collect an ln invoice where exposure will be collected
+  // 2. make a reverse submarine swap (LN => LBTC) to get invoice
+  // 3. show invoice from 2. in qrcode format and string (with copy)
+  // 4. wait for ln payment (will result in one or more utxos)
+  // 5. use utxos to fund mint operation with factory
+  // 6. broadcast borrow/mint transaction (will result in a fuji utxo)
+  // 7. make a submarine swap (LBTC => LN) with invoice from 1. (will result an address)
+  // 8. propose a TDEX trade (FUSD => LBTC) with following params:
+  //    - use fuji utxo from 6. as input
+  //    - use address from 7. as output
+  // 9. sign and complete TDEX transaction
   const handleInvoice = async (receivingInvoice?: string): Promise<void> => {
     // nothing to do if no new contract, network or market
     if (!newContract || !network || !market) return
 
-    // show modal to user to collect receiving invoice
+    // 1. show modal to user to collect receiving invoice
     if (!receivingInvoice || typeof receivingInvoice !== 'string')
       return openModal(ModalIds.ReceiveWithLightning)
-
     closeModal(ModalIds.ReceiveWithLightning)
 
     try {
+      // 2. make a reverse submarine swap
       openModal(ModalIds.PayWithLightning)
       // if there's an unspent swap, we will use it
-      const swap = unspentSwap.current ?? (await makeSwap())
-      if (!swap) return
+      const activeSwap = unspentSwap.current ?? (await makeSwap())
+      if (!activeSwap) throw new Error('Error generating submarine swap')
       // save this swap for the case this process fails after the swap
       // we don't want users to have to make the swap again
-      unspentSwap.current = swap
+      unspentSwap.current = activeSwap
 
-      // inform user we asking permission to mint
+      // 3. show lightning invoice to user
+      setInvoice(activeSwap.swap.invoice)
+      setStage(ModalStages.NeedsPayment)
+
+      // 4. wait for swap payment
+      const paidSwap = await waitForSwapPayment(activeSwap.swap)
+      if (!paidSwap) throw new Error('Error waiting for swap payment')
+
+      // 5. use utxos to fund mint operation with factory
       setStage(ModalStages.NeedsFujiApproval)
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
         artifact,
         newContract,
-        swap.utxos,
-        swap.redeemScript,
+        paidSwap.utxos,
+        paidSwap.redeemScript,
         oracles[0],
       )
       // propose contract to alpha factory
       const resp = await proposeBorrowContract(preparedTx, network)
       if (!resp.partialTransaction) throw new Error('Not accepted by Fuji')
 
-      // finalize and broadcast transaction
+      // 6. broadcast borrow/mint transaction (will result in a fuji utxo)
       setStage(ModalStages.Broadcasting)
       const txid = await finalizeAndBroadcast(
         resp,
         newContract,
         preparedTx,
-        swap,
+        activeSwap,
       )
       if (!txid) throw new Error('Error broadcasting transaction')
       // where we can find this fuji coin
       const outpoint: Outpoint = { txid, vout: preparedTx.pset.outputs.length }
 
-      // make submarine swap to receive exposure
+      // 7. make a submarine swap (LBTC => LN) with invoice from 1. (will result an address)
       setStage(ModalStages.NeedsAddress)
       const refundPublicKey = (
         await getPublicKey(await getNextAddress())
@@ -341,7 +350,7 @@ const MultiplyLightning: NextPage = () => {
       )
       if (!boltzSwap) throw new Error('Error creating swap')
 
-      // propose TDEX trade
+      // 8. propose a TDEX trade (FUSD => LBTC)
       setStage(ModalStages.NeedsTDEXSwap)
       const pair = { from: newContract.synthetic, dest: newContract.collateral }
       const propose = await proposeTrade(
@@ -352,10 +361,9 @@ const MultiplyLightning: NextPage = () => {
       )
       if (!propose.swapAccept) throw new Error('TDEX swap not accepted')
 
-      // sign TDEX trade transaction
+      // 9. sign and complete TDEX transaction
       setStage(ModalStages.NeedsConfirmation)
       const signedTx = await signTx(propose.swapAccept.transaction)
-
       // complete TDEX trade
       setStage(ModalStages.NeedsFinishing)
       const completeResponse = await completeTrade(propose, market, signedTx)
