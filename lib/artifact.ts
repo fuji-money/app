@@ -4,11 +4,10 @@ import {
   templateString,
 } from '@ionio-lang/ionio'
 import { fetchURL } from './fetch'
+import { artifactJSONurl } from './constants'
 
 export const getArtifact = async (): Promise<Artifact> => {
-  const artifactJSON = await fetchURL(
-    'https://raw.githubusercontent.com/fuji-money/tapscripts/main/artifacts/alpha/fuji.ionio.json',
-  )
+  const artifactJSON = await fetchURL(artifactJSONurl)
   return replaceArtifactConstructorWithArguments(
     artifactJSON as Artifact,
     artifactJSON.constructorInputs.map((ci: any) => {
