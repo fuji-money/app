@@ -4,12 +4,14 @@ import { Asset } from 'lib/types'
 import { useContext } from 'react'
 import { getAssetBalance } from 'lib/marina'
 import { WalletContext } from 'components/providers/wallet'
+import { useSelectBalances } from 'lib/hooks'
 
 interface BalanceRowProps {
   asset: Asset
 }
 const BalanceRow = ({ asset }: BalanceRowProps) => {
-  const { balances } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
+  const balances = useSelectBalances(wallet)
   return (
     <tr>
       <td>

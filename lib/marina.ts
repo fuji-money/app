@@ -1,7 +1,4 @@
-import * as ecc from 'tiny-secp256k1'
-import { BIP32Factory } from 'bip32'
-import { Pset } from 'liquidjs-lib'
-import { Asset, Contract, ContractParams } from './types'
+import { Asset, ContractParams } from './types'
 import {
   detectProvider,
   MarinaProvider,
@@ -12,24 +9,123 @@ import {
   AccountType,
   AccountID,
   Address,
-  SentTransaction,
 } from 'marina-provider'
-import {
-  defaultNetwork,
-  marinaFujiAccountID,
-  marinaLegacyMainAccountID,
-  marinaMainAccountID,
-  marinaTestnetMainAccountID,
-} from 'lib/constants'
-import { coinToContract } from './contracts'
 import { Artifact } from '@ionio-lang/ionio'
+import { Wallet, WalletType } from './wallet'
+import { closeModal, openModal } from './utils'
+import { ModalIds } from 'components/modals/modal'
 
-export async function getBalances(): Promise<Balance[]> {
-  const marina = await getMarinaProvider()
-  if (!marina) return []
-  if (!(await marina.isEnabled())) return []
-  const mainAccountIDs = await getMainAccountIDs()
-  return marina.getBalances(mainAccountIDs)
+export class MarinaWallet implements Wallet {
+  static FujiAccountID = 'fuji' // slip13(fuji)
+  static MainAccountID = 'mainAccount' // m/84'/1776'/0'
+  static TestnetMainAccountID = 'mainAccountTest' // m/84'/1'/0'
+  static LegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
+
+  type = WalletType.Marina
+  _isConnected = false
+  _xPub: string | undefined // always main account, is the "ID" of the marina wallet
+
+  private constructor(private marina: MarinaProvider) {}
+
+  static async detect(): Promise<MarinaWallet | undefined> {
+    const marina = await detectProvider('marina')
+    if (!marina) return undefined
+    const instance = new MarinaWallet(marina)
+    instance._isConnected = await instance.marina.isEnabled()
+    if (!instance._isConnected) await instance.connect()
+    const infos = await instance.marina.getAccountInfo(MarinaWallet.MainAccountID)
+    instance._xPub = infos.masterXPub
+    return instance
+  }
+
+  isConnected(): boolean {
+    return this._isConnected
+  }
+
+  async connect(): Promise<void> {
+    await this.marina.enable()
+
+    if (await fujiAccountMissing(this.marina)) {
+      openModal(ModalIds.Account)
+      await createFujiAccount(this.marina)
+      closeModal(ModalIds.Account)
+    }
+
+    this._isConnected = true
+  }
+
+  async disconnect(): Promise<void> {
+    await this.marina.disable()
+    this._isConnected = false
+  }
+
+  getMainAccountXPubKey(): string {
+    return this._xPub ?? ''
+  }
+
+  async getBalances(): Promise<Balance[]> {
+    if (!this._isConnected) return []
+    const network = await this.getNetwork()
+    const mainAccountIDs = await getMainAccountIDs(network)
+    return this.marina.getBalances(mainAccountIDs)
+  }
+
+  getCoins(): Promise<Utxo[]> {
+    return this.marina.getCoins()
+  }
+
+  getTransactions(): Promise<Transaction[]> {
+    return this.marina.getTransactions()
+  }
+
+  getNetwork(): Promise<NetworkString> {
+    return this.marina.getNetwork()
+  }
+
+  signPset(psetBase64: string): Promise<string> {
+    return this.marina.signTransaction(psetBase64)
+  }
+
+  async getNextAddress(): Promise<Address> {
+    const network = await this.getNetwork()
+    const account = network === 'liquid' ? MarinaWallet.MainAccountID : MarinaWallet.TestnetMainAccountID
+    await this.marina.useAccount(account)
+    return this.marina.getNextAddress()
+  }
+
+  async getNextChangeAddress(): Promise<Address> {
+    const network = await this.getNetwork()
+    const account = network === 'liquid' ? MarinaWallet.MainAccountID : MarinaWallet.TestnetMainAccountID
+    await this.marina.useAccount(account)
+    return this.marina.getNextChangeAddress()
+  }
+
+  async getNextCovenantAddress(
+    artifact: Artifact,
+    params: Omit<ContractParams, 'borrowerPublicKey'>,
+  ): Promise<Address> {
+  await this.marina.useAccount(MarinaWallet.FujiAccountID)
+  const covenantAddress = await this.marina.getNextAddress({
+    artifact,
+    args: params,
+  })
+  return covenantAddress
+  }
+
+  onSpentUtxo(callback: (utxo: Utxo) => void): () => void {
+    const id = this.marina.on('SPENT_UTXO', callback)
+    return () => this.marina.off(id)
+  }
+
+  onNewUtxo(callback: (utxo: Utxo) => void): () => void {
+    const id = this.marina.on('NEW_UTXO', callback)
+    return () => this.marina.off(id)
+  }
+
+  onNetworkChange(callback: (network: NetworkString) => void): () => void {
+    const id = this.marina.on('NETWORK', callback)
+    return () => this.marina.off(id)
+  }
 }
 
 export function getAssetBalance(asset: Asset, balances: Balance[]): number {
@@ -38,153 +134,23 @@ export function getAssetBalance(asset: Asset, balances: Balance[]): number {
   return found.amount
 }
 
-export async function getMarinaProvider(): Promise<MarinaProvider | undefined> {
-  if (typeof window === 'undefined') return undefined
-  try {
-    return await detectProvider('marina')
-  } catch {
-    console.info('Please install Marina extension')
-    return undefined
-  }
-}
-
-export async function getNetwork(): Promise<NetworkString> {
-  const marina = await getMarinaProvider()
-  if (marina) return await marina.getNetwork()
-  return defaultNetwork
-}
-
-// always returns MainAccountID xpubkey
-// if you want the testnet xpubkey, use marina.getAccountInfo(marinaMainTestnetAccountID)
-export async function getMainAccountXPubKey(): Promise<string> {
-  const marina = await getMarinaProvider()
-  if (marina) {
-    const info = await marina.getAccountInfo(marinaMainAccountID)
-    return info.masterXPub
-  }
-  return ''
-}
-
-async function getCoins(accountID: string): Promise<Utxo[]> {
-  const marina = await getMarinaProvider()
-  if (!marina) return []
-  return await marina.getCoins([accountID])
-}
-
-export async function getMainAccountCoins(): Promise<Utxo[]> {
-  const marina = await getMarinaProvider()
-  if (!marina) return []
-  const mainAccountIDs = await getMainAccountIDs()
-  return await marina.getCoins(mainAccountIDs)
-}
-
-export async function getFujiCoins(): Promise<Utxo[]> {
-  return getCoins(marinaFujiAccountID)
-}
-
-export async function getTransactions(): Promise<Transaction[]> {
-  const marina = await getMarinaProvider()
-  if (!marina) return []
-  return marina.getTransactions()
-}
-
-export async function signTx(partialTransaction: string) {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
-  // sign transaction
-  const ptx = Pset.fromBase64(partialTransaction)
-  return await marina.signTransaction(ptx.toBase64())
-}
-
 export async function createFujiAccount(marina: MarinaProvider) {
-  await marina.createAccount(marinaFujiAccountID, AccountType.Ionio)
+  await marina.createAccount(MarinaWallet.FujiAccountID, AccountType.Ionio)
 }
 
 export async function fujiAccountMissing(
   marina: MarinaProvider,
 ): Promise<boolean> {
   const accountIDs = await marina.getAccountsIDs()
-  return !accountIDs.includes(marinaFujiAccountID)
+  return !accountIDs.includes(MarinaWallet.FujiAccountID)
 }
 
-export async function getNextAddress(accountID?: AccountID) {
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('No Marina provider found')
-  const mainAccountIDs = await getMainAccountIDs(false)
-  const id = accountID ?? mainAccountIDs[0]
-  await marina.useAccount(id)
-  const address = await marina.getNextAddress()
-  if (id !== mainAccountIDs[0]) await marina.useAccount(mainAccountIDs[0])
-  return address
-}
-
-export async function getNextChangeAddress(accountID?: AccountID) {
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('No Marina provider found')
-  const mainAccountIDs = await getMainAccountIDs(false)
-  const id = accountID ?? mainAccountIDs[0]
-  await marina.useAccount(id)
-  const address = await marina.getNextChangeAddress()
-  if (id !== mainAccountIDs[0]) await marina.useAccount(mainAccountIDs[0])
-  return address
-}
-
-export async function getNextCovenantAddress(
-  artifact: Artifact,
-  contractParams: Omit<ContractParams, 'borrowerPublicKey'>,
-) {
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('No Marina provider found')
-  await marina.useAccount(marinaFujiAccountID)
-  const covenantAddress = await marina.getNextAddress({
-    artifact,
-    args: contractParams,
-  })
-  await marina.useAccount((await getMainAccountIDs(false))[0])
-  return covenantAddress
-}
-
-export async function getPublicKey(covenantAddress: Address): Promise<Buffer> {
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('No Marina provider found')
-  const { masterXPub } = await marina.getAccountInfo(
-    covenantAddress.accountName,
-  )
-  if (!covenantAddress.derivationPath)
-    throw new Error(
-      'unable to find derivation path used by Marina to generate borrowerPublicKey',
-    )
-  return BIP32Factory(ecc)
-    .fromBase58(masterXPub)
-    .derivePath(covenantAddress.derivationPath.replace('m/', '')).publicKey // remove m/ from path
-}
-
-export async function getMainAccountIDs(
+async function getMainAccountIDs(
+  network: NetworkString,
   withLegacy = true,
 ): Promise<AccountID[]> {
-  const network = await getNetwork()
-  const mainAccounts = withLegacy ? [marinaLegacyMainAccountID] : []
+  const mainAccounts = withLegacy ? [MarinaWallet.LegacyMainAccountID] : []
   return mainAccounts.concat(
-    network === 'liquid' ? marinaMainAccountID : marinaTestnetMainAccountID,
+    network === 'liquid' ? MarinaWallet.MainAccountID : MarinaWallet.TestnetMainAccountID,
   )
-}
-
-export async function broadcastTx(rawTxHex: string): Promise<SentTransaction> {
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('No Marina provider found')
-  return marina.broadcastTransaction(rawTxHex)
-}
-
-export async function getContractsFromMarina(
-  assets: Asset[],
-): Promise<Contract[]> {
-  const contracts: Contract[] = []
-  const coins = await getFujiCoins()
-  for (const coin of coins) {
-    const contract = await coinToContract(coin, assets)
-    if (contract) contracts.push(contract)
-  }
-  return contracts
 }

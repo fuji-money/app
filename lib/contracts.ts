@@ -1,7 +1,6 @@
 import { ActivityType, Asset, Contract, ContractState } from './types'
 import Decimal from 'decimal.js'
 import { expirationSeconds, safeBorrowMargin } from './constants'
-import { getNetwork, getMainAccountXPubKey } from './marina'
 import {
   updateContractOnStorage,
   addContractToStorage,
@@ -14,6 +13,7 @@ import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
 import { Artifact } from '@ionio-lang/ionio'
+import { Wallet } from './wallet'
 
 // checks if a given contract was already spent
 // 1. fetch the contract funding transaction
@@ -62,19 +62,18 @@ export async function checkContractOutspend(
 }
 
 // transform a fuji coin into a contract
-export const coinToContract = async (
+export function coinToContract(
+  network: NetworkString,
   coin: Utxo,
-  assets: Asset[],
-): Promise<Contract | undefined> => {
+  synthetic: Asset,
+  collateral: Asset,
+): Contract | undefined {
   if (
     coin.scriptDetails &&
     isIonioScriptDetails(coin.scriptDetails) &&
     coin.blindingData
   ) {
     const params = coin.scriptDetails.params
-    const collateral = assets.find((a) => a.id === coin.blindingData?.asset)
-    const synthetic = assets.find((a) => a.id === (params[0] as string))
-    if (!collateral || !synthetic) return
     const borrowAsset = params[0] as string
     const borrowAmount = params[1] as number
     const treasuryPublicKey = params[2] as string
@@ -103,7 +102,7 @@ export const coinToContract = async (
       },
       createdAt,
       expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
-      network: await getNetwork(),
+      network,
       oracles: [oraclePublicKey],
       priceLevel: hex64LEToNumber(priceLevel),
       synthetic: {
@@ -203,11 +202,11 @@ export const getContractPriceLevel = (
 
 // get all contacts belonging to this xpub and network
 export async function getContracts(
+  xPubKey: string, // xpub of the wallet (wallet ID)
   assets: Asset[],
   network: NetworkString,
 ): Promise<Contract[]> {
   if (typeof window === 'undefined' || assets.length === 0) return []
-  const xPubKey = await getMainAccountXPubKey()
   const contracts: Contract[] = []
   for (const contract of getMyContractsFromStorage(network, xPubKey)) {
     const collateral = assets.find((a) => a.id === contract.collateral.id)
@@ -231,11 +230,20 @@ export async function getContracts(
 // get contract with txid
 export async function getContract(
   txid: string,
-  assets: Asset[],
-  network: NetworkString,
+  wallet: Wallet,
+  synthetic: Asset,
+  collateral: Asset,
 ): Promise<Contract | undefined> {
-  const contracts = await getContracts(assets, network)
-  return contracts.find((c) => c.txid === txid)
+  const coins = await wallet.getCoins()
+  const network = await wallet.getNetwork()
+  const coin = coins.find((c) => c.txid === txid)  
+  if (!coin) return 
+  return coinToContract(
+    network,
+    coin,
+    synthetic,
+    collateral,
+  )
 }
 
 // add contract to storage and create activity

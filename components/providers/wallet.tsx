@@ -1,142 +1,112 @@
-import { createContext, ReactNode, useEffect, useRef, useState } from 'react'
 import {
-  getBalances,
-  getMarinaProvider,
-  getNetwork,
-  getMainAccountXPubKey,
-} from 'lib/marina'
-import { Balance, MarinaProvider, NetworkString } from 'marina-provider'
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { defaultNetwork } from 'lib/constants'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet, WalletType } from 'lib/wallet'
+import { MarinaWallet } from 'lib/marina'
+import { NetworkString } from 'marina-provider'
 
 interface WalletContextProps {
-  balances: Balance[]
-  chainSource: ChainSource
-  connected: boolean
-  marina: MarinaProvider | undefined
-  network: NetworkString | undefined
-  setConnected: (arg0: boolean) => void
-  updateBalances: () => void
-  xPubKey: string
+  wallets: Wallet[]
+  chainSource?: ChainSource
+  network: NetworkString
+
+  wallet?: Wallet;
+  selectWallet(type: WalletType): Promise<void>
+}
+
+function walletFactory(type: WalletType): Promise<Wallet | undefined> {
+  switch (type) {
+    case WalletType.Marina:
+      return MarinaWallet.detect()
+    case WalletType.Alby:
+      throw new Error('Alby wallet not implemented')
+    default:
+      throw new Error('Unknown wallet type')
+  }
+}
+
+async function detectWallets(): Promise<Wallet[]> {
+  const supportedWallets = [WalletType.Marina]
+  const walletsPromises = await Promise.allSettled(
+    supportedWallets.map((type) => walletFactory(type)),
+  )
+
+  const wallets = []
+  for (const walletPromise of walletsPromises) {
+    if (walletPromise.status === 'fulfilled' && walletPromise.value) {
+      wallets.push(walletPromise.value)
+    }
+  }
+  return wallets
 }
 
 export const WalletContext = createContext<WalletContextProps>({
-  balances: [],
-  chainSource: new WsElectrumChainSource(defaultNetwork),
-  connected: false,
-  marina: undefined,
-  network: undefined,
-  setConnected: () => {},
-  updateBalances: () => {},
-  xPubKey: '',
+  wallets: [],
+  wallet: undefined,
+  selectWallet: () => Promise.resolve(),
+  network: defaultNetwork,
 })
 
 interface WalletProviderProps {
   children: ReactNode
 }
+
 export const WalletProvider = ({ children }: WalletProviderProps) => {
-  const [balances, setBalances] = useState<Balance[]>([])
-  const [chainSource, setChainSource] = useState<ChainSource>(
-    new WsElectrumChainSource(defaultNetwork),
-  )
-  const [connected, setConnected] = useState(false)
-  const [marina, setMarina] = useState<MarinaProvider>()
-  const [network, setNetwork] = useState<NetworkString>()
-  const [xPubKey, setXPubKey] = useState('')
+  const [wallets, setWallets] = useState<Wallet[]>([])
+  const [wallet, setWallet] = useState<Wallet | undefined>(undefined)
+  const [closeNetworkListener, setCloseNetworkLst] = useState<() => void>()
+  const [chainSource, setChainSource] = useState<{
+    network: string
+    src: ChainSource
+  }>()
 
-  const updateBalances = async () => setBalances(await getBalances())
-  const updateNetwork = async () => setNetwork(await getNetwork())
-  const updateXPubKey = async () => setXPubKey(await getMainAccountXPubKey())
+  const selectWallet = useCallback(
+    async (type: WalletType) => {
+      const wallet = wallets.find((wallet) => wallet.type === type)
+      if (!wallet) throw new Error(`Wallet ${type} not found`)
+      setWallet(wallet)
+      // close previous listeners
+      closeNetworkListener?.() 
+      chainSource?.src.close() // close chain source
 
-  // get marina provider
-  useEffect(() => {
-    getMarinaProvider().then((marinaProvider) => {
-      setMarina(marinaProvider)
-      updateNetwork()
-    })
-  }, [])
-
-  // update connected state
-  useEffect(() => {
-    if (marina) {
-      marina.isEnabled().then((payload) => setConnected(payload))
-    } else {
-      setConnected(false)
-    }
-  }, [marina])
-
-  // add event listeners for enable and disable (aka connected)
-  useEffect(() => {
-    if (marina && network) {
-      const onDisabledId = marina.on('DISABLED', ({ data }) => {
-        if (data.network === network) setConnected(false)
-      })
-      const onEnabledId = marina.on('ENABLED', ({ data }) => {
-        if (data.network === network) setConnected(true)
-      })
-      return () => {
-        marina.off(onDisabledId)
-        marina.off(onEnabledId)
-      }
-    }
-  }, [marina, network])
-
-  // update network and add event listener
-  useEffect(() => {
-    if (connected && marina) {
-      const id = marina.on('NETWORK', updateNetwork)
-      return () => marina.off(id)
-    }
-  }, [connected, marina])
-
-  // when network changes, connect to respective electrum server
-  useEffect(() => {
-    if (network && chainSource.network !== network) {
-      chainSource
-        .close()
-        .then(() => {
-          setChainSource(new WsElectrumChainSource(network))
-        })
-        .catch(console.error)
-    }
-  }, [chainSource, network])
-
-  // update balances and add event listener
-  useEffect(() => {
-    // marina can take up to 10 seconds to update balances
-    // so web update balances now and on 10 seconds in the future
-    const updateNowAndLater = () => {
-      updateBalances()
-      setTimeout(updateBalances, 10_000)
-    }
-    // add event listeners
-    if (connected && marina) {
-      marina.isEnabled().then((enabled) => {
-        if (enabled) {
-          updateBalances()
-          updateXPubKey()
-          const onSpentUtxoId = marina.on('SPENT_UTXO', updateNowAndLater)
-          const onNewUtxoId = marina.on('NEW_UTXO', updateNowAndLater)
-          return () => {
-            marina.off(onSpentUtxoId)
-            marina.off(onNewUtxoId)
-          }
+      const closeOnNetworkChange = wallet.onNetworkChange((network) => {
+        if (network !== chainSource?.network) {
+          closeNetworkListener?.()
+          chainSource?.src.close().catch(console.error)
+          const src = new WsElectrumChainSource(network)
+          setChainSource({
+            network,
+            src,
+          })
         }
       })
-    }
-  }, [connected, marina, network])
+      setCloseNetworkLst(() => closeOnNetworkChange)
+    },
+    [wallets, chainSource, closeNetworkListener],
+  )
+
+  useEffect(() => {
+    detectWallets()
+      .then(setWallets)
+      .then(() => selectWallet(WalletType.Marina)) // select marina by default
+      .catch(console.error)
+  }, [selectWallet])
 
   return (
     <WalletContext.Provider
       value={{
-        balances,
-        chainSource,
-        connected,
-        marina,
-        network,
-        setConnected,
-        updateBalances,
-        xPubKey,
+        wallets,
+        chainSource: chainSource?.src,
+        network: chainSource?.network as NetworkString ?? defaultNetwork,
+        wallet,
+        selectWallet,
       }}
     >
       {children}

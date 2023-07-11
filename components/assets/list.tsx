@@ -4,9 +4,14 @@ import SomeError from 'components/layout/error'
 import AssetRow from './row'
 import Spinner from 'components/spinner'
 import { ConfigContext } from 'components/providers/config'
+import { WalletContext } from 'components/providers/wallet'
+import { useSelectBalances } from 'lib/hooks'
+import { getAssetBalance } from 'lib/marina'
 
 const AssetsList = () => {
   const { config, loading } = useContext(ConfigContext)
+  const { wallet } = useContext(WalletContext)
+  const balances = useSelectBalances(wallet)
 
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
 
@@ -23,7 +28,11 @@ const AssetsList = () => {
     <div className="assets-list">
       {filteredAssets &&
         filteredAssets.map((asset: Asset, index: number) => (
-          <AssetRow key={index} asset={asset} />
+          <AssetRow
+            key={index}
+            asset={asset}
+            balance={getAssetBalance(asset, balances)}
+          />
         ))}
     </div>
   )

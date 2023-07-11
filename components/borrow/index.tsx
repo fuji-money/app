@@ -1,4 +1,4 @@
-import { Contract, Offer, Oracle } from 'lib/types'
+import { Contract, Offer } from 'lib/types'
 import BorrowForm from './form'
 import { useContext, useEffect, useState } from 'react'
 import BorrowInfo from './info'
@@ -19,7 +19,7 @@ interface BorrowProps {
 }
 
 const Borrow = ({ offer }: BorrowProps) => {
-  const { network, xPubKey } = useContext(WalletContext)
+  const { network, wallet, wallets } = useContext(WalletContext)
   const { newContract } = useContext(ContractsContext)
 
   const { collateral, oracles, synthetic } = offer
@@ -30,6 +30,8 @@ const Borrow = ({ offer }: BorrowProps) => {
   const minRatio = synthetic.minCollateralRatio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer, startingRatio)
 
+  if (!wallet) throw new Error('Wallet not found')
+
   const [contract, setContract] = useState<Contract>({
     collateral,
     expirationDate: getContractExpirationDate(),
@@ -37,7 +39,7 @@ const Borrow = ({ offer }: BorrowProps) => {
     oracles,
     synthetic,
     priceLevel,
-    xPubKey,
+    xPubKey: wallet.getMainAccountXPubKey()
   })
 
   useEffect(() => {

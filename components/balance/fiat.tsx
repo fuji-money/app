@@ -5,9 +5,11 @@ import { prettyNumber, prettyPercentage } from 'lib/pretty'
 import { getAssetBalance } from 'lib/marina'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
+import { useSelectBalances } from 'lib/hooks'
 
 const BalanceInFiat = () => {
-  const { balances, connected } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
+  const balances = useSelectBalances(wallet)
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
@@ -28,7 +30,7 @@ const BalanceInFiat = () => {
     )
   }, [assets, balances])
 
-  if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
+  if (!wallet?._isConnected()) return <p>🔌 Connect your wallet to view your balance</p>
   if (loading) return <Spinner />
 
   return (

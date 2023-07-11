@@ -6,13 +6,13 @@ import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 const BalanceTable = () => {
-  const { connected } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
   const { assets } = config
 
-  if (!connected) return <p>🔌 Connect your wallet to view your balance</p>
+  if (!wallet?._isConnected()) return <p>🔌 Connect your wallet to view your balance</p>
   if (loading) return <Spinner />
 
   return (

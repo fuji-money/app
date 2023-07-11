@@ -12,7 +12,7 @@ interface ContractsListProps {
 }
 
 const ContractsList = ({ showActive }: ContractsListProps) => {
-  const { connected } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
   const { contracts, loading } = useContext(ContractsContext)
 
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([])
@@ -25,7 +25,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
     )
   }, [contracts, showActive])
 
-  if (!connected)
+  if (!wallet?._isConnected())
     return (
       <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
     )

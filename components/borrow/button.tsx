@@ -2,6 +2,7 @@ import { ConfigContext } from 'components/providers/config'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { feeAmount, minDustLimit } from 'lib/constants'
+import { useSelectBalances } from 'lib/hooks'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { LightningEnabledTasks, Tasks } from 'lib/tasks'
@@ -17,7 +18,8 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
-  const { balances, connected } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
+  const balances = useSelectBalances(wallet)
   const { config } = useContext(ConfigContext)
   const { setNewContract } = useContext(ContractsContext)
 
@@ -33,7 +35,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     if (!asset) return
     const funds = getAssetBalance(asset, balances)
     const needed = contract.collateral.quantity
-    const enoughFundsOnMarina = connected && funds > needed
+    const enoughFundsOnMarina = !!wallet && wallet.isConnected() && funds > needed
     if (LightningEnabledTasks[Tasks.Borrow]) {
       const outOfBounds = swapDepositAmountOutOfBounds(needed)
       setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
@@ -58,7 +60,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   }, [contract.synthetic.quantity])
 
   const enabled =
-    connected &&
+    wallet?.isConnected() &&
     enoughFunds &&
     collateral.quantity > 0 &&
     collateral.value > 0 &&

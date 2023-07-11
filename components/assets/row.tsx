@@ -3,19 +3,15 @@ import Image from 'next/image'
 import { Asset } from 'lib/types'
 import FilterButton from 'components/buttons/filter'
 import TradeButton from 'components/buttons/trade'
-import { useContext } from 'react'
-import { WalletContext } from 'components/providers/wallet'
-import { getAssetBalance } from 'lib/marina'
 import ProgressBar from 'components/progress'
 import LeftToMint from 'components/progress/leftToMint'
 
 interface AssetRowProps {
   asset: Asset
+  balance: number
 }
 
-const AssetRow = ({ asset }: AssetRowProps) => {
-  const { balances } = useContext(WalletContext)
-  const balance = getAssetBalance(asset, balances)
+const AssetRow = ({ asset, balance }: AssetRowProps) => {
   const disabled = !(asset.isAvailable && asset.id)
 
   return (

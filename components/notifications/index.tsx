@@ -16,6 +16,7 @@ import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
+import { useSelectBalances } from 'lib/hooks'
 
 interface NotificationsProps {
   contract: Contract
@@ -30,7 +31,8 @@ const Notifications = ({
   ratio,
   topup,
 }: NotificationsProps) => {
-  const { balances, connected } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
+  const balances = useSelectBalances(wallet)
   const { config } = useContext(ConfigContext)
 
   const [belowDustLimit, setBelowDustLimit] = useState(false)
@@ -52,7 +54,7 @@ const Notifications = ({
     const asset = assets.find((a) => a.ticker === collateral.ticker)
     if (!asset) return
     const balance = getAssetBalance(asset, balances)
-    setNotEnoughFunds(connected && spendQuantity > balance)
+    setNotEnoughFunds(!!wallet?.isConnected() && spendQuantity > balance)
     setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
     setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,7 +98,7 @@ const Notifications = ({
       ) : (
         <>{notEnoughFunds && <NotEnoughFundsNotification oob={true} />}</>
       )}
-      {!connected && <ConnectWalletNotification />}
+      {!wallet?.isConnected() && <ConnectWalletNotification />}
       {belowDustLimit && <BelowDustLimitNotification />}
       {collateralTooLow && <LowCollateralAmountNotification />}
       {notEnoughOracles && <NotEnoughOraclesNotification />}

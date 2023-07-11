@@ -1,58 +1,47 @@
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
-import { createFujiAccount, fujiAccountMissing } from 'lib/marina'
-import { closeModal, openModal } from 'lib/utils'
-import AccountModal from 'components/modals/account'
-import WalletsModal from 'components/modals/wallets'
-import { ModalIds } from 'components/modals/modal'
+import { WalletType } from 'lib/wallet'
+import DropDown from 'components/dropdown'
 
 const ConnectButton = () => {
-  const { connected, marina, setConnected } = useContext(WalletContext)
+  const { wallet, selectWallet, wallets } = useContext(WalletContext)
 
-  const toggle = async () => {
-    if (!marina) return
-    if (connected) {
-      await marina.disable()
-      setConnected(false)
-    } else {
-      openModal(ModalIds.Wallets)
+  const toggleWallet = async (type: WalletType) => {
+    if (!type) return
+    // disconnect if already connected
+    if (wallet?.type === type) {
+      if (wallet?.isConnected()) {
+        await wallet.disconnect()
+      }
+      return
     }
-  }
 
-  const handleWalletChoice = async () => {
-    closeModal(ModalIds.Wallets)
-    if (!marina) return
-    if (!(await marina.isEnabled())) await marina.enable()
-    setConnected(true)
-    if (await fujiAccountMissing(marina)) {
-      openModal(ModalIds.Account)
-      await createFujiAccount(marina)
-      closeModal(ModalIds.Account)
-    }
+    // select the new wallet and connect it
+    await selectWallet(type)
+    await wallet?.connect()
   }
 
   return (
     <>
-      {marina && (
+      {wallets?.length && (
         <>
-          <button
-            onClick={toggle}
-            className="button is-primary is-solid-pink my-auto mr-4"
-          >
-            {connected ? 'Disconnect' : 'Connect wallet'}
-          </button>
-          <AccountModal />
-          <WalletsModal handleWalletChoice={handleWalletChoice} />
+          <DropDown 
+            title={wallet?.isConnected() ? wallet?.type : 'Connect'}
+            options={wallets.map((w) => ({
+              value: wallet?.type === w.type ? 'Disconnect ' + wallet?.type  : w.type,
+              onClick: () => toggleWallet(w.type),
+            }))}
+          />
         </>
       )}
-      {!marina && (
+      {!wallets.length && (
         <a
           href="https://vulpem.com/marina"
           target="_blank"
           rel="noreferrer"
           className="button is-primary my-auto"
         >
-          Install Marina
+          Install Marina or Alby
         </a>
       )}
     </>
