@@ -15,11 +15,11 @@ import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { Extractor, Finalizer } from 'liquidjs-lib'
-import { broadcastTx, getNextAddress, getPublicKey } from 'lib/marina'
 import { ConfigContext } from 'components/providers/config'
+import { WsElectrumChainSource } from 'lib/chainsource.port'
 
 const ContractRedeemLightning: NextPage = () => {
-  const { marina, network, updateBalances } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
   const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -39,11 +39,13 @@ const ContractRedeemLightning: NextPage = () => {
   const quantity = newContract.collateral.quantity
 
   const proceedWithRedeem = async (swapAddress?: string) => {
-    if (!marina || !network) return
+    if (!wallet) return
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
+    const network = await wallet.getNetwork()
     const tx = await prepareRedeemTx(
+      wallet,
       artifact,
       newContract,
       network,
@@ -66,7 +68,9 @@ const ContractRedeemLightning: NextPage = () => {
 
     // extract and broadcast transaction
     const rawHex = Extractor.extract(finalizer.pset).toHex()
-    const { txid } = await broadcastTx(rawHex)
+    const chainSource = new WsElectrumChainSource(network)
+    const txid = await chainSource.broadcastTransaction(rawHex)
+    await chainSource.close().catch(console.error)
     if (!txid) throw new Error('No txid returned')
 
     markContractRedeemed(newContract)
@@ -77,16 +81,15 @@ const ContractRedeemLightning: NextPage = () => {
   }
 
   const handleInvoice = async (invoice?: string): Promise<void> => {
-    if (!marina || !network) return
+    if (!wallet) return
     if (!invoice || typeof invoice !== 'string')
       return openModal(ModalIds.Invoice)
     closeModal(ModalIds.Invoice)
     openModal(ModalIds.Redeem)
     try {
       setStage(ModalStages.NeedsAddress)
-      const refundPublicKey = (
-        await getPublicKey(await getNextAddress())
-      ).toString('hex')
+      const network = await wallet.getNetwork()
+      const refundPublicKey = await wallet.getNewPublicKey()
       // create swap with Boltz.exchange
       const boltzSwap = await createSubmarineSwap(
         invoice,
@@ -119,7 +122,7 @@ const ContractRedeemLightning: NextPage = () => {
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleInvoice, updateBalances)}
+        retry={retry(setData, setResult, handleInvoice)}
         stage={stage}
         task={Tasks.Redeem}
       />

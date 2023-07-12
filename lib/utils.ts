@@ -95,12 +95,10 @@ export const retry = (
   setData: (arg0: string) => void,
   setResult: (arg0: string) => void,
   handler = () => {},
-  updateBalances = () => {},
 ) => {
   return () => {
     setData('')
     setResult('')
-    updateBalances()
     handler()
   }
 }

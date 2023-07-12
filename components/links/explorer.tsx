@@ -1,14 +1,10 @@
-import { WalletContext } from 'components/providers/wallet'
-import { useContext } from 'react'
-
 interface ExplorerLinkProps {
   extraClass?: string
   txid: string
+  network: string
 }
 
-const ExplorerLink = ({ extraClass, txid }: ExplorerLinkProps) => {
-  const { network } = useContext(WalletContext)
-
+const ExplorerLink = ({ extraClass, txid, network }: ExplorerLinkProps) => {
   const href =
     network === 'testnet'
       ? `https://blockstream.info/liquidtestnet/tx/${txid}`

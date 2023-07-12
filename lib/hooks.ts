@@ -10,8 +10,10 @@ export const useSelectBalances = (wallet?: Wallet) => {
       setBalances([])
       return
     }
+
     const getBalances = async () => {
       const balances = await wallet.getBalances()
+      console.log('balances', balances)
       setBalances(balances)
     }
 

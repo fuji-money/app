@@ -31,19 +31,24 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { assets } = config
 
   useEffect(() => {
+    if (balances.length === 0) return
     const asset = assets.find((a) => a.ticker === contract.collateral.ticker)
     if (!asset) return
     const funds = getAssetBalance(asset, balances)
     const needed = contract.collateral.quantity
-    const enoughFundsOnMarina = !!wallet && wallet.isConnected() && funds > needed
+    const enoughFundsOnMarina = funds > needed
     if (LightningEnabledTasks[Tasks.Borrow]) {
       const outOfBounds = swapDepositAmountOutOfBounds(needed)
       setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
     } else {
       setEnoughFunds(enoughFundsOnMarina)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [
+    assets,
+    balances,
+    contract.collateral.quantity,
+    contract.collateral.ticker,
+  ])
 
   const handleClick = () => {
     setNewContract(contract)
@@ -59,8 +64,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contract.synthetic.quantity])
 
-  const enabled =
-    wallet?.isConnected() &&
+  const enabled = () =>
     enoughFunds &&
     collateral.quantity > 0 &&
     collateral.value > 0 &&
@@ -76,7 +80,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     <div className="has-text-centered">
       <button
         className="button is-primary is-cta"
-        disabled={!enabled}
+        disabled={!enabled()}
         onClick={handleClick}
       >
         Proceed to deposit

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ExplorerLink from 'components/links/explorer'
 import TwitterLink from 'components/links/twitter'
-import { twitterMessage } from 'lib/constants'
+import { defaultNetwork, twitterMessage } from 'lib/constants'
 import { closeAllModals } from 'lib/utils'
 import { Contract, Outcome } from 'lib/types'
 import { Tasks } from 'lib/tasks'
@@ -55,7 +55,7 @@ const Success = ({ contract, task, txid }: SuccessProps) => {
         />
       </p>
       <h2 className="mt-4 mb-4">Success</h2>
-      <ExplorerLink txid={txid} />
+      <ExplorerLink txid={txid} network={contract.network ?? defaultNetwork} />
       &nbsp;
       <TwitterLink message={twitterMessage} />
       <p className="has-text-centered mt-5">

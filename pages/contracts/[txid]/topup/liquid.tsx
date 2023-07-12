@@ -25,12 +25,11 @@ import NotAllowed from 'components/messages/notAllowed'
 import { selectCoins } from 'lib/selection'
 import { Pset } from 'liquidjs-lib'
 import { finalizeTx } from 'lib/transaction'
-import { broadcastTx, getMainAccountCoins } from 'lib/marina'
 import { ConfigContext } from 'components/providers/config'
+import { WsElectrumChainSource } from 'lib/chainsource.port'
 
 const ContractTopupLiquid: NextPage = () => {
-  const { chainSource, marina, network, updateBalances } =
-    useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
   const { artifact, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -61,13 +60,13 @@ const ContractTopupLiquid: NextPage = () => {
     newContract.collateral.quantity - oldContract.collateral.quantity
 
   const handleMarina = async (): Promise<void> => {
-    if (!marina || !network) return
+    if (!wallet) return
     openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
-      const utxos = await getMainAccountCoins()
+      const utxos = await wallet.getCoins()
       // validate we have necessary utxos
-      const collateralUtxos = selectCoins(
+      const { selection: collateralUtxos } = selectCoins(
         utxos,
         newContract.collateral.id,
         topupAmount + feeAmount,
@@ -75,8 +74,11 @@ const ContractTopupLiquid: NextPage = () => {
       if (collateralUtxos.length === 0)
         throw new Error('Not enough collateral funds')
 
+      const network = await wallet.getNetwork()
+
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(
+        wallet,
         artifact,
         newContract,
         oldContract,
@@ -98,7 +100,7 @@ const ContractTopupLiquid: NextPage = () => {
 
       // user now must sign transaction on marina
       setStage(ModalStages.NeedsConfirmation)
-      const base64 = await marina.signTransaction(partialTransaction)
+      const base64 = await wallet.signPset(partialTransaction)
       const ptx = Pset.fromBase64(base64)
 
       // tell user we are now on the final stage of the process
@@ -111,7 +113,9 @@ const ContractTopupLiquid: NextPage = () => {
       const rawHex = finalizeTx(ptx)
 
       // broadcast transaction
-      const { txid } = await broadcastTx(rawHex)
+      const chainSource = new WsElectrumChainSource(network)
+      const txid = await chainSource.broadcastTransaction(rawHex)
+      await chainSource.close().catch(() => null)
       newContract.txid = txid
       if (!newContract.txid) throw new Error('No txid returned')
 
@@ -164,7 +168,7 @@ const ContractTopupLiquid: NextPage = () => {
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleMarina, updateBalances)}
+        retry={retry(setData, setResult, handleMarina)}
         stage={stage}
         task={Tasks.Topup}
       />

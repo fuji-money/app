@@ -39,7 +39,7 @@ export const ConfigContext = createContext<ConfigContextProps>({
 })
 
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {
-  const { network } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
 
   const [artifact, setArtifact] = useState<Artifact>(emptyArtifact)
   const [config, setConfig] = useState<Config>(emptyConfig)
@@ -47,10 +47,12 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
 
   const reloadConfig = async () => {
     // return if network not defined
-    if (!network) {
+    if (!wallet) {
       setLoading(false)
       return
     }
+
+    const network = await wallet.getNetwork()
 
     // fetch config from factory
     const config: ConfigResponse = await fetchConfig(network)
@@ -90,9 +92,9 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (network) reloadConfig()
+    if (wallet) reloadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network])
+  }, [wallet])
 
   return (
     <ConfigContext.Provider value={{ artifact, config, loading, reloadConfig }}>

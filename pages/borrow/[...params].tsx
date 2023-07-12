@@ -24,7 +24,6 @@ import {
   prepareBorrowTx,
   PreparedBorrowTx,
 } from 'lib/covenant'
-import { broadcastTx, signTx } from 'lib/marina'
 import {
   createReverseSubmarineSwap,
   getInvoiceExpireDate,
@@ -53,10 +52,10 @@ import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
+import { WsElectrumChainSource } from 'lib/chainsource.port'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, network, updateBalances, xPubKey } =
-    useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
   const { artifact, config } = useContext(ConfigContext)
@@ -91,7 +90,9 @@ const BorrowParams: NextPage = () => {
 
   // make a swap via boltz.exchange
   const makeSwap = async (): Promise<ActiveSwap | undefined> => {
-    if (!network) return
+    if (!wallet) return
+    const network = await wallet.getNetwork()
+
     setStage(ModalStages.NeedsInvoice)
 
     // we will create a ephemeral key pair:
@@ -166,10 +167,14 @@ const BorrowParams: NextPage = () => {
     }, invoiceExpireDate - Date.now())
 
     // wait for tx to be available (mempool or confirmed)
+    const chainSource = new WsElectrumChainSource(network)
     await chainSource.waitForAddressReceivesTx(lockupAddress)
 
     // fetch utxos for address
     const utxos = await chainSource.listUnspents(lockupAddress)
+    // close ws connection
+    await Promise.allSettled([chainSource.close()])
+
     const u = utxos[0]
     const { asset, assetBlindingFactor, value, valueBlindingFactor } =
       await toBlindingData(Buffer.from(blindingKey, 'hex'), u.witnessUtxo)
@@ -199,7 +204,8 @@ const BorrowParams: NextPage = () => {
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
   ) => {
-    if (!network) return
+    if (!wallet) return
+    const network = await wallet.getNetwork()
 
     // change message to user
     setStage(ModalStages.NeedsFinishing)
@@ -207,7 +213,8 @@ const BorrowParams: NextPage = () => {
     // broadcast transaction
     const rawHex = finalizeTx(pset)
     console.log('rawHex', rawHex)
-    const { txid } = await broadcastTx(rawHex)
+    const chainSource = new WsElectrumChainSource(network)
+    const txid = await chainSource.broadcastTransaction(rawHex)
     newContract.txid = txid
     if (!newContract.txid) throw new Error('No txid returned')
 
@@ -221,7 +228,7 @@ const BorrowParams: NextPage = () => {
     // add contractParams to contract
     const { contractParams } = preparedTx
     newContract.contractParams = { ...contractParams }
-    newContract.xPubKey = xPubKey
+    newContract.xPubKey = wallet.getMainAccountXPubKey()
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
@@ -247,7 +254,8 @@ const BorrowParams: NextPage = () => {
   // handle payment through lightning invoice
   const handleInvoice = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract || !network) return
+    if (!newContract || !wallet) return
+    const network = await wallet.getNetwork()
 
     try {
       openModal(ModalIds.InvoiceDeposit)
@@ -266,6 +274,7 @@ const BorrowParams: NextPage = () => {
 
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
+        wallet,
         artifact,
         newContract,
         utxos,
@@ -316,10 +325,8 @@ const BorrowParams: NextPage = () => {
   }
 
   // handle payment through Alby
-  const handleAlby =
-    weblnProviderName === 'Alby' &&
-    network === 'liquid' &&
-    (weblnProvider.enabled || weblnCanEnable)
+  const handleInvoiceFromWebln =
+    weblnProviderName === 'Alby' && (weblnProvider.enabled || weblnCanEnable)
       ? async () => {
           setUseWebln(true)
           await handleInvoice()
@@ -327,9 +334,10 @@ const BorrowParams: NextPage = () => {
       : undefined
 
   // handle payment through marina browser extension
-  const handleMarina = async (): Promise<void> => {
+  const handleInvoiceFromLiquid = async (): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract || !network) return
+    if (!newContract || !wallet) return
+    const network = await wallet.getNetwork()
 
     try {
       openModal(ModalIds.MarinaDeposit)
@@ -337,6 +345,7 @@ const BorrowParams: NextPage = () => {
 
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(
+        wallet,
         artifact,
         newContract,
         oracles[0],
@@ -352,7 +361,7 @@ const BorrowParams: NextPage = () => {
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
-      const signedTransaction = await signTx(partialTransaction)
+      const signedTransaction = await wallet.signPset(partialTransaction)
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
@@ -411,14 +420,14 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLiquid
                 contract={newContract}
-                handleMarina={handleMarina}
+                handleMarina={handleInvoiceFromLiquid}
                 task={Tasks.Borrow}
               />
               <MarinaDepositModal
                 contract={newContract}
                 data={data}
                 result={result}
-                retry={retry(setData, setResult, handleMarina, updateBalances)}
+                retry={retry(setData, setResult, handleInvoiceFromLiquid)}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
@@ -430,7 +439,7 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLightning
                 contract={newContract}
-                handleAlby={handleAlby}
+                handleAlby={handleInvoiceFromWebln}
                 handleInvoice={handleInvoice}
                 task={Tasks.Borrow}
               />
@@ -439,7 +448,7 @@ const BorrowParams: NextPage = () => {
                 data={data}
                 invoice={invoice}
                 result={result}
-                retry={retry(setData, setResult, handleInvoice, updateBalances)}
+                retry={retry(setData, setResult, handleInvoice)}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}

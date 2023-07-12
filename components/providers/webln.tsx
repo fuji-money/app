@@ -31,7 +31,7 @@ interface WeblnProviderProps {
   children: ReactNode
 }
 export const WeblnProvider = ({ children }: WeblnProviderProps) => {
-  const { network } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
 
   const [weblnCanEnable, setWeblnCanEnable] = useState(true)
   const [weblnIsEnabled, setweblnIsEnabled] = useState(false)
@@ -61,7 +61,7 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
 
   // if webln support detected, asks user to enable it
   useEffect(() => {
-    if (window.webln && network === 'liquid') {
+    if (window.webln && wallet) {
       setWeblnProvider(window.webln)
       if (window.webln.enabled) setweblnIsEnabled(true)
       else if (!alreadyAsk.current) {
@@ -69,7 +69,7 @@ export const WeblnProvider = ({ children }: WeblnProviderProps) => {
         alreadyAsk.current = true
       }
     }
-  }, [network])
+  }, [wallet])
 
   return (
     <WeblnContext.Provider

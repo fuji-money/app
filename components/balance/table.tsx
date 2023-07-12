@@ -12,7 +12,8 @@ const BalanceTable = () => {
 
   const { assets } = config
 
-  if (!wallet?._isConnected()) return <p>🔌 Connect your wallet to view your balance</p>
+  if (!wallet?.isConnected())
+    return <p>🔌 Connect your wallet to view your balance</p>
   if (loading) return <Spinner />
 
   return (

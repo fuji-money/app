@@ -22,13 +22,18 @@ const ConnectButton = () => {
   }
 
   return (
-    <>
-      {wallets?.length && (
+    <div className="my-auto">
+      {!!wallets?.length && (
         <>
-          <DropDown 
-            title={wallet?.isConnected() ? wallet?.type : 'Connect'}
+          <DropDown
+            title={wallet?.isConnected() ? wallet?.type : 'Connect wallet'}
             options={wallets.map((w) => ({
-              value: wallet?.type === w.type ? 'Disconnect ' + wallet?.type  : w.type,
+              isActive: wallet?.type === w.type,
+              value: w.type,
+              icon:
+                w.type === WalletType.Marina
+                  ? '/images/wallets/marina.svg'
+                  : '/images/wallets/alby.svg',
               onClick: () => toggleWallet(w.type),
             }))}
           />
@@ -39,12 +44,12 @@ const ConnectButton = () => {
           href="https://vulpem.com/marina"
           target="_blank"
           rel="noreferrer"
-          className="button is-primary my-auto"
+          className="button is-primary"
         >
           Install Marina or Alby
         </a>
       )}
-    </>
+    </div>
   )
 }
 

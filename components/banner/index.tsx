@@ -1,8 +1,14 @@
 import { WalletContext } from 'components/providers/wallet'
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 
 export default function Banner() {
-  const { network } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
+
+  const [network, setNetwork] = useState('liquid')
+
+  useEffect(() => {
+    if (wallet) wallet.getNetwork().then((n) => setNetwork(n))
+  }, [wallet])
 
   if (network !== 'testnet') return <></>
 

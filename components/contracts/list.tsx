@@ -25,7 +25,7 @@ const ContractsList = ({ showActive }: ContractsListProps) => {
     )
   }, [contracts, showActive])
 
-  if (!wallet?._isConnected())
+  if (!wallet?.isConnected())
     return (
       <EmptyState>🔌 Connect your wallet to view your contracts</EmptyState>
     )

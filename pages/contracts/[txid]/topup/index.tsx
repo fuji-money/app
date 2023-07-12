@@ -10,9 +10,11 @@ import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import { WalletContext } from 'components/providers/wallet'
 import { ConfigContext } from 'components/providers/config'
+import { fUSDAssetId } from 'lib/constants'
+import { networks } from 'liquidjs-lib'
 
 const ContractTopup: NextPage = () => {
-  const { network } = useContext(WalletContext)
+  const { wallet } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { newContract, setNewContract, setOldContract } =
     useContext(ContractsContext)
@@ -20,20 +22,29 @@ const ContractTopup: NextPage = () => {
   const [isLoading, setIsLoading] = useState(true)
 
   const { assets } = config
+  const synthetic = assets.find((asset) => asset.id === fUSDAssetId)
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
-    if (txid && typeof txid === 'string' && network) {
-      getContract(txid, assets, network).then((contract) => {
+    const getAndSetOldContract = async () => {
+      if (!wallet) return
+      if (typeof txid !== 'string') return
+      const network = await wallet.getNetwork()
+      const collateral = assets.find(
+        (asset) => asset.id === networks[network].assetHash,
+      )
+      if (synthetic && collateral) {
+        const contract = await getContract(txid, wallet, synthetic, collateral)
         if (contract) {
           if (!newContract) setNewContract(contract)
           setOldContract(contract)
         }
-        setIsLoading(false)
-      })
+      }
     }
+
+    getAndSetOldContract().finally(() => setIsLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 

@@ -31,6 +31,7 @@ export type ChainSource = {
   fetchBlockHeader(height: number): Promise<BlockHeader>
   fetchTransactions(txids: string[]): Promise<{ txID: string; hex: string }[]>
   listUnspents(address: string): Promise<Unspent[]>
+  broadcastTransaction(txHex: string): Promise<string>
   close(): Promise<void>
 }
 
@@ -46,6 +47,7 @@ const electrumURL = (network: NetworkString): string => {
   }
 }
 
+const BroadcastTransaction = 'blockchain.transaction.broadcast' // returns txid
 const GetTransactionMethod = 'blockchain.transaction.get'
 const GetHistoryMethod = 'blockchain.scripthash.get_history'
 const GetBlockHeaderMethod = 'blockchain.block.header'
@@ -133,6 +135,10 @@ export class WsElectrumChainSource implements ChainSource {
         // this.unsubscribeScriptStatus(script).catch(() => resolve(false))
       }).catch(() => resolve(false))
     })
+  }
+
+  async broadcastTransaction(hex: string): Promise<string> {
+    return this.ws.request<string>(BroadcastTransaction, hex)
   }
 
   async close() {

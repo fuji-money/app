@@ -15,7 +15,7 @@ const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
   const { wallet } = useContext(WalletContext)
   const { activities, loading } = useContext(ContractsContext)
 
-  if (!wallet?._isConnected())
+  if (!wallet?.isConnected())
     return (
       <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
     )

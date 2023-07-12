@@ -236,14 +236,9 @@ export async function getContract(
 ): Promise<Contract | undefined> {
   const coins = await wallet.getCoins()
   const network = await wallet.getNetwork()
-  const coin = coins.find((c) => c.txid === txid)  
-  if (!coin) return 
-  return coinToContract(
-    network,
-    coin,
-    synthetic,
-    collateral,
-  )
+  const coin = coins.find((c) => c.txid === txid)
+  if (!coin) return
+  return coinToContract(network, coin, synthetic, collateral)
 }
 
 // add contract to storage and create activity
