@@ -27,9 +27,10 @@ import { Pset } from 'liquidjs-lib'
 import { finalizeTx } from 'lib/transaction'
 import { ConfigContext } from 'components/providers/config'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet } from 'lib/wallet'
 
 const ContractTopupLiquid: NextPage = () => {
-  const { wallet } = useContext(WalletContext)
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>()
   const { artifact, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -59,12 +60,12 @@ const ContractTopupLiquid: NextPage = () => {
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
 
-  const handleMarina = async (): Promise<void> => {
-    if (!wallet) return
+  const handleWallet = async (selected: Wallet): Promise<void> => {
+    setSelectedWallet(selected)
     openModal(ModalIds.MarinaDeposit)
     setStage(ModalStages.NeedsCoins)
     try {
-      const utxos = await wallet.getCoins()
+      const utxos = await selected.getCoins()
       // validate we have necessary utxos
       const { selection: collateralUtxos } = selectCoins(
         utxos,
@@ -74,11 +75,11 @@ const ContractTopupLiquid: NextPage = () => {
       if (collateralUtxos.length === 0)
         throw new Error('Not enough collateral funds')
 
-      const network = await wallet.getNetwork()
+      const network = await selected.getNetwork()
 
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(
-        wallet,
+        selected,
         artifact,
         newContract,
         oldContract,
@@ -100,7 +101,7 @@ const ContractTopupLiquid: NextPage = () => {
 
       // user now must sign transaction on marina
       setStage(ModalStages.NeedsConfirmation)
-      const base64 = await wallet.signPset(partialTransaction)
+      const base64 = await selected.signPset(partialTransaction)
       const ptx = Pset.fromBase64(base64)
 
       // tell user we are now on the final stage of the process
@@ -160,7 +161,7 @@ const ContractTopupLiquid: NextPage = () => {
     <>
       <EnablersLiquid
         contract={newContract}
-        handleMarina={handleMarina}
+        handler={handleWallet}
         task={Tasks.Topup}
       />
       <MarinaDepositModal
@@ -168,7 +169,7 @@ const ContractTopupLiquid: NextPage = () => {
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleMarina)}
+        retry={retry(setData, setResult, () => handleWallet(selectedWallet!))}
         stage={stage}
         task={Tasks.Topup}
       />

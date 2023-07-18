@@ -15,9 +15,9 @@ import NotAllowed from 'components/messages/notAllowed'
 import { Extractor, Finalizer } from 'liquidjs-lib'
 import { ConfigContext } from 'components/providers/config'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet, WalletType } from 'lib/wallet'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { wallet } = useContext(WalletContext)
   const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -25,6 +25,7 @@ const ContractRedeemLiquid: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>()
 
   const resetModal = () => {
     resetContracts()
@@ -34,15 +35,15 @@ const ContractRedeemLiquid: NextPage = () => {
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
-  async function handleWallet(): Promise<void> {
-    if (!wallet) return
+  async function handleWallet(selected: Wallet): Promise<void> {
+    setSelectedWallet(selected)
     openModal(ModalIds.Redeem)
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
       if (!newContract) throw new Error('Contract not found')
-      const network = await wallet.getNetwork()
-      const tx = await prepareRedeemTx(wallet, artifact, newContract, network)
+      const network = await selected.getNetwork()
+      const tx = await prepareRedeemTx(selected, artifact, newContract, network)
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
@@ -83,15 +84,16 @@ const ContractRedeemLiquid: NextPage = () => {
     <>
       <EnablersLiquid
         contract={newContract}
-        handleMarina={handleWallet}
+        handler={handleWallet}
         task={Tasks.Redeem}
       />
       <RedeemModal
+        wallet={selectedWallet?.type || WalletType.Marina}
         contract={newContract}
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleWallet)}
+        retry={retry(setData, setResult, () => handleWallet(selectedWallet!))}
         stage={stage}
         task={Tasks.Redeem}
       />

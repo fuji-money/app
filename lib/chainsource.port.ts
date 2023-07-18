@@ -30,8 +30,13 @@ export type ChainSource = {
   fetchHistories(scripts: Buffer[]): Promise<TransactionHistory[]>
   fetchBlockHeader(height: number): Promise<BlockHeader>
   fetchTransactions(txids: string[]): Promise<{ txID: string; hex: string }[]>
-  listUnspents(address: string): Promise<Unspent[]>
+  listUnspents(script: string): Promise<Unspent[]>
   broadcastTransaction(txHex: string): Promise<string>
+  subscribeScriptStatus(
+    script: Buffer,
+    callback: (scripthash: string, status: string | null) => void,
+  ): Promise<void>
+  unsubscribeScriptStatus(script: Buffer): Promise<void>
   close(): Promise<void>
 }
 
@@ -41,9 +46,9 @@ const electrumURL = (network: NetworkString): string => {
     case 'regtest':
       return 'http://localhost:3001' // TODO
     case 'testnet':
-      return 'wss://blockstream.info/liquidtestnet/electrum-websocket/api'
+      return 'wss://blockstream.info/liquidtestnet/electrum-websocket/api/'
     default:
-      return 'wss://blockstream.info/liquid/electrum-websocket/api'
+      return 'wss://blockstream.info/liquid/electrum-websocket/api/'
   }
 }
 
@@ -86,8 +91,8 @@ export class WsElectrumChainSource implements ChainSource {
     return responses.map((hex, i) => ({ txID: txids[i], hex }))
   }
 
-  async listUnspents(addr: string): Promise<Unspent[]> {
-    const scriptHash = toScriptHash(address.toOutputScript(addr))
+  async listUnspents(script: string): Promise<Unspent[]> {
+    const scriptHash = toScriptHash(Buffer.from(script, 'hex'))
     const unspentsFromElectrum = await this.ws.request<UnspentElectrum[]>(
       ListUnspentMethod,
       scriptHash,
@@ -149,7 +154,7 @@ export class WsElectrumChainSource implements ChainSource {
     }
   }
 
-  private async unsubscribeScriptStatus(script: Buffer): Promise<void> {
+  async unsubscribeScriptStatus(script: Buffer): Promise<void> {
     try {
       await this.ws.unsubscribe(SubscribeStatusMethod, toScriptHash(script))
     } catch (e) {
@@ -157,7 +162,7 @@ export class WsElectrumChainSource implements ChainSource {
     }
   }
 
-  private async subscribeScriptStatus(
+  async subscribeScriptStatus(
     script: Buffer,
     callback: (scripthash: string, status: string | null) => void,
   ) {

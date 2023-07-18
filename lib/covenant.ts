@@ -1,5 +1,5 @@
 import { Contract, ContractParams, ContractResponse, Oracle } from './types'
-import { Utxo, Address, NetworkString } from 'marina-provider'
+import { Utxo, NetworkString } from 'marina-provider'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import {
   feeAmount,
@@ -30,7 +30,6 @@ import {
   TopupContractArgs,
   topupRequest,
 } from './fetch'
-import { createFujiAccount, fujiAccountMissing } from './marina'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { selectCoins } from './selection'
@@ -117,8 +116,8 @@ async function getCovenantOutput(
 
 // borrow
 export interface PreparedBorrowTx {
-  borrowerAddress: Address
-  changeAddress?: Address
+  borrowerAddress: string
+  changeAddress?: string
   collateralUtxos: Utxo[]
   contractParams: ContractParams
   collateralAsset: string
@@ -233,9 +232,8 @@ export async function prepareBorrowTx(
   let changeAddress = undefined
   if (changeAmount > 0) {
     changeAddress = await wallet.getNextChangeAddress()
-    const { scriptPubKey, blindingKey } = address.fromConfidential(
-      changeAddress.confidentialAddress,
-    )
+    const { scriptPubKey, blindingKey } =
+      address.fromConfidential(changeAddress)
     updater.addOutputs([
       {
         script: scriptPubKey,
@@ -316,7 +314,7 @@ export async function proposeBorrowContract(
     collateralAmount,
     collateralAsset,
     covenantOutputIndexInTransaction: 0,
-    borrowerAddress: borrowerAddress.confidentialAddress,
+    borrowerAddress,
     contractParams: {
       assetPair: Buffer.from(assetPair.substring(2), 'hex'),
       borrowAsset,
@@ -356,8 +354,7 @@ export async function prepareRedeemTx(
   if (collateral.quantity < feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
-  const address =
-    swapAddress || (await wallet.getNextAddress()).confidentialAddress
+  const address = swapAddress || (await wallet.getNextAddress())
 
   // get ionio instance
   let ionioInstance = await getIonioInstance(artifact, contract, network)
@@ -440,7 +437,7 @@ export async function prepareRedeemTx(
   if (syntheticChangeAmount > 0) {
     const syntheticChangeAddress = await wallet.getNextChangeAddress()
     tx.withRecipient(
-      syntheticChangeAddress.confidentialAddress,
+      syntheticChangeAddress,
       syntheticChangeAmount,
       synthetic.id,
       0,
@@ -456,7 +453,7 @@ export async function prepareRedeemTx(
 
 // topup
 export interface PreparedTopupTx {
-  borrowerAddress: Address
+  borrowerAddress: string
   coinToTopup: Utxo
   contractParams: ContractParams
   collateralAsset: string
@@ -636,7 +633,7 @@ export async function prepareTopupTx(
   if (collateralChangeAmount > 0) {
     collateralChangeAddress = await wallet.getNextChangeAddress()
     tx.withRecipient(
-      collateralChangeAddress.confidentialAddress,
+      collateralChangeAddress,
       collateralChangeAmount,
       newContract.collateral.id,
       0,
@@ -653,7 +650,7 @@ export async function prepareTopupTx(
   if (syntheticChangeAmount > 0) {
     syntheticChangeAddress = await wallet.getNextChangeAddress()
     tx.withRecipient(
-      syntheticChangeAddress.confidentialAddress,
+      syntheticChangeAddress,
       syntheticChangeAmount,
       newContract.synthetic.id,
       0,
@@ -734,7 +731,7 @@ export async function proposeTopupContract(
     collateralAmount,
     collateralAsset,
     covenantOutputIndexInTransaction: 0,
-    borrowerAddress: borrowerAddress.confidentialAddress,
+    borrowerAddress,
     contractParams: {
       borrowAsset,
       borrowAmount,

@@ -7,26 +7,38 @@ import {
 } from 'react'
 import { Wallet, WalletType } from 'lib/wallet'
 import { MarinaWallet } from 'lib/marina'
+import { AlbyWallet } from 'lib/alby'
+import { InMemoryTransactionRepository } from 'lib/transactions-repository'
+import { InMemoryBlindersRepository } from 'lib/blinders-repository'
+import { NetworkString } from 'marina-provider'
+import { defaultNetwork } from 'lib/constants'
+import { getGlobalsFromStorage, saveNetworkGlobal } from 'lib/storage'
 
 interface WalletContextProps {
-  wallets: Wallet[]
-  wallet?: Wallet
-  selectWallet(type: WalletType): Promise<void>
+  installedWallets: Wallet[]
+  wallets: Wallet[] // wallets connected & belonging to the selected network
+  network: NetworkString
+  setNetwork: (network: NetworkString) => Promise<void>
+  connect: (type: WalletType) => Promise<void>
 }
+
+const txRepo = new InMemoryTransactionRepository()
+const blindersRepo = new InMemoryBlindersRepository()
 
 function walletFactory(type: WalletType): Promise<Wallet | undefined> {
   switch (type) {
     case WalletType.Marina:
       return MarinaWallet.detect()
     case WalletType.Alby:
-      throw new Error('Alby wallet not implemented')
+      // alby needs some repos to cache the chain data
+      return AlbyWallet.detect(txRepo, blindersRepo)
     default:
       throw new Error('Unknown wallet type')
   }
 }
 
 async function detectWallets(): Promise<Wallet[]> {
-  const supportedWallets = [WalletType.Marina]
+  const supportedWallets = [WalletType.Marina, WalletType.Alby]
   const walletsPromises = await Promise.allSettled(
     supportedWallets.map((type) => walletFactory(type)),
   )
@@ -41,9 +53,11 @@ async function detectWallets(): Promise<Wallet[]> {
 }
 
 export const WalletContext = createContext<WalletContextProps>({
+  installedWallets: [],
   wallets: [],
-  wallet: undefined,
-  selectWallet: () => Promise.resolve(),
+  network: defaultNetwork,
+  setNetwork: async () => {},
+  connect: async () => {},
 })
 
 interface WalletProviderProps {
@@ -52,27 +66,71 @@ interface WalletProviderProps {
 
 export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [wallets, setWallets] = useState<Wallet[]>([])
-  const [wallet, setWallet] = useState<Wallet | undefined>(undefined)
+  const [installedWallets, setInstalledWallets] = useState<Wallet[]>([])
+  const [network, setNetworkInState] = useState<NetworkString>(defaultNetwork)
 
-  const selectWallet = useCallback(
-    async (type: WalletType) => {
-      const wallet = wallets.find((wallet) => wallet.type === type)
-      if (!wallet) throw new Error(`Wallet ${type} not found`)
-      setWallet(wallet)
+  const setNetwork = useCallback(
+    async (newNetwork: NetworkString) => {
+      if (newNetwork === 'regtest') throw new Error('regtest is not supported')
+      if (network !== newNetwork) {
+        setNetworkInState(newNetwork)
+        saveNetworkGlobal(newNetwork)
+      }
+      const walletsNetworks = await Promise.allSettled(
+        installedWallets.map((w) => w.getNetwork()),
+      )
+
+      const newWalletsState = installedWallets.filter((_, index) => {
+        const walletNetwork = walletsNetworks[index]
+        return (
+          walletNetwork.status === 'fulfilled' &&
+          walletNetwork.value === newNetwork
+        )
+      })
+
+      walletsNetworks.forEach((walletNetwork) => {
+        if (walletNetwork.status === 'rejected') {
+          console.error(walletNetwork.reason)
+        }
+      })
+
+      setWallets(newWalletsState)
     },
-    [wallets],
+    [installedWallets, network],
+  )
+
+  const connect = useCallback(
+    async (type: WalletType) => {
+      const fromInstalled = installedWallets.find((w) => w.type === type)
+      if (!fromInstalled) throw new Error('Wallet not installed')
+      await fromInstalled.connect()
+
+      if (fromInstalled.isConnected()) {
+        if (wallets.find((w) => w.type === type)) return
+        const network = getGlobalsFromStorage().network
+        const walletNetwork = await fromInstalled.getNetwork()
+        if (walletNetwork !== network) return
+        setWallets((prevWallets) => [...prevWallets, fromInstalled])
+      }
+    },
+    [installedWallets, wallets],
   )
 
   useEffect(() => {
-    detectWallets().then(setWallets).catch(console.error)
-  }, [selectWallet])
+    detectWallets()
+      .then(setInstalledWallets)
+      .then(() => setNetwork(getGlobalsFromStorage().network))
+      .catch(console.error)
+  }, [setNetwork])
 
   return (
     <WalletContext.Provider
       value={{
+        installedWallets,
         wallets,
-        wallet,
-        selectWallet,
+        network,
+        setNetwork,
+        connect,
       }}
     >
       {children}

@@ -24,6 +24,7 @@ import {
   witnessStackToScriptWitness,
   script as bscript,
   Finalizer,
+  address,
 } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
@@ -152,7 +153,9 @@ const ContractTopupLightning: NextPage = () => {
       await chainSource.waitForAddressReceivesTx(lockupAddress)
 
       // fetch utxos for address
-      const utxos = await chainSource.listUnspents(lockupAddress)
+      const utxos = await chainSource.listUnspents(
+        address.toOutputScript(lockupAddress).toString('hex'),
+      )
 
       // payment has arrived
       if (utxos.length > 0) {

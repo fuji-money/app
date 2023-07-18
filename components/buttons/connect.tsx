@@ -1,55 +1,43 @@
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
+import { closeModal, openModal } from 'lib/utils'
+import AccountModal from 'components/modals/account'
+import WalletsModal from 'components/modals/wallets'
+import { ModalIds } from 'components/modals/modal'
 import { WalletType } from 'lib/wallet'
-import DropDown from 'components/dropdown'
 
 const ConnectButton = () => {
-  const { wallet, selectWallet, wallets } = useContext(WalletContext)
+  const { installedWallets, connect } = useContext(WalletContext)
 
-  const toggleWallet = async (type: WalletType) => {
-    if (!type) return
-    // disconnect if already connected
-    if (wallet?.type === type) {
-      if (wallet?.isConnected()) {
-        await wallet.disconnect()
-      }
-      return
-    }
-
-    // select the new wallet and connect it
-    await selectWallet(type)
-    await wallet?.connect()
+  const handleWalletChoice = async (type: WalletType) => {
+    closeModal(ModalIds.Wallets)
+    if (type) await connect(type)
   }
 
   return (
-    <div className="my-auto">
-      {!!wallets?.length && (
+    <>
+      {installedWallets.length ? (
         <>
-          <DropDown
-            title={wallet?.isConnected() ? wallet?.type : 'Connect wallet'}
-            options={wallets.map((w) => ({
-              isActive: wallet?.type === w.type,
-              value: w.type,
-              icon:
-                w.type === WalletType.Marina
-                  ? '/images/wallets/marina.svg'
-                  : '/images/wallets/alby.svg',
-              onClick: () => toggleWallet(w.type),
-            }))}
-          />
+          <button
+            onClick={() => openModal(ModalIds.Wallets)}
+            className="button is-primary my-auto mr-4"
+          >
+            Connect
+          </button>
+          <AccountModal />
+          <WalletsModal handleWalletChoice={handleWalletChoice} />
         </>
-      )}
-      {!wallets.length && (
+      ) : (
         <a
           href="https://vulpem.com/marina"
           target="_blank"
           rel="noreferrer"
-          className="button is-primary"
+          className="button is-primary my-auto"
         >
           Install Marina or Alby
         </a>
       )}
-    </div>
+    </>
   )
 }
 

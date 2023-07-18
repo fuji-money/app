@@ -3,20 +3,22 @@ import { Asset, ContractParams } from './types'
 import {
   detectProvider,
   MarinaProvider,
-  Balance,
-  Utxo,
   NetworkString,
-  Transaction,
   AccountType,
   AccountID,
   Address,
   isIonioScriptDetails,
+  Utxo,
 } from 'marina-provider'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import { Wallet, WalletType } from './wallet'
+import { Coin, Wallet, WalletType } from './wallet'
 import { closeModal, openModal } from './utils'
 import { ModalIds } from 'components/modals/modal'
 import { BIP32Factory } from 'bip32'
+
+function isCoin(utxo: Utxo): utxo is Coin {
+  return utxo.witnessUtxo !== undefined
+}
 
 export class MarinaWallet implements Wallet {
   static FujiAccountID = 'fuji' // slip13(fuji)
@@ -68,19 +70,24 @@ export class MarinaWallet implements Wallet {
     return this._xPub ?? ''
   }
 
-  async getBalances(): Promise<Balance[]> {
-    if (!this.isConnected) return []
+  async getBalances(): Promise<Record<string, number>> {
+    if (!this.isConnected) return {}
     const network = await this.getNetwork()
     const mainAccountIDs = await getMainAccountIDs(network)
-    return this.marina.getBalances(mainAccountIDs)
+    const marinaBalances = await this.marina.getBalances(mainAccountIDs)
+
+    const balances: Record<string, number> = {}
+
+    for (const balance of marinaBalances) {
+      balances[balance.asset.assetHash] = balance.amount
+    }
+
+    return balances
   }
 
-  getCoins(): Promise<Utxo[]> {
-    return this.marina.getCoins()
-  }
-
-  getTransactions(): Promise<Transaction[]> {
-    return this.marina.getTransactions()
+  async getCoins(): Promise<Coin[]> {
+    const marinaCoins = await this.marina.getCoins()
+    return marinaCoins.filter(isCoin)
   }
 
   getNetwork(): Promise<NetworkString> {
@@ -91,7 +98,7 @@ export class MarinaWallet implements Wallet {
     return this.marina.signTransaction(psetBase64)
   }
 
-  async getNextAddress(): Promise<Address> {
+  private async getNextMainAddress(): Promise<Address> {
     const network = await this.getNetwork()
     const account =
       network === 'liquid'
@@ -101,8 +108,13 @@ export class MarinaWallet implements Wallet {
     return this.marina.getNextAddress()
   }
 
+  async getNextAddress(): Promise<string> {
+    const address = await this.getNextMainAddress()
+    return address.confidentialAddress
+  }
+
   async getNewPublicKey(): Promise<string> {
-    const newAddress = await this.getNextAddress()
+    const newAddress = await this.getNextMainAddress()
     if (!newAddress.derivationPath) throw new Error('Invalid derivation path')
     const accountInfos = await this.marina.getAccountInfo(
       newAddress.accountName,
@@ -114,14 +126,15 @@ export class MarinaWallet implements Wallet {
       .publicKey.toString('hex')
   }
 
-  async getNextChangeAddress(): Promise<Address> {
+  async getNextChangeAddress(): Promise<string> {
     const network = await this.getNetwork()
     const account =
       network === 'liquid'
         ? MarinaWallet.MainAccountID
         : MarinaWallet.TestnetMainAccountID
     await this.marina.useAccount(account)
-    return this.marina.getNextChangeAddress()
+    const { confidentialAddress } = await this.marina.getNextChangeAddress()
+    return confidentialAddress
   }
 
   async getNextCovenantAddress(
@@ -164,32 +177,29 @@ export class MarinaWallet implements Wallet {
     }
   }
 
-  onSpentUtxo(callback: (utxo: Utxo) => void): () => void {
-    const id = this.marina.on('SPENT_UTXO', ({ data }: { data: Utxo }) =>
+  onSpentUtxo(callback: (utxo: Coin) => void): () => void {
+    const id = this.marina.on('SPENT_UTXO', ({ data }: { data: Coin }) =>
       callback(data),
     )
     return () => this.marina.off(id)
   }
 
-  onNewUtxo(callback: (utxo: Utxo) => void): () => void {
-    const id = this.marina.on('NEW_UTXO', ({ data }: { data: Utxo }) =>
-      callback(data),
-    )
-    return () => this.marina.off(id)
-  }
-
-  onNetworkChange(callback: (network: NetworkString) => void): () => void {
-    const id = this.marina.on('NETWORK', ({ data }: { data: NetworkString }) =>
+  onNewUtxo(callback: (utxo: Coin) => void): () => void {
+    const id = this.marina.on('NEW_UTXO', ({ data }: { data: Coin }) =>
       callback(data),
     )
     return () => this.marina.off(id)
   }
 }
 
-export function getAssetBalance(asset: Asset, balances: Balance[]): number {
-  const found = balances.find((a) => a.asset.assetHash === asset.id)
-  if (!found || !found.amount) return 0
-  return found.amount
+export function getAssetBalance(
+  asset: Asset,
+  balances?: Record<string, number>,
+): number {
+  if (!balances) return 0
+  const found = balances[asset.id]
+  if (!found) return 0
+  return found
 }
 
 export async function createFujiAccount(marina: MarinaProvider) {

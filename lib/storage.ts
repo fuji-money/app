@@ -106,3 +106,27 @@ export function addSwapToStorage(swap: SwapInfo): void {
   swaps.push(swap)
   saveSwapsToStorage(swaps)
 }
+
+// globals
+
+export const localStorageGlobalsKey = 'fujiGlobals'
+
+export type Globals = {
+  network: 'liquid' | 'testnet'
+}
+
+export function getGlobalsFromStorage(): Globals {
+  if (typeof window === 'undefined') return { network: 'liquid' }
+  const storedGlobals = localStorage.getItem(localStorageGlobalsKey)
+  if (!storedGlobals) return { network: 'liquid' }
+  return JSON.parse(storedGlobals)
+}
+
+export function saveNetworkGlobal(network: 'liquid' | 'testnet'): void {
+  if (typeof window === 'undefined') return
+  const current = getGlobalsFromStorage()
+  localStorage.setItem(
+    localStorageGlobalsKey,
+    JSON.stringify({ ...current, network }),
+  )
+}

@@ -4,9 +4,9 @@ import InvestButton from './button'
 import BalanceInFiat from 'components/balance/fiat'
 
 const TotalBalance = () => {
-  const { wallet } = useContext(WalletContext)
+  const { wallets } = useContext(WalletContext)
 
-  if (!wallet?.isConnected())
+  if (!wallets || wallets.length === 0)
     return <p>🔌 Connect your wallet to view your balance</p>
 
   return (

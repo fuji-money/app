@@ -1,41 +1,42 @@
 import Image from 'next/image'
 import Modal, { ModalIds } from './modal'
+import { WalletType } from 'lib/wallet'
+import { useContext } from 'react'
+import { WalletContext } from 'components/providers/wallet'
+import classNames from 'classnames'
 
 interface WalletInfo {
+  type: WalletType
   name: string
   icon: string
   desc: string
-  enabled?: boolean
 }
 
 const wallets: WalletInfo[] = [
   {
+    type: WalletType.Marina,
     name: 'Marina',
     icon: '/images/wallets/marina.svg',
     desc: 'Connect to Marina wallet to access Fuji Money directly from your browser',
-    enabled: true,
   },
   {
-    name: 'Aqua (soon)',
-    icon: '/images/wallets/aqua.svg',
+    type: WalletType.Alby,
+    name: 'Alby',
+    icon: '/images/wallets/alby.svg',
     desc: 'Connect to Aqua wallet to access Fuji Money from your mobile device',
-  },
-  {
-    name: 'Jade (soon)',
-    icon: '/images/wallets/jade.svg',
-    desc: 'Connect to your Jade wallet to access Fuji Money from secure hardware.',
-  },
-  {
-    name: 'Ledger (soon)',
-    icon: '/images/wallets/ledger.svg',
-    desc: 'Connect to your Ledger wallet to safely access Fuji Money.',
   },
 ]
 
-const WalletButton = ({ wallet }: { wallet: WalletInfo }) => {
-  const { name, icon, desc, enabled } = wallet
+const WalletButton = ({
+  wallet,
+  enabled,
+}: {
+  wallet: WalletInfo
+  enabled?: boolean
+}) => {
+  const { name, icon, desc } = wallet
   return (
-    <div className={`${enabled ? '' : 'disabled'} box`}>
+    <div className={classNames('box', { disabled: !enabled })}>
       <article className="media has-text-left">
         <div className="media-left">
           <figure className="image is-64x64">
@@ -74,14 +75,21 @@ const WalletButton = ({ wallet }: { wallet: WalletInfo }) => {
 }
 
 interface WalletsModalProps {
-  handleWalletChoice: (name: string) => void
+  handleWalletChoice: (type: WalletType) => void
 }
 
 const WalletsModal = ({ handleWalletChoice }: WalletsModalProps) => {
+  const { installedWallets } = useContext(WalletContext)
+  const installedWalletTypes = installedWallets.map((wallet) => wallet.type)
+
   const buttons = wallets.map((wallet, index) => {
-    return wallet.enabled ? (
-      <a key={index} onClick={() => handleWalletChoice(wallet.name)}>
-        <WalletButton wallet={wallet} />
+    const enabled =
+      installedWalletTypes.includes(wallet.type) &&
+      !installedWallets.find((w) => w.type === wallet.type)?.isConnected()
+
+    return enabled ? (
+      <a key={index} onClick={() => handleWalletChoice(wallet.type)}>
+        <WalletButton wallet={wallet} enabled />
       </a>
     ) : (
       <div key={index}>

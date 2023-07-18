@@ -1,6 +1,5 @@
 import Footer from 'components/footer'
 import Navbar from 'components/navbar'
-import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
 import TradeModal from 'components/modals/trade'
 import Breadcrumbs from 'components/breadcrumbs'

@@ -36,8 +36,15 @@ export function addActivity(
   addActivityToStorage(activity)
 }
 
+export async function getActivities(wallets: Wallet[]): Promise<Activity[]> {
+  const activities = await Promise.all(
+    wallets.map((wallet) => getWalletActivities(wallet)),
+  )
+  return activities.flat()
+}
+
 // get all activities on storage for this network
-export async function getActivities(wallet: Wallet): Promise<Activity[]> {
+async function getWalletActivities(wallet: Wallet): Promise<Activity[]> {
   const network = await wallet.getNetwork()
   const xPubKey = wallet.getMainAccountXPubKey()
   return getActivitiesFromStorage().filter(

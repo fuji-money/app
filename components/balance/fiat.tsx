@@ -8,8 +8,8 @@ import { ConfigContext } from 'components/providers/config'
 import { useSelectBalances } from 'lib/hooks'
 
 const BalanceInFiat = () => {
-  const { wallet } = useContext(WalletContext)
-  const balances = useSelectBalances(wallet)
+  const { wallets } = useContext(WalletContext)
+  const balancesByWallet = useSelectBalances(wallets)
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
@@ -24,13 +24,16 @@ const BalanceInFiat = () => {
   useEffect(() => {
     setBalance(
       assets.reduce((prev, asset) => {
-        const quantity = getAssetBalance(asset, balances)
+        let quantity = 0
+        for (const balances of Object.values(balancesByWallet)) {
+          quantity += getAssetBalance(asset, balances)
+        }
         return prev + quantity * asset.value
       }, 0),
     )
-  }, [assets, balances])
+  }, [assets, balancesByWallet])
 
-  if (!wallet?.isConnected())
+  if (!wallets || wallets.length === 0)
     return <p>🔌 Connect your wallet to view your balance</p>
   if (loading) return <Spinner />
 

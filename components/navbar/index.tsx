@@ -4,6 +4,7 @@ import { openModal } from 'lib/utils'
 import ConnectButton from 'components/buttons/connect'
 import Settings from 'components/settings'
 import { ModalIds } from 'components/modals/modal'
+import NetworkButton from 'components/buttons/network'
 
 export default function Navbar() {
   return (

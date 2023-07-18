@@ -8,8 +8,10 @@ import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
 import { useSelectBalances } from 'lib/hooks'
+import { WalletType } from 'lib/wallet'
 
 interface RedeemModalProps {
+  wallet: WalletType
   contract: Contract
   data: string
   reset: () => void
@@ -27,15 +29,16 @@ const RedeemModal = ({
   retry,
   stage,
   task,
+  wallet,
 }: RedeemModalProps) => {
-  const { wallet } = useContext(WalletContext)
-  const balances = useSelectBalances(wallet)
+  const { wallets } = useContext(WalletContext)
+  const balances = useSelectBalances(wallets)
 
   if (!contract) return <></>
 
   // decision variables
   const { synthetic } = contract
-  const balance = getAssetBalance(synthetic, balances)
+  const balance = getAssetBalance(synthetic, balances[wallet])
   const ticker = synthetic.ticker
   const neededAmount = synthetic.quantity
   const hasFunds = neededAmount && balance >= neededAmount

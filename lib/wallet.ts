@@ -1,16 +1,15 @@
-import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
-import type {
-  Address,
-  Balance,
-  NetworkString,
-  Transaction,
-  Utxo,
-} from 'marina-provider'
+import { Artifact } from '@ionio-lang/ionio'
+import type { NetworkString, UnblindedOutput } from 'marina-provider'
 import { ContractParams } from './types'
+import { TxOutput } from 'liquidjs-lib'
 
 export enum WalletType {
   Marina = 'marina',
   Alby = 'alby',
+}
+
+export type Coin = UnblindedOutput & {
+  witnessUtxo: TxOutput
 }
 
 export interface Wallet {
@@ -21,26 +20,23 @@ export interface Wallet {
   disconnect(): Promise<void>
 
   getMainAccountXPubKey(): string
-  getBalances(): Promise<Balance[]>
-  getCoins(): Promise<Utxo[]> // returns all coins
-  getTransactions(): Promise<Transaction[]>
+  getBalances(): Promise<Record<string, number>>
+  getCoins(): Promise<Coin[]> // returns all coins, including contract ones
   getNetwork(): Promise<NetworkString>
 
-  getNextAddress(): Promise<Address>
-  getNextChangeAddress(): Promise<Address>
+  getNextAddress(): Promise<string>
+  getNextChangeAddress(): Promise<string>
   getNextCovenantAddress(
     artifact: Artifact,
     params: Omit<ContractParams, 'borrowerPublicKey'>, // wallet should "inject" the borrower public key parameter
   ): Promise<{
     confidentialAddress: string
-    contract: IonioContract
     contractParams: ContractParams
   }>
   getNewPublicKey(): Promise<string> // this is used mostly for Boltz
 
   signPset(psetBase64: string): Promise<string>
 
-  onSpentUtxo(callback: (utxo: Utxo) => void): () => void
-  onNewUtxo(callback: (utxo: Utxo) => void): () => void
-  onNetworkChange(callback: (network: NetworkString) => void): () => void
+  onSpentUtxo(callback: (utxo: Coin) => void): () => void
+  onNewUtxo(callback: (utxo: Coin) => void): () => void
 }

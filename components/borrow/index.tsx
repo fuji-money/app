@@ -12,7 +12,6 @@ import {
 } from 'lib/contracts'
 import { minBorrowRatio, safeBorrowMargin } from 'lib/constants'
 import { ContractsContext } from 'components/providers/contracts'
-import { WalletContext } from 'components/providers/wallet'
 import { networks } from 'liquidjs-lib'
 
 interface BorrowProps {
@@ -26,7 +25,6 @@ function networkFromOffer(offer: Offer) {
 }
 
 const Borrow = ({ offer }: BorrowProps) => {
-  const { wallet } = useContext(WalletContext)
   const { newContract } = useContext(ContractsContext)
 
   const { collateral, oracles, synthetic } = offer
@@ -37,8 +35,6 @@ const Borrow = ({ offer }: BorrowProps) => {
   const minRatio = synthetic.minCollateralRatio || minBorrowRatio
   const priceLevel = getContractPriceLevel(offer, startingRatio)
 
-  if (!wallet) throw new Error('Wallet not found')
-
   const [contract, setContract] = useState<Contract>({
     collateral,
     expirationDate: getContractExpirationDate(),
@@ -46,7 +42,6 @@ const Borrow = ({ offer }: BorrowProps) => {
     oracles,
     synthetic,
     priceLevel,
-    xPubKey: wallet.getMainAccountXPubKey(),
   })
 
   useEffect(() => {

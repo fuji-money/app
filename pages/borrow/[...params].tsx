@@ -38,6 +38,7 @@ import {
   script as bscript,
   Finalizer,
   Transaction,
+  address,
 } from 'liquidjs-lib'
 import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
@@ -46,16 +47,17 @@ import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
-import { addSwapToStorage } from 'lib/storage'
+import { addSwapToStorage, getGlobalsFromStorage } from 'lib/storage'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet, WalletType } from 'lib/wallet'
 
 const BorrowParams: NextPage = () => {
-  const { wallet } = useContext(WalletContext)
+  const { wallets } = useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
   const { artifact, config } = useContext(ConfigContext)
@@ -67,6 +69,9 @@ const BorrowParams: NextPage = () => {
   const [invoice, setInvoice] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+
+  // which wallet has been selected to pay the invoice
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>()
 
   const router = useRouter()
   const { params } = router.query
@@ -89,9 +94,10 @@ const BorrowParams: NextPage = () => {
   const unspentSwap = useRef<ActiveSwap>()
 
   // make a swap via boltz.exchange
-  const makeSwap = async (): Promise<ActiveSwap | undefined> => {
+  // wallet is the receiving wallet
+  const makeSwap = async (wallet: Wallet): Promise<ActiveSwap | undefined> => {
     if (!wallet) return
-    const network = await wallet.getNetwork()
+    const network = getGlobalsFromStorage().network
 
     setStage(ModalStages.NeedsInvoice)
 
@@ -171,7 +177,9 @@ const BorrowParams: NextPage = () => {
     await chainSource.waitForAddressReceivesTx(lockupAddress)
 
     // fetch utxos for address
-    const utxos = await chainSource.listUnspents(lockupAddress)
+    const utxos = await chainSource.listUnspents(
+      address.toOutputScript(lockupAddress).toString('hex'),
+    )
     // close ws connection
     await Promise.allSettled([chainSource.close()])
 
@@ -200,6 +208,7 @@ const BorrowParams: NextPage = () => {
 
   // finalize and broadcast proposed transaction
   const finalizeAndBroadcast = async (
+    wallet: Wallet,
     pset: Pset,
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
@@ -252,7 +261,7 @@ const BorrowParams: NextPage = () => {
   }
 
   // handle payment through lightning invoice
-  const handleInvoice = async (): Promise<void> => {
+  const handleInvoice = async (wallet: Wallet): Promise<void> => {
     // nothing to do if no new contract
     if (!newContract || !wallet) return
     const network = await wallet.getNetwork()
@@ -261,7 +270,7 @@ const BorrowParams: NextPage = () => {
       openModal(ModalIds.InvoiceDeposit)
 
       // if there's an unspent swap, we will use it
-      const swap = unspentSwap.current ?? (await makeSwap())
+      const swap = unspentSwap.current ?? (await makeSwap(wallet))
       if (!swap) return
       const { keyPair, preimage, redeemScript, utxos } = swap
 
@@ -315,7 +324,7 @@ const BorrowParams: NextPage = () => {
       })
 
       // finalize and broadcast transaction
-      finalizeAndBroadcast(pset, newContract, preparedTx)
+      finalizeAndBroadcast(wallet, pset, newContract, preparedTx)
     } catch (error) {
       console.error(error)
       setData(extractError(error))
@@ -329,15 +338,18 @@ const BorrowParams: NextPage = () => {
     weblnProviderName === 'Alby' && (weblnProvider.enabled || weblnCanEnable)
       ? async () => {
           setUseWebln(true)
-          await handleInvoice()
+          const albyWallet = wallets.find((w) => w.type === WalletType.Alby)
+          if (!albyWallet) throw new Error('No Alby wallet found')
+          await handleInvoice(albyWallet)
         }
       : undefined
 
   // handle payment through marina browser extension
-  const handleInvoiceFromLiquid = async (): Promise<void> => {
+  const handleInvoiceFromLiquid = async (w: Wallet): Promise<void> => {
+    setSelectedWallet(w)
     // nothing to do if no new contract
-    if (!newContract || !wallet) return
-    const network = await wallet.getNetwork()
+    if (!newContract) return
+    const network = await w.getNetwork()
 
     try {
       openModal(ModalIds.MarinaDeposit)
@@ -345,7 +357,7 @@ const BorrowParams: NextPage = () => {
 
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(
-        wallet,
+        w,
         artifact,
         newContract,
         oracles[0],
@@ -361,11 +373,11 @@ const BorrowParams: NextPage = () => {
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
-      const signedTransaction = await wallet.signPset(partialTransaction)
+      const signedTransaction = await w.signPset(partialTransaction)
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      finalizeAndBroadcast(pset, newContract, preparedTx)
+      finalizeAndBroadcast(w, pset, newContract, preparedTx)
     } catch (error) {
       setData(extractError(error))
       setResult(Outcome.Failure)
@@ -420,14 +432,16 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLiquid
                 contract={newContract}
-                handleMarina={handleInvoiceFromLiquid}
+                handler={handleInvoiceFromLiquid}
                 task={Tasks.Borrow}
               />
               <MarinaDepositModal
                 contract={newContract}
                 data={data}
                 result={result}
-                retry={retry(setData, setResult, handleInvoiceFromLiquid)}
+                retry={retry(setData, setResult, () =>
+                  handleInvoiceFromLiquid(selectedWallet!),
+                )}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
@@ -439,8 +453,11 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLightning
                 contract={newContract}
-                handleAlby={handleInvoiceFromWebln}
-                handleInvoice={handleInvoice}
+                handleInvoice={(wallet: Wallet) => {
+                  if (wallet.type === WalletType.Alby && handleInvoiceFromWebln)
+                    return handleInvoiceFromWebln()
+                  return handleInvoice(wallet)
+                }}
                 task={Tasks.Borrow}
               />
               <InvoiceDepositModal
@@ -448,7 +465,11 @@ const BorrowParams: NextPage = () => {
                 data={data}
                 invoice={invoice}
                 result={result}
-                retry={retry(setData, setResult, handleInvoice)}
+                retry={retry(setData, setResult, () =>
+                  handleInvoice(
+                    wallets.find((w) => w.type === WalletType.Marina)!,
+                  ),
+                )}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}

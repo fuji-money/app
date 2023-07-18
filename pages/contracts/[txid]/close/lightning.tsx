@@ -17,9 +17,9 @@ import NotAllowed from 'components/messages/notAllowed'
 import { Extractor, Finalizer } from 'liquidjs-lib'
 import { ConfigContext } from 'components/providers/config'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet, WalletType } from 'lib/wallet'
 
 const ContractRedeemLightning: NextPage = () => {
-  const { wallet } = useContext(WalletContext)
   const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -27,6 +27,8 @@ const ContractRedeemLightning: NextPage = () => {
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+
+  const [selected, setSelected] = useState<Wallet>()
 
   const resetModal = () => {
     resetContracts()
@@ -38,9 +40,7 @@ const ContractRedeemLightning: NextPage = () => {
 
   const quantity = newContract.collateral.quantity
 
-  const proceedWithRedeem = async (swapAddress?: string) => {
-    if (!wallet) return
-
+  const proceedWithRedeem = async (wallet: Wallet, swapAddress?: string) => {
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
     const network = await wallet.getNetwork()
@@ -80,8 +80,12 @@ const ContractRedeemLightning: NextPage = () => {
     reloadContracts()
   }
 
-  const handleInvoice = async (invoice?: string): Promise<void> => {
+  const handleInvoice = async (
+    wallet: Wallet,
+    invoice?: string,
+  ): Promise<void> => {
     if (!wallet) return
+    setSelected(wallet)
     if (!invoice || typeof invoice !== 'string')
       return openModal(ModalIds.Invoice)
     closeModal(ModalIds.Invoice)
@@ -100,7 +104,7 @@ const ContractRedeemLightning: NextPage = () => {
       const { address, expectedAmount } = boltzSwap
       if (expectedAmount > quantity)
         throw new Error('Expected amount higher then collateral amount')
-      proceedWithRedeem(address)
+      proceedWithRedeem(wallet, address)
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))
@@ -113,20 +117,23 @@ const ContractRedeemLightning: NextPage = () => {
     <>
       <EnablersLightning
         contract={newContract}
-        handleAlby={handleInvoice}
         handleInvoice={handleInvoice}
         task={Tasks.Redeem}
       />
       <RedeemModal
+        wallet={selected?.type || WalletType.Marina}
         contract={newContract}
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleInvoice)}
+        retry={retry(setData, setResult, () => handleInvoice(selected!))}
         stage={stage}
         task={Tasks.Redeem}
       />
-      <InvoiceModal contract={newContract} handler={handleInvoice} />
+      <InvoiceModal
+        contract={newContract}
+        handler={(invoice) => handleInvoice(selected!, invoice)}
+      />
     </>
   )
 }

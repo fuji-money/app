@@ -10,16 +10,14 @@ import { getAssetBalance } from 'lib/marina'
 
 const AssetsList = () => {
   const { config, loading } = useContext(ConfigContext)
-  const { wallet } = useContext(WalletContext)
-  const balances = useSelectBalances(wallet)
+  const { wallets } = useContext(WalletContext)
+  const balances = useSelectBalances(wallets)
 
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
 
-  const { assets } = config
-
   useEffect(() => {
-    setFilteredAssets(assets.filter((asset: Asset) => asset.isSynthetic))
-  }, [assets])
+    setFilteredAssets(config.assets.filter((asset: Asset) => asset.isSynthetic))
+  }, [config.assets])
 
   if (loading) return <Spinner />
   if (!filteredAssets) return <SomeError>Error getting assets</SomeError>
@@ -31,7 +29,10 @@ const AssetsList = () => {
           <AssetRow
             key={index}
             asset={asset}
-            balance={getAssetBalance(asset, balances)}
+            balance={wallets.reduce(
+              (acc, w) => getAssetBalance(asset, balances[w.type]) + acc,
+              0,
+            )}
           />
         ))}
     </div>

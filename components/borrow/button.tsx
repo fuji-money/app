@@ -8,6 +8,7 @@ import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
+import { WalletType } from 'lib/wallet'
 import Router from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 
@@ -18,12 +19,12 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
-  const { wallet } = useContext(WalletContext)
-  const balances = useSelectBalances(wallet)
+  const { wallets } = useContext(WalletContext)
+  const balances = useSelectBalances(wallets)
   const { config } = useContext(ConfigContext)
   const { setNewContract } = useContext(ContractsContext)
 
-  const [enoughFunds, setEnoughFunds] = useState(false)
+  const [enoughFunds, setEnoughFunds] = useState<WalletType[]>([])
   const [mintLimitReached, setMintLimitReached] = useState(false)
 
   const { collateral, oracles, synthetic } = contract
@@ -31,23 +32,29 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { assets } = config
 
   useEffect(() => {
-    if (balances.length === 0) return
+    if (!wallets.length) return
     const asset = assets.find((a) => a.ticker === contract.collateral.ticker)
     if (!asset) return
-    const funds = getAssetBalance(asset, balances)
-    const needed = contract.collateral.quantity
-    const enoughFundsOnMarina = funds > needed
+
+    for (const wallet of wallets) {
+      const balance = getAssetBalance(asset, balances[wallet.type])
+      if (contract.collateral.quantity > balance) {
+        setEnoughFunds((prev) => [...prev, wallet.type])
+      }
+    }
+
     if (LightningEnabledTasks[Tasks.Borrow]) {
-      const outOfBounds = swapDepositAmountOutOfBounds(needed)
-      setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
-    } else {
-      setEnoughFunds(enoughFundsOnMarina)
+      const outOfBounds = swapDepositAmountOutOfBounds(
+        contract.collateral.quantity,
+      )
+      if (outOfBounds) setEnoughFunds([])
     }
   }, [
     assets,
     balances,
     contract.collateral.quantity,
     contract.collateral.ticker,
+    wallets,
   ])
 
   const handleClick = () => {
