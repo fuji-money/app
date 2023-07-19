@@ -41,14 +41,6 @@ const MultiplyDeposit = ({
   const handleLightning = async () => {} // TODO
   const handleMarina = () => {} // TODO
 
-  const handleAlby =
-    weblnProviderName === 'Alby'
-      ? async () => {
-          setUseWebln(true)
-          await handleLightning()
-        }
-      : undefined
-
   return (
     <>
       <div className="is-box has-pink-border p-6">
@@ -56,7 +48,6 @@ const MultiplyDeposit = ({
         {lightning && (
           <EnablersLightning
             contract={contract}
-            handleAlby={handleAlby}
             handleInvoice={handleLightning}
             task={Tasks.Multiply}
           />

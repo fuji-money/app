@@ -11,10 +11,10 @@ interface TopupButtonProps {
 }
 
 const TopupButton = ({ minRatio, oracles, ratio, topup }: TopupButtonProps) => {
-  const { wallet } = useContext(WalletContext)
+  const { wallets } = useContext(WalletContext)
 
   const enabled =
-    wallet?.isConnected &&
+    wallets?.[0]?.isConnected() &&
     topup > minDustLimit + feeAmount &&
     ratio > minRatio &&
     oracles.length > 0

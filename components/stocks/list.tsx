@@ -8,15 +8,16 @@ import { WalletContext } from 'components/providers/wallet'
 import { ContractsContext } from 'components/providers/contracts'
 
 const StocksList = () => {
-  const { wallet } = useContext(WalletContext)
+  const { wallets } = useContext(WalletContext)
   const { loading } = useContext(ContractsContext)
   const [stocks, setStocks] = useState<Stock[]>()
 
   useEffect(() => {
-    if (wallet) {
-      wallet.getNetwork().then(fetchStocks).then(setStocks)
+    if (wallets.length) {
+      wallets[0].getNetwork().then(fetchStocks).then(setStocks)
     }
-  }, [wallet])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallets.length])
 
   if (loading) return <Spinner />
   if (!stocks) return <SomeError>Error getting stocks</SomeError>
