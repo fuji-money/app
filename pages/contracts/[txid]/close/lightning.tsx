@@ -20,6 +20,7 @@ import { WsElectrumChainSource } from 'lib/chainsource.port'
 import { Wallet, WalletType } from 'lib/wallet'
 
 const ContractRedeemLightning: NextPage = () => {
+  const { wallets } = useContext(WalletContext)
   const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -44,7 +45,14 @@ const ContractRedeemLightning: NextPage = () => {
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
     const network = await wallet.getNetwork()
+
+    const owner = wallets.find(
+      (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
+    )
+    if (!owner) throw new Error('Owner not found')
+
     const tx = await prepareRedeemTx(
+      owner,
       wallet,
       artifact,
       newContract,
@@ -77,7 +85,7 @@ const ContractRedeemLightning: NextPage = () => {
     setData(txid)
     setResult(Outcome.Success)
     setStage(ModalStages.ShowResult)
-    reloadContracts()
+    await reloadContracts()
   }
 
   const handleInvoice = async (

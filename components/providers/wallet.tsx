@@ -8,11 +8,15 @@ import {
 import { Wallet, WalletType } from 'lib/wallet'
 import { MarinaWallet } from 'lib/marina'
 import { AlbyWallet } from 'lib/alby'
-import { InMemoryTransactionRepository } from 'lib/transactions-repository'
-import { InMemoryBlindersRepository } from 'lib/blinders-repository'
 import { NetworkString } from 'marina-provider'
 import { defaultNetwork } from 'lib/constants'
-import { getGlobalsFromStorage, saveNetworkGlobal } from 'lib/storage'
+import {
+  getGlobalsFromStorage,
+  LocalStorageBlindersRepository,
+  LocalStorageTransactionsRepository,
+  saveNetworkGlobal,
+} from 'lib/storage'
+import { useSelectBalances } from 'lib/hooks'
 
 interface WalletContextProps {
   installedWallets: Wallet[]
@@ -20,10 +24,11 @@ interface WalletContextProps {
   network: NetworkString
   setNetwork: (network: NetworkString) => Promise<void>
   connect: (type: WalletType) => Promise<void>
+  balances: Record<string, Record<string, number>>
 }
 
-const txRepo = new InMemoryTransactionRepository()
-const blindersRepo = new InMemoryBlindersRepository()
+const txRepo = new LocalStorageTransactionsRepository()
+const blindersRepo = new LocalStorageBlindersRepository()
 
 function walletFactory(type: WalletType): Promise<Wallet | undefined> {
   switch (type) {
@@ -58,6 +63,7 @@ export const WalletContext = createContext<WalletContextProps>({
   network: defaultNetwork,
   setNetwork: async () => {},
   connect: async () => {},
+  balances: {},
 })
 
 interface WalletProviderProps {
@@ -68,14 +74,10 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [installedWallets, setInstalledWallets] = useState<Wallet[]>([])
   const [network, setNetworkInState] = useState<NetworkString>(defaultNetwork)
+  const balances = useSelectBalances(wallets)
 
-  const setNetwork = useCallback(
-    async (newNetwork: NetworkString) => {
-      if (newNetwork === 'regtest') throw new Error('regtest is not supported')
-      if (network !== newNetwork) {
-        setNetworkInState(newNetwork)
-        saveNetworkGlobal(newNetwork)
-      }
+  useEffect(() => {
+    const update = async () => {
       const walletsNetworks = await Promise.allSettled(
         installedWallets.map((w) => w.getNetwork()),
       )
@@ -84,7 +86,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         const walletNetwork = walletsNetworks[index]
         return (
           walletNetwork.status === 'fulfilled' &&
-          walletNetwork.value === newNetwork
+          walletNetwork.value === network
         )
       })
 
@@ -94,9 +96,21 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         }
       })
 
-      setWallets(newWalletsState)
+      return newWalletsState
+    }
+
+    update().then(setWallets).catch(console.error)
+  }, [installedWallets, network])
+
+  const setNetwork = useCallback(
+    async (newNetwork: NetworkString) => {
+      if (newNetwork === 'regtest') throw new Error('regtest is not supported')
+      if (network !== newNetwork) {
+        setNetworkInState(newNetwork)
+        saveNetworkGlobal(newNetwork)
+      }
     },
-    [installedWallets, network],
+    [network],
   )
 
   const connect = useCallback(
@@ -117,11 +131,14 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   )
 
   useEffect(() => {
-    detectWallets()
-      .then(setInstalledWallets)
-      .then(() => setNetwork(getGlobalsFromStorage().network))
-      .catch(console.error)
-  }, [setNetwork])
+    const n = getGlobalsFromStorage().network
+    if (n === network) return
+    setNetwork(getGlobalsFromStorage().network).catch(console.error)
+  }, [network, setNetwork])
+
+  useEffect(() => {
+    detectWallets().then(setInstalledWallets).catch(console.error)
+  }, [])
 
   return (
     <WalletContext.Provider
@@ -131,6 +148,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         network,
         setNetwork,
         connect,
+        balances,
       }}
     >
       {children}

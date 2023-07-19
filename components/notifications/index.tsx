@@ -16,7 +16,6 @@ import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
-import { useSelectBalances } from 'lib/hooks'
 import { WalletType } from 'lib/wallet'
 
 interface NotificationsProps {
@@ -32,8 +31,7 @@ const Notifications = ({
   ratio,
   topup,
 }: NotificationsProps) => {
-  const { wallets } = useContext(WalletContext)
-  const balances = useSelectBalances(wallets)
+  const { wallets, balances } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
 
   const [belowDustLimit, setBelowDustLimit] = useState(false)
@@ -58,7 +56,7 @@ const Notifications = ({
     for (const wallet of wallets) {
       const balance = getAssetBalance(asset, balances[wallet.type])
       if (spendQuantity > balance) {
-        setNotEnoughFunds((prev) => [...prev, wallet.type])
+        setNotEnoughFunds((prev) => Array.from(new Set([...prev, wallet.type])))
       }
     }
 

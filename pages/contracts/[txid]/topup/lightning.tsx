@@ -45,10 +45,10 @@ import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { ConfigContext } from 'components/providers/config'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet } from 'lib/wallet'
 
 const ContractTopupLightning: NextPage = () => {
-  const { wallet } = useContext(WalletContext)
-  const { weblnProviderName } = useContext(WeblnContext)
+  const { wallets } = useContext(WalletContext)
   const { artifact, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -58,6 +58,7 @@ const ContractTopupLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null)
 
   const { oracles } = config
 
@@ -75,8 +76,9 @@ const ContractTopupLightning: NextPage = () => {
 
   if (!newContract) throw new Error('Missing contract')
 
-  const handleInvoice = async (): Promise<void> => {
-    if (!wallet) return
+  const handleInvoice = async (wallet: Wallet): Promise<void> => {
+    setSelectedWallet(wallet)
+    if (!wallets.length) throw new Error('Missing wallets')
     openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {
@@ -172,8 +174,14 @@ const ContractTopupLightning: NextPage = () => {
         const value = onchainTopupAmount
         const collateralUtxos = [{ ...utxo, value, redeemScript }]
 
+        const owner = wallets.filter(
+          (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
+        )[0]
+        if (!owner) throw new Error('Cannot found owned of contract')
+
         // prepare borrow transaction with claim utxo as input
         const preparedTx = await prepareTopupTx(
+          owner,
           wallet,
           artifact,
           newContract,
@@ -248,14 +256,14 @@ const ContractTopupLightning: NextPage = () => {
         await saveContractToStorage(newContract)
 
         // wait for confirmation, mark contract confirmed and reload contracts
-        chainSource
+        await chainSource
           .waitForConfirmation(
             newContract.txid,
             await getContractCovenantAddress(artifact, newContract, network),
           )
           .then(() => {
             markContractConfirmed(newContract)
-            reloadContracts()
+            return reloadContracts()
           })
 
         // mark old contract as topup
@@ -273,19 +281,10 @@ const ContractTopupLightning: NextPage = () => {
     }
   }
 
-  const handleAlby =
-    weblnProviderName === 'Alby'
-      ? async () => {
-          setUseWebln(true)
-          await handleInvoice()
-        }
-      : undefined
-
   return (
     <>
       <EnablersLightning
         contract={newContract}
-        handleAlby={handleAlby}
         handleInvoice={handleInvoice}
         task={Tasks.Topup}
       />
@@ -294,7 +293,7 @@ const ContractTopupLightning: NextPage = () => {
         data={data}
         invoice={invoice}
         result={result}
-        retry={retry(setData, setResult, handleInvoice)}
+        retry={retry(setData, setResult, () => handleInvoice(selectedWallet!))}
         reset={resetModal}
         stage={stage}
         task={Tasks.Topup}

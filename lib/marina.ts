@@ -86,8 +86,17 @@ export class MarinaWallet implements Wallet {
   }
 
   async getCoins(): Promise<Coin[]> {
-    const marinaCoins = await this.marina.getCoins()
+    const network = await this.getNetwork()
+    const mainAccountIDs = await getMainAccountIDs(network, true)
+    const marinaCoins = await this.marina.getCoins(mainAccountIDs)
     return marinaCoins.filter(isCoin)
+  }
+
+  async getContractCoin(txID: string, vout: number): Promise<Coin | undefined> {
+    const coins = await this.marina.getCoins([MarinaWallet.FujiAccountID])
+    return coins
+      .filter(isCoin)
+      .find((coin) => coin.txid === txID && coin.vout === vout)
   }
 
   getNetwork(): Promise<NetworkString> {

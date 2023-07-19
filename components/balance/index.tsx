@@ -1,12 +1,10 @@
 import { WalletContext } from 'components/providers/wallet'
 import BalanceTable from './table'
 import { useContext } from 'react'
-import { useSelectBalances } from 'lib/hooks'
 import { WalletType } from 'lib/wallet'
 
 const Balance = () => {
-  const { wallets } = useContext(WalletContext)
-  const balances = useSelectBalances(wallets)
+  const { balances } = useContext(WalletContext)
 
   return (
     <div className="is-box has-pink-border">

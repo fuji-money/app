@@ -19,7 +19,7 @@ import {
   getContractCovenantAddress,
   checkContractOutspend,
 } from 'lib/contracts'
-import { getGlobalsFromStorage, getMyContractsFromStorage } from 'lib/storage'
+import { getMyContractsFromStorage } from 'lib/storage'
 import { Activity, Contract, ContractState } from 'lib/types'
 import { WalletContext } from './wallet'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
@@ -28,6 +28,7 @@ import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { address } from 'liquidjs-lib'
 import { ConfigContext } from './config'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
+import { Coin } from 'lib/wallet'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -36,7 +37,7 @@ interface ContractsContextProps {
   newContract: Contract | undefined
   oldContract: Contract | undefined
   getContract(txID: string): Contract | undefined
-  reloadContracts: () => void
+  reloadContracts: () => Promise<void>
   resetContracts: () => void
   setLoading: (arg0: boolean) => void
   setNewContract: (arg0: Contract) => void
@@ -50,7 +51,7 @@ export const ContractsContext = createContext<ContractsContextProps>({
   newContract: undefined,
   oldContract: undefined,
   getContract: () => undefined,
-  reloadContracts: () => {},
+  reloadContracts: () => Promise.resolve(),
   resetContracts: () => {},
   setLoading: () => {},
   setNewContract: () => {},
@@ -76,10 +77,9 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // save first time app was run
   const lastReload = useRef(Date.now())
 
-  const reloadAndMarkLastReload = () => {
+  const reloadAndMarkLastReload = async () => {
     lastReload.current = Date.now()
-    reloadContracts()
-    reloadConfig()
+    await Promise.allSettled([reloadContracts(), reloadConfig()])
   }
 
   const resetContracts = () => {
@@ -99,15 +99,16 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const reloadContracts = async () => {
     if (wallets && wallets.length > 0) {
       await checkContractsStatus()
-      const network = getGlobalsFromStorage().network
-      setContracts(
-        await getContracts(
-          wallets.map((w) => w.getMainAccountXPubKey()),
-          assets,
-          network,
-        ),
+      const contracts = await getContracts(
+        wallets.map((w) => w.getMainAccountXPubKey()),
+        assets,
+        network,
       )
-      setActivities(await getActivities(wallets))
+
+      if (contracts.length > 0) {
+        setContracts(contracts)
+        setActivities(await getActivities(wallets))
+      }
       setLoading(false)
     }
   }
@@ -120,8 +121,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
   const notConfirmed = async (contract: Contract, chainSource: ChainSource) => {
-    const network =
-      (contract.network as NetworkString) || getGlobalsFromStorage().network
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(artifact, contract, network),
@@ -139,10 +138,6 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     if (wallets.length === 0) return
     // function to check if contract has fuji coin
     for (const wallet of wallets) {
-      const fujiCoins = await wallet.getCoins()
-      const hasCoin = (txid = '') =>
-        fujiCoins.some((coin) => coin.txid === txid)
-
       const network = await wallet.getNetwork()
 
       // open a websocket connection to explorer
@@ -196,10 +191,18 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         } else {
           // contract not spent
           // if we have coin it means contract is still open
-          if (hasCoin(contract.txid)) {
-            markContractOpen(contract)
-            continue
+          try {
+            if (
+              contract.vout !== undefined &&
+              (await wallet.getContractCoin(contract.txid, contract.vout))
+            ) {
+              markContractOpen(contract)
+              continue
+            }
+          } catch (e) {
+            console.warn('error', e)
           }
+
           // if no coin, could be redeemed or topuped just now, or else is unknown
           if (
             contract.state !== ContractState.Redeemed &&
@@ -269,21 +272,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
   const setWalletListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
-    const okToReload = (accountID: string) =>
-      Date.now() - lastReload.current > 30000
+    const okToReload = () => Date.now() - lastReload.current > 30000
     // add event listeners
     if (wallets.length > 0) {
-      const listenerFunction = async (utxo: Utxo) => {
-        if (
-          !utxo ||
-          !utxo.scriptDetails ||
-          !isIonioScriptDetails(utxo.scriptDetails) ||
-          (isIonioScriptDetails(utxo.scriptDetails) &&
-            utxo.scriptDetails.artifact.contractName !== 'SyntheticAsset')
-        )
-          return
-        if (okToReload(utxo.scriptDetails.accountName))
-          reloadAndMarkLastReload()
+      const listenerFunction = async () => {
+        if (okToReload()) await reloadAndMarkLastReload()
       }
 
       const closeFns: (() => void)[] = []
@@ -294,6 +287,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       }
       return () => closeFns.forEach((fn) => fn())
     }
+
     return () => {}
   }
 
@@ -302,12 +296,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   useEffect(() => {
     async function runOnAssetsChange() {
       if (assets.length) {
-        const network = getGlobalsFromStorage().network
         if (!firstRender.current.includes(network)) {
           // await syncContractsWithWallet()
           firstRender.current.push(network)
+          await reloadContracts()
         }
-        await reloadContracts()
         setLoading(false)
         return setWalletListener() // return the close listener function
       }

@@ -7,7 +7,6 @@ import Result from 'components/result'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
-import { useSelectBalances } from 'lib/hooks'
 import { WalletType } from 'lib/wallet'
 
 interface RedeemModalProps {
@@ -31,8 +30,7 @@ const RedeemModal = ({
   task,
   wallet,
 }: RedeemModalProps) => {
-  const { wallets } = useContext(WalletContext)
-  const balances = useSelectBalances(wallets)
+  const { wallets, balances } = useContext(WalletContext)
 
   if (!contract) return <></>
 

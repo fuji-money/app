@@ -21,6 +21,7 @@ const ContractRedeemLiquid: NextPage = () => {
   const { artifact } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
+  const { wallets } = useContext(WalletContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
@@ -43,7 +44,20 @@ const ContractRedeemLiquid: NextPage = () => {
       setStage(ModalStages.NeedsCoins)
       if (!newContract) throw new Error('Contract not found')
       const network = await selected.getNetwork()
-      const tx = await prepareRedeemTx(selected, artifact, newContract, network)
+
+      // find owned of the contract
+      const owner = wallets.find(
+        (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
+      )
+      if (!owner) throw new Error('Owner not found')
+
+      const tx = await prepareRedeemTx(
+        owner,
+        selected,
+        artifact,
+        newContract,
+        network,
+      )
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
@@ -71,7 +85,7 @@ const ContractRedeemLiquid: NextPage = () => {
       setData(txid)
       setResult(Outcome.Success)
       setStage(ModalStages.ShowResult)
-      reloadContracts()
+      await reloadContracts()
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))

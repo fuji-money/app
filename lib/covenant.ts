@@ -337,7 +337,8 @@ export async function proposeBorrowContract(
 
 // redeem
 export async function prepareRedeemTx(
-  wallet: Wallet,
+  owner: Wallet, // who owns the collateral
+  wallet: Wallet, // who will pay to redeem collateral
   artifact: Artifact,
   contract: Contract,
   network: NetworkString,
@@ -360,16 +361,17 @@ export async function prepareRedeemTx(
   let ionioInstance = await getIonioInstance(artifact, contract, network)
 
   // find coin for this contract
-  const coins = await wallet.getCoins()
-  const coinToRedeem = coins.find(
-    (c) => c.txid === contract.txid && c.vout === contract.vout,
-  )
+  if (!contract.txid) throw new Error('Invalid contract: no txid')
+  if (contract.vout === undefined) throw new Error('Invalid contract: no vout')
+
+  const coinToRedeem = await owner.getContractCoin(contract.txid, contract.vout)
   if (!coinToRedeem)
     throw new Error(
       'Contract cannot be found in the connected wallet. ' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
+  const coins = await wallet.getCoins()
   // validate we have sufficient synthetic funds
   const { selection: syntheticUtxos, change: syntheticChangeAmount } =
     selectCoins(coins, synthetic.id, synthetic.quantity)
@@ -377,8 +379,10 @@ export async function prepareRedeemTx(
 
   // marina signer for ionio redeem function
   const marinaSigner = {
-    signTransaction: (base64: string) => {
-      return wallet.signPset(base64)
+    signTransaction: async (base64: string) => {
+      const signedByOwner = await owner.signPset(base64)
+      if (owner.type !== wallet.type) return wallet.signPset(signedByOwner)
+      return signedByOwner
     },
   }
 
@@ -463,7 +467,8 @@ export interface PreparedTopupTx {
 }
 
 export async function prepareTopupTx(
-  wallet: Wallet,
+  contractOwner: Wallet, // wallet that owns the contract
+  wallet: Wallet, // wallet that will topup
   artifact: Artifact,
   newContract: Contract,
   oldContract: Contract,
@@ -490,9 +495,14 @@ export async function prepareTopupTx(
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
 
-  const coins = await wallet.getCoins()
-  const coinToTopup = coins.find(
-    (c) => c.txid === oldContract.txid && c.vout === oldContract.vout,
+  // find coin for this contract
+  if (!oldContract.txid) throw new Error('Invalid contract: no txid')
+  if (oldContract.vout === undefined)
+    throw new Error('Invalid contract: no vout')
+
+  const coinToTopup = await contractOwner.getContractCoin(
+    oldContract.txid,
+    oldContract.vout,
   )
   if (!coinToTopup)
     throw new Error(
@@ -500,8 +510,9 @@ export async function prepareTopupTx(
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
+  const coins = await wallet.getCoins()
   // validate we have sufficient synthetic funds to burn
-  const { selection: syntheticUtxos, change } = selectCoins(
+  const { selection: syntheticUtxos } = selectCoins(
     coins,
     burnAsset,
     burnAmount,
@@ -544,7 +555,7 @@ export async function prepareTopupTx(
   // signatures needed for topup
   const marinaSigner = {
     signTransaction: (base64: string) => {
-      return wallet.signPset(base64)
+      return contractOwner.signPset(base64)
     },
   }
   const skipSignature = {

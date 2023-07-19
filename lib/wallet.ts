@@ -21,7 +21,8 @@ export interface Wallet {
 
   getMainAccountXPubKey(): string
   getBalances(): Promise<Record<string, number>>
-  getCoins(): Promise<Coin[]> // returns all coins, including contract ones
+  getCoins(): Promise<Coin[]> // returns all coins that are not locked by the covenants
+  getContractCoin(txID: string, vout: number): Promise<Coin | undefined>
   getNetwork(): Promise<NetworkString>
 
   getNextAddress(): Promise<string>

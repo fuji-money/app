@@ -34,6 +34,7 @@ const ContractTopupLiquid: NextPage = () => {
   const { artifact, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
+  const { wallets } = useContext(WalletContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
@@ -77,8 +78,14 @@ const ContractTopupLiquid: NextPage = () => {
 
       const network = await selected.getNetwork()
 
+      const owner = wallets.find(
+        (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
+      )
+      if (!owner) throw new Error('Owner not found')
+
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(
+        owner,
         selected,
         artifact,
         newContract,

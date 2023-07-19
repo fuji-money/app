@@ -221,7 +221,6 @@ const BorrowParams: NextPage = () => {
 
     // broadcast transaction
     const rawHex = finalizeTx(pset)
-    console.log('rawHex', rawHex)
     const chainSource = new WsElectrumChainSource(network)
     const txid = await chainSource.broadcastTransaction(rawHex)
     newContract.txid = txid
@@ -244,14 +243,14 @@ const BorrowParams: NextPage = () => {
     await saveContractToStorage({ ...newContract })
 
     // wait for confirmation, mark contract confirmed and reload contracts
-    chainSource
+    await chainSource
       .waitForConfirmation(
         newContract.txid,
         await getContractCovenantAddress(artifact, newContract, network),
       )
       .then(() => {
         markContractConfirmed(newContract)
-        reloadContracts()
+        return reloadContracts()
       })
 
     // show success

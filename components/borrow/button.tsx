@@ -2,7 +2,6 @@ import { ConfigContext } from 'components/providers/config'
 import { ContractsContext } from 'components/providers/contracts'
 import { WalletContext } from 'components/providers/wallet'
 import { feeAmount, minDustLimit } from 'lib/constants'
-import { useSelectBalances } from 'lib/hooks'
 import { getAssetBalance } from 'lib/marina'
 import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { LightningEnabledTasks, Tasks } from 'lib/tasks'
@@ -19,8 +18,7 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
-  const { wallets } = useContext(WalletContext)
-  const balances = useSelectBalances(wallets)
+  const { wallets, balances } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { setNewContract } = useContext(ContractsContext)
 

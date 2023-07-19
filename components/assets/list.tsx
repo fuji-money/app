@@ -5,13 +5,23 @@ import AssetRow from './row'
 import Spinner from 'components/spinner'
 import { ConfigContext } from 'components/providers/config'
 import { WalletContext } from 'components/providers/wallet'
-import { useSelectBalances } from 'lib/hooks'
 import { getAssetBalance } from 'lib/marina'
 
 const AssetsList = () => {
   const { config, loading } = useContext(ConfigContext)
-  const { wallets } = useContext(WalletContext)
-  const balances = useSelectBalances(wallets)
+  const { wallets, balances } = useContext(WalletContext)
+
+  const [totalBalance, setTotalBalance] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    for (const asset of config.assets) {
+      let total = 0
+      for (const wallet of wallets) {
+        total += getAssetBalance(asset, balances[wallet.type])
+      }
+      setTotalBalance((prev) => ({ ...prev, [asset.id]: total }))
+    }
+  }, [balances, config.assets, wallets])
 
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>()
 
@@ -29,10 +39,7 @@ const AssetsList = () => {
           <AssetRow
             key={index}
             asset={asset}
-            balance={wallets.reduce(
-              (acc, w) => getAssetBalance(asset, balances[w.type]) + acc,
-              0,
-            )}
+            balance={totalBalance[asset.id]}
           />
         ))}
     </div>

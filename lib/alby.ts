@@ -1,5 +1,5 @@
 import { ECPairFactory } from 'ecpair'
-import { Artifact, Contract } from '@ionio-lang/ionio'
+import { Artifact, Contract, Outpoint } from '@ionio-lang/ionio'
 import { Utxo, NetworkString, UnblindingData } from 'marina-provider'
 import { ContractParams } from './types'
 import { Coin, Wallet, WalletType } from './wallet'
@@ -8,13 +8,14 @@ import {
   ElementsValue,
   Pset,
   Transaction,
+  TxOutput,
   Updater,
   address,
   confidential,
   networks,
 } from 'liquidjs-lib'
 import { ChainSource, WsElectrumChainSource } from './chainsource.port'
-import { getMyContractsFromStorage } from './storage'
+import { getGlobalsFromStorage, getMyContractsFromStorage } from './storage'
 import { assetPair, expirationTimeout } from './constants'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import * as ecc from 'tiny-secp256k1'
@@ -24,6 +25,13 @@ import { TransactionRepository } from './transactions-repository'
 import { BlindersRepository } from './blinders-repository'
 
 const ZERO_32 = Buffer.alloc(32, 0).toString('hex')
+
+function isUnconfidential(output: TxOutput): boolean {
+  return (
+    (!output.rangeProof || output.rangeProof.length === 0) &&
+    (!output.surjectionProof || output.surjectionProof.length === 0)
+  )
+}
 
 // epxosed as window.liquid by alby
 interface LiquidProvider {
@@ -132,7 +140,8 @@ enum ListenerType {
 export class AlbyWallet implements Wallet {
   type = WalletType.Alby
 
-  private cacheCoins: Utxo[] = []
+  private _chainSource: ChainSource | undefined
+
   private listeners: {
     id: string
     type: ListenerType
@@ -142,6 +151,8 @@ export class AlbyWallet implements Wallet {
   private albyAddress:
     | Awaited<ReturnType<LiquidProvider['getAddress']>>
     | undefined
+
+  private artifact: Artifact | undefined
 
   private constructor(
     private provider: LiquidProvider,
@@ -156,6 +167,7 @@ export class AlbyWallet implements Wallet {
     try {
       const provider = await safeDetectProvider()
       const wallet = new AlbyWallet(provider, txRepository, blindersRepository)
+      wallet.artifact = await getArtifact()
       if (!!provider.enabled) {
         await wallet.fetchAndSetAddress()
       }
@@ -171,7 +183,18 @@ export class AlbyWallet implements Wallet {
 
   private async getChainSource(): Promise<ChainSource> {
     const network = await this.getNetwork()
-    return new WsElectrumChainSource(network)
+    if (!this._chainSource) {
+      this._chainSource = new WsElectrumChainSource(network)
+      return this._chainSource
+    }
+
+    if (this._chainSource.network !== network) {
+      await this._chainSource.close().catch(console.error)
+      this._chainSource = new WsElectrumChainSource(network)
+      return this._chainSource
+    }
+
+    return this._chainSource
   }
 
   // getAllScripts returns all the scripts signable by Alby wallet
@@ -180,18 +203,18 @@ export class AlbyWallet implements Wallet {
     if (!this.albyAddress) await this.fetchAndSetAddress()
     const addr = this.albyAddress?.address
     if (!addr) throw new Error('Wallet not connected')
-    const chainsource = await this.getChainSource()
 
+    const network = getGlobalsFromStorage().network
     const contracts = getMyContractsFromStorage(
-      chainsource.network,
+      network,
       this.getMainAccountXPubKey(),
     )
 
-    const artifact = await getArtifact()
+    if (!this.artifact) throw new Error('Artifact not found')
 
     const ionioInstances = await Promise.allSettled(
       contracts.map((contract) => {
-        return getIonioInstance(artifact, contract, chainsource.network)
+        return getIonioInstance(this.artifact!, contract, network)
       }),
     )
 
@@ -370,7 +393,6 @@ export class AlbyWallet implements Wallet {
           )
 
           if (unblindData) {
-            console.log('unblindData', unblindData)
             updater.addInExplicitAsset(
               i,
               AssetHash.fromHex(unblindData.asset).bytes,
@@ -400,30 +422,21 @@ export class AlbyWallet implements Wallet {
     if (!this.albyAddress) await this.fetchAndSetAddress()
     const blindPrvKey = this.albyAddress?.blindingPrivateKey
     if (!blindPrvKey) throw new Error('Wallet not connected')
+    const confidentialAddress = this.albyAddress?.address
+    if (!confidentialAddress) throw new Error('Wallet not connected')
 
-    const allScripts = await this.getAllScripts()
+    const scripts = [address.toOutputScript(confidentialAddress)]
+
     const chainSource = await this.getChainSource()
 
-    const allUnspentsPromises = await Promise.allSettled(
-      allScripts.map((script) => chainSource.listUnspents(script)),
-    )
-
-    const allUnspents: Awaited<ReturnType<ChainSource['listUnspents']>> = []
-
-    for (const res of allUnspentsPromises) {
-      if (res.status === 'fulfilled') {
-        allUnspents.push(...res.value)
-      } else {
-        console.warn('Error fetching unspents', res.reason)
-      }
-    }
-
+    const histories = await chainSource.fetchHistories(scripts)
     // fetch transactions if needed
     const toFetch = new Set<string>()
-
-    for (const unspent of allUnspents) {
-      if (!(await this.txRepo.getTransaction(unspent.txid))) {
-        toFetch.add(unspent.txid)
+    for (const history of histories) {
+      for (const { tx_hash } of history) {
+        if (!(await this.txRepo.getTransaction(tx_hash))) {
+          toFetch.add(tx_hash)
+        }
       }
     }
 
@@ -434,23 +447,26 @@ export class AlbyWallet implements Wallet {
       }
     }
 
+    const allTransactionsHex = await this.txRepo.getAllTransactions()
+    const transactions = allTransactionsHex.map((hex) =>
+      Transaction.fromHex(hex),
+    )
+
+    const utxos = computeUtxos(scripts, transactions)
+
     const key = Buffer.from(blindPrvKey, 'hex')
     const unblinder = new confidential.Confidential(await zkpLib())
 
     const unblindedResults = await Promise.allSettled(
-      allUnspents.map(async ({ txid, vout }) => {
-        const txHex = await this.txRepo.getTransaction(txid)
-        if (!txHex) throw new Error('Transaction not found')
-        const tx = Transaction.fromHex(txHex)
+      utxos.map(async ({ txid, vout }) => {
+        const tx = transactions.find((t) => t.getId() === txid)
+        if (!tx) throw new Error('transaction not found')
         const output = tx.outs[vout]
 
         let blindingData: UnblindingData | undefined
 
         /// unconfidential case
-        if (
-          (!output.rangeProof || output.rangeProof.length === 0) &&
-          (!output.surjectionProof || output.surjectionProof.length === 0)
-        ) {
+        if (isUnconfidential(output)) {
           blindingData = {
             asset: AssetHash.fromBytes(output.asset).hex,
             assetBlindingFactor: ZERO_32,
@@ -499,12 +515,77 @@ export class AlbyWallet implements Wallet {
     return unblinded
   }
 
+  async getContractCoin(txID: string, vout: number): Promise<Coin | undefined> {
+    // check if we have the contract
+    const network = await this.getNetwork()
+    const contract = getMyContractsFromStorage(
+      network,
+      this.getMainAccountXPubKey(),
+    ).find((c) => c.txid === txID && c.vout === vout)
+
+    // check if we have the tx
+    let witnessUtxo: TxOutput
+    const tx = await this.txRepo.getTransaction(txID)
+    if (!tx) {
+      const chainSource = await this.getChainSource()
+      const [{ hex }] = await chainSource.fetchTransactions([txID])
+      if (!hex) return undefined
+
+      await this.txRepo.addTransaction(txID, hex)
+      witnessUtxo = Transaction.fromHex(hex).outs[vout]
+    } else {
+      witnessUtxo = Transaction.fromHex(tx).outs[vout]
+    }
+    if (!witnessUtxo) throw new Error('tx not found')
+
+    if (isUnconfidential(witnessUtxo)) {
+      return {
+        txid: txID,
+        vout,
+        witnessUtxo,
+        blindingData: {
+          asset: AssetHash.fromBytes(witnessUtxo.asset).hex,
+          assetBlindingFactor: ZERO_32,
+          value: ElementsValue.fromBytes(witnessUtxo.value).number,
+          valueBlindingFactor: ZERO_32,
+        },
+      }
+    }
+
+    // confidential case
+    // check if we have the blinding data in repo
+
+    let blindingData = await this.blindersRepo.getBlindingData(txID, vout)
+    if (!blindingData) {
+      const blindPrvKey = this.albyAddress?.blindingPrivateKey
+      if (!blindPrvKey) throw new Error('Wallet not connected')
+      const key = Buffer.from(blindPrvKey, 'hex')
+      const unblinder = new confidential.Confidential(await zkpLib())
+      const unblinded = unblinder.unblindOutputWithKey(witnessUtxo, key)
+      blindingData = {
+        asset: AssetHash.fromBytes(unblinded.asset).hex,
+        assetBlindingFactor: unblinded.assetBlindingFactor.toString('hex'),
+        valueBlindingFactor: unblinded.valueBlindingFactor.toString('hex'),
+        value: parseInt(unblinded.value),
+      }
+      await this.blindersRepo.addBlindingData(txID, vout, blindingData)
+    }
+
+    return {
+      txid: txID,
+      vout,
+      witnessUtxo,
+      blindingData,
+    }
+  }
+
   async getBalances(): Promise<Record<string, number>> {
-    const utxos = await this.getCoins()
-    return computeBalances(utxos)
+    const coins = await this.getCoins()
+    return computeBalances(coins)
   }
 
   private async subsribeScript(chainSource: ChainSource, script: string) {
+    let cache = await this.getCoins()
     await chainSource.subscribeScriptStatus(
       Buffer.from(script, 'hex'),
       async (_, status) => {
@@ -515,20 +596,20 @@ export class AlbyWallet implements Wallet {
         // find new utxos
         const newUtxos = utxos.filter(
           (utxo) =>
-            !this.cacheCoins.find(
+            !cache.find(
               (cached) =>
                 cached.txid === utxo.txid && cached.vout === utxo.vout,
             ),
         )
         // find spent utxos
-        const spentUtxos = this.cacheCoins.filter(
+        const spentUtxos = cache.filter(
           (cached) =>
             !utxos.find(
               (utxo) => cached.txid === utxo.txid && cached.vout === utxo.vout,
             ),
         )
 
-        this.cacheCoins = utxos
+        cache = utxos
 
         for (const { type, callback } of this.listeners) {
           switch (type) {
@@ -560,7 +641,6 @@ export class AlbyWallet implements Wallet {
         for (const script of scripts) {
           await this.subsribeScript(chainSource, script)
         }
-        await chainSource.close()
       }
       subscribeAll().catch(() => {})
     }
@@ -581,7 +661,6 @@ export class AlbyWallet implements Wallet {
         for (const script of scripts) {
           await chainSource.unsubscribeScriptStatus(Buffer.from(script, 'hex'))
         }
-        await chainSource.close().catch(() => {})
       }
       unsubscribeAll().catch(() => {})
     }
@@ -610,4 +689,34 @@ function computeBalances(
     balances[asset] = (balances[asset] || 0) + value
   }
   return balances
+}
+
+function computeUtxos(
+  walletScripts: Buffer[],
+  transactions: Transaction[],
+): Outpoint[] {
+  const outpointsInInputs = new Set<string>()
+  const walletOutputs = new Set<string>()
+
+  for (const tx of transactions) {
+    for (const input of tx.ins) {
+      outpointsInInputs.add(
+        `${Buffer.from(input.hash).reverse().toString('hex')}:${input.index}`,
+      )
+    }
+    for (let i = 0; i < tx.outs.length; i++) {
+      if (!walletScripts.find((script) => script.equals(tx.outs[i].script)))
+        continue
+      walletOutputs.add(`${tx.getId()}:${i}`)
+    }
+  }
+
+  const utxosOutpoints = Array.from(walletOutputs)
+    .filter((outpoint) => !outpointsInInputs.has(outpoint))
+    .map((outpoint) => {
+      const [txid, vout] = outpoint.split(':')
+      return { txid, vout: Number(vout) }
+    })
+
+  return utxosOutpoints
 }

@@ -5,11 +5,9 @@ import { prettyNumber, prettyPercentage } from 'lib/pretty'
 import { getAssetBalance } from 'lib/marina'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
-import { useSelectBalances } from 'lib/hooks'
 
 const BalanceInFiat = () => {
-  const { wallets } = useContext(WalletContext)
-  const balancesByWallet = useSelectBalances(wallets)
+  const { wallets, balances: balancesByWallet } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
