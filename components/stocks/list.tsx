@@ -8,15 +8,13 @@ import { WalletContext } from 'components/providers/wallet'
 import { ContractsContext } from 'components/providers/contracts'
 
 const StocksList = () => {
-  const { wallet } = useContext(WalletContext)
+  const { network } = useContext(WalletContext)
   const { loading } = useContext(ContractsContext)
   const [stocks, setStocks] = useState<Stock[]>()
 
   useEffect(() => {
-    if (wallet) {
-      wallet.getNetwork().then(fetchStocks).then(setStocks)
-    }
-  }, [wallet])
+    fetchStocks(network).then(setStocks)
+  }, [network])
 
   if (loading) return <Spinner />
   if (!stocks) return <SomeError>Error getting stocks</SomeError>

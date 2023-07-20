@@ -56,7 +56,6 @@ const MultiplyDeposit = ({
         {lightning && (
           <EnablersLightning
             contract={contract}
-            handleAlby={handleAlby}
             handleInvoice={handleLightning}
             task={Tasks.Multiply}
           />
