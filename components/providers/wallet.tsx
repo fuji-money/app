@@ -19,6 +19,7 @@ import {
 import { useSelectBalances } from 'lib/hooks'
 
 interface WalletContextProps {
+  initializing: boolean
   installedWallets: Wallet[]
   wallets: Wallet[] // wallets connected & belonging to the selected network
   network: NetworkString
@@ -64,6 +65,7 @@ export const WalletContext = createContext<WalletContextProps>({
   setNetwork: async () => {},
   connect: async () => {},
   balances: {},
+  initializing: true,
 })
 
 interface WalletProviderProps {
@@ -71,20 +73,20 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider = ({ children }: WalletProviderProps) => {
-  const [wallets, setWallets] = useState<Wallet[]>([])
-  const [installedWallets, setInstalledWallets] = useState<Wallet[]>([])
+  const [wallets, setWallets] = useState<Wallet[]>()
+  const [installedWallets, setInstalledWallets] = useState<Wallet[]>()
   const [network, setNetworkInState] = useState<NetworkString>(defaultNetwork)
-  const balances = useSelectBalances(wallets)
+  const balances = useSelectBalances(wallets || [])
 
   useEffect(() => {
     const update = async () => {
       const walletsNetworks = await Promise.allSettled(
-        installedWallets
+        (installedWallets || [])
           .filter((w) => w.isConnected)
           .map((w) => w.getNetwork()),
       )
 
-      const newWalletsState = installedWallets.filter((_, index) => {
+      const newWalletsState = (installedWallets || []).filter((_, index) => {
         const walletNetwork = walletsNetworks[index]
         return (
           walletNetwork.status === 'fulfilled' &&
@@ -117,6 +119,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
 
   const connect = useCallback(
     async (type: WalletType) => {
+      if (!installedWallets) throw new Error('Wallets not detected')
+      if (!wallets) throw new Error('Wallets not detected')
+
       const fromInstalled = installedWallets.find((w) => w.type === type)
       if (!fromInstalled) throw new Error('Wallet not installed')
       await fromInstalled.connect()
@@ -126,7 +131,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         const network = getGlobalsFromStorage().network
         const walletNetwork = await fromInstalled.getNetwork()
         if (walletNetwork !== network) return
-        setWallets((prevWallets) => [...prevWallets, fromInstalled])
+        setWallets((prevWallets) =>
+          prevWallets ? [...prevWallets, fromInstalled] : [fromInstalled],
+        )
       }
     },
     [installedWallets, wallets],
@@ -145,8 +152,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   return (
     <WalletContext.Provider
       value={{
-        installedWallets,
-        wallets,
+        initializing: installedWallets === undefined || wallets === undefined,
+        installedWallets: installedWallets || [],
+        wallets: wallets || [],
         network,
         setNetwork,
         connect,
