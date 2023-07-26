@@ -32,16 +32,20 @@ export class MarinaWallet implements Wallet {
 
   private constructor(private marina: MarinaProvider) {}
 
+  // initialize cached value (_isConnected, _xPub)
+  private async init() {
+    this._isConnected = await this.marina.isEnabled()
+    if (this._isConnected) {
+      const infos = await this.marina.getAccountInfo(MarinaWallet.MainAccountID)
+      this._xPub = infos.masterXPub
+    }
+  }
+
   static async detect(): Promise<MarinaWallet | undefined> {
     const marina = await detectProvider('marina')
     if (!marina) return undefined
     const instance = new MarinaWallet(marina)
-    instance._isConnected = await instance.marina.isEnabled()
-    if (!instance.isConnected()) await instance.connect()
-    const infos = await instance.marina.getAccountInfo(
-      MarinaWallet.MainAccountID,
-    )
-    instance._xPub = infos.masterXPub
+    await instance.init()
     return instance
   }
 
@@ -51,6 +55,7 @@ export class MarinaWallet implements Wallet {
 
   async connect(): Promise<void> {
     await this.marina.enable()
+    await this.init()
 
     if (await fujiAccountMissing(this.marina)) {
       openModal(ModalIds.Account)
@@ -67,6 +72,8 @@ export class MarinaWallet implements Wallet {
   }
 
   getMainAccountXPubKey(): string {
+    if (!this._isConnected) throw new Error('Wallet not connected')
+    if (!this._xPub) throw new Error('Invalid xPub')
     return this._xPub ?? ''
   }
 

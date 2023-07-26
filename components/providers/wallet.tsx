@@ -79,7 +79,9 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   useEffect(() => {
     const update = async () => {
       const walletsNetworks = await Promise.allSettled(
-        installedWallets.map((w) => w.getNetwork()),
+        installedWallets
+          .filter((w) => w.isConnected)
+          .map((w) => w.getNetwork()),
       )
 
       const newWalletsState = installedWallets.filter((_, index) => {
