@@ -12,14 +12,14 @@ interface ActivitiesListProps {
 }
 
 const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
-  const { wallets } = useContext(WalletContext)
+  const { wallets, initializing } = useContext(WalletContext)
   const { activities, loading } = useContext(ContractsContext)
 
+  if (loading || initializing) return <Spinner />
   if (!wallets.length)
     return (
       <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
     )
-  if (loading) return <Spinner />
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)

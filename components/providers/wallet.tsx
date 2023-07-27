@@ -43,19 +43,13 @@ function walletFactory(type: WalletType): Promise<Wallet | undefined> {
   }
 }
 
-async function detectWallets(): Promise<Wallet[]> {
-  const supportedWallets = [WalletType.Marina, WalletType.Alby]
-  const walletsPromises = await Promise.allSettled(
-    supportedWallets.map((type) => walletFactory(type)),
-  )
+// which wallets will be detected at startup
+const SUPPORTED_WALLETS = [WalletType.Marina, WalletType.Alby]
 
-  const wallets = []
-  for (const walletPromise of walletsPromises) {
-    if (walletPromise.status === 'fulfilled' && walletPromise.value) {
-      wallets.push(walletPromise.value)
-    }
-  }
-  return wallets
+function isFullfilled(
+  p: PromiseSettledResult<Wallet | undefined>,
+): p is PromiseFulfilledResult<Wallet> {
+  return p.status === 'fulfilled' && p.value !== undefined
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -81,15 +75,16 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   useEffect(() => {
     const update = async () => {
       const walletsNetworks = await Promise.allSettled(
-        (installedWallets || [])
-          .filter((w) => w.isConnected)
-          .map((w) => w.getNetwork()),
+        (installedWallets || []).map((w) =>
+          w.isConnected() ? w.getNetwork() : Promise.resolve(undefined),
+        ),
       )
 
       const newWalletsState = (installedWallets || []).filter((_, index) => {
         const walletNetwork = walletsNetworks[index]
         return (
           walletNetwork.status === 'fulfilled' &&
+          walletNetwork.value &&
           walletNetwork.value === network
         )
       })
@@ -103,6 +98,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       return newWalletsState
     }
 
+    if (!installedWallets) return
     update().then(setWallets).catch(console.error)
   }, [installedWallets, network])
 
@@ -146,7 +142,14 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
   }, [network, setNetwork])
 
   useEffect(() => {
-    detectWallets().then(setInstalledWallets).catch(console.error)
+    const walletFactoryPromises = SUPPORTED_WALLETS.map(walletFactory)
+    Promise.allSettled(walletFactoryPromises).then((results) => {
+      const newInstalledWallets = results
+        .filter(isFullfilled)
+        .map((r) => r.value)
+
+      setInstalledWallets(newInstalledWallets)
+    })
   }, [])
 
   return (

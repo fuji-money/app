@@ -97,6 +97,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
+    console.time('reloadContracts')
     if (wallets && wallets.length > 0) {
       await checkContractsStatus()
       const contracts = await getContracts(
@@ -111,6 +112,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       }
       setLoading(false)
     }
+    console.timeEnd('reloadContracts')
   }
 
   // check if a contract is confirmed by its transaction history

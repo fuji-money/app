@@ -168,7 +168,7 @@ export class AlbyWallet implements Wallet {
       const provider = await safeDetectProvider()
       const wallet = new AlbyWallet(provider, txRepository, blindersRepository)
       wallet.artifact = await getArtifact()
-      if (!!provider.enabled) {
+      if (provider.enabled) {
         await wallet.fetchAndSetAddress()
       }
       return wallet
@@ -178,7 +178,7 @@ export class AlbyWallet implements Wallet {
   }
 
   isConnected(): boolean {
-    return true
+    return this.albyAddress !== undefined
   }
 
   private async getChainSource(): Promise<ChainSource> {
@@ -238,7 +238,6 @@ export class AlbyWallet implements Wallet {
   async connect(): Promise<void> {
     await this.provider.enable()
     await this.fetchAndSetAddress()
-    return Promise.resolve()
   }
 
   disconnect(): Promise<void> {
@@ -478,7 +477,6 @@ export class AlbyWallet implements Wallet {
           blindingData = await this.blindersRepo.getBlindingData(txid, vout)
 
           // unblind if needed
-
           if (!blindingData) {
             const unblinded = unblinder.unblindOutputWithKey(output, key)
             blindingData = {
@@ -518,11 +516,6 @@ export class AlbyWallet implements Wallet {
   async getContractCoin(txID: string, vout: number): Promise<Coin | undefined> {
     // check if we have the contract
     const network = await this.getNetwork()
-    const contract = getMyContractsFromStorage(
-      network,
-      this.getMainAccountXPubKey(),
-    ).find((c) => c.txid === txID && c.vout === vout)
-
     // check if we have the tx
     let witnessUtxo: TxOutput
     const tx = await this.txRepo.getTransaction(txID)

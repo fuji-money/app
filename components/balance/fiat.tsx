@@ -7,7 +7,11 @@ import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
 
 const BalanceInFiat = () => {
-  const { wallets, balances: balancesByWallet } = useContext(WalletContext)
+  const {
+    wallets,
+    balances: balancesByWallet,
+    initializing,
+  } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
 
@@ -31,9 +35,9 @@ const BalanceInFiat = () => {
     )
   }, [assets, balancesByWallet])
 
+  if (loading || initializing) return <Spinner />
   if (!wallets || wallets.length === 0)
     return <p>🔌 Connect your wallet to view your balance</p>
-  if (loading) return <Spinner />
 
   return (
     <>

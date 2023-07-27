@@ -54,7 +54,7 @@ const WalletButton = ({
           </div>
           <div className="media-content">
             <div className="content">
-              <p>
+              <div>
                 <div className="is-flex is-justify-content-space-between is-align-content-center">
                   <span>
                     <strong>{name}</strong>
@@ -66,8 +66,8 @@ const WalletButton = ({
                     </span>
                   )}
                 </div>
-                {desc}
-              </p>
+                <p>{desc}</p>
+              </div>
             </div>
           </div>
         </article>
@@ -116,7 +116,7 @@ const WalletsModal = ({
     const connected = !!found?.isConnected()
 
     return (
-      <a
+      <div
         key={index}
         onClick={
           installed && !connected
@@ -129,7 +129,7 @@ const WalletsModal = ({
           installed={installed}
           isConnected={connected}
         />
-      </a>
+      </div>
     )
   })
   return (
