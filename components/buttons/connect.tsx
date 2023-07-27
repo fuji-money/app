@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import React, { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { closeModal, openModal } from 'lib/utils'
 import AccountModal from 'components/modals/account'
@@ -6,7 +6,7 @@ import WalletsModal from 'components/modals/wallets'
 import { ModalIds } from 'components/modals/modal'
 import { WalletType } from 'lib/wallet'
 
-const ConnectButton = () => {
+const ConnectButton: React.FC = () => {
   const { installedWallets, connect, initializing } = useContext(WalletContext)
 
   const handleWalletChoice = async (type: WalletType) => {
@@ -30,6 +30,14 @@ const ConnectButton = () => {
         />
       </>
     )
+
+  return (
+    <>
+      <button className="button is-primary my-auto mr-4" disabled>
+        Loading...
+      </button>
+    </>
+  )
 }
 
 export default ConnectButton
