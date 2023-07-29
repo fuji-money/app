@@ -37,3 +37,7 @@ yarn-error.log*
 # dev files
 .env.development
 .vscode
+/test-results/
+/playwright-report/
+/playwright/.cache/
+tests/marina
