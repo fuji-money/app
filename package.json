@@ -9,7 +9,8 @@
     "lint": "next lint",
     "prettier": "npx prettier --check pages/ components/ lib/",
     "prettier:fix": "npx prettier --write pages/ components/ lib/",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:init": "bash ./scripts/getmarina.sh"
   },
   "dependencies": {
     "@ionio-lang/ionio": "^0.3.0",

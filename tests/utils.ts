@@ -3,8 +3,6 @@ import { test as basePlaywrightTest, chromium } from '@playwright/test';
 import { generateMnemonic } from 'bip39';
 import path from 'path';
 
-export const FUJI_APP_LOCAL_URL = 'http://localhost:3000';
-
 export const test = basePlaywrightTest.extend<{
   context: BrowserContext;
   extensionId: string;
