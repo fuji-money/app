@@ -25,6 +25,7 @@ export type BlockHeader = {
 
 export type ChainSource = {
   network: NetworkString
+  isConfirmed(txID: string): Promise<boolean>
   waitForConfirmation(txID: string, covenantAddress: string): Promise<boolean>
   waitForAddressReceivesTx(addr: string): Promise<void>
   fetchHistories(scripts: Buffer[]): Promise<TransactionHistory[]>
@@ -46,6 +47,17 @@ const electrumURL = (network: NetworkString): string => {
   }
 }
 
+const esploraURL = (network: NetworkString): string => {
+  switch (network) {
+    case 'regtest':
+      return 'http://localhost:3001'
+    case 'testnet':
+      return 'https://blockstream.info/liquidtestnet/api'
+    default:
+      return 'https://blockstream.info/liquid/api'
+  }
+}
+
 const GetTransactionMethod = 'blockchain.transaction.get'
 const GetHistoryMethod = 'blockchain.scripthash.get_history'
 const GetBlockHeaderMethod = 'blockchain.block.header'
@@ -54,9 +66,18 @@ const SubscribeStatusMethod = 'blockchain.scripthash' // ElectrumWS add .subscri
 
 export class WsElectrumChainSource implements ChainSource {
   private ws: ElectrumWS
+  private esploraURL: string
 
   constructor(public network: NetworkString) {
     this.ws = new ElectrumWS(electrumURL(network))
+    this.esploraURL = esploraURL(network)
+  }
+
+  async isConfirmed(txID: string): Promise<boolean> {
+    const { confirmed } = await fetch(`${this.esploraURL}/tx/${txID}/status`)
+      .then((res) => res.json())
+      .catch(() => ({ confirmed: false }))
+    return confirmed
   }
 
   async fetchHistories(scripts: Buffer[]): Promise<TransactionHistory[]> {

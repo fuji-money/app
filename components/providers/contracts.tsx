@@ -108,6 +108,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   spent   => hist.length == 2
   const notConfirmed = async (contract: Contract) => {
     if (!network) return
+    if (contract.txid) {
+      const confirmed = await chainSource.isConfirmed(contract.txid)
+      return !confirmed
+    }
+
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(artifact, contract, network),
