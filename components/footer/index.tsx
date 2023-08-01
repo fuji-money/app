@@ -1,8 +1,10 @@
+const artifactRepositoryURL = 'https://github.com/fuji-money/tapscripts'
+
 const Footer = () => (
   <footer>
     <p>
       Covenant artifact fetched from{' '}
-      {/* <a href={artifactJSONurl}>{artifactJSONurl}</a> */}
+      <a href={artifactRepositoryURL}>{artifactRepositoryURL}</a>
     </p>
     <style jsx>{`
       p {

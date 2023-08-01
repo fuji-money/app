@@ -226,7 +226,7 @@ const BorrowParams: NextPage = () => {
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
-    await saveContractToStorage({ ...newContract })
+    await saveContractToStorage({ ...newContract, createdAt: Date.now() })
 
     // wait for confirmation, mark contract confirmed and reload contracts
     chainSource

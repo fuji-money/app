@@ -41,9 +41,14 @@ const ContractRedeemLiquid: NextPage = () => {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
       if (!newContract) throw new Error('Contract not found')
-      if (!newContract.createdAt)
-        throw new Error('Contract createdAt member not found')
-      const artifact = await artifactRepo.get(newContract.createdAt)
+      if (newContract.createdAt)
+        console.warn(
+          'unable to get createdAt timestamp for your contract, getting latest covenant artifact.',
+        )
+
+      const artifact = newContract.createdAt
+        ? await artifactRepo.get(newContract.createdAt)
+        : await artifactRepo.getLatest()
       const tx = await prepareRedeemTx(artifact, newContract, network)
 
       // ask user to sign transaction

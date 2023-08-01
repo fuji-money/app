@@ -47,7 +47,6 @@ export class GitArtifactRepository implements ArtifactRepository {
   // find the commit that is closest to the given timestamp modifying the artifact file
 
   async get(timestamp: number): Promise<Artifact> {
-    console.log('request artifact for', new Date(timestamp).toISOString())
     const until = new Date(timestamp).toISOString()
 
     const commits = await this.client.repos.listCommits({
