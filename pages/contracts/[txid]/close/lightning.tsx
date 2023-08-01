@@ -20,7 +20,7 @@ import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemLightning: NextPage = () => {
   const { marina, network, updateBalances } = useContext(WalletContext)
-  const { artifact } = useContext(ConfigContext)
+  const { artifactRepo } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -43,6 +43,10 @@ const ContractRedeemLightning: NextPage = () => {
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
+    if (!newContract.createdAt)
+      throw new Error('Contract createdAt member not found')
+    const artifact = await artifactRepo.get(newContract.createdAt)
+
     const tx = await prepareRedeemTx(
       artifact,
       newContract,

@@ -18,7 +18,7 @@ import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemLiquid: NextPage = () => {
   const { network, updateBalances } = useContext(WalletContext)
-  const { artifact } = useContext(ConfigContext)
+  const { artifactRepo } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -41,6 +41,9 @@ const ContractRedeemLiquid: NextPage = () => {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
       if (!newContract) throw new Error('Contract not found')
+      if (!newContract.createdAt)
+        throw new Error('Contract createdAt member not found')
+      const artifact = await artifactRepo.get(newContract.createdAt)
       const tx = await prepareRedeemTx(artifact, newContract, network)
 
       // ask user to sign transaction

@@ -18,21 +18,25 @@ import {
 import { populateOffer } from 'lib/offers'
 import { populateOracle } from 'lib/oracles'
 import { ModalIds } from 'components/modals/modal'
-import { Artifact } from '@ionio-lang/ionio'
-import { getArtifact } from 'lib/artifact'
+import { ArtifactRepository, GitArtifactRepository } from 'lib/artifact.port'
 
 interface ConfigContextProps {
-  artifact: Artifact
+  artifactRepo: ArtifactRepository
   config: Config
   loading: boolean
   reloadConfig: () => void
 }
 
-const emptyArtifact = { contractName: '', constructorInputs: [], functions: [] }
+const artifactRepo = new GitArtifactRepository({
+  owner: 'fuji-money',
+  repo: 'tapscripts',
+  branch: 'main',
+})
+
 const emptyConfig = { assets: [], offers: [], oracles: [] }
 
 export const ConfigContext = createContext<ConfigContextProps>({
-  artifact: emptyArtifact,
+  artifactRepo,
   config: emptyConfig,
   loading: true,
   reloadConfig: () => {},
@@ -40,8 +44,6 @@ export const ConfigContext = createContext<ConfigContextProps>({
 
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useContext(WalletContext)
-
-  const [artifact, setArtifact] = useState<Artifact>(emptyArtifact)
   const [config, setConfig] = useState<Config>(emptyConfig)
   const [loading, setLoading] = useState(true)
 
@@ -85,17 +87,14 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
-    getArtifact().then(setArtifact)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
     if (network) reloadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network])
 
   return (
-    <ConfigContext.Provider value={{ artifact, config, loading, reloadConfig }}>
+    <ConfigContext.Provider
+      value={{ artifactRepo, config, loading, reloadConfig }}
+    >
       {children}
     </ConfigContext.Provider>
   )

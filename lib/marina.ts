@@ -131,6 +131,12 @@ export async function getNextChangeAddress(accountID?: AccountID) {
   return address
 }
 
+function replaceBorrowerPublicKey(artifact: Artifact): Artifact {
+  const str = JSON.stringify(artifact)
+  const newStr = str.replaceAll('borrowerPublicKey', marinaFujiAccountID)
+  return JSON.parse(newStr)
+}
+
 export async function getNextCovenantAddress(
   artifact: Artifact,
   contractParams: Omit<ContractParams, 'borrowerPublicKey'>,
@@ -139,7 +145,7 @@ export async function getNextCovenantAddress(
   if (!marina) throw new Error('No Marina provider found')
   await marina.useAccount(marinaFujiAccountID)
   const covenantAddress = await marina.getNextAddress({
-    artifact,
+    artifact: replaceBorrowerPublicKey(artifact),
     args: contractParams,
   })
   await marina.useAccount((await getMainAccountIDs(false))[0])
