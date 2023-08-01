@@ -1,5 +1,5 @@
 import { Artifact } from '@ionio-lang/ionio'
-import { Octokit as BaseOctokit } from 'octokit'
+import { Octokit as BaseOctokit } from '@octokit/rest'
 import { throttling } from '@octokit/plugin-throttling'
 
 const Octokit = BaseOctokit.plugin(throttling)

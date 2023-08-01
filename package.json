@@ -15,6 +15,7 @@
   "dependencies": {
     "@ionio-lang/ionio": "^0.3.0",
     "@octokit/plugin-throttling": "^7.0.0",
+    "@octokit/rest": "^20.0.1",
     "@types/tiny-secp256k1": "^2.0.1",
     "@vulpemventures/secp256k1-zkp": "^2.1.1",
     "bech32": "^2.0.0",
@@ -29,7 +30,6 @@
     "marina-provider": "^2.0.0",
     "next": "^12.2.2",
     "next-qrcode": "^2.2.0",
-    "octokit": "^3.1.0",
     "react": "18.0.0",
     "react-dom": "18.0.0",
     "recharts": "^2.1.10",
