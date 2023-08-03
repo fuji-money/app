@@ -14,14 +14,6 @@ export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 
 export const defaultNetwork = 'liquid'
 
-export const treasuryPublicKey =
-  process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||
-  '03e6fbc4bcd62026a3d5a13ab8fd5b72008ff38907b2ee64de45e25263a418c377'
-
-export const fUSDAssetId =
-  process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
-  '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806'
-
 export const factoryUrlMainnet =
   process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev-factory.fuji.money'
 

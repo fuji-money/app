@@ -29,7 +29,12 @@ interface ConfigContextProps {
 }
 
 const emptyArtifact = { contractName: '', constructorInputs: [], functions: [] }
-const emptyConfig = { assets: [], offers: [], oracles: [] }
+const emptyConfig = {
+  assets: [],
+  offers: [],
+  oracles: [],
+  xOnlyTreasuryPublicKey: '',
+}
 
 export const ConfigContext = createContext<ConfigContextProps>({
   artifact: emptyArtifact,
@@ -53,7 +58,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // fetch config from factory
-    const config: ConfigResponse = await fetchConfig(network)
+    const config = await fetchConfig(network)
     if (!config) return
 
     // populate oracles with name
@@ -80,7 +85,12 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
       populateOffer(offer, assets, oracles),
     )
 
-    setConfig({ assets, offers, oracles })
+    setConfig({
+      assets,
+      offers,
+      oracles,
+      xOnlyTreasuryPublicKey: config.xOnlyIssuerPublicKey,
+    })
     setLoading(false)
   }
 
