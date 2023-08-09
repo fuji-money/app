@@ -29,8 +29,8 @@ const OutOfBoundsMessage = ({ asset, recv, send }: OutOfBoundsMessageProps) => {
   const recvSat = fromSatoshis(recv, asset.precision)
   const sendSat = fromSatoshis(send, asset.precision)
 
-  const invalidRecvAmount = recvSat < minSwap || recvSat > maxSwap
-  const invalidSendAmount = sendSat < minSwap || sendSat > maxSwap
+  const invalidRecvAmount = recvSat !== 0 && (recvSat < minSwap || recvSat > maxSwap)
+  const invalidSendAmount = sendSat !== 0 && (sendSat < minSwap || sendSat > maxSwap)
 
   return (
     <>
