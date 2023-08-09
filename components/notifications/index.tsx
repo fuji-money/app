@@ -22,7 +22,7 @@ interface NotificationsProps {
   contract: Contract
   minRatio: number
   ratio: number
-  tdexError: string
+  tdexError?: string
   topup?: number
 }
 
