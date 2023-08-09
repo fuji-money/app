@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { Config, ConfigResponse } from 'lib/types'
+import { Config } from 'lib/types'
 import { WalletContext } from './wallet'
 import { fetchConfig, getBTCvalue } from 'lib/api'
 import { openModal } from 'lib/utils'
