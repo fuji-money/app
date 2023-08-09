@@ -15,6 +15,7 @@ import { findBestMarket } from 'lib/tdex/market'
 import { WalletContext } from 'components/providers/wallet'
 import { getExposure } from 'lib/tdex/preview'
 import { getContractPriceLevel } from 'lib/contracts'
+import { extractAxiosError } from 'lib/utils'
 
 interface MultiplyProps {
   offer: Offer
@@ -34,7 +35,7 @@ const Multiply = ({ offer }: MultiplyProps) => {
     priceLevel: getContractPriceLevel(offer, initialRatio),
   })
   const [ratio, setRatio] = useState(initialRatio)
-  const [tdexError, setTdexError] = useState(false)
+  const [tdexError, setTdexError] = useState('')
 
   const minRatio = offer.synthetic.minCollateralRatio || minMultiplyRatio
 
@@ -51,11 +52,11 @@ const Multiply = ({ offer }: MultiplyProps) => {
       findBestMarket(network, assetPair)
         .then((market) => {
           setMarket(market)
-          setTdexError(false)
+          setTdexError('')
         })
         .catch((err) => {
           console.error(err)
-          setTdexError(true)
+          setTdexError(`TDEX error: ${extractAxiosError(err)}`)
         })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,11 +67,11 @@ const Multiply = ({ offer }: MultiplyProps) => {
     getExposure(contract, market)
       .then((exposure) => {
         setContract({ ...contract, exposure })
-        setTdexError(false)
+        setTdexError('')
       })
       .catch((err) => {
         console.error(err)
-        setTdexError(true)
+        setTdexError(`TDEX error: ${extractAxiosError(err)}`)
       })
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

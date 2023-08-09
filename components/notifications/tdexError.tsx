@@ -1,9 +1,7 @@
 import Notification from './notification'
 
-const TdexErrorNotification = () => {
-  const label = 'TDEX error'
-  const type = 'danger'
-  return <Notification label={label} type={type} />
+const TdexErrorNotification = ({ error }: { error: string }) => {
+  return <Notification label={error} type={'danger'} />
 }
 
 export default TdexErrorNotification

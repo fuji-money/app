@@ -22,7 +22,7 @@ interface NotificationsProps {
   contract: Contract
   minRatio: number
   ratio: number
-  tdexError?: boolean
+  tdexError: string
   topup?: number
 }
 
@@ -106,7 +106,7 @@ const Notifications = ({
       {notEnoughOracles && <NotEnoughOraclesNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
       {mintLimitReached && <MintLimitReachedNotification />}
-      {tdexError && <TdexErrorNotification />}
+      {tdexError && <TdexErrorNotification error={tdexError} />}
     </>
   )
 }

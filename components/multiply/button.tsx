@@ -14,7 +14,7 @@ interface MultiplyButtonProps {
   contract: Contract
   minRatio: number
   ratio: number
-  tdexError: boolean
+  tdexError: string
 }
 
 const MultiplyButton = ({

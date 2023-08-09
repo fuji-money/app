@@ -87,6 +87,10 @@ export const extractError = (error: any): string => {
     : ''
 }
 
+export const extractAxiosError = (error: any): string | undefined => {
+  return error.response.data.message ?? error.request ?? error.message
+}
+
 export const operationFromTask = (task: string): string => {
   switch (task) {
     case Tasks.Borrow:
