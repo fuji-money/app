@@ -179,6 +179,7 @@ const ContractTopupLightning: NextPage = () => {
           network,
           collateralUtxos,
           oracles[0],
+          config.xOnlyTreasuryPublicKey,
         )
 
         // propose contract to alpha factory
