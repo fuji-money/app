@@ -219,6 +219,7 @@ export interface Config {
   assets: Asset[]
   offers: Offer[]
   oracles: Oracle[]
+  xOnlyTreasuryPublicKey: string
 }
 
 export interface Outpoint {
