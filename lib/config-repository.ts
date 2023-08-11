@@ -1,5 +1,5 @@
 export interface ConfigRepository {
-  hasBeenEnabled(): Promise<boolean>
+  isEnabled(): Promise<boolean>
   setEnabled(): Promise<void>
   clear(): Promise<void>
 }

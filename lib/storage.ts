@@ -216,11 +216,10 @@ export class LocalStorageTransactionsRepository
 export class LocalStorageConfigRepository implements ConfigRepository {
   static ALBY_ENABLED_KEY = makeLocalStorageKey('alby-has-been-enabled')
 
-  hasBeenEnabled(): Promise<boolean> {
+  isEnabled(): Promise<boolean> {
     const enabled = localStorage.getItem(
       LocalStorageConfigRepository.ALBY_ENABLED_KEY,
     )
-
     return Promise.resolve(enabled === '1')
   }
 

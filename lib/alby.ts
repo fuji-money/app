@@ -180,7 +180,7 @@ export class AlbyWallet implements Wallet {
         configRepository,
       )
       wallet.artifact = await getArtifact()
-      if (provider.enabled || (await configRepository.hasBeenEnabled())) {
+      if (provider.enabled || (await configRepository.isEnabled())) {
         await wallet.fetchAndSetAddress()
       }
       return wallet
