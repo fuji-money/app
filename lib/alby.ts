@@ -23,6 +23,7 @@ import { getIonioInstance } from './covenant'
 import { getArtifact } from './artifact'
 import { TransactionRepository } from './transactions-repository'
 import { BlindersRepository } from './blinders-repository'
+import { ConfigRepository } from './config-repository'
 
 const ZERO_32 = Buffer.alloc(32, 0).toString('hex')
 
@@ -137,6 +138,10 @@ enum ListenerType {
   SPENT_UTXO,
 }
 
+// AlbyWallet needs some repositories to work correctly
+// - TransactionRepository: cache the wallet transactions
+// - BlindersRepository: cache the blinders if any utxos is confidential
+// - ConfigRepository: cache the global boolean "hasBeenEnabled", in order to know if we can call window.liquid.enable() without showing any popup to the user.
 export class AlbyWallet implements Wallet {
   type = WalletType.Alby
 
@@ -158,17 +163,24 @@ export class AlbyWallet implements Wallet {
     private provider: LiquidProvider,
     private txRepo: TransactionRepository,
     private blindersRepo: BlindersRepository,
+    private configRepo: ConfigRepository,
   ) {}
 
   static async detect(
     txRepository: TransactionRepository,
     blindersRepository: BlindersRepository,
+    configRepository: ConfigRepository,
   ): Promise<AlbyWallet | undefined> {
     try {
       const provider = await safeDetectProvider()
-      const wallet = new AlbyWallet(provider, txRepository, blindersRepository)
+      const wallet = new AlbyWallet(
+        provider,
+        txRepository,
+        blindersRepository,
+        configRepository,
+      )
       wallet.artifact = await getArtifact()
-      if (provider.enabled) {
+      if (provider.enabled || (await configRepository.hasBeenEnabled())) {
         await wallet.fetchAndSetAddress()
       }
       return wallet
@@ -237,7 +249,12 @@ export class AlbyWallet implements Wallet {
 
   async connect(): Promise<void> {
     await this.provider.enable()
-    await this.fetchAndSetAddress()
+    if (this.provider.enabled) {
+      await Promise.all([
+        this.fetchAndSetAddress(),
+        this.configRepo.setEnabled(),
+      ])
+    }
   }
 
   disconnect(): Promise<void> {
