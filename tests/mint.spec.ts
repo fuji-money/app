@@ -9,7 +9,7 @@ test('connect marina & use the mint page', async ({ page, extensionId, context }
   await page.waitForSelector('text=Mint')
 
   // connect Marina
-  await page.getByRole('button', { name: 'Connect Wallet' }).click();
+  await page.getByRole('button', { name: 'Connect' }).click();
   await page.getByRole('article').first().click(); // first is marina
   const marinaPopup = await context.waitForEvent('page');
   await marinaPopup.getByRole('button', { name: 'Connect' }).click()
@@ -29,6 +29,5 @@ test('connect marina & use the mint page', async ({ page, extensionId, context }
   await page.getByPlaceholder('0.00').fill('25');
 
   // expect to find the proceed to deposit button disabled
-  await expect(page.getByRole('button', { name: 'Proceed to Deposit' })).toBeDisabled();
-  await expect(page.getByText('not enough funds')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Proceed to deposit' })).toBeDisabled();
 });

@@ -30,26 +30,21 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { assets } = config
 
   useEffect(() => {
-    if (!wallets.length) return
-    const asset = assets.find((a) => a.ticker === contract.collateral.ticker)
+    setEnoughFunds([])
+    const asset = assets.find((a) => a.ticker === collateral.ticker)
     if (!asset) return
+    if (!wallets.length) return
 
     for (const wallet of wallets) {
       const balance = getAssetBalance(asset, balances[wallet.type])
-      if (contract.collateral.quantity > balance) {
+      if (contract.collateral.quantity <= balance) {
         setEnoughFunds((prev) => [...prev, wallet.type])
       }
-    }
-
-    if (LightningEnabledTasks[Tasks.Borrow]) {
-      const outOfBounds = swapDepositAmountOutOfBounds(
-        contract.collateral.quantity,
-      )
-      if (outOfBounds) setEnoughFunds([])
     }
   }, [
     assets,
     balances,
+    collateral.ticker,
     contract.collateral.quantity,
     contract.collateral.ticker,
     wallets,
@@ -70,7 +65,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   }, [contract.synthetic.quantity])
 
   const enabled = () =>
-    enoughFunds &&
+    enoughFunds.length > 0 &&
     collateral.quantity > 0 &&
     collateral.value > 0 &&
     ratio >= minRatio &&
