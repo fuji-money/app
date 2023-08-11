@@ -8,14 +8,6 @@ export const maxMultiplyRatio = 330
 
 export const defaultNetwork = 'liquid'
 
-export const treasuryPublicKey =
-  process.env.NEXT_PUBLIC_LIQUIDATOR_PUBKEY ||
-  '03e6fbc4bcd62026a3d5a13ab8fd5b72008ff38907b2ee64de45e25263a418c377'
-
-export const fUSDAssetId =
-  process.env.NEXT_PUBLIC_FUSD_ASSET_ID ||
-  '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806'
-
 export const factoryUrlMainnet =
   process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev-factory.fuji.money'
 
@@ -43,3 +35,6 @@ export const feeAmount = 500 // fee for regular liquid tx
 export const swapFeeAmount = 500 // fee for Boltz
 
 export const twitterMessage = `I'm using @fuji_money to borrow Fuji USD with #Bitcoin collateral.\n\n🥷 No intermediaries\n🏃‍♀️ Redeem anytime\n\nCheck it out!\n\nhttps://fuji.money`
+
+export const artifactJSONurl =
+  'https://raw.githubusercontent.com/fuji-money/tapscripts/main/artifacts/alpha/fuji.ionio.json'

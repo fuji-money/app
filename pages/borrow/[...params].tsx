@@ -288,6 +288,7 @@ const BorrowParams: NextPage = () => {
         utxos,
         redeemScript,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
 
       // propose contract to alpha factory
@@ -360,6 +361,7 @@ const BorrowParams: NextPage = () => {
         artifact,
         newContract,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 

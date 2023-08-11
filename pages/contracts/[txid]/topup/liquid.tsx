@@ -93,6 +93,7 @@ const ContractTopupLiquid: NextPage = () => {
         network,
         collateralUtxos,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
