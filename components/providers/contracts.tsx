@@ -18,17 +18,19 @@ import {
   contractIsClosed,
   getContractCovenantAddress,
   checkContractOutspend,
+  createNewContract,
 } from 'lib/contracts'
 import { getMyContractsFromStorage } from 'lib/storage'
 import { Activity, Contract, ContractState } from 'lib/types'
 import { WalletContext } from './wallet'
-import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
+import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
 import { address } from 'liquidjs-lib'
 import { ConfigContext } from './config'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
-import { Coin } from 'lib/wallet'
+import { Wallet } from 'lib/wallet'
+import { hex64LEToNumber } from 'lib/utils'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -218,58 +220,43 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
       await chainSource.close().catch(() => {}) // ignore errors from close
     }
   }
-  // ******************
-  // TODO: handle alby case ? currently disabled for all wallets
-  // ******************
+
   // Wallet could know about contracts that local storage doesn't
   // This could happen if the user is using more than one device
   // In this case, we will add the unknown contracts into storage
+  const syncContractsWithWallet = async (wallet: Wallet) => {
+    if (!wallet.getContracts) {
+      console.warn(
+        `wallet ${wallet.type} can't sync with localstorage. If you are using this wallet on several devices, you may not see all your contracts.`,
+      )
+      return
+    }
+    const network = await wallet.getNetwork()
+    if (network === 'regtest') return
+    const walletXPub = wallet.getMainAccountXPubKey()
+    const walletContracts = await wallet.getContracts(assets)
+    const storageContracts = getMyContractsFromStorage(network, walletXPub)
 
-  // const syncContractsWithWallet = async () => {
-  //   if (!wallet) return
-  //   const network = await wallet.getNetwork()
-  //   if (network === 'regtest') return
+    const notInStorage = (contract: Contract) =>
+      storageContracts.some(
+        (sc) => sc.txid === contract.txid && sc.vout === contract.vout,
+      ) === false
 
-  //   const storageContracts = getContractsFromStorage()
-  //   const allCoins = await wallet.getCoins()
-  //   const collateralAssetID = networks[network].assetHash // always L-BTC
+    for (const contract of walletContracts.filter(notInStorage)) {
+      try {
+        if (!contract) continue
+        // check creation date so that activity will match
+        const setupTimestamp = contract.contractParams?.setupTimestamp
+        const timestamp = setupTimestamp
+          ? hex64LEToNumber(setupTimestamp)
+          : undefined
 
-  //   const collateralLockedBySynthContract = allCoins.filter(
-  //     (coin) =>
-  //       coin.blindingData &&
-  //       coin.blindingData.asset === collateralAssetID
-  //   )
-
-  //   // check if contract from marina is on storage
-  //   const notInStorage = (coin: Utxo) =>
-  //     storageContracts.some(
-  //       (sc) => sc.txid === coin.txid && sc.vout === coin.vout,
-  //     ) === false
-
-  //   const collateral = assets.find((a) => a.id === collateralAssetID)
-  //   const synthetic = assets.find((a) => a.id === fUSDAssetId)
-
-  //   const xPubKey = wallet.getMainAccountXPubKey()
-
-  //   if (!collateral || !synthetic) return
-
-  //   for (const coin of collateralLockedBySynthContract.filter(notInStorage)) {
-  //     try {
-  //       const contract = coinToContract(network, coin, synthetic, collateral)
-  //       if (!contract) continue
-  //       // add xPubKey to contract
-  //       contract.xPubKey = xPubKey
-  //       // check creation date so that activity will match
-  //       const setupTimestamp = contract.contractParams?.setupTimestamp
-  //       const timestamp = setupTimestamp
-  //         ? hex64LEToNumber(setupTimestamp)
-  //         : undefined
-  //       createNewContract(contract, timestamp)
-  //     } catch (e) {
-  //       console.error(e)
-  //     }
-  //   }
-  // }
+        createNewContract(contract, timestamp)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+  }
 
   // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
   const setWalletListener = () => {
@@ -299,7 +286,9 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     async function runOnAssetsChange() {
       if (assets.length) {
         if (!firstRender.current.includes(network)) {
-          // await syncContractsWithWallet()
+          await Promise.allSettled(
+            wallets.map((w) => syncContractsWithWallet(w)),
+          )
           firstRender.current.push(network)
           await reloadContracts()
         }
@@ -307,7 +296,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         return setWalletListener() // return the close listener function
       }
     }
-    runOnAssetsChange()
+    runOnAssetsChange().catch(console.error)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assets])
 

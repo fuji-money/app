@@ -89,11 +89,14 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
         populateOffer(offer, assets, oracles),
       )
 
-      setConfig({
-        assets,
-        offers,
-        oracles,
-        xOnlyTreasuryPublicKey: config.xOnlyIssuerPublicKey,
+      setConfigs({
+        ...configs,
+        [net]: {
+          assets,
+          offers,
+          oracles,
+          xOnlyTreasuryPublicKey: config.xOnlyIssuerPublicKey,
+        },
       })
       setLoading(false)
     },

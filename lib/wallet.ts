@@ -1,6 +1,6 @@
 import { Artifact } from '@ionio-lang/ionio'
 import type { NetworkString, UnblindedOutput } from 'marina-provider'
-import { ContractParams } from './types'
+import { Asset, Contract, ContractParams } from './types'
 import { TxOutput } from 'liquidjs-lib'
 
 export enum WalletType {
@@ -40,4 +40,9 @@ export interface Wallet {
 
   onSpentUtxo(callback: (utxo: Coin) => void): () => void
   onNewUtxo(callback: (utxo: Coin) => void): () => void
+
+  // getContractsFromWallet should return all contracts that are in the wallet without any call to localstorage
+  // it is used to sync the wallet with the local storage (in case the user has used the app on several device)
+  // *optional* if not implemented, the wallet can't sync with the local storage
+  getContracts?(assets: Asset[]): Promise<Contract[]>
 }

@@ -9,7 +9,7 @@ import {
 import { addActivity, removeActivities } from './activities'
 import { getIonioInstance } from './covenant'
 import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
-import { fromSatoshis, hex64LEToNumber, toSatoshis } from './utils'
+import { fromSatoshis, toSatoshis } from './utils'
 import { ChainSource } from './chainsource.port'
 import { address, Transaction } from 'liquidjs-lib'
 import { Artifact } from '@ionio-lang/ionio'

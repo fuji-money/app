@@ -18,7 +18,6 @@ export function hex64LEToBase64LE(hex: string): string {
 }
 
 // used in coinToContract (marina coin => contract)
-// used in syncContractsWithMarina
 export function hex64LEToNumber(hex: string): number {
   const buf = Buffer.from(hex.slice(2), 'hex')
   return readUInt64LE(buf, 0)

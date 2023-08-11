@@ -1,5 +1,5 @@
 import * as ecc from 'tiny-secp256k1'
-import { Asset, ContractParams } from './types'
+import { Asset, Contract, ContractParams } from './types'
 import {
   detectProvider,
   MarinaProvider,
@@ -12,9 +12,11 @@ import {
 } from 'marina-provider'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { Coin, Wallet, WalletType } from './wallet'
-import { closeModal, openModal } from './utils'
+import { closeModal, hex64LEToNumber, openModal } from './utils'
 import { ModalIds } from 'components/modals/modal'
 import { BIP32Factory } from 'bip32'
+import { getMyContractsFromStorage } from './storage'
+import { getContractExpirationDate } from './contracts'
 
 function isCoin(utxo: Utxo): utxo is Coin {
   return utxo.witnessUtxo !== undefined
@@ -193,6 +195,15 @@ export class MarinaWallet implements Wallet {
     }
   }
 
+  async getContracts(assets: Asset[]): Promise<Contract[]> {
+    const network = await this.getNetwork()
+    if (network === 'regtest') return []
+    const fujiUtxos = await this.marina.getCoins([MarinaWallet.FujiAccountID])
+    return fujiUtxos
+      .map(coinToContract(assets, network, this.getMainAccountXPubKey()))
+      .filter(isDefined)
+  }
+
   onSpentUtxo(callback: (utxo: Coin) => void): () => void {
     const id = this.marina.on('SPENT_UTXO', ({ data }: { data: Coin }) =>
       callback(data),
@@ -218,13 +229,11 @@ export function getAssetBalance(
   return found
 }
 
-export async function createFujiAccount(marina: MarinaProvider) {
+async function createFujiAccount(marina: MarinaProvider) {
   await marina.createAccount(MarinaWallet.FujiAccountID, AccountType.Ionio)
 }
 
-export async function fujiAccountMissing(
-  marina: MarinaProvider,
-): Promise<boolean> {
+async function fujiAccountMissing(marina: MarinaProvider): Promise<boolean> {
   const accountIDs = await marina.getAccountsIDs()
   return !accountIDs.includes(MarinaWallet.FujiAccountID)
 }
@@ -239,4 +248,67 @@ async function getMainAccountIDs(
       ? MarinaWallet.MainAccountID
       : MarinaWallet.TestnetMainAccountID,
   )
+}
+
+function coinToContract(
+  assets: Asset[],
+  network: NetworkString,
+  xPubKey: string,
+) {
+  return (coin: Utxo): Contract | undefined => {
+    if (
+      coin.scriptDetails &&
+      isIonioScriptDetails(coin.scriptDetails) &&
+      coin.blindingData
+    ) {
+      const params = coin.scriptDetails.params
+      const collateral = assets.find((a) => a.id === coin.blindingData?.asset)
+      const synthetic = assets.find((a) => a.id === (params[0] as string))
+      if (!collateral || !synthetic) return
+      const borrowAsset = params[0] as string
+      const borrowAmount = params[1] as number
+      const treasuryPublicKey = params[2] as string
+      const expirationTimeout = params[3] as string
+      const borrowerPublicKey = params[4] as string
+      const oraclePublicKey = params[5] as string
+      const priceLevel = params[6] as string
+      const setupTimestamp = params[7] as string
+      const assetPair = params[8] as string
+      const createdAt = hex64LEToNumber(setupTimestamp)
+      const contract: Contract = {
+        xPubKey,
+        collateral: {
+          ...collateral,
+          quantity: coin.blindingData.value,
+        },
+        contractParams: {
+          assetPair,
+          expirationTimeout,
+          borrowAsset,
+          borrowAmount,
+          borrowerPublicKey,
+          oraclePublicKey,
+          treasuryPublicKey,
+          priceLevel,
+          setupTimestamp,
+        },
+        createdAt,
+        expirationDate: getContractExpirationDate(Math.floor(createdAt / 1000)),
+        network,
+        oracles: [oraclePublicKey],
+        priceLevel: hex64LEToNumber(priceLevel),
+        synthetic: {
+          ...synthetic,
+          quantity: borrowAmount as number,
+        },
+        txid: coin.txid,
+        vout: coin.vout,
+      }
+      return contract
+    }
+  }
+}
+
+function isDefined<T>(a: T | undefined): a is T {
+  return a !== undefined
 }

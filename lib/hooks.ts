@@ -3,17 +3,6 @@ import { Coin, Wallet } from './wallet'
 
 type BalanceMap = Record<string, Record<string, number>>
 
-async function safeGetBalances(
-  wallet: Wallet,
-): Promise<Record<string, number>> {
-  try {
-    return wallet.getBalances()
-  } catch (e) {
-    console.warn('error getting balances', e)
-    return {}
-  }
-}
-
 export const useSelectBalances = (wallets: Wallet[]) => {
   const [balances, setBalances] = useState<BalanceMap>()
 
@@ -23,7 +12,8 @@ export const useSelectBalances = (wallets: Wallet[]) => {
     const closeFns: (() => void)[] = []
 
     for (const wallet of wallets) {
-      safeGetBalances(wallet)
+      wallet
+        .getBalances()
         .then((initialBalances) => {
           setBalances((current) => {
             const newBalances = current ? { ...current } : {}
