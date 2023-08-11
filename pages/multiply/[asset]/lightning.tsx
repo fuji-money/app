@@ -317,6 +317,7 @@ const MultiplyLightning: NextPage = () => {
         paidSwap.utxos,
         paidSwap.redeemScript,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
       // propose contract to alpha factory
       const resp = await proposeBorrowContract(preparedTx, network)

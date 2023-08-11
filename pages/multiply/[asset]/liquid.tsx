@@ -105,6 +105,7 @@ const MultiplyLiquid: NextPage = () => {
         artifact,
         newContract,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
