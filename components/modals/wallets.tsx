@@ -32,10 +32,12 @@ const WalletButton = ({
   wallet,
   installed,
   isConnected,
+  network,
 }: {
   wallet: WalletInfo
   installed?: boolean
   isConnected?: boolean
+  network?: string
 }) => {
   const { name, icon, desc } = wallet
   return (
@@ -55,16 +57,21 @@ const WalletButton = ({
           <div className="media-content">
             <div className="content">
               <div>
-                <div className="is-flex is-justify-content-space-between is-align-content-center">
+                <div className="is-flex is-justify-content-space-between is-align-content-center mb-1">
                   <span>
                     <strong>{name}</strong>
                   </span>
 
-                  {installed && isConnected && (
-                    <span className="tag is-success">
-                      Connected <i className="ml-1 fa-solid fa-check"></i>
-                    </span>
-                  )}
+                  <div>
+                    {installed && network && (
+                      <span className="tag is-info">{network}</span>
+                    )}
+                    {installed && isConnected && (
+                      <span className="tag is-success ml-1">
+                        Connected <i className="ml-1 fa-solid fa-check"></i>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p>{desc}</p>
               </div>
@@ -104,16 +111,19 @@ const WalletButton = ({
 interface WalletsModalProps {
   handleWalletChoice: (type: WalletType) => void
   installedWallets: Wallet[]
+  getWalletNetwork: (type: WalletType) => string | undefined
 }
 
 const WalletsModal = ({
   handleWalletChoice,
   installedWallets,
+  getWalletNetwork,
 }: WalletsModalProps) => {
   const buttons = wallets.map((wallet, index) => {
     const found = installedWallets.find((w) => w.type === wallet.type)
     const installed = !!found
     const connected = !!found?.isConnected()
+    const network = getWalletNetwork(wallet.type)
 
     return (
       <div
@@ -128,6 +138,7 @@ const WalletsModal = ({
           wallet={wallet}
           installed={installed}
           isConnected={connected}
+          network={network}
         />
       </div>
     )
