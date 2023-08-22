@@ -117,7 +117,7 @@ export class SafeLiquidProvider implements LiquidProvider {
 
 // retry some times to detect provider
 // ensures that we are not failing because the script is not loaded yet
-async function safeDetectProvider(retry = 60): Promise<LiquidProvider> {
+async function safeDetectProvider(retry = 5): Promise<LiquidProvider> {
   let fails = 0
   while (fails < retry) {
     try {
@@ -189,6 +189,7 @@ export class AlbyWallet implements Wallet {
       return wallet
     } catch (e) {
       console.error(e)
+      await configRepository.clear()
       return undefined
     }
   }
@@ -258,7 +259,10 @@ export class AlbyWallet implements Wallet {
         this.fetchAndSetAddress(),
         this.configRepo.setEnabled(),
       ])
+      return
     }
+
+    throw new Error('Alby not enabled')
   }
 
   disconnect(): Promise<void> {
@@ -282,7 +286,7 @@ export class AlbyWallet implements Wallet {
     if (!addr) throw new Error('Wallet not connected')
     if (addr.startsWith('tlq')) return 'testnet'
     if (addr.startsWith('lq')) return 'liquid'
-    throw new Error('Invalid address') // Alby does not support regtest
+    return 'regtest'
   }
 
   // Alby does not generate new addresses, it uses a single address-wallet

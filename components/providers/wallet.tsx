@@ -101,7 +101,12 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
 
     if (!installedWallets) return
-    update().then(setWallets).catch(console.error)
+    update()
+      .then(setWallets)
+      .catch((e) => {
+        console.error(e)
+        setWallets([])
+      })
   }, [installedWallets, network])
 
   const setNetwork = useCallback(
