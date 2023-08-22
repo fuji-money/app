@@ -117,7 +117,7 @@ export class SafeLiquidProvider implements LiquidProvider {
 
 // retry some times to detect provider
 // ensures that we are not failing because the script is not loaded yet
-async function safeDetectProvider(retry = 5): Promise<LiquidProvider> {
+async function safeDetectProvider(retry = 60): Promise<LiquidProvider> {
   let fails = 0
   while (fails < retry) {
     try {
@@ -180,11 +180,15 @@ export class AlbyWallet implements Wallet {
         configRepository,
       )
       wallet.artifact = await getArtifact()
-      if (provider.enabled || (await configRepository.isEnabled())) {
+      if (!provider.enabled) {
+        const isEnabledInCache = await configRepository.isEnabled()
+        if (isEnabledInCache) await wallet.connect()
+      } else {
         await wallet.fetchAndSetAddress()
       }
       return wallet
-    } catch {
+    } catch (e) {
+      console.error(e)
       return undefined
     }
   }
