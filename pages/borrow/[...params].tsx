@@ -167,7 +167,7 @@ const BorrowParams: NextPage = () => {
         if (!weblnIsEnabled) {
           await weblnProvider.enable()
         }
-        weblnProvider.sendPayment(invoice).catch(console.error)
+        setUseWebln(true)
       }
     }
 
