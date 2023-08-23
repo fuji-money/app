@@ -7,14 +7,18 @@ test('connect marina & use the mint page', async ({ page, extensionId, context }
   await switchToTestnetNetwork(page, extensionId);
   await page.goto('/');
   await page.waitForSelector('text=Mint')
-
   // connect Marina
+  await page.getByRole('button', { name: 'Loading...' }).isEnabled();
   await page.getByRole('button', { name: 'Connect' }).click();
   await page.getByRole('article').first().click(); // first is marina
+  
+  // connect popup
   const marinaPopup = await context.waitForEvent('page');
   await marinaPopup.getByRole('button', { name: 'Connect' }).click()
   
+  // should ask to create the custom Marina account "fuji"
   const marinaPopupCreateAccount = await context.waitForEvent('page');
+  await marinaPopupCreateAccount.waitForSelector('text=fuji')
   await marinaPopupCreateAccount.getByRole('button', { name: 'Accept' }).click()
   await marinaPopupCreateAccount.getByPlaceholder('Password').fill(PASSWORD);
   await marinaPopupCreateAccount.getByRole('button', { name: 'Unlock' }).click()

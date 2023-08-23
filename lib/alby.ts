@@ -180,12 +180,16 @@ export class AlbyWallet implements Wallet {
         configRepository,
       )
       wallet.artifact = await getArtifact()
-      if (provider.enabled || (await configRepository.isEnabled())) {
+      if (!provider.enabled) {
+        const isEnabledInCache = await configRepository.isEnabled()
+        if (isEnabledInCache) await wallet.connect()
+      } else {
         await wallet.fetchAndSetAddress()
       }
       return wallet
     } catch (e) {
-      console.warn('Alby wallet not detected', e)
+      console.error(e)
+      await configRepository.clear()
       return undefined
     }
   }
@@ -256,7 +260,10 @@ export class AlbyWallet implements Wallet {
         this.fetchAndSetAddress(),
         this.configRepo.setEnabled(),
       ])
+      return
     }
+
+    throw new Error('Alby not enabled')
   }
 
   disconnect(): Promise<void> {
@@ -280,7 +287,7 @@ export class AlbyWallet implements Wallet {
     if (!addr) throw new Error('Wallet not connected')
     if (addr.startsWith('tlq')) return 'testnet'
     if (addr.startsWith('lq')) return 'liquid'
-    throw new Error('Invalid address') // Alby does not support regtest
+    return 'regtest'
   }
 
   // Alby does not generate new addresses, it uses a single address-wallet
