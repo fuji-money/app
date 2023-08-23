@@ -58,8 +58,7 @@ import { Wallet, WalletType } from 'lib/wallet'
 
 const BorrowParams: NextPage = () => {
   const { wallets } = useContext(WalletContext)
-  const { weblnCanEnable, weblnProvider, weblnProviderName } =
-    useContext(WeblnContext)
+  const { weblnProvider, weblnIsEnabled } = useContext(WeblnContext)
   const { artifact, config } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -162,7 +161,16 @@ const BorrowParams: NextPage = () => {
       task: Tasks.Borrow,
     })
 
-    // show lightning invoice to user
+    // if Alby has been choosen, check if webLN is enabled
+    if (wallet.type === WalletType.Alby) {
+      if (weblnProvider) {
+        if (!weblnIsEnabled) {
+          await weblnProvider.enable()
+        }
+        weblnProvider.sendPayment(invoice).catch(console.error)
+      }
+    }
+
     setInvoice(invoice)
     setStage(ModalStages.NeedsPayment)
 
@@ -260,7 +268,7 @@ const BorrowParams: NextPage = () => {
   }
 
   // handle payment through lightning invoice
-  const handleInvoice = async (wallet: Wallet): Promise<void> => {
+  const handleInvoiceFromLightning = async (wallet: Wallet): Promise<void> => {
     // nothing to do if no new contract
     if (!newContract || !wallet) return
     const network = await wallet.getNetwork()
@@ -332,18 +340,6 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.ShowResult)
     }
   }
-
-  // handle payment through Alby
-  const handleInvoiceFromWebln =
-    weblnProviderName === 'Alby' && (weblnProvider.enabled || weblnCanEnable)
-      ? async () => {
-          setUseWebln(true)
-          const albyWallet = wallets.find((w) => w.type === WalletType.Alby)
-          if (!albyWallet) throw new Error('No Alby wallet found')
-          await handleInvoice(albyWallet)
-        }
-      : undefined
-
   // handle payment through marina browser extension
   const handleInvoiceFromLiquid = async (w: Wallet): Promise<void> => {
     setSelectedWallet(w)
@@ -454,11 +450,7 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLightning
                 contract={newContract}
-                handleInvoice={(wallet: Wallet) => {
-                  if (wallet.type === WalletType.Alby && handleInvoiceFromWebln)
-                    return handleInvoiceFromWebln()
-                  return handleInvoice(wallet)
-                }}
+                handleInvoice={handleInvoiceFromLightning}
                 task={Tasks.Borrow}
               />
               <InvoiceDepositModal
@@ -467,7 +459,7 @@ const BorrowParams: NextPage = () => {
                 invoice={invoice}
                 result={result}
                 retry={retry(setData, setResult, () =>
-                  handleInvoice(
+                  handleInvoiceFromLightning(
                     wallets.find((w) => w.type === WalletType.Marina)!,
                   ),
                 )}

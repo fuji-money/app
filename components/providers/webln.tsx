@@ -1,21 +1,16 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, ReactNode, useEffect, useRef, useState } from 'react'
 import { VoidOrUndefFunc } from 'lib/types'
 import { closeModal, openModal } from 'lib/utils'
 import { ModalIds } from 'components/modals/modal'
-import { WalletContext } from './wallet'
+import type { WebLNProvider as BaseWebLn } from 'webln'
+
+type WebLNProvider = Pick<BaseWebLn, 'enable' | 'getInfo' | 'sendPayment'>
 
 interface WeblnContextProps {
   weblnIsEnabled: boolean
   weblnEnableHandler: VoidOrUndefFunc
   weblnCanEnable: boolean
-  weblnProvider: any
+  weblnProvider?: WebLNProvider
   weblnProviderName: string
 }
 
@@ -33,7 +28,7 @@ interface WeblnProviderProps {
 export const WeblnProvider = ({ children }: WeblnProviderProps) => {
   const [weblnCanEnable, setWeblnCanEnable] = useState(true)
   const [weblnIsEnabled, setweblnIsEnabled] = useState(false)
-  const [weblnProvider, setWeblnProvider] = useState<any>()
+  const [weblnProvider, setWeblnProvider] = useState<WebLNProvider>()
   const [weblnProviderName, setWeblnProviderName] = useState('')
 
   const alreadyAsk = useRef(true) // TODO

@@ -184,7 +184,8 @@ export class AlbyWallet implements Wallet {
         await wallet.fetchAndSetAddress()
       }
       return wallet
-    } catch {
+    } catch (e) {
+      console.warn('Alby wallet not detected', e)
       return undefined
     }
   }
@@ -244,6 +245,7 @@ export class AlbyWallet implements Wallet {
   }
 
   private async fetchAndSetAddress(): Promise<void> {
+    await this.provider.enable()
     this.albyAddress = await this.provider.getAddress()
   }
 

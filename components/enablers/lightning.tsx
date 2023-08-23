@@ -36,7 +36,7 @@ const EnablersLightning = ({
                       name={
                         wallet.type === WalletType.Marina
                           ? 'Lightning Invoice'
-                          : 'Alby'
+                          : 'Alby WebLN'
                       }
                       icon={
                         wallet.type === WalletType.Marina
