@@ -20,7 +20,7 @@ import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemLightning: NextPage = () => {
   const { marina, network, updateBalances } = useContext(WalletContext)
-  const { artifact } = useContext(ConfigContext)
+  const { artifactRepo } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -43,6 +43,15 @@ const ContractRedeemLightning: NextPage = () => {
 
     // select coins and prepare redeem transaction
     setStage(ModalStages.NeedsCoins)
+    if (newContract.createdAt)
+      console.warn(
+        'unable to get createdAt timestamp for your contract, getting latest covenant artifact.',
+      )
+
+    const artifact = newContract.createdAt
+      ? await artifactRepo.get(newContract.createdAt)
+      : await artifactRepo.getLatest()
+
     const tx = await prepareRedeemTx(
       artifact,
       newContract,
