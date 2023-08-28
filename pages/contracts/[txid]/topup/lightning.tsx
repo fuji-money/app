@@ -42,14 +42,13 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 import { finalizeTx } from 'lib/transaction'
-import { WeblnContext } from 'components/providers/webln'
 import { ConfigContext } from 'components/providers/config'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
 import { Wallet } from 'lib/wallet'
 
 const ContractTopupLightning: NextPage = () => {
   const { wallets } = useContext(WalletContext)
-  const { artifact, config } = useContext(ConfigContext)
+  const { artifactRepo, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -177,7 +176,10 @@ const ContractTopupLightning: NextPage = () => {
         const owner = wallets.filter(
           (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
         )[0]
-        if (!owner) throw new Error('Cannot found owned of contract')
+        if (!owner) throw new Error('Cannot found wallet owning the contract')
+        if (!oldContract.createdAt)
+          throw new Error('oldContract has no createdAt member')
+        const artifact = await artifactRepo.get(oldContract.createdAt)
 
         // prepare borrow transaction with claim utxo as input
         const preparedTx = await prepareTopupTx(

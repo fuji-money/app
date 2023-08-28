@@ -21,7 +21,7 @@ import { Wallet, WalletType } from 'lib/wallet'
 
 const ContractRedeemLightning: NextPage = () => {
   const { wallets } = useContext(WalletContext)
-  const { artifact } = useContext(ConfigContext)
+  const { artifactRepo } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -50,6 +50,14 @@ const ContractRedeemLightning: NextPage = () => {
       (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
     )
     if (!owner) throw new Error('Owner not found')
+    if (newContract.createdAt)
+      console.warn(
+        'unable to get createdAt timestamp for your contract, getting latest covenant artifact.',
+      )
+
+    const artifact = newContract.createdAt
+      ? await artifactRepo.get(newContract.createdAt)
+      : await artifactRepo.getLatest()
 
     const tx = await prepareRedeemTx(
       owner,

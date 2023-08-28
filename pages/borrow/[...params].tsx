@@ -1,3 +1,5 @@
+import ECPairFactory from 'ecpair'
+import * as ecc from 'tiny-secp256k1'
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useContext, useRef, useState } from 'react'
@@ -40,9 +42,6 @@ import {
   Transaction,
   address,
 } from 'liquidjs-lib'
-import ECPairFactory from 'ecpair'
-import * as ecc from 'tiny-secp256k1'
-import { WalletContext } from 'components/providers/wallet'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
@@ -53,13 +52,13 @@ import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
+import { Artifact } from '@ionio-lang/ionio'
 import { WsElectrumChainSource } from 'lib/chainsource.port'
 import { Wallet, WalletType } from 'lib/wallet'
 
 const BorrowParams: NextPage = () => {
-  const { wallets } = useContext(WalletContext)
   const { weblnProvider, weblnIsEnabled } = useContext(WeblnContext)
-  const { artifact, config } = useContext(ConfigContext)
+  const { artifactRepo, config } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -220,6 +219,7 @@ const BorrowParams: NextPage = () => {
     pset: Pset,
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
+    artifact: Artifact,
   ) => {
     if (!wallet) return
     const network = await wallet.getNetwork()
@@ -248,7 +248,7 @@ const BorrowParams: NextPage = () => {
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
-    await saveContractToStorage({ ...newContract })
+    await saveContractToStorage({ ...newContract, createdAt: Date.now() })
 
     // wait for confirmation, mark contract confirmed and reload contracts
     await chainSource
@@ -287,6 +287,8 @@ const BorrowParams: NextPage = () => {
 
       // inform user we asking permission to mint
       setStage(ModalStages.NeedsFujiApproval)
+
+      const artifact = await artifactRepo.getLatest()
 
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
@@ -332,7 +334,13 @@ const BorrowParams: NextPage = () => {
       })
 
       // finalize and broadcast transaction
-      finalizeAndBroadcast(wallet, pset, newContract, preparedTx)
+      await finalizeAndBroadcast(
+        wallet,
+        pset,
+        newContract,
+        preparedTx,
+        artifact,
+      )
     } catch (error) {
       console.error(error)
       setData(extractError(error))
@@ -350,6 +358,8 @@ const BorrowParams: NextPage = () => {
     try {
       openModal(ModalIds.MarinaDeposit)
       setStage(ModalStages.NeedsCoins)
+
+      const artifact = await artifactRepo.getLatest()
 
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(
@@ -374,8 +384,9 @@ const BorrowParams: NextPage = () => {
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      finalizeAndBroadcast(w, pset, newContract, preparedTx)
+      await finalizeAndBroadcast(w, pset, newContract, preparedTx, artifact)
     } catch (error) {
+      console.error(error)
       setData(extractError(error))
       setResult(Outcome.Failure)
       setStage(ModalStages.ShowResult)
@@ -459,9 +470,7 @@ const BorrowParams: NextPage = () => {
                 invoice={invoice}
                 result={result}
                 retry={retry(setData, setResult, () =>
-                  handleInvoiceFromLightning(
-                    wallets.find((w) => w.type === WalletType.Marina)!,
-                  ),
+                  handleInvoiceFromLightning(selectedWallet!),
                 )}
                 reset={resetModal}
                 stage={stage}

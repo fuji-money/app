@@ -18,6 +18,13 @@ import {
   saveNetworkGlobal,
 } from 'lib/storage'
 import { useSelectBalances } from 'lib/hooks'
+import { GitArtifactRepository } from 'lib/artifact.port'
+
+export const artifactRepo = new GitArtifactRepository({
+  owner: 'fuji-money',
+  repo: 'tapscripts',
+  branch: 'main',
+})
 
 interface WalletContextProps {
   initializing: boolean
@@ -39,7 +46,7 @@ function walletFactory(type: WalletType): Promise<Wallet | undefined> {
       return MarinaWallet.detect()
     case WalletType.Alby:
       // alby needs some repos to cache the chain data
-      return AlbyWallet.detect(txRepo, blindersRepo, configRepo)
+      return AlbyWallet.detect(txRepo, blindersRepo, configRepo, artifactRepo)
     default:
       throw new Error('Unknown wallet type')
   }

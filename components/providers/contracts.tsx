@@ -31,6 +31,7 @@ import { ConfigContext } from './config'
 import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
 import { Wallet } from 'lib/wallet'
 import { hex64LEToNumber } from 'lib/utils'
+import { Artifact } from '@ionio-lang/ionio'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -66,7 +67,7 @@ interface ContractsProviderProps {
 
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { wallets, network } = useContext(WalletContext)
-  const { artifact, config, reloadConfig } = useContext(ConfigContext)
+  const { artifactRepo, config, reloadConfig } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -124,7 +125,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   mempool => hist.length == 1 && hist[0].height == 0
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
-  const notConfirmed = async (contract: Contract, chainSource: ChainSource) => {
+  const notConfirmed = async (
+    contract: Contract,
+    chainSource: ChainSource,
+    artifact: Artifact,
+  ) => {
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(artifact, contract, network),
@@ -152,10 +157,14 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         network,
         wallet.getMainAccountXPubKey(),
       )) {
+        const artifact = contract.createdAt
+          ? await artifactRepo.get(contract.createdAt)
+          : await artifactRepo.getLatest()
+
         if (!contract.txid) continue
         if (!contract.confirmed) {
           // if funding tx is not confirmed, we can skip this contract
-          if (await notConfirmed(contract, chainSource)) continue
+          if (await notConfirmed(contract, chainSource, artifact)) continue
           markContractConfirmed(contract)
         }
         // if contract is redeemed, topup or liquidated

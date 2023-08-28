@@ -31,7 +31,7 @@ import { Wallet } from 'lib/wallet'
 
 const ContractTopupLiquid: NextPage = () => {
   const [selectedWallet, setSelectedWallet] = useState<Wallet>()
-  const { artifact, config } = useContext(ConfigContext)
+  const { artifactRepo, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
   const { wallets } = useContext(WalletContext)
@@ -82,6 +82,8 @@ const ContractTopupLiquid: NextPage = () => {
         (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
       )
       if (!owner) throw new Error('Owner not found')
+      if (!oldContract.createdAt) throw new Error('Missing createdAt member')
+      const artifact = await artifactRepo.get(oldContract.createdAt)
 
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(

@@ -18,7 +18,7 @@ import { WsElectrumChainSource } from 'lib/chainsource.port'
 import { Wallet, WalletType } from 'lib/wallet'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { artifact } = useContext(ConfigContext)
+  const { artifactRepo } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
   const { wallets } = useContext(WalletContext)
@@ -50,6 +50,15 @@ const ContractRedeemLiquid: NextPage = () => {
         (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
       )
       if (!owner) throw new Error('Owner not found')
+
+      if (newContract.createdAt)
+        console.warn(
+          'unable to get createdAt timestamp for your contract, getting latest covenant artifact.',
+        )
+
+      const artifact = newContract.createdAt
+        ? await artifactRepo.get(newContract.createdAt)
+        : await artifactRepo.getLatest()
 
       const tx = await prepareRedeemTx(
         owner,

@@ -1,6 +1,6 @@
 import { ECPairFactory } from 'ecpair'
 import { Artifact, Contract, Outpoint } from '@ionio-lang/ionio'
-import { Utxo, NetworkString, UnblindingData } from 'marina-provider'
+import { NetworkString, UnblindingData } from 'marina-provider'
 import { ContractParams } from './types'
 import { Coin, Wallet, WalletType } from './wallet'
 import {
@@ -20,10 +20,10 @@ import { assetPair, expirationTimeout } from './constants'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import * as ecc from 'tiny-secp256k1'
 import { getIonioInstance } from './covenant'
-import { getArtifact } from './artifact'
 import { TransactionRepository } from './transactions-repository'
 import { BlindersRepository } from './blinders-repository'
 import { ConfigRepository } from './config-repository'
+import { ArtifactRepository } from './artifact.port'
 
 const ZERO_32 = Buffer.alloc(32, 0).toString('hex')
 
@@ -170,6 +170,7 @@ export class AlbyWallet implements Wallet {
     txRepository: TransactionRepository,
     blindersRepository: BlindersRepository,
     configRepository: ConfigRepository,
+    artifactRepository: ArtifactRepository,
   ): Promise<AlbyWallet | undefined> {
     try {
       const provider = await safeDetectProvider()
@@ -179,7 +180,7 @@ export class AlbyWallet implements Wallet {
         blindersRepository,
         configRepository,
       )
-      wallet.artifact = await getArtifact()
+      wallet.artifact = await artifactRepository.getLatest()
       if (!provider.enabled) {
         const isEnabledInCache = await configRepository.isEnabled()
         if (isEnabledInCache) await wallet.connect()

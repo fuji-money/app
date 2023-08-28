@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 import { Config } from 'lib/types'
-import { WalletContext } from './wallet'
+import { artifactRepo, WalletContext } from './wallet'
 import { fetchConfig, getBTCvalue } from 'lib/api'
 import { openModal } from 'lib/utils'
 import {
@@ -19,17 +19,15 @@ import {
 import { populateOffer } from 'lib/offers'
 import { populateOracle } from 'lib/oracles'
 import { ModalIds } from 'components/modals/modal'
-import { Artifact } from '@ionio-lang/ionio'
-import { getArtifact } from 'lib/artifact'
+import { ArtifactRepository } from 'lib/artifact.port'
 
 interface ConfigContextProps {
-  artifact: Artifact
+  artifactRepo: ArtifactRepository
   config: Config
   loading: boolean
   reloadConfig: () => void
 }
 
-const emptyArtifact = { contractName: '', constructorInputs: [], functions: [] }
 const emptyConfig = {
   assets: [],
   offers: [],
@@ -38,7 +36,7 @@ const emptyConfig = {
 }
 
 export const ConfigContext = createContext<ConfigContextProps>({
-  artifact: emptyArtifact,
+  artifactRepo,
   config: emptyConfig,
   loading: true,
   reloadConfig: () => {},
@@ -46,8 +44,6 @@ export const ConfigContext = createContext<ConfigContextProps>({
 
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const { network } = useContext(WalletContext)
-
-  const [artifact, setArtifact] = useState<Artifact>(emptyArtifact)
   const [config, setConfig] = useState<Config>(emptyConfig)
   const [configs, setConfigs] = useState<
     Record<'liquid' | 'testnet', Config | undefined>
@@ -104,11 +100,6 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   )
 
   useEffect(() => {
-    getArtifact().then(setArtifact)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
     if (network === 'regtest') return
     reloadConfig(network)
   }, [network, reloadConfig])
@@ -123,7 +114,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   return (
     <ConfigContext.Provider
       value={{
-        artifact,
+        artifactRepo,
         config,
         loading,
         reloadConfig: () => reloadConfig(network as 'liquid' | 'testnet', true),
