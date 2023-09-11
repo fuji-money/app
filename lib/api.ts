@@ -23,6 +23,6 @@ export async function fetchConfig(network: NetworkString) {
 
 export const getBTCvalue = async (oracle: Oracle): Promise<number> => {
   if (!oracle.url) return 0
-  const data = await fetchURL(oracle.url)
+  const data = await fetchURL(oracle.url + '/oracle/BTCUSD')
   return data ? Number(data.lastPrice) : 0
 }
