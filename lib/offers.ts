@@ -6,7 +6,7 @@ export function populateOffer(
   oracles: Oracle[],
 ): Offer {
   const oraclePubkeys = oracles
-    .filter((oracle) => oracle.pubkey && !oracle.disabled)
+    .filter((oracle) => oracle.pubkey)
     .map((oracle) => oracle.pubkey ?? '')
   const collateral = assets.find((a) => a.id === offer.collateralAsset)
   const synthetic = assets.find((a) => a.id === offer.syntheticAsset)
