@@ -10,7 +10,7 @@ export enum Tasks {
 export const EnabledTasks: Record<string, boolean> = {
   [Tasks.Borrow]: true,
   [Tasks.Exchange]: false,
-  [Tasks.Multiply]: false,
+  [Tasks.Multiply]: true,
   [Tasks.Redeem]: true,
   [Tasks.Renew]: false,
   [Tasks.Topup]: false,
@@ -19,7 +19,7 @@ export const EnabledTasks: Record<string, boolean> = {
 export const LightningEnabledTasks: Record<string, boolean> = {
   [Tasks.Borrow]: true,
   [Tasks.Exchange]: false,
-  [Tasks.Multiply]: false,
+  [Tasks.Multiply]: true,
   [Tasks.Redeem]: true,
   [Tasks.Renew]: false,
   [Tasks.Topup]: false,

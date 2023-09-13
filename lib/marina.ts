@@ -109,7 +109,7 @@ export async function fujiAccountMissing(
   return !accountIDs.includes(marinaFujiAccountID)
 }
 
-export async function getNextAddress(accountID?: AccountID) {
+export async function getNextAddress(accountID?: AccountID): Promise<Address> {
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('No Marina provider found')
   const mainAccountIDs = await getMainAccountIDs(false)
@@ -152,19 +152,14 @@ export async function getNextCovenantAddress(
   return covenantAddress
 }
 
-export async function getPublicKey(covenantAddress: Address): Promise<Buffer> {
+export async function getPublicKey(address: Address): Promise<Buffer> {
   const marina = await getMarinaProvider()
   if (!marina) throw new Error('No Marina provider found')
-  const { masterXPub } = await marina.getAccountInfo(
-    covenantAddress.accountName,
-  )
-  if (!covenantAddress.derivationPath)
-    throw new Error(
-      'unable to find derivation path used by Marina to generate borrowerPublicKey',
-    )
+  const { masterXPub } = await marina.getAccountInfo(address.accountName)
+  if (!address.derivationPath) throw new Error('Unable to find derivation path')
   return BIP32Factory(ecc)
     .fromBase58(masterXPub)
-    .derivePath(covenantAddress.derivationPath.replace('m/', '')).publicKey // remove m/ from path
+    .derivePath(address.derivationPath.replace('m/', '')).publicKey
 }
 
 export async function getMainAccountIDs(

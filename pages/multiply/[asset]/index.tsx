@@ -1,6 +1,5 @@
 import type { NextPage } from 'next'
 import { useContext, useEffect, useState } from 'react'
-import Multiply from 'components/multiply'
 import { useRouter } from 'next/router'
 import { Offer } from 'lib/types'
 import SomeError from 'components/layout/error'
@@ -8,6 +7,7 @@ import Spinner from 'components/spinner'
 import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
+import Multiply from 'components/multiply'
 
 const MultiplyAsset: NextPage = () => {
   const { config } = useContext(ConfigContext)

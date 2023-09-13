@@ -2,6 +2,7 @@ import b58 from 'bs58check'
 import Decimal from 'decimal.js'
 import { readUInt64LE, writeUInt64LE } from 'liquidjs-lib/src/bufferutils'
 import { Tasks } from './tasks'
+import { Utxo } from 'marina-provider'
 
 // The 3 following function are need to transform encoding
 // for contractParams.priceLevel and contractParams.setupTimestamp:
@@ -22,6 +23,14 @@ export function hex64LEToBase64LE(hex: string): string {
 export function hex64LEToNumber(hex: string): number {
   const buf = Buffer.from(hex.slice(2), 'hex')
   return readUInt64LE(buf, 0)
+}
+
+// used in tdex
+export function numberToUInt64LE(n: number): string {
+  const num = Decimal.floor(n).toNumber()
+  const buf = Buffer.alloc(8)
+  writeUInt64LE(buf, num, 0)
+  return buf.toString()
 }
 
 // used in contract provider to migrate old contracts
@@ -78,14 +87,19 @@ export const extractError = (error: any): string => {
     : ''
 }
 
+export const extractAxiosError = (error: any): string | undefined => {
+  return error.response.data.message ?? error.request ?? error.message
+}
+
 export const operationFromTask = (task: string): string => {
   switch (task) {
     case Tasks.Borrow:
+    case Tasks.Topup:
       return 'deposit'
     case Tasks.Redeem:
       return 'receive'
-    case Tasks.Topup:
-      return 'deposit'
+    case Tasks.Multiply:
+      return 'Multiply'
     default:
       return 'unknown'
   }
@@ -173,3 +187,25 @@ export function encodeExpirationTimeout(seconds: number): Buffer {
     SEQUENCE_LOCKTIME_TYPE_FLAG | (seconds >> SEQUENCE_LOCKTIME_GRANULARITY)
   return Buffer.from(asNumber.toString(16), 'hex').reverse()
 }
+
+/**
+ * Generates a random id of a fixed length.
+ * @param length size of the string id.
+ */
+export function makeid(length: number): string {
+  let result = ''
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const charactersLength = characters.length
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+  return result
+}
+
+/**
+ * Returns value for a given utxo
+ * @param utxo Utxo
+ * @returns number
+ */
+export const utxoValue = (utxo: Utxo): number => utxo.blindingData?.value || 0

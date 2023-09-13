@@ -7,6 +7,7 @@ import Result from 'components/result'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
+import { fromSatoshis } from 'lib/utils'
 
 interface RedeemModalProps {
   contract: Contract
@@ -58,20 +59,20 @@ const RedeemModal = ({
     </>
   )
 
-  if (!result && !hasFunds) {
+  if (!hasFunds) {
     return (
       <Modal id={ModalIds.Redeem} reset={reset}>
         <h3 className="mt-4">Insufficient funds to redeem contract</h3>
         <p>
           You need{' '}
           <strong>
-            {neededAmount} {ticker}
+            {fromSatoshis(neededAmount, synthetic.precision)} {ticker}
           </strong>
         </p>
         <p>
           Your balance is{' '}
           <strong>
-            {balance} {ticker}
+            {fromSatoshis(balance, synthetic.precision)} {ticker}
           </strong>
         </p>
       </Modal>

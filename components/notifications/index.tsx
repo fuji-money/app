@@ -10,17 +10,19 @@ import { WalletContext } from 'components/providers/wallet'
 import ConnectWalletNotification from './connectWallet'
 import LowCollateralAmountNotification from './lowCollateralAmount'
 import { getAssetBalance } from 'lib/marina'
-import { swapDepositAmountOutOfBounds } from 'lib/swaps'
+import { lightningSwapAmountOutOfBounds } from 'lib/swaps'
 import OutOfBoundsNotification from './outOfBounds'
 import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
+import TdexErrorNotification from './tdexError'
 
 interface NotificationsProps {
   contract: Contract
   minRatio: number
   ratio: number
+  tdexError?: string
   topup?: number
 }
 
@@ -28,6 +30,7 @@ const Notifications = ({
   contract,
   minRatio,
   ratio,
+  tdexError,
   topup,
 }: NotificationsProps) => {
   const { balances, connected } = useContext(WalletContext)
@@ -53,10 +56,11 @@ const Notifications = ({
     if (!asset) return
     const balance = getAssetBalance(asset, balances)
     setNotEnoughFunds(connected && spendQuantity > balance)
-    setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
+    setOutOfBounds(lightningSwapAmountOutOfBounds(spendQuantity))
     setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
+    setBelowDustLimit(spendQuantity < minDustLimit)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contract.synthetic.quantity])
+  }, [contract.collateral.quantity])
 
   useEffect(() => {
     const asset = assets.find((a) => a.ticker === synthetic.ticker)
@@ -102,6 +106,7 @@ const Notifications = ({
       {notEnoughOracles && <NotEnoughOraclesNotification />}
       {ratioTooLow && <RatioTooLowNotification />}
       {mintLimitReached && <MintLimitReachedNotification />}
+      {tdexError && <TdexErrorNotification error={tdexError} />}
     </>
   )
 }

@@ -8,7 +8,7 @@ type UnspentElectrum = {
   tx_hash: string
 }
 
-type Unspent = Omit<Utxo, 'scriptDetails'>
+export type Unspent = Omit<Utxo, 'scriptDetails'>
 
 export type TransactionHistory = Array<{
   tx_hash: string

@@ -12,12 +12,17 @@ import { useEffect, useState } from 'react'
 import Modal, { ModalIds } from './modal'
 import CopyButton from 'components/buttons/copy'
 
-interface InvoiceModalProps {
+interface ReceiveWithLightningModalProps {
   contract: Contract
   handler: (arg0: string) => void
+  quantity?: number
 }
 
-const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
+const ReceiveWithLightningModal = ({
+  contract,
+  handler,
+  quantity,
+}: ReceiveWithLightningModalProps) => {
   const [invoice, setInvoice] = useState('')
   const [text, setText] = useState('')
   const [valid, setValid] = useState(false)
@@ -25,7 +30,8 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
 
   const { collateral } = contract
 
-  const amount = collateral.quantity - swapFeeAmount
+  const initialAmount = quantity ?? collateral.quantity
+  const amount = initialAmount - swapFeeAmount
   const boltzFees = submarineSwapBoltzFees(amount)
   const invoiceAmount = amount - boltzFees
 
@@ -81,7 +87,7 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
     prettyNumber(fromSatoshis(n, precision), precision, precision)
 
   return (
-    <Modal id={ModalIds.Invoice}>
+    <Modal id={ModalIds.ReceiveWithLightning}>
       <h3 className="mt-4">
         Enter a BOLT11 Lightning Invoice, <br />
         a Lightning address or <br />a LNURL pay link
@@ -92,9 +98,9 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
       </p>
       <div className="is-size-7 is-flex is-justify-content-center mb-4">
         <p>
-          * Collateral amount
+          * Amount
           <br />
-          {pn(collateral.quantity, collateral.precision)}
+          {pn(initialAmount, collateral.precision)}
         </p>
         <Separator />
         <p>
@@ -128,4 +134,4 @@ const InvoiceModal = ({ contract, handler }: InvoiceModalProps) => {
   )
 }
 
-export default InvoiceModal
+export default ReceiveWithLightningModal

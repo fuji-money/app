@@ -8,7 +8,7 @@ import { openModal, closeModal, extractError, retry } from 'lib/utils'
 import { WalletContext } from 'components/providers/wallet'
 import { prepareRedeemTx } from 'lib/covenant'
 import { markContractRedeemed } from 'lib/contracts'
-import InvoiceModal from 'components/modals/invoice'
+import ReceiveWithLightningModal from 'components/modals/receiveWithLightning'
 import RedeemModal from 'components/modals/redeem'
 import EnablersLightning from 'components/enablers/lightning'
 import { Outcome } from 'lib/types'
@@ -88,8 +88,8 @@ const ContractRedeemLightning: NextPage = () => {
   const handleInvoice = async (invoice?: string): Promise<void> => {
     if (!marina || !network) return
     if (!invoice || typeof invoice !== 'string')
-      return openModal(ModalIds.Invoice)
-    closeModal(ModalIds.Invoice)
+      return openModal(ModalIds.ReceiveWithLightning)
+    closeModal(ModalIds.ReceiveWithLightning)
     openModal(ModalIds.Redeem)
     try {
       setStage(ModalStages.NeedsAddress)
@@ -132,7 +132,10 @@ const ContractRedeemLightning: NextPage = () => {
         stage={stage}
         task={Tasks.Redeem}
       />
-      <InvoiceModal contract={newContract} handler={handleInvoice} />
+      <ReceiveWithLightningModal
+        contract={newContract}
+        handler={handleInvoice}
+      />
     </>
   )
 }

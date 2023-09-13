@@ -1,6 +1,6 @@
 import type { TagData } from 'bolt11'
 import bolt11 from 'bolt11'
-import { address, crypto, script, payments } from 'liquidjs-lib'
+import { address as laddress, crypto, script, payments } from 'liquidjs-lib'
 import { fromSatoshis } from 'lib/utils'
 import { feeAmount, swapFeeAmount } from './constants'
 import Boltz, { SubmarineSwapResponse } from './boltz'
@@ -21,7 +21,7 @@ export const DEPOSIT_LIGHTNING_LIMITS = {
 // UTILS
 
 // check if amount is out of bounds for lightning swap
-export const swapDepositAmountOutOfBounds = (amount = 0): boolean =>
+export const lightningSwapAmountOutOfBounds = (amount = 0): boolean =>
   amount > DEPOSIT_LIGHTNING_LIMITS.maximal ||
   amount < DEPOSIT_LIGHTNING_LIMITS.minimal
 
@@ -125,6 +125,9 @@ export const createSubmarineSwap = async (
     refundPublicKey,
   })
 
+  console.log('boltz address', address)
+  console.log('boltz unconfidential', laddress.fromConfidential(address))
+
   const submarineSwap: SubmarineSwap = {
     address,
     blindingKey,
@@ -160,7 +163,7 @@ const reverseSwapAddressDerivesFromScript = (
   lockupAddress: string,
   redeemScript: string,
 ) => {
-  const addressScript = address.toOutputScript(lockupAddress)
+  const addressScript = laddress.toOutputScript(lockupAddress)
   const addressScriptASM = script.toASM(script.decompile(addressScript) || [])
   const sha256 = crypto.sha256(Buffer.from(redeemScript, 'hex')).toString('hex')
   const expectedAddressScriptASM = `OP_0 ${sha256}` // P2SH

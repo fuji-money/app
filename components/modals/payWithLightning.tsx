@@ -10,7 +10,7 @@ import Summary from 'components/contract/summary'
 import Image from 'next/image'
 import { WeblnContext } from 'components/providers/webln'
 
-interface InvoiceDepositModalProps {
+interface PayWithLightningModalProps {
   contract: Contract
   data: string
   invoice: string
@@ -22,7 +22,7 @@ interface InvoiceDepositModalProps {
   useWebln: boolean
 }
 
-const InvoiceDepositModal = ({
+const PayWithLightningModal = ({
   contract,
   data,
   invoice,
@@ -32,7 +32,7 @@ const InvoiceDepositModal = ({
   stage,
   task,
   useWebln,
-}: InvoiceDepositModalProps) => {
+}: PayWithLightningModalProps) => {
   const { weblnCanEnable, weblnProvider } = useContext(WeblnContext)
   const [buttonText, setButtonText] = useState('Copy')
 
@@ -73,11 +73,55 @@ const InvoiceDepositModal = ({
   let ModalContent = () => <></>
 
   switch (stage) {
-    case ModalStages.NeedsInvoice:
+    case ModalStages.NeedsAddress:
       ModalContent = () => (
         <>
           <Spinner />
           <MainMessage text="Making swap" />
+          <p>Requesting submarine swap:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for address from submarine swap" />
+        </>
+      )
+      break
+    case ModalStages.NeedsConfirmation:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Approve transaction" />
+          <p>Confirm contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Accept and unlock this transaction in your Marina wallet" />
+        </>
+      )
+      break
+    case ModalStages.NeedsFinishing:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Finishing" />
+          <p>Creating contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Broadcasting transaction" />
+        </>
+      )
+      break
+    case ModalStages.NeedsFujiApproval:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Preparing transaction" />
+          <p>Preparing contract:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for Fuji approval" />
+        </>
+      )
+      break
+    case ModalStages.NeedsInvoice:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="Making reverse swap" />
           <p>Deposit to contract:</p>
           <ContractSummary />
           <SecondaryMessage text="Waiting for invoice" />
@@ -112,6 +156,17 @@ const InvoiceDepositModal = ({
             </>
           )
       break
+    case ModalStages.NeedsTDEXSwap:
+      ModalContent = () => (
+        <>
+          <Spinner />
+          <MainMessage text="TDEX swap" />
+          <p>Creating swap:</p>
+          <ContractSummary />
+          <SecondaryMessage text="Waiting for TDEX swap to complete" />
+        </>
+      )
+      break
     case ModalStages.PaymentReceived:
       ModalContent = () => (
         <>
@@ -124,28 +179,6 @@ const InvoiceDepositModal = ({
             />
           </p>
           <MainMessage text="Payment received" />
-        </>
-      )
-      break
-    case ModalStages.NeedsFujiApproval:
-      ModalContent = () => (
-        <>
-          <Spinner />
-          <MainMessage text="Preparing transaction" />
-          <p>Preparing contract:</p>
-          <ContractSummary />
-          <SecondaryMessage text="Waiting for Fuji approval" />
-        </>
-      )
-      break
-    case ModalStages.NeedsFinishing:
-      ModalContent = () => (
-        <>
-          <Spinner />
-          <MainMessage text="Finishing" />
-          <p>Creating contract:</p>
-          <ContractSummary />
-          <SecondaryMessage text="Broadcasting transaction" />
         </>
       )
       break
@@ -165,10 +198,10 @@ const InvoiceDepositModal = ({
   }
 
   return (
-    <Modal id={ModalIds.InvoiceDeposit} reset={reset}>
+    <Modal id={ModalIds.PayWithLightning} reset={reset}>
       <ModalContent />
     </Modal>
   )
 }
 
-export default InvoiceDepositModal
+export default PayWithLightningModal

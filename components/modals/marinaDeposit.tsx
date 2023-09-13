@@ -94,6 +94,15 @@ const MarinaDepositModal = ({
         />
       )
       break
+    case ModalStages.NeedsTDEXSwap:
+      ModalContent = () => (
+        <ModalTemplate
+          first="TDEX swap"
+          second="Creating swap"
+          third="Broadcasting transaction"
+        />
+      )
+      break
     default:
       break
   }

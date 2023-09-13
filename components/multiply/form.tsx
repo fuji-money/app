@@ -1,170 +1,105 @@
-import MultiplyButton from './button'
-import { useContext, useEffect, useState } from 'react'
+import { useContext } from 'react'
 import Range from './range'
-import Snippet from './snippet'
-import Image from 'next/image'
-import { openModal } from 'lib/utils'
-import MultiplyModals from 'components/modals/multiply'
 import Collateral from './collateral'
-import { Asset, Contract } from 'lib/types'
+import { Contract } from 'lib/types'
 import Spinner from 'components/spinner'
 import SomeError from 'components/layout/error'
 import Oracles from 'components/oracles'
-import { maxMultiplyRatio, minMultiplyRatio } from 'lib/constants'
-import { ModalIds } from 'components/modals/modal'
-import { WalletContext } from 'components/providers/wallet'
-import { TICKERS } from 'lib/assets'
 import { ContractsContext } from 'components/providers/contracts'
 import { ConfigContext } from 'components/providers/config'
+import { toSatoshis } from 'lib/utils'
+import {
+  getContractExpirationDate,
+  getContractPriceLevel,
+  getSyntheticQuantity,
+} from 'lib/contracts'
 
 interface MultiplyFormProps {
   contract: Contract
+  minRatio: number
+  ratio: number
   setContract: (arg0: Contract) => void
-  setDeposit: (arg0: boolean) => void
+  setRatio: (arg0: number) => void
 }
 
 const MultiplyForm = ({
   contract,
+  minRatio,
+  ratio,
   setContract,
-  setDeposit,
+  setRatio,
 }: MultiplyFormProps) => {
   const { config } = useContext(ConfigContext)
   const { loading } = useContext(ContractsContext)
+  const { oracles } = config
 
-  const [lbtc, setLbtc] = useState<Asset>()
-  const [exposure, setExposure] = useState(0)
-  const [fujiDebt, setFujiDebt] = useState(0)
-  const [liquidationPrice, setLiquidationPrice] = useState(0)
-  const [multiplier, setMultiplier] = useState(0)
-  const [quantity, setQuantity] = useState(0)
-  const [ratio, setRatio] = useState(maxMultiplyRatio)
+  const maxRatio = minRatio + 200
 
-  const { assets, oracles } = config
+  const updateContract = (contract: Contract) => {
+    setContract({ ...contract, expirationDate: getContractExpirationDate() })
+  }
 
-  useEffect(() => {
-    setLbtc(assets.find((asset) => asset.ticker === TICKERS.lbtc))
-  }, [assets])
+  const setCollateralQuantity = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let quantity = toSatoshis(
+      parseFloat(e.target.value),
+      contract.collateral.precision,
+    )
+    const collateral = { ...contract.collateral, quantity }
+    quantity = getSyntheticQuantity({ ...contract, collateral }, ratio)
+    const synthetic = { ...contract.synthetic, quantity }
+    updateContract({ ...contract, collateral, synthetic })
+  }
 
-  useEffect(() => {
-    if (lbtc) {
-      const quoc = (1 / ratio) * 100
-      const debt = (quantity * lbtc.value * quoc) / (1 - quoc)
-      const expo = debt / lbtc.value + quantity
-      const mult = quantity ? expo / quantity : 0
-      const liqp = (lbtc.value / ratio) * minMultiplyRatio
-      contract.collateral.quantity = quantity
-      contract.synthetic.quantity = debt
-      setFujiDebt(debt)
-      setMultiplier(mult)
-      setExposure(expo)
-      setLiquidationPrice(liqp)
-      setContract(contract)
-    }
-  }, [contract, lbtc, quantity, ratio, setContract])
+  const setContractRatio = (newRatio: number) => {
+    const ratio = newRatio > minRatio ? newRatio : minRatio
+    const quantity = getSyntheticQuantity(contract, ratio)
+    const synthetic = { ...contract.synthetic, quantity }
+    const newContract = { ...contract, synthetic }
+    const priceLevel = getContractPriceLevel(newContract, ratio)
+    updateContract({ ...newContract, priceLevel })
+    setRatio(ratio)
+  }
 
   if (loading) return <Spinner />
-  if (!lbtc) return <SomeError>Error getting L-BTC asset</SomeError>
   if (!oracles) return <SomeError>Error getting oracles</SomeError>
 
   return (
-    <div className="columns">
-      <div className="column is-4">
-        <div className="is-box has-pink-border">
-          <div className="is-flex is-justify-content-space-between">
-            <p className="is-size-7 has-text-weight-bold">Liquidation price</p>
-            <p>
-              <a onClick={() => openModal(ModalIds.LiquidationPrice)}>
-                <Image
-                  src="/images/icons/help.svg"
-                  alt="help icon"
-                  height={20}
-                  width={20}
-                />
-              </a>
-            </p>
-          </div>
-          <p className="is-size-5 is-gradient has-text-weight-bold">US$ 0.00</p>
-          <p>
-            <span className="is-after">
-              $ {liquidationPrice.toLocaleString()} after
-            </span>
-          </p>
-        </div>
-        <div className="is-box has-pink-border">
-          <div className="is-flex is-justify-content-space-between">
-            <p className="is-size-7 has-text-weight-bold">Current price</p>
-            <p>
-              <a onClick={() => openModal(ModalIds.CurrentPrice)}>
-                <Image
-                  src="/images/icons/help.svg"
-                  alt="help icon"
-                  height={20}
-                  width={20}
-                />
-              </a>
-            </p>
-          </div>
-          <p className="is-size-5 is-gradient has-text-weight-bold">
-            US$ {lbtc.value.toLocaleString()}
-          </p>
-        </div>
-        <div className="row">
-          <div className="columns">
-            <div className="column is-6">
-              <Snippet
-                title="FUJI Debt"
-                value="0.000 FUSD"
-                after={`${fujiDebt.toLocaleString()} after`}
-              />
-            </div>
-            <div className="column is-6">
-              <Snippet
-                title="Total L-BTC exposure"
-                value="0.000 L-BTC"
-                after={`${exposure.toLocaleString()} after`}
-              />
-            </div>
-          </div>
-          <div className="columns">
-            <div className="column is-6">
-              <Snippet
-                title="FUJI debt multiplier"
-                value="0.00x"
-                after={`${multiplier.toLocaleString()}x after`}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="column is-1"></div>
-      <div className="column is-7">
-        <div className="is-box has-pink-border">
-          <p className="has-text-weight-bold">Configure your vault</p>
-          <p className="is-size-7 mt-5">
-            In vivamus mi pretium pharetra cursus lacus, elit. Adipiscing eget
-            vel ut non duis vitae. Augue mi, bibendum ac imperdiet ipsum sed
-            ornare. Facilisis id sem quam elementum euismod ante ut.
-          </p>
-          <p className="has-text-weight-bold mt-6 mb-4">Deposit your L-BTC</p>
-          <Collateral asset={lbtc} setQuantity={setQuantity} />
-          <p className="has-text-weight-bold mt-6 mb-4">Adjust your multiply</p>
-          <Range
-            liquidationPrice={liquidationPrice}
-            minRatio={minMultiplyRatio}
-            maxRatio={maxMultiplyRatio}
-            ratio={ratio}
-            setRatio={setRatio}
-          />
-          <p className="has-text-weight-bold mt-5 mb-4">
-            Choose oracle providers
-          </p>
-          <Oracles contract={contract} setContract={setContract} />
-          <p className="has-text-centered mt-6 mb-4">
-            <MultiplyButton setDeposit={setDeposit} />
-          </p>
-        </div>
-      </div>
-      <MultiplyModals />
+    <div className="is-box has-pink-border">
+      <h3 className="mt-4">
+        <span className="stepper">1</span>
+        Deposit your {contract.collateral.ticker}
+      </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        Enter the desired amount of {contract.collateral.ticker} you want to
+        multiply.
+      </p>
+      <Collateral
+        asset={contract.collateral}
+        setCollateralQuantity={setCollateralQuantity}
+      />
+      <h3 className="mt-6">
+        <span className="stepper">2</span>
+        Set a collateral ratio
+      </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        Position will be liquidated below the minimum.
+      </p>
+      <Range
+        contract={contract}
+        minRatio={minRatio}
+        maxRatio={maxRatio}
+        setRatio={setContractRatio}
+        ratio={ratio}
+      />
+      <h3 className="mt-6">
+        <span className="stepper">3</span>
+        Select oracle providers
+      </h3>
+      <p className="is-size-6 ml-5 mb-4">
+        You can choose one or more oracles to use to determine the price of the
+        collateral.
+      </p>
+      <Oracles contract={contract} setContract={setContract} />
     </div>
   )
 }

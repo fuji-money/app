@@ -109,6 +109,7 @@ export interface Contract {
   txid?: string
   vout?: number
   xPubKey?: string
+  exposure?: number
 }
 
 export interface Investment {
@@ -219,4 +220,9 @@ export interface Config {
   offers: Offer[]
   oracles: Oracle[]
   xOnlyTreasuryPublicKey: string
+}
+
+export interface Outpoint {
+  txid: string
+  vout: number
 }

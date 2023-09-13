@@ -3,7 +3,7 @@ import { useContext, useState } from 'react'
 import { ContractsContext } from 'components/providers/contracts'
 import EnablersLightning from 'components/enablers/lightning'
 import { EnabledTasks, Tasks } from 'lib/tasks'
-import InvoiceDepositModal from 'components/modals/invoiceDeposit'
+import PayWithLightningModal from 'components/modals/payWithLightning'
 import { WalletContext } from 'components/providers/wallet'
 import { ModalIds, ModalStages } from 'components/modals/modal'
 import SomeError from 'components/layout/error'
@@ -77,7 +77,7 @@ const ContractTopupLightning: NextPage = () => {
 
   const handleInvoice = async (): Promise<void> => {
     if (!marina || !network) return
-    openModal(ModalIds.InvoiceDeposit)
+    openModal(ModalIds.PayWithLightning)
     setStage(ModalStages.NeedsInvoice)
     try {
       // we will create a ephemeral key pair:
@@ -288,7 +288,7 @@ const ContractTopupLightning: NextPage = () => {
         handleInvoice={handleInvoice}
         task={Tasks.Topup}
       />
-      <InvoiceDepositModal
+      <PayWithLightningModal
         contract={newContract}
         data={data}
         invoice={invoice}

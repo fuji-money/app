@@ -44,7 +44,7 @@ import ECPairFactory from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { WalletContext } from 'components/providers/wallet'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
-import InvoiceDepositModal from 'components/modals/invoiceDeposit'
+import PayWithLightningModal from 'components/modals/payWithLightning'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
@@ -251,7 +251,7 @@ const BorrowParams: NextPage = () => {
     if (!newContract || !network) return
 
     try {
-      openModal(ModalIds.InvoiceDeposit)
+      openModal(ModalIds.PayWithLightning)
 
       // if there's an unspent swap, we will use it
       const swap = unspentSwap.current ?? (await makeSwap())
@@ -259,7 +259,7 @@ const BorrowParams: NextPage = () => {
       const { keyPair, preimage, redeemScript, utxos } = swap
 
       // save this swap for the case this process fails after the swap
-      // we don't users to have to make the swap again
+      // we don't want users to have to make the swap again
       unspentSwap.current = { keyPair, preimage, redeemScript, utxos }
 
       // inform user we asking permission to mint
@@ -442,7 +442,7 @@ const BorrowParams: NextPage = () => {
                 handleInvoice={handleInvoice}
                 task={Tasks.Borrow}
               />
-              <InvoiceDepositModal
+              <PayWithLightningModal
                 contract={newContract}
                 data={data}
                 invoice={invoice}
