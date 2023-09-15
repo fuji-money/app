@@ -53,13 +53,14 @@ import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
+import { Artifact } from '@ionio-lang/ionio'
 
 const BorrowParams: NextPage = () => {
   const { chainSource, network, updateBalances, xPubKey } =
     useContext(WalletContext)
   const { weblnCanEnable, weblnProvider, weblnProviderName } =
     useContext(WeblnContext)
-  const { artifact, config } = useContext(ConfigContext)
+  const { artifactRepo, config } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -198,6 +199,7 @@ const BorrowParams: NextPage = () => {
     pset: Pset,
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
+    artifact: Artifact,
   ) => {
     if (!network) return
 
@@ -206,7 +208,6 @@ const BorrowParams: NextPage = () => {
 
     // broadcast transaction
     const rawHex = finalizeTx(pset)
-    console.log('rawHex', rawHex)
     const { txid } = await broadcastTx(rawHex)
     newContract.txid = txid
     if (!newContract.txid) throw new Error('No txid returned')
@@ -225,7 +226,7 @@ const BorrowParams: NextPage = () => {
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
-    await saveContractToStorage({ ...newContract })
+    await saveContractToStorage({ ...newContract, createdAt: Date.now() })
 
     // wait for confirmation, mark contract confirmed and reload contracts
     chainSource
@@ -264,6 +265,8 @@ const BorrowParams: NextPage = () => {
       // inform user we asking permission to mint
       setStage(ModalStages.NeedsFujiApproval)
 
+      const artifact = await artifactRepo.getLatest()
+
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
         artifact,
@@ -271,6 +274,7 @@ const BorrowParams: NextPage = () => {
         utxos,
         redeemScript,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
 
       // propose contract to alpha factory
@@ -306,7 +310,7 @@ const BorrowParams: NextPage = () => {
       })
 
       // finalize and broadcast transaction
-      finalizeAndBroadcast(pset, newContract, preparedTx)
+      await finalizeAndBroadcast(pset, newContract, preparedTx, artifact)
     } catch (error) {
       console.error(error)
       setData(extractError(error))
@@ -335,11 +339,14 @@ const BorrowParams: NextPage = () => {
       openModal(ModalIds.MarinaDeposit)
       setStage(ModalStages.NeedsCoins)
 
+      const artifact = await artifactRepo.getLatest()
+
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(
         artifact,
         newContract,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 
@@ -356,8 +363,9 @@ const BorrowParams: NextPage = () => {
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      finalizeAndBroadcast(pset, newContract, preparedTx)
+      await finalizeAndBroadcast(pset, newContract, preparedTx, artifact)
     } catch (error) {
+      console.error(error)
       setData(extractError(error))
       setResult(Outcome.Failure)
       setStage(ModalStages.ShowResult)

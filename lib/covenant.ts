@@ -3,7 +3,6 @@ import { Utxo, Address, NetworkString } from 'marina-provider'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import {
   feeAmount,
-  treasuryPublicKey,
   minDustLimit,
   assetPair,
   expirationTimeout,
@@ -85,6 +84,7 @@ async function getCovenantOutput(
   artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
+  xOnlyTreasuryPublicKey: string,
 ): Promise<{
   contractParams: ContractParams
   covenantOutput: UpdaterOutput
@@ -96,12 +96,11 @@ async function getCovenantOutput(
 
   // set contract params
   const timestamp = Date.now()
-  const treasuryPk = Buffer.from(treasuryPublicKey, 'hex')
   const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
     oraclePublicKey: `0x${oracle.pubkey}`,
-    treasuryPublicKey: `0x${treasuryPk.slice(1).toString('hex')}`,
+    treasuryPublicKey: `0x${xOnlyTreasuryPublicKey}`,
     priceLevel: numberToHex64LE(contract.priceLevel || 0),
     setupTimestamp: numberToHex64LE(timestamp),
     expirationTimeout,
@@ -149,6 +148,7 @@ export async function prepareBorrowTxWithClaimTx(
   utxos: Utxo[],
   redeemScript: string, // must be associated with the first utxo
   oracle: Oracle,
+  xOnlyTreasuryPublicKey: string,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -176,6 +176,7 @@ export async function prepareBorrowTxWithClaimTx(
     artifact,
     contract,
     oracle,
+    xOnlyTreasuryPublicKey,
   )
 
   updater
@@ -205,6 +206,7 @@ export async function prepareBorrowTx(
   artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
+  xOnlyTreasuryPublicKey: string,
 ): Promise<PreparedBorrowTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -241,6 +243,7 @@ export async function prepareBorrowTx(
     artifact,
     contract,
     oracle,
+    xOnlyTreasuryPublicKey,
   )
 
   // add collateral inputs
@@ -512,6 +515,7 @@ export async function prepareTopupTx(
   network: NetworkString,
   collateralUtxos: (Utxo & { redeemScript?: string })[],
   oracle: Oracle,
+  xOnlyTreasuryPublicKey: string,
 ): Promise<PreparedTopupTx> {
   // check for marina
   const marina = await getMarinaProvider()
@@ -552,6 +556,7 @@ export async function prepareTopupTx(
     artifact,
     newContract,
     oracle,
+    xOnlyTreasuryPublicKey,
   )
 
   // find coin for this contract

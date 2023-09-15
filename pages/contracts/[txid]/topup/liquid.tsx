@@ -31,7 +31,7 @@ import { ConfigContext } from 'components/providers/config'
 const ContractTopupLiquid: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
-  const { artifact, config } = useContext(ConfigContext)
+  const { artifactRepo, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -75,6 +75,9 @@ const ContractTopupLiquid: NextPage = () => {
       if (collateralUtxos.length === 0)
         throw new Error('Not enough collateral funds')
 
+      if (!oldContract.createdAt) throw new Error('Missing createdAt member')
+      const artifact = await artifactRepo.get(oldContract.createdAt)
+
       // prepare topup transaction
       const preparedTx = await prepareTopupTx(
         artifact,
@@ -83,6 +86,7 @@ const ContractTopupLiquid: NextPage = () => {
         network,
         collateralUtxos,
         oracles[0],
+        config.xOnlyTreasuryPublicKey,
       )
       if (!preparedTx) throw new Error('Unable to prepare Tx')
 

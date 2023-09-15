@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@ionio-lang/ionio": "^0.3.0",
+    "@octokit/plugin-throttling": "^7.0.0",
+    "@octokit/rest": "^20.0.1",
     "@types/tiny-secp256k1": "^2.0.1",
     "@vulpemventures/secp256k1-zkp": "^2.1.1",
     "bech32": "^2.0.0",

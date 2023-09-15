@@ -1,9 +1,5 @@
 import { NetworkString } from 'marina-provider'
-import {
-  assetExplorerUrlMainnet,
-  assetExplorerUrlTestnet,
-  fUSDAssetId,
-} from './constants'
+import { assetExplorerUrlMainnet, assetExplorerUrlTestnet } from './constants'
 import { Asset, ConfigResponseAsset } from './types'
 import { networks } from 'liquidjs-lib'
 import { fromSatoshis } from './utils'
@@ -54,8 +50,15 @@ const fuji: Asset = {
 }
 
 const assetById: Record<string, Asset> = {
-  [fUSDAssetId]: { ...fuji, precision: 2 }, // mainnet
-  '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518': fuji, // testnet
+  '0dea022a8a25abb128b42b0f8e98532bc8bd74f8a77dc81251afcc13168acef7': {
+    ...fuji,
+    precision: 2,
+  }, // (FUSD) mainnet
+  '518c0b351f5731f5d40cf6ad444d1c147eda1cdf8c867185c58a526fb02ad806': {
+    ...fuji,
+    precision: 2,
+  }, // (TEST-FUSD) mainnet
+  '0d86b2f6a8c3b02a8c7c8836b83a081e68b7e2b4bcdfc58981fc5486f59f7518': fuji, // (FUSD) testnet
   '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d': lbtc, // mainnet
   '144c654344aa716d6f3abcc1ca90e5641e4e2a7f633bc09fe3baf64585819a49': lbtc, // testnet
   ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2: usdt, // mainnet

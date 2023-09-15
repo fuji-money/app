@@ -30,6 +30,7 @@ import { marinaFujiAccountID } from 'lib/constants'
 import { hex64LEToNumber } from 'lib/utils'
 import { address } from 'liquidjs-lib'
 import { ConfigContext } from './config'
+import { Artifact } from '@ionio-lang/ionio'
 
 interface ContractsContextProps {
   activities: Activity[]
@@ -64,7 +65,7 @@ interface ContractsProviderProps {
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   const { chainSource, connected, marina, network, xPubKey } =
     useContext(WalletContext)
-  const { artifact, config, reloadConfig } = useContext(ConfigContext)
+  const { artifactRepo, config, reloadConfig } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -106,8 +107,9 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   mempool => hist.length == 1 && hist[0].height == 0
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
-  const notConfirmed = async (contract: Contract) => {
+  const notConfirmed = async (contract: Contract, artifact: Artifact) => {
     if (!network) return
+
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(artifact, contract, network),
@@ -130,9 +132,13 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     // iterate through contracts in storage
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
       if (!contract.txid) continue
+      const artifact = contract.createdAt
+        ? await artifactRepo.get(contract.createdAt)
+        : await artifactRepo.getLatest()
+
       if (!contract.confirmed) {
         // if funding tx is not confirmed, we can skip this contract
-        if (await notConfirmed(contract)) continue
+        if (await notConfirmed(contract, artifact)) continue
         markContractConfirmed(contract)
       }
       // if contract is redeemed, topup or liquidated

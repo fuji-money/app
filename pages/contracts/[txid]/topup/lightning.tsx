@@ -49,7 +49,7 @@ const ContractTopupLightning: NextPage = () => {
   const { chainSource, marina, network, updateBalances } =
     useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
-  const { artifact, config } = useContext(ConfigContext)
+  const { artifactRepo, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
 
@@ -167,6 +167,10 @@ const ContractTopupLightning: NextPage = () => {
         const value = onchainTopupAmount
         const collateralUtxos = [{ ...utxo, value, redeemScript }]
 
+        if (!oldContract.createdAt)
+          throw new Error('oldContract has no createdAt member')
+        const artifact = await artifactRepo.get(oldContract.createdAt)
+
         // prepare borrow transaction with claim utxo as input
         const preparedTx = await prepareTopupTx(
           artifact,
@@ -175,6 +179,7 @@ const ContractTopupLightning: NextPage = () => {
           network,
           collateralUtxos,
           oracles[0],
+          config.xOnlyTreasuryPublicKey,
         )
 
         // propose contract to alpha factory
