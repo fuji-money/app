@@ -126,10 +126,10 @@ export interface Offer {
 }
 
 export interface Oracle {
-  name: string
-  disabled: boolean
-  pubkey?: string
-  url?: string
+  domain?: string
+  name?: string
+  pubkey: string
+  url: string
 }
 
 export interface Stock {
