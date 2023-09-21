@@ -15,7 +15,7 @@ export const marinaLegacyMainAccountID = 'mainAccountLegacy' // m/44'/0'/0'
 export const defaultNetwork = 'liquid'
 
 export const factoryUrlMainnet =
-  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://dev-factory.fuji.money'
+  process.env.NEXT_PUBLIC_FACTORY_URL || 'https://factory.fuji-labs.io'
 
 export const factoryUrlTestnet =
   process.env.NEXT_PUBLIC_FACTORY_URL_TESTNET ||
