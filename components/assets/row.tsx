@@ -45,7 +45,7 @@ const AssetRow = ({ asset }: AssetRowProps) => {
             </p>
           ) : (
             <>
-              <TradeButton />
+              <TradeButton hash={asset.id} />
               <FilterButton ticker={asset.ticker} />
             </>
           )}

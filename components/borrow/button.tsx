@@ -41,7 +41,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
       setEnoughFunds(enoughFundsOnMarina)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [contract.collateral.quantity])
 
   const handleClick = () => {
     setNewContract(contract)

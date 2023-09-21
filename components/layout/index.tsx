@@ -1,8 +1,6 @@
 import Footer from 'components/footer'
 import Navbar from 'components/navbar'
-import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
-import TradeModal from 'components/modals/trade'
 import Breadcrumbs from 'components/breadcrumbs'
 import { WalletProvider } from 'components/providers/wallet'
 import Banner from 'components/banner'
@@ -42,7 +40,6 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="container">{children}</div>
               </main>
               <Footer />
-              <TradeModal />
               <WeblnModal />
               <MintLimitModal />
             </div>
