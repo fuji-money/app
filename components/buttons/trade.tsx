@@ -1,11 +1,13 @@
-import { ModalIds } from 'components/modals/modal'
-import { openModal } from 'lib/utils'
-
-const TradeButton = () => {
+const TradeButton = ({ hash }: { hash: string }) => {
   return (
-    <button onClick={() => openModal(ModalIds.Trade)} className="button">
+    <a
+      className="button"
+      href={`https://trade.fuji.money/?asset=${hash}`}
+      target="_blank"
+      rel="noreferrer"
+    >
       Trade
-    </button>
+    </a>
   )
 }
 
