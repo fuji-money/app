@@ -1,9 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { openModal } from 'lib/utils'
 import ConnectButton from 'components/buttons/connect'
 import Settings from 'components/settings'
-import { ModalIds } from 'components/modals/modal'
 
 export default function Navbar() {
   return (
@@ -24,7 +22,9 @@ export default function Navbar() {
             </Link>
             <a
               className="is-block my-auto ml-5"
-              onClick={() => openModal(ModalIds.Trade)}
+              href="https://trade.fuji.money"
+              target="_blank"
+              rel="noreferrer"
             >
               Trade
             </a>

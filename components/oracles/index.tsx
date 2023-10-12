@@ -14,8 +14,8 @@ export default function Oracles({ contract, setContract }: OraclesProps) {
 
   const hasOracle = (id = '') => contract.oracles.includes(id)
 
-  const handleClick = ({ pubkey, disabled }: Oracle) => {
-    if (disabled || !pubkey) return
+  const handleClick = ({ pubkey }: Oracle) => {
+    if (!pubkey) return
     const newOracles = hasOracle(pubkey)
       ? contract.oracles.filter((opk) => opk != pubkey)
       : [...contract.oracles, pubkey]
@@ -31,7 +31,6 @@ export default function Oracles({ contract, setContract }: OraclesProps) {
           onClick={() => handleClick(oracle)}
         >
           {oracle.name}
-          {oracle.disabled && ' (Coming Soon)'}
         </p>
       ))}
       <style jsx>{`

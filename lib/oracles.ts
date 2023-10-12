@@ -1,23 +1,20 @@
 import { ConfigResponseOracle, Oracle } from './types'
 
-const fuji: Oracle = {
-  name: 'Fuji.Money',
-  disabled: false,
-}
-
-const bitfinex: Oracle = {
-  name: 'Bitfinex',
-  disabled: true,
-}
-
-const blockstream: Oracle = {
-  name: 'Blockstream',
-  disabled: true,
-}
+const knownOracles = [
+  {
+    domain: 'fuji.money',
+    name: 'Fuji.Money',
+  },
+  {
+    domain: 'bitcoinreserve.com',
+    name: 'Bitcoin Reserve',
+  },
+]
 
 export function populateOracle(responseOracle: ConfigResponseOracle): Oracle {
   const pubkey = responseOracle.xOnlyPublicKey
-  return { ...fuji, pubkey, url: responseOracle.url }
+  const url = responseOracle.url
+  const oracle = knownOracles.find(({ domain }) => url.match(domain))
+  const name = oracle ? oracle.name : 'Unknown'
+  return { name, pubkey, url }
 }
-
-export const getOtherOracles = () => [bitfinex, blockstream]
