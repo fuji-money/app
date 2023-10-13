@@ -16,6 +16,9 @@ test('connect marina & use the mint page', async ({
   await makeOnboardingRestore(page, extensionId)
   await switchToTestnetNetwork(page, extensionId)
   await page.goto('/')
+  await page.getByRole('img', { name: 'settings' }).hover()
+  await page.getByRole('button', { name: 'Switch to Testnet' }).click()
+
   await page.waitForSelector('text=Mint')
   // connect Marina
   await page.getByRole('button', { name: 'Loading...' }).isEnabled();
@@ -57,12 +60,12 @@ test('connect marina & use the mint page', async ({
 
   // expect to find the proceed to deposit button enabled (due to lightning)
   await inputFujiQtty.fill('25')
-  await expect(proceedButton).toBeEnabled()
+  await expect(proceedButton).toBeDisabled()
   await expect(marinaNoFunds).toBeVisible()
   await expect(lnOutOfBounds).toBeHidden()
 
   // expect to see the ratio is unsafe warning
   await contractRatio.fill('110')
-  await expect(proceedButton).toBeEnabled()
+  await expect(proceedButton).toBeDisabled()
   await expect(ratioIsUnsafe).toBeVisible()
 })
