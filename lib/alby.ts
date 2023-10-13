@@ -147,7 +147,6 @@ enum ListenerType {
 // AlbyWallet needs some repositories to work correctly
 // - TransactionRepository: cache the wallet transactions
 // - BlindersRepository: cache the blinders if any utxos is confidential
-// - ConfigRepository: cache the global boolean "hasBeenEnabled", in order to know if we can call window.liquid.enable() without showing any popup to the user.
 export class AlbyWallet implements Wallet {
   type = WalletType.Alby
 

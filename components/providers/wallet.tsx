@@ -13,7 +13,6 @@ import { defaultNetwork } from 'lib/constants'
 import {
   getGlobalsFromStorage,
   LocalStorageBlindersRepository,
-  LocalStorageConfigRepository,
   LocalStorageTransactionsRepository,
   saveNetworkGlobal,
 } from 'lib/storage'

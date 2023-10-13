@@ -3,7 +3,6 @@ import { Activity, Contract, SwapInfo } from './types'
 import { assetPair, expirationSeconds, expirationTimeout } from './constants'
 import { BlindersRepository } from './blinders-repository'
 import { TransactionRepository } from './transactions-repository'
-import { ConfigRepository } from './config-repository'
 
 // contracts
 
@@ -210,26 +209,5 @@ export class LocalStorageTransactionsRepository
     const hex = localStorage.getItem(key)
     if (!hex) return Promise.resolve(undefined)
     return Promise.resolve(hex)
-  }
-}
-
-export class LocalStorageConfigRepository implements ConfigRepository {
-  static ALBY_ENABLED_KEY = makeLocalStorageKey('alby-has-been-enabled')
-
-  isEnabled(): Promise<boolean> {
-    const enabled = localStorage.getItem(
-      LocalStorageConfigRepository.ALBY_ENABLED_KEY,
-    )
-    return Promise.resolve(enabled === '1')
-  }
-
-  setEnabled(): Promise<void> {
-    localStorage.setItem(LocalStorageConfigRepository.ALBY_ENABLED_KEY, '1')
-    return Promise.resolve()
-  }
-
-  clear(): Promise<void> {
-    localStorage.removeItem(LocalStorageConfigRepository.ALBY_ENABLED_KEY)
-    return Promise.resolve()
   }
 }
