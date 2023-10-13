@@ -107,7 +107,7 @@ const RedeemModal = ({
         <ModalTemplate
           first="Approve transaction"
           second="Close contract"
-          third="Accept and unlock this transaction in your Marina wallet"
+          third="Accept and unlock this transaction in your wallet"
         />
       )
       break

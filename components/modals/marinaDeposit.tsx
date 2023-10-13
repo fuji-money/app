@@ -70,7 +70,7 @@ const MarinaDepositModal = ({
         <ModalTemplate
           first="Approve transaction"
           second="Approving contract"
-          third="Accept and unlock this transaction in your Marina wallet"
+          third="Accept and unlock this transaction in your wallet"
         />
       )
       break
