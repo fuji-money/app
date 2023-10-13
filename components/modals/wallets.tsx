@@ -1,32 +1,30 @@
 import Image from 'next/image'
 import Modal, { ModalIds } from './modal'
-import { Wallet, WalletType } from 'lib/wallet'
+import { WalletType } from 'lib/wallet'
 import classNames from 'classnames'
+import { NetworkString } from 'marina-provider'
 
 interface WalletInfo {
-  type: WalletType
   name: string
   icon: string
   desc: string
   link: string
 }
 
-const wallets: WalletInfo[] = [
-  {
-    type: WalletType.Marina,
+const walletsInfos: Record<WalletType, WalletInfo> = {
+  [WalletType.Marina]: {
     name: 'Marina',
     icon: '/images/wallets/marina.svg',
     desc: 'Connect to Marina to access Fuji Money from your marina browser extension',
     link: 'https://vulpem.com/marina',
   },
-  {
-    type: WalletType.Alby,
+  [WalletType.Alby]: {
     name: 'Alby',
     icon: '/images/wallets/alby.svg',
     desc: 'Connect to Alby wallet to access Fuji Money from your alby liquid account',
     link: 'https://getalby.com/',
   },
-]
+}
 
 const WalletButton = ({
   wallet,
@@ -108,41 +106,36 @@ const WalletButton = ({
   )
 }
 
-interface WalletsModalProps {
+export interface WalletsModalProps {
   handleWalletChoice: (type: WalletType) => void
-  installedWallets: Wallet[]
-  getWalletNetwork: (type: WalletType) => string | undefined
+  wallets: {
+    type: WalletType
+    installed: boolean
+    connected: boolean
+    network?: NetworkString
+  }[]
 }
 
-const WalletsModal = ({
-  handleWalletChoice,
-  installedWallets,
-  getWalletNetwork,
-}: WalletsModalProps) => {
-  const buttons = wallets.map((wallet, index) => {
-    const found = installedWallets.find((w) => w.type === wallet.type)
-    const installed = !!found
-    const connected = !!found?.isConnected()
-    const network = getWalletNetwork(wallet.type)
-
-    return (
-      <div
-        key={index}
-        onClick={
-          installed && !connected
-            ? () => handleWalletChoice(wallet.type)
-            : undefined
-        }
-      >
-        <WalletButton
-          wallet={wallet}
-          installed={installed}
-          isConnected={connected}
-          network={network}
-        />
-      </div>
-    )
-  })
+const WalletsModal = ({ handleWalletChoice, wallets }: WalletsModalProps) => {
+  const buttons = wallets.map(
+    ({ type, connected, installed, network }, index) => {
+      return (
+        <div
+          key={index}
+          onClick={
+            installed && !connected ? () => handleWalletChoice(type) : undefined
+          }
+        >
+          <WalletButton
+            wallet={walletsInfos[type]}
+            installed={installed}
+            isConnected={connected}
+            network={network}
+          />
+        </div>
+      )
+    },
+  )
   return (
     <Modal id={ModalIds.Wallets}>
       <h3 className="mb-5">Connect wallet</h3>

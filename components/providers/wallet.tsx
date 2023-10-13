@@ -38,7 +38,6 @@ interface WalletContextProps {
 
 const txRepo = new LocalStorageTransactionsRepository()
 const blindersRepo = new LocalStorageBlindersRepository()
-const configRepo = new LocalStorageConfigRepository()
 
 function walletFactory(type: WalletType): Promise<Wallet | undefined> {
   switch (type) {
@@ -46,7 +45,7 @@ function walletFactory(type: WalletType): Promise<Wallet | undefined> {
       return MarinaWallet.detect()
     case WalletType.Alby:
       // alby needs some repos to cache the chain data
-      return AlbyWallet.detect(txRepo, blindersRepo, configRepo, artifactRepo)
+      return AlbyWallet.detect(txRepo, blindersRepo, artifactRepo)
     default:
       throw new Error('Unknown wallet type')
   }

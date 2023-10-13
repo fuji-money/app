@@ -22,7 +22,6 @@ import * as ecc from 'tiny-secp256k1'
 import { getIonioInstance } from './covenant'
 import { TransactionRepository } from './transactions-repository'
 import { BlindersRepository } from './blinders-repository'
-import { ConfigRepository } from './config-repository'
 import { ArtifactRepository } from './artifact.port'
 
 const ZERO_32 = Buffer.alloc(32, 0).toString('hex')
@@ -43,7 +42,7 @@ interface LiquidProvider {
   }>
   signPset(psetBase64: string): Promise<{ signed: string }>
   enable(): Promise<void>
-  enabled: boolean
+  isEnabled(): Promise<boolean>
 }
 
 function detectAlbyProvider(): LiquidProvider {
@@ -74,8 +73,15 @@ export class SafeLiquidProvider implements LiquidProvider {
     })
   }
 
-  get enabled(): boolean {
-    return this.provider.enabled
+  async isEnabled(): Promise<boolean> {
+    if (this.hasActiveCall) await this.waitUntilCallIsCompleted()
+    this.hasActiveCall = true
+    try {
+      const res = await this.provider.isEnabled()
+      return res
+    } finally {
+      this.hasActiveCall = false
+    }
   }
 
   async getAddress(): Promise<{
@@ -163,34 +169,23 @@ export class AlbyWallet implements Wallet {
     private provider: LiquidProvider,
     private txRepo: TransactionRepository,
     private blindersRepo: BlindersRepository,
-    private configRepo: ConfigRepository,
   ) {}
 
   static async detect(
     txRepository: TransactionRepository,
     blindersRepository: BlindersRepository,
-    configRepository: ConfigRepository,
     artifactRepository: ArtifactRepository,
   ): Promise<AlbyWallet | undefined> {
     try {
       const provider = await safeDetectProvider()
-      const wallet = new AlbyWallet(
-        provider,
-        txRepository,
-        blindersRepository,
-        configRepository,
-      )
+      const wallet = new AlbyWallet(provider, txRepository, blindersRepository)
       wallet.artifact = await artifactRepository.getLatest()
-      if (!provider.enabled) {
-        const isEnabledInCache = await configRepository.isEnabled()
-        if (isEnabledInCache) await wallet.connect()
-      } else {
+      if (await provider.isEnabled()) {
         await wallet.fetchAndSetAddress()
       }
       return wallet
     } catch (e) {
       console.error(e)
-      await configRepository.clear()
       return undefined
     }
   }
@@ -256,11 +251,8 @@ export class AlbyWallet implements Wallet {
 
   async connect(): Promise<void> {
     await this.provider.enable()
-    if (this.provider.enabled) {
-      await Promise.all([
-        this.fetchAndSetAddress(),
-        this.configRepo.setEnabled(),
-      ])
+    if (await this.provider.isEnabled()) {
+      await Promise.all([this.fetchAndSetAddress()])
       return
     }
 
