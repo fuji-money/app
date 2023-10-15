@@ -23,7 +23,10 @@ const calcLeft = (ratio: number) => {
     if (container) {
       const startsOn = thumbWidth / 2
       const eachRatio = (container.clientWidth - thumbWidth) / maxBorrowRatio
-      return startsOn + ratio * eachRatio
+      const maxLeft = startsOn + maxBorrowRatio * eachRatio
+      const left = startsOn + ratio * eachRatio
+      if (left > maxLeft) return maxLeft
+      return left
     }
   }
   return 0

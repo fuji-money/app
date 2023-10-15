@@ -83,7 +83,7 @@ const Notifications = ({
     setNotEnoughOracles(oracles?.length === 0)
   }, [oracles])
 
-  if (!spendQuantity) return <></>
+  if (!spendQuantity && ratio !== 0) return <></>
 
   return (
     <>
