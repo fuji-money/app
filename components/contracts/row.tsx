@@ -32,7 +32,11 @@ const ContractRow = ({ contract }: ContractRowProps) => {
         </div>
         <div className="column is-2">
           {contract.txid && (
-            <ExplorerLink txid={contract.txid} extraClass="is-small" />
+            <ExplorerLink
+              txid={contract.txid}
+              network={contract.network ?? 'liquid'}
+              extraClass="is-small"
+            />
           )}
         </div>
         <div className="column is-4 is-flex is-justify-content-flex-end">

@@ -16,6 +16,7 @@ import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { ConfigContext } from 'components/providers/config'
 import MintLimitReachedNotification from './mintLimitReached'
 import { fromSatoshis } from 'lib/utils'
+import { WalletType } from 'lib/wallet'
 
 interface NotificationsProps {
   contract: Contract
@@ -30,14 +31,14 @@ const Notifications = ({
   ratio,
   topup,
 }: NotificationsProps) => {
-  const { balances, connected } = useContext(WalletContext)
+  const { wallets, balances } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
 
   const [belowDustLimit, setBelowDustLimit] = useState(false)
   const [collateralTooLow, setCollateralTooLow] = useState(false)
   const [outOfBounds, setOutOfBounds] = useState(false)
   const [mintLimitReached, setMintLimitReached] = useState(false)
-  const [notEnoughFunds, setNotEnoughFunds] = useState(false)
+  const [notEnoughFunds, setNotEnoughFunds] = useState<WalletType[]>([])
   const [notEnoughOracles, setNotEnoughOracles] = useState(false)
   const [ratioTooLow, setRatioTooLow] = useState(false)
   const [ratioUnsafe, setRatioUnsafe] = useState(false)
@@ -51,8 +52,14 @@ const Notifications = ({
   useEffect(() => {
     const asset = assets.find((a) => a.ticker === collateral.ticker)
     if (!asset) return
-    const balance = getAssetBalance(asset, balances)
-    setNotEnoughFunds(connected && spendQuantity > balance)
+
+    for (const wallet of wallets) {
+      const balance = getAssetBalance(asset, balances[wallet.type])
+      if (spendQuantity > balance) {
+        setNotEnoughFunds((prev) => Array.from(new Set([...prev, wallet.type])))
+      }
+    }
+
     setOutOfBounds(swapDepositAmountOutOfBounds(spendQuantity))
     setCollateralTooLow(spendQuantity < feeAmount + minDustLimit)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,18 +92,26 @@ const Notifications = ({
 
   if (!spendQuantity && ratio !== 0) return <></>
 
+  const notEnoughFundsNotifications = (
+    <>
+      {notEnoughFunds.map((wallet, index) => (
+        <NotEnoughFundsNotification key={index} wallet={wallet} oob={true} />
+      ))}
+    </>
+  )
+
   return (
     <>
       {ratioUnsafe && <RatioUnsafeNotification />}
       {LightningEnabledTasks[Tasks.Borrow] ? (
         <>
-          {notEnoughFunds && <NotEnoughFundsNotification oob={outOfBounds} />}
-          {outOfBounds && <OutOfBoundsNotification nef={notEnoughFunds} />}
+          {outOfBounds && <OutOfBoundsNotification nef={outOfBounds} />}
+          {notEnoughFunds && notEnoughFundsNotifications}
         </>
       ) : (
-        <>{notEnoughFunds && <NotEnoughFundsNotification oob={true} />}</>
+        <>{notEnoughFunds && notEnoughFundsNotifications}</>
       )}
-      {!connected && <ConnectWalletNotification />}
+      {!wallets.length && <ConnectWalletNotification />}
       {belowDustLimit && <BelowDustLimitNotification />}
       {collateralTooLow && <LowCollateralAmountNotification />}
       {notEnoughOracles && <NotEnoughOraclesNotification />}

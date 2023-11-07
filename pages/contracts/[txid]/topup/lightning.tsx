@@ -24,6 +24,7 @@ import {
   witnessStackToScriptWitness,
   script as bscript,
   Finalizer,
+  address,
 } from 'liquidjs-lib'
 import {
   finalizeTopupCovenantInput,
@@ -41,14 +42,12 @@ import NotAllowed from 'components/messages/notAllowed'
 import { addSwapToStorage } from 'lib/storage'
 import { Outcome } from 'lib/types'
 import { finalizeTx } from 'lib/transaction'
-import { WeblnContext } from 'components/providers/webln'
-import { broadcastTx } from 'lib/marina'
 import { ConfigContext } from 'components/providers/config'
+import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet } from 'lib/wallet'
 
 const ContractTopupLightning: NextPage = () => {
-  const { chainSource, marina, network, updateBalances } =
-    useContext(WalletContext)
-  const { weblnProviderName } = useContext(WeblnContext)
+  const { wallets } = useContext(WalletContext)
   const { artifactRepo, config } = useContext(ConfigContext)
   const { newContract, oldContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -58,6 +57,7 @@ const ContractTopupLightning: NextPage = () => {
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null)
 
   const { oracles } = config
 
@@ -75,8 +75,9 @@ const ContractTopupLightning: NextPage = () => {
 
   if (!newContract) throw new Error('Missing contract')
 
-  const handleInvoice = async (): Promise<void> => {
-    if (!marina || !network) return
+  const handleInvoice = async (wallet: Wallet): Promise<void> => {
+    setSelectedWallet(wallet)
+    if (!wallets.length) throw new Error('Missing wallets')
     openModal(ModalIds.InvoiceDeposit)
     setStage(ModalStages.NeedsInvoice)
     try {
@@ -90,6 +91,8 @@ const ContractTopupLightning: NextPage = () => {
       // give enough satoshis to pay for all fees expected, so that we
       // can use the returning coin as a solo input for the topup tx
       const onchainTopupAmount = topupAmount + feeAmount
+
+      const network = await wallet.getNetwork()
 
       // create swap with boltz.exchange
       const boltzSwap: ReverseSwap | undefined =
@@ -147,10 +150,13 @@ const ContractTopupLightning: NextPage = () => {
       }, invoiceExpireDate - Date.now())
 
       // wait for confirmation
+      const chainSource = new WsElectrumChainSource(network)
       await chainSource.waitForAddressReceivesTx(lockupAddress)
 
       // fetch utxos for address
-      const utxos = await chainSource.listUnspents(lockupAddress)
+      const utxos = await chainSource.listUnspents(
+        address.toOutputScript(lockupAddress).toString('hex'),
+      )
 
       // payment has arrived
       if (utxos.length > 0) {
@@ -167,12 +173,18 @@ const ContractTopupLightning: NextPage = () => {
         const value = onchainTopupAmount
         const collateralUtxos = [{ ...utxo, value, redeemScript }]
 
+        const owner = wallets.filter(
+          (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
+        )[0]
+        if (!owner) throw new Error('Cannot found wallet owning the contract')
         if (!oldContract.createdAt)
           throw new Error('oldContract has no createdAt member')
         const artifact = await artifactRepo.get(oldContract.createdAt)
 
         // prepare borrow transaction with claim utxo as input
         const preparedTx = await prepareTopupTx(
+          owner,
+          wallet,
           artifact,
           newContract,
           oldContract,
@@ -206,7 +218,7 @@ const ContractTopupLightning: NextPage = () => {
 
         // ask user to sign tx with marina
         setStage(ModalStages.NeedsConfirmation)
-        const base64 = await marina.signTransaction(signer.pset.toBase64())
+        const base64 = await wallet.signPset(signer.pset.toBase64())
         const ptx = Pset.fromBase64(base64)
 
         // tell user we are now on the final stage of the process
@@ -230,7 +242,7 @@ const ContractTopupLightning: NextPage = () => {
 
         // broadcast transaction
         const rawHex = finalizeTx(finalizer.pset)
-        const { txid } = await broadcastTx(rawHex)
+        const txid = await chainSource.broadcastTransaction(rawHex)
         newContract.txid = txid
         if (!newContract.txid) throw new Error('No txid returned')
 
@@ -247,14 +259,14 @@ const ContractTopupLightning: NextPage = () => {
         await saveContractToStorage(newContract)
 
         // wait for confirmation, mark contract confirmed and reload contracts
-        chainSource
+        await chainSource
           .waitForConfirmation(
             newContract.txid,
             await getContractCovenantAddress(artifact, newContract, network),
           )
           .then(() => {
             markContractConfirmed(newContract)
-            reloadContracts()
+            return reloadContracts()
           })
 
         // mark old contract as topup
@@ -272,19 +284,10 @@ const ContractTopupLightning: NextPage = () => {
     }
   }
 
-  const handleAlby =
-    weblnProviderName === 'Alby' && network === 'liquid'
-      ? async () => {
-          setUseWebln(true)
-          await handleInvoice()
-        }
-      : undefined
-
   return (
     <>
       <EnablersLightning
         contract={newContract}
-        handleAlby={handleAlby}
         handleInvoice={handleInvoice}
         task={Tasks.Topup}
       />
@@ -293,7 +296,7 @@ const ContractTopupLightning: NextPage = () => {
         data={data}
         invoice={invoice}
         result={result}
-        retry={retry(setData, setResult, handleInvoice, updateBalances)}
+        retry={retry(setData, setResult, () => handleInvoice(selectedWallet!))}
         reset={resetModal}
         stage={stage}
         task={Tasks.Topup}

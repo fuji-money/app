@@ -12,6 +12,11 @@ function MyApp({ Component, pageProps }: AppProps) {
         src="https://analytics.fuji.money/js/plausible.js"
         strategy="lazyOnload"
       />
+      <Script
+        src="https://kit.fontawesome.com/2ccc237064.js"
+        crossOrigin="anonymous"
+      />
+
       <Head>
         <title>App - Fuji Money</title>
         <meta

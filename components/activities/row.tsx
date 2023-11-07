@@ -26,7 +26,7 @@ const ActivityRow = ({ activity }: ActivityRowProps) => {
       </div>
       <div className="level-right">
         <div className="level-item">
-          <ExplorerLink txid={txid} />
+          <ExplorerLink txid={txid} network={activity.network} />
         </div>
         <div className="level-item">
           <p className="time">{prettyAgo(createdAt)}</p>

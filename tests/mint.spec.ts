@@ -16,15 +16,22 @@ test('connect marina & use the mint page', async ({
   await makeOnboardingRestore(page, extensionId)
   await switchToTestnetNetwork(page, extensionId)
   await page.goto('/')
+  await page.getByRole('img', { name: 'settings' }).hover()
+  await page.getByRole('button', { name: 'Switch to Testnet' }).click()
+
   await page.waitForSelector('text=Mint')
-
   // connect Marina
-  await page.getByRole('button', { name: 'Connect Wallet' }).click()
-  await page.getByRole('article').first().click() // first is marina
-  const marinaPopup = await context.waitForEvent('page')
+  await page.getByRole('button', { name: 'Loading...' }).isEnabled();
+  await page.getByRole('button', { name: 'Connect' }).click();
+  await page.getByRole('article').first().click(); // first is marina
+  
+  // connect popup
+  const marinaPopup = await context.waitForEvent('page');
   await marinaPopup.getByRole('button', { name: 'Connect' }).click()
-
-  const marinaPopupCreateAccount = await context.waitForEvent('page')
+  
+  // should ask to create the custom Marina account "fuji"
+  const marinaPopupCreateAccount = await context.waitForEvent('page');
+  await marinaPopupCreateAccount.waitForSelector('text=fuji')
   await marinaPopupCreateAccount.getByRole('button', { name: 'Accept' }).click()
   await marinaPopupCreateAccount.getByPlaceholder('Password').fill(PASSWORD)
   await marinaPopupCreateAccount.getByRole('button', { name: 'Unlock' }).click()
@@ -53,12 +60,12 @@ test('connect marina & use the mint page', async ({
 
   // expect to find the proceed to deposit button enabled (due to lightning)
   await inputFujiQtty.fill('25')
-  await expect(proceedButton).toBeEnabled()
+  await expect(proceedButton).toBeDisabled()
   await expect(marinaNoFunds).toBeVisible()
   await expect(lnOutOfBounds).toBeHidden()
 
   // expect to see the ratio is unsafe warning
   await contractRatio.fill('110')
-  await expect(proceedButton).toBeEnabled()
+  await expect(proceedButton).toBeDisabled()
   await expect(ratioIsUnsafe).toBeVisible()
 })

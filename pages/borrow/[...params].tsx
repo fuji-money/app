@@ -1,3 +1,5 @@
+import ECPairFactory from 'ecpair'
+import * as ecc from 'tiny-secp256k1'
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useContext, useRef, useState } from 'react'
@@ -24,7 +26,6 @@ import {
   prepareBorrowTx,
   PreparedBorrowTx,
 } from 'lib/covenant'
-import { broadcastTx, signTx } from 'lib/marina'
 import {
   createReverseSubmarineSwap,
   getInvoiceExpireDate,
@@ -39,27 +40,24 @@ import {
   script as bscript,
   Finalizer,
   Transaction,
+  address,
 } from 'liquidjs-lib'
-import ECPairFactory from 'ecpair'
-import * as ecc from 'tiny-secp256k1'
-import { WalletContext } from 'components/providers/wallet'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
-import { addSwapToStorage } from 'lib/storage'
+import { addSwapToStorage, getGlobalsFromStorage } from 'lib/storage'
 import { finalizeTx } from 'lib/transaction'
 import { WeblnContext } from 'components/providers/webln'
 import { Utxo } from 'marina-provider'
 import { ConfigContext } from 'components/providers/config'
 import { toBlindingData } from 'liquidjs-lib/src/psbt'
 import { Artifact } from '@ionio-lang/ionio'
+import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet, WalletType } from 'lib/wallet'
 
 const BorrowParams: NextPage = () => {
-  const { chainSource, network, updateBalances, xPubKey } =
-    useContext(WalletContext)
-  const { weblnCanEnable, weblnProvider, weblnProviderName } =
-    useContext(WeblnContext)
+  const { weblnProvider, weblnIsEnabled } = useContext(WeblnContext)
   const { artifactRepo, config } = useContext(ConfigContext)
   const { loading, newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
@@ -69,6 +67,9 @@ const BorrowParams: NextPage = () => {
   const [invoice, setInvoice] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsCoins)
   const [useWebln, setUseWebln] = useState(false)
+
+  // which wallet has been selected to pay the invoice
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>()
 
   const router = useRouter()
   const { params } = router.query
@@ -91,8 +92,11 @@ const BorrowParams: NextPage = () => {
   const unspentSwap = useRef<ActiveSwap>()
 
   // make a swap via boltz.exchange
-  const makeSwap = async (): Promise<ActiveSwap | undefined> => {
-    if (!network) return
+  // wallet is the receiving wallet
+  const makeSwap = async (wallet: Wallet): Promise<ActiveSwap | undefined> => {
+    if (!wallet) return
+    const network = getGlobalsFromStorage().network
+
     setStage(ModalStages.NeedsInvoice)
 
     // we will create a ephemeral key pair:
@@ -156,7 +160,16 @@ const BorrowParams: NextPage = () => {
       task: Tasks.Borrow,
     })
 
-    // show lightning invoice to user
+    // if Alby has been choosen, check if webLN is enabled
+    if (wallet.type === WalletType.Alby) {
+      if (weblnProvider) {
+        if (!weblnIsEnabled) {
+          await weblnProvider.enable()
+        }
+        setUseWebln(true)
+      }
+    }
+
     setInvoice(invoice)
     setStage(ModalStages.NeedsPayment)
 
@@ -167,10 +180,16 @@ const BorrowParams: NextPage = () => {
     }, invoiceExpireDate - Date.now())
 
     // wait for tx to be available (mempool or confirmed)
+    const chainSource = new WsElectrumChainSource(network)
     await chainSource.waitForAddressReceivesTx(lockupAddress)
 
     // fetch utxos for address
-    const utxos = await chainSource.listUnspents(lockupAddress)
+    const utxos = await chainSource.listUnspents(
+      address.toOutputScript(lockupAddress).toString('hex'),
+    )
+    // close ws connection
+    await Promise.allSettled([chainSource.close()])
+
     const u = utxos[0]
     const { asset, assetBlindingFactor, value, valueBlindingFactor } =
       await toBlindingData(Buffer.from(blindingKey, 'hex'), u.witnessUtxo)
@@ -196,19 +215,22 @@ const BorrowParams: NextPage = () => {
 
   // finalize and broadcast proposed transaction
   const finalizeAndBroadcast = async (
+    wallet: Wallet,
     pset: Pset,
     newContract: Contract,
     preparedTx: PreparedBorrowTx,
     artifact: Artifact,
   ) => {
-    if (!network) return
+    if (!wallet) return
+    const network = await wallet.getNetwork()
 
     // change message to user
     setStage(ModalStages.NeedsFinishing)
 
     // broadcast transaction
     const rawHex = finalizeTx(pset)
-    const { txid } = await broadcastTx(rawHex)
+    const chainSource = new WsElectrumChainSource(network)
+    const txid = await chainSource.broadcastTransaction(rawHex)
     newContract.txid = txid
     if (!newContract.txid) throw new Error('No txid returned')
 
@@ -222,21 +244,21 @@ const BorrowParams: NextPage = () => {
     // add contractParams to contract
     const { contractParams } = preparedTx
     newContract.contractParams = { ...contractParams }
-    newContract.xPubKey = xPubKey
+    newContract.xPubKey = wallet.getMainAccountXPubKey()
 
     // add additional fields to contract and save to storage
     // note: save before mark as confirmed (next code block)
     await saveContractToStorage({ ...newContract, createdAt: Date.now() })
 
     // wait for confirmation, mark contract confirmed and reload contracts
-    chainSource
+    await chainSource
       .waitForConfirmation(
         newContract.txid,
         await getContractCovenantAddress(artifact, newContract, network),
       )
       .then(() => {
         markContractConfirmed(newContract)
-        reloadContracts()
+        return reloadContracts()
       })
 
     // show success
@@ -246,15 +268,16 @@ const BorrowParams: NextPage = () => {
   }
 
   // handle payment through lightning invoice
-  const handleInvoice = async (): Promise<void> => {
+  const handleInvoiceFromLightning = async (wallet: Wallet): Promise<void> => {
     // nothing to do if no new contract
-    if (!newContract || !network) return
+    if (!newContract || !wallet) return
+    const network = await wallet.getNetwork()
 
     try {
       openModal(ModalIds.InvoiceDeposit)
 
       // if there's an unspent swap, we will use it
-      const swap = unspentSwap.current ?? (await makeSwap())
+      const swap = unspentSwap.current ?? (await makeSwap(wallet))
       if (!swap) return
       const { keyPair, preimage, redeemScript, utxos } = swap
 
@@ -269,6 +292,7 @@ const BorrowParams: NextPage = () => {
 
       // prepare borrow transaction with claim utxo as input
       const preparedTx = await prepareBorrowTxWithClaimTx(
+        wallet,
         artifact,
         newContract,
         utxos,
@@ -310,7 +334,13 @@ const BorrowParams: NextPage = () => {
       })
 
       // finalize and broadcast transaction
-      await finalizeAndBroadcast(pset, newContract, preparedTx, artifact)
+      await finalizeAndBroadcast(
+        wallet,
+        pset,
+        newContract,
+        preparedTx,
+        artifact,
+      )
     } catch (error) {
       console.error(error)
       setData(extractError(error))
@@ -318,22 +348,12 @@ const BorrowParams: NextPage = () => {
       setStage(ModalStages.ShowResult)
     }
   }
-
-  // handle payment through Alby
-  const handleAlby =
-    weblnProviderName === 'Alby' &&
-    network === 'liquid' &&
-    (weblnProvider.enabled || weblnCanEnable)
-      ? async () => {
-          setUseWebln(true)
-          await handleInvoice()
-        }
-      : undefined
-
   // handle payment through marina browser extension
-  const handleMarina = async (): Promise<void> => {
+  const handleInvoiceFromLiquid = async (w: Wallet): Promise<void> => {
+    setSelectedWallet(w)
     // nothing to do if no new contract
-    if (!newContract || !network) return
+    if (!newContract) return
+    const network = await w.getNetwork()
 
     try {
       openModal(ModalIds.MarinaDeposit)
@@ -343,6 +363,7 @@ const BorrowParams: NextPage = () => {
 
       // prepare borrow transaction
       const preparedTx = await prepareBorrowTx(
+        w,
         artifact,
         newContract,
         oracles[0],
@@ -359,11 +380,11 @@ const BorrowParams: NextPage = () => {
 
       // sign and broadcast transaction
       setStage(ModalStages.NeedsConfirmation)
-      const signedTransaction = await signTx(partialTransaction)
+      const signedTransaction = await w.signPset(partialTransaction)
 
       // finalize and broadcast transaction
       const pset = Pset.fromBase64(signedTransaction)
-      await finalizeAndBroadcast(pset, newContract, preparedTx, artifact)
+      await finalizeAndBroadcast(w, pset, newContract, preparedTx, artifact)
     } catch (error) {
       console.error(error)
       setData(extractError(error))
@@ -419,14 +440,16 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLiquid
                 contract={newContract}
-                handleMarina={handleMarina}
+                handler={handleInvoiceFromLiquid}
                 task={Tasks.Borrow}
               />
               <MarinaDepositModal
                 contract={newContract}
                 data={data}
                 result={result}
-                retry={retry(setData, setResult, handleMarina, updateBalances)}
+                retry={retry(setData, setResult, () =>
+                  handleInvoiceFromLiquid(selectedWallet!),
+                )}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}
@@ -438,8 +461,7 @@ const BorrowParams: NextPage = () => {
             <>
               <EnablersLightning
                 contract={newContract}
-                handleAlby={handleAlby}
-                handleInvoice={handleInvoice}
+                handleInvoice={handleInvoiceFromLightning}
                 task={Tasks.Borrow}
               />
               <InvoiceDepositModal
@@ -447,7 +469,9 @@ const BorrowParams: NextPage = () => {
                 data={data}
                 invoice={invoice}
                 result={result}
-                retry={retry(setData, setResult, handleInvoice, updateBalances)}
+                retry={retry(setData, setResult, () =>
+                  handleInvoiceFromLightning(selectedWallet!),
+                )}
                 reset={resetModal}
                 stage={stage}
                 task={Tasks.Borrow}

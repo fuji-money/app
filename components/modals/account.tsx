@@ -1,6 +1,6 @@
 import Spinner from 'components/spinner'
 import Modal, { ModalIds } from './modal'
-import { marinaFujiAccountID } from 'lib/constants'
+import { MarinaWallet } from 'lib/marina'
 
 const AccountModal = () => {
   return (
@@ -8,7 +8,8 @@ const AccountModal = () => {
       <Spinner />
       <h3 className="mt-4">Waiting for confirmation...</h3>
       <p>
-        Creating a Marina account named <strong>{marinaFujiAccountID}</strong>
+        Creating a Marina account named{' '}
+        <strong>{MarinaWallet.FujiAccountID}</strong>
       </p>
       <p>Please accept and unlock on Marina</p>
     </Modal>

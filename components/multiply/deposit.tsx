@@ -2,11 +2,9 @@ import { Contract } from 'lib/types'
 import Channel from 'components/channel'
 import InvoiceDepositModal from 'components/modals/invoiceDeposit'
 import MarinaDepositModal from 'components/modals/marinaDeposit'
-import { WalletContext } from 'components/providers/wallet'
 import { useContext, useState } from 'react'
 import { ModalStages } from 'components/modals/modal'
 import EnablersLightning from 'components/enablers/lightning'
-import EnablersLiquid from 'components/enablers/liquid'
 import { Tasks } from 'lib/tasks'
 import { WeblnContext } from 'components/providers/webln'
 
@@ -23,7 +21,6 @@ const MultiplyDeposit = ({
   setChannel,
   setDeposit,
 }: MultiplyDepositProps) => {
-  const { network } = useContext(WalletContext)
   const { weblnProviderName } = useContext(WeblnContext)
 
   const [data, setData] = useState('')
@@ -45,7 +42,7 @@ const MultiplyDeposit = ({
   const handleMarina = () => {} // TODO
 
   const handleAlby =
-    weblnProviderName === 'Alby' && network === 'liquid'
+    weblnProviderName === 'Alby'
       ? async () => {
           setUseWebln(true)
           await handleLightning()
@@ -59,18 +56,17 @@ const MultiplyDeposit = ({
         {lightning && (
           <EnablersLightning
             contract={contract}
-            handleAlby={handleAlby}
             handleInvoice={handleLightning}
             task={Tasks.Multiply}
           />
         )}
-        {liquid && (
-          <EnablersLiquid
-            contract={contract}
-            handleMarina={handleMarina}
-            task={Tasks.Multiply}
-          />
-        )}
+        {/* {liquid && (
+          // <EnablersLiquid
+          //   contract={contract}
+          //   handleMarina={handleMarina}
+          //   task={Tasks.Multiply}
+          // />
+        )} */}
       </div>
       <MarinaDepositModal
         contract={contract}

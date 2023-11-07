@@ -1,60 +1,75 @@
-import { useContext } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { WalletContext } from 'components/providers/wallet'
-import { createFujiAccount, fujiAccountMissing } from 'lib/marina'
 import { closeModal, openModal } from 'lib/utils'
 import AccountModal from 'components/modals/account'
-import WalletsModal from 'components/modals/wallets'
+import WalletsModal, { WalletsModalProps } from 'components/modals/wallets'
 import { ModalIds } from 'components/modals/modal'
+import { WalletType } from 'lib/wallet'
 
-const ConnectButton = () => {
-  const { connected, marina, setConnected } = useContext(WalletContext)
+const ConnectButton: React.FC = () => {
+  const { installedWallets, connect, initializing } = useContext(WalletContext)
+  const [wallets, setWallets] = useState<WalletsModalProps['wallets']>([])
 
-  const toggle = async () => {
-    if (!marina) return
-    if (connected) {
-      await marina.disable()
-      setConnected(false)
-    } else {
-      openModal(ModalIds.Wallets)
-    }
-  }
+  const updateFn =
+    (update: WalletsModalProps['wallets'][number]) =>
+    (prevWallets: WalletsModalProps['wallets']) =>
+      [...prevWallets.filter((w) => w.type !== update.type), update]
 
-  const handleWalletChoice = async () => {
+  const updateWallet = useCallback(
+    async (type: WalletType) => {
+      const wallet = installedWallets.find((w) => w.type === type)
+      if (!wallet) {
+        setWallets(updateFn({ type, installed: false, connected: false }))
+        return
+      }
+      const isConnected = wallet.isConnected()
+      if (!isConnected) {
+        setWallets(updateFn({ type, installed: true, connected: false }))
+        return
+      }
+
+      const network = await wallet.getNetwork()
+      setWallets(updateFn({ type, installed: true, connected: true, network }))
+    },
+    [installedWallets],
+  )
+
+  const handleWalletChoice = async (type: WalletType) => {
     closeModal(ModalIds.Wallets)
-    if (!marina) return
-    if (!(await marina.isEnabled())) await marina.enable()
-    setConnected(true)
-    if (await fujiAccountMissing(marina)) {
-      openModal(ModalIds.Account)
-      await createFujiAccount(marina)
-      closeModal(ModalIds.Account)
-    }
+    if (type) await connect(type)
+    await updateWallet(type)
   }
+
+  useEffect(() => {
+    async function updateWallets() {
+      await Promise.all([WalletType.Marina, WalletType.Alby].map(updateWallet))
+    }
+
+    updateWallets()
+  }, [installedWallets, updateWallet])
+
+  if (!initializing)
+    return (
+      <>
+        <button
+          onClick={() => openModal(ModalIds.Wallets)}
+          className="button is-primary my-auto mr-4"
+        >
+          Connect
+        </button>
+        <AccountModal />
+        <WalletsModal
+          handleWalletChoice={handleWalletChoice}
+          wallets={wallets}
+        />
+      </>
+    )
 
   return (
     <>
-      {marina && (
-        <>
-          <button
-            onClick={toggle}
-            className="button is-primary is-solid-pink my-auto mr-4"
-          >
-            {connected ? 'Disconnect' : 'Connect wallet'}
-          </button>
-          <AccountModal />
-          <WalletsModal handleWalletChoice={handleWalletChoice} />
-        </>
-      )}
-      {!marina && (
-        <a
-          href="https://vulpem.com/marina"
-          target="_blank"
-          rel="noreferrer"
-          className="button is-primary my-auto"
-        >
-          Install Marina
-        </a>
-      )}
+      <button className="button is-primary my-auto mr-4" disabled>
+        Loading...
+      </button>
     </>
   )
 }

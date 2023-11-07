@@ -30,7 +30,13 @@ export type ChainSource = {
   fetchHistories(scripts: Buffer[]): Promise<TransactionHistory[]>
   fetchBlockHeader(height: number): Promise<BlockHeader>
   fetchTransactions(txids: string[]): Promise<{ txID: string; hex: string }[]>
-  listUnspents(address: string): Promise<Unspent[]>
+  listUnspents(script: string): Promise<Unspent[]>
+  broadcastTransaction(txHex: string): Promise<string>
+  subscribeScriptStatus(
+    script: Buffer,
+    callback: (scripthash: string, status: string | null) => void,
+  ): Promise<void>
+  unsubscribeScriptStatus(script: Buffer): Promise<void>
   close(): Promise<void>
 }
 
@@ -46,6 +52,7 @@ const electrumURL = (network: NetworkString): string => {
   }
 }
 
+const BroadcastTransaction = 'blockchain.transaction.broadcast' // returns txid
 const GetTransactionMethod = 'blockchain.transaction.get'
 const GetHistoryMethod = 'blockchain.scripthash.get_history'
 const GetBlockHeaderMethod = 'blockchain.block.header'
@@ -84,8 +91,8 @@ export class WsElectrumChainSource implements ChainSource {
     return responses.map((hex, i) => ({ txID: txids[i], hex }))
   }
 
-  async listUnspents(addr: string): Promise<Unspent[]> {
-    const scriptHash = toScriptHash(address.toOutputScript(addr))
+  async listUnspents(script: string): Promise<Unspent[]> {
+    const scriptHash = toScriptHash(Buffer.from(script, 'hex'))
     const unspentsFromElectrum = await this.ws.request<UnspentElectrum[]>(
       ListUnspentMethod,
       scriptHash,
@@ -135,6 +142,10 @@ export class WsElectrumChainSource implements ChainSource {
     })
   }
 
+  async broadcastTransaction(hex: string): Promise<string> {
+    return this.ws.request<string>(BroadcastTransaction, hex)
+  }
+
   async close() {
     try {
       await this.ws.close('close')
@@ -143,7 +154,7 @@ export class WsElectrumChainSource implements ChainSource {
     }
   }
 
-  private async unsubscribeScriptStatus(script: Buffer): Promise<void> {
+  async unsubscribeScriptStatus(script: Buffer): Promise<void> {
     try {
       await this.ws.unsubscribe(SubscribeStatusMethod, toScriptHash(script))
     } catch (e) {
@@ -151,7 +162,7 @@ export class WsElectrumChainSource implements ChainSource {
     }
   }
 
-  private async subscribeScriptStatus(
+  async subscribeScriptStatus(
     script: Buffer,
     callback: (scripthash: string, status: string | null) => void,
   ) {

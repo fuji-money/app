@@ -7,6 +7,7 @@ import { swapDepositAmountOutOfBounds } from 'lib/swaps'
 import { LightningEnabledTasks, Tasks } from 'lib/tasks'
 import { Contract } from 'lib/types'
 import { fromSatoshis } from 'lib/utils'
+import { WalletType } from 'lib/wallet'
 import Router from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 
@@ -17,11 +18,11 @@ interface BorrowButtonProps {
 }
 
 const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
-  const { balances, connected } = useContext(WalletContext)
+  const { wallets, balances } = useContext(WalletContext)
   const { config } = useContext(ConfigContext)
   const { setNewContract } = useContext(ContractsContext)
 
-  const [enoughFunds, setEnoughFunds] = useState(false)
+  const [enoughFunds, setEnoughFunds] = useState<WalletType[]>([])
   const [mintLimitReached, setMintLimitReached] = useState(false)
 
   const { collateral, oracles, synthetic } = contract
@@ -29,19 +30,25 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
   const { assets } = config
 
   useEffect(() => {
-    const asset = assets.find((a) => a.ticker === contract.collateral.ticker)
+    setEnoughFunds([])
+    const asset = assets.find((a) => a.ticker === collateral.ticker)
     if (!asset) return
-    const funds = getAssetBalance(asset, balances)
-    const needed = contract.collateral.quantity
-    const enoughFundsOnMarina = connected && funds > needed
-    if (LightningEnabledTasks[Tasks.Borrow]) {
-      const outOfBounds = swapDepositAmountOutOfBounds(needed)
-      setEnoughFunds(enoughFundsOnMarina || !outOfBounds)
-    } else {
-      setEnoughFunds(enoughFundsOnMarina)
+    if (!wallets.length) return
+
+    for (const wallet of wallets) {
+      const balance = getAssetBalance(asset, balances[wallet.type])
+      if (contract.collateral.quantity <= balance) {
+        setEnoughFunds((prev) => [...prev, wallet.type])
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contract.collateral.quantity])
+  }, [
+    assets,
+    balances,
+    collateral.ticker,
+    contract.collateral.quantity,
+    contract.collateral.ticker,
+    wallets,
+  ])
 
   const handleClick = () => {
     setNewContract(contract)
@@ -57,9 +64,8 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contract.synthetic.quantity])
 
-  const enabled =
-    connected &&
-    enoughFunds &&
+  const enabled = () =>
+    enoughFunds.length > 0 &&
     collateral.quantity > 0 &&
     collateral.value > 0 &&
     ratio >= minRatio &&
@@ -74,7 +80,7 @@ const BorrowButton = ({ contract, minRatio, ratio }: BorrowButtonProps) => {
     <div className="has-text-centered">
       <button
         className="button is-primary is-cta"
-        disabled={!enabled}
+        disabled={!enabled()}
         onClick={handleClick}
       >
         Proceed to deposit

@@ -1,5 +1,5 @@
 import { Contract, ContractParams, ContractResponse, Oracle } from './types'
-import { Utxo, Address, NetworkString } from 'marina-provider'
+import { Utxo, NetworkString } from 'marina-provider'
 import zkpLib from '@vulpemventures/secp256k1-zkp'
 import {
   feeAmount,
@@ -29,22 +29,12 @@ import {
   TopupContractArgs,
   topupRequest,
 } from './fetch'
-import {
-  createFujiAccount,
-  fujiAccountMissing,
-  getFujiCoins,
-  getMainAccountCoins,
-  getMarinaProvider,
-  getNextAddress,
-  getNextChangeAddress,
-  getNextCovenantAddress,
-  getPublicKey,
-} from './marina'
 import * as ecc from 'tiny-secp256k1'
 import { Artifact, Contract as IonioContract } from '@ionio-lang/ionio'
 import { selectCoins } from './selection'
 import { Network } from 'liquidjs-lib/src/networks'
 import { getFactoryUrl } from './api'
+import { Wallet } from './wallet'
 
 const getNetwork = (str?: NetworkString): Network => {
   return str ? (networks as Record<string, Network>)[str] : networks.liquid
@@ -81,6 +71,7 @@ export async function getIonioInstance(
 }
 
 async function getCovenantOutput(
+  wallet: Wallet,
   artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
@@ -88,15 +79,11 @@ async function getCovenantOutput(
 ): Promise<{
   contractParams: ContractParams
   covenantOutput: UpdaterOutput
-  covenantAddress: Address
+  confidentialAddress: string
 }> {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
   // set contract params
   const timestamp = Date.now()
-  const contractParams: Omit<ContractParams, 'borrowerPublicKey'> = {
+  const parametersWithoutKey: Omit<ContractParams, 'borrowerPublicKey'> = {
     borrowAsset: contract.synthetic.id,
     borrowAmount: contract.synthetic.quantity,
     oraclePublicKey: `0x${oracle.pubkey}`,
@@ -107,12 +94,12 @@ async function getCovenantOutput(
     assetPair,
   }
 
-  const covenantAddress = await getNextCovenantAddress(artifact, contractParams)
+  const { confidentialAddress, contractParams } =
+    await wallet.getNextCovenantAddress(artifact, parametersWithoutKey)
 
   // set covenant output
-  const { scriptPubKey } = address.fromConfidential(
-    covenantAddress.confidentialAddress,
-  )
+  const { scriptPubKey } = address.fromConfidential(confidentialAddress)
+
   const covenantOutput: UpdaterOutput = {
     script: scriptPubKey,
     amount: contract.collateral.quantity,
@@ -120,21 +107,16 @@ async function getCovenantOutput(
   }
 
   return {
-    contractParams: {
-      ...contractParams,
-      borrowerPublicKey: `0x${(await getPublicKey(covenantAddress))
-        .subarray(1)
-        .toString('hex')}`,
-    },
+    contractParams,
     covenantOutput,
-    covenantAddress,
+    confidentialAddress,
   }
 }
 
 // borrow
 export interface PreparedBorrowTx {
-  borrowerAddress: Address
-  changeAddress?: Address
+  borrowerAddress: string
+  changeAddress?: string
   collateralUtxos: Utxo[]
   contractParams: ContractParams
   collateralAsset: string
@@ -143,6 +125,7 @@ export interface PreparedBorrowTx {
 }
 
 export async function prepareBorrowTxWithClaimTx(
+  wallet: Wallet,
   artifact: Artifact,
   contract: Contract,
   utxos: Utxo[],
@@ -150,13 +133,6 @@ export async function prepareBorrowTxWithClaimTx(
   oracle: Oracle,
   xOnlyTreasuryPublicKey: string,
 ): Promise<PreparedBorrowTx> {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
-  // check for marina account, create if doesn't exists
-  if (await fujiAccountMissing(marina)) await createFujiAccount(marina)
-
   // validate contract
   const { collateral, synthetic } = contract
   if (!collateral.quantity)
@@ -173,6 +149,7 @@ export async function prepareBorrowTxWithClaimTx(
 
   // get covenant
   const { contractParams, covenantOutput } = await getCovenantOutput(
+    wallet,
     artifact,
     contract,
     oracle,
@@ -193,7 +170,7 @@ export async function prepareBorrowTxWithClaimTx(
     .addOutputs([covenantOutput])
 
   return {
-    borrowerAddress: await getNextAddress(),
+    borrowerAddress: await wallet.getNextAddress(),
     collateralUtxos: utxos,
     contractParams,
     pset: updater.pset,
@@ -203,18 +180,12 @@ export async function prepareBorrowTxWithClaimTx(
 }
 
 export async function prepareBorrowTx(
+  wallet: Wallet,
   artifact: Artifact,
   contract: Contract,
   oracle: Oracle,
   xOnlyTreasuryPublicKey: string,
 ): Promise<PreparedBorrowTx> {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
-  // check for marina account, create if doesn't exists
-  if (await fujiAccountMissing(marina)) await createFujiAccount(marina)
-
   // validate contract
   const { collateral, synthetic } = contract
   if (!collateral.quantity)
@@ -224,13 +195,15 @@ export async function prepareBorrowTx(
   if (!contract.priceLevel)
     throw new Error('Invalid contract: no contract priceLevel')
 
-  const utxos = await getMainAccountCoins()
+  const utxos = await wallet.getCoins()
+
   // validate we have necessary utxo
-  const collateralUtxos = selectCoins(
+  const { selection: collateralUtxos, change: changeAmount } = selectCoins(
     utxos,
     collateral.id,
     collateral.quantity + feeAmount,
   )
+
   if (collateralUtxos.length === 0)
     throw new Error('Not enough collateral funds')
 
@@ -240,6 +213,7 @@ export async function prepareBorrowTx(
 
   // get covenant params
   const { contractParams, covenantOutput } = await getCovenantOutput(
+    wallet,
     artifact,
     contract,
     oracle,
@@ -258,18 +232,11 @@ export async function prepareBorrowTx(
     )
     .addOutputs([covenantOutput])
 
-  // add change output
-  let changeAddress
-  const collateralUtxosAmount = collateralUtxos.reduce(
-    (value, utxo) => value + (utxo.blindingData?.value || 0),
-    0,
-  )
-  const changeAmount = collateralUtxosAmount - collateral.quantity - feeAmount
+  let changeAddress = undefined
   if (changeAmount > 0) {
-    changeAddress = await getNextChangeAddress()
-    const { scriptPubKey, blindingKey } = address.fromConfidential(
-      changeAddress.confidentialAddress,
-    )
+    changeAddress = await wallet.getNextChangeAddress()
+    const { scriptPubKey, blindingKey } =
+      address.fromConfidential(changeAddress)
     updater.addOutputs([
       {
         script: scriptPubKey,
@@ -282,7 +249,7 @@ export async function prepareBorrowTx(
   }
 
   return {
-    borrowerAddress: await getNextAddress(),
+    borrowerAddress: await wallet.getNextAddress(),
     changeAddress,
     collateralUtxos,
     contractParams,
@@ -350,7 +317,7 @@ export async function proposeBorrowContract(
     collateralAmount,
     collateralAsset,
     covenantOutputIndexInTransaction: 0,
-    borrowerAddress: borrowerAddress.confidentialAddress,
+    borrowerAddress,
     contractParams: {
       assetPair: Buffer.from(assetPair.substring(2), 'hex'),
       borrowAsset,
@@ -373,15 +340,13 @@ export async function proposeBorrowContract(
 
 // redeem
 export async function prepareRedeemTx(
+  owner: Wallet, // who owns the collateral
+  wallet: Wallet, // who will pay to redeem collateral
   artifact: Artifact,
   contract: Contract,
   network: NetworkString,
   swapAddress?: string,
 ) {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
   // validate contract
   const { collateral, synthetic } = contract
   if (!collateral.quantity)
@@ -393,38 +358,34 @@ export async function prepareRedeemTx(
   if (collateral.quantity < feeAmount + minDustLimit)
     throw new Error('Invalid contract: collateral amount too low')
 
-  const address = swapAddress || (await getNextAddress()).confidentialAddress
+  const address = swapAddress || (await wallet.getNextAddress())
 
   // get ionio instance
   let ionioInstance = await getIonioInstance(artifact, contract, network)
 
   // find coin for this contract
-  const collateralCoins = await getFujiCoins()
-  const coinToRedeem = collateralCoins.find(
-    (c) => c.txid === contract.txid && c.vout === contract.vout,
-  )
+  if (!contract.txid) throw new Error('Invalid contract: no txid')
+  if (contract.vout === undefined) throw new Error('Invalid contract: no vout')
+
+  const coinToRedeem = await owner.getContractCoin(contract.txid, contract.vout)
   if (!coinToRedeem)
     throw new Error(
       'Contract cannot be found in the connected wallet. ' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
 
+  const coins = await wallet.getCoins()
   // validate we have sufficient synthetic funds
-  const utxos = await getMainAccountCoins()
-  const syntheticUtxos = selectCoins(utxos, synthetic.id, synthetic.quantity)
+  const { selection: syntheticUtxos, change: syntheticChangeAmount } =
+    selectCoins(coins, synthetic.id, synthetic.quantity)
   if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
-
-  // calculate synthetic change amount
-  const syntheticUtxosAmount = syntheticUtxos.reduce(
-    (value, utxo) => value + (utxo.blindingData?.value || 0),
-    0,
-  )
-  const syntheticChangeAmount = syntheticUtxosAmount - synthetic.quantity
 
   // marina signer for ionio redeem function
   const marinaSigner = {
     signTransaction: async (base64: string) => {
-      return await marina.signTransaction(base64)
+      const signedByOwner = await owner.signPset(base64)
+      if (owner.type !== wallet.type) return wallet.signPset(signedByOwner)
+      return signedByOwner
     },
   }
 
@@ -481,9 +442,9 @@ export async function prepareRedeemTx(
 
   // add synthetic change if any
   if (syntheticChangeAmount > 0) {
-    const syntheticChangeAddress = await getNextChangeAddress()
+    const syntheticChangeAddress = await wallet.getNextChangeAddress()
     tx.withRecipient(
-      syntheticChangeAddress.confidentialAddress,
+      syntheticChangeAddress,
       syntheticChangeAmount,
       synthetic.id,
       0,
@@ -499,7 +460,7 @@ export async function prepareRedeemTx(
 
 // topup
 export interface PreparedTopupTx {
-  borrowerAddress: Address
+  borrowerAddress: string
   coinToTopup: Utxo
   contractParams: ContractParams
   collateralAsset: string
@@ -509,6 +470,8 @@ export interface PreparedTopupTx {
 }
 
 export async function prepareTopupTx(
+  contractOwner: Wallet, // wallet that owns the contract
+  wallet: Wallet, // wallet that will topup
   artifact: Artifact,
   newContract: Contract,
   oldContract: Contract,
@@ -517,13 +480,6 @@ export async function prepareTopupTx(
   oracle: Oracle,
   xOnlyTreasuryPublicKey: string,
 ): Promise<PreparedTopupTx> {
-  // check for marina
-  const marina = await getMarinaProvider()
-  if (!marina) throw new Error('Please install Marina')
-
-  // check for marina account, create if doesn't exists
-  if (await fujiAccountMissing(marina)) await createFujiAccount(marina)
-
   // validate contracts
   if (!newContract.collateral.quantity)
     throw new Error('Invalid new contract: no collateral quantity')
@@ -543,32 +499,38 @@ export async function prepareTopupTx(
   const topupAmount =
     newContract.collateral.quantity - oldContract.collateral.quantity
 
-  // validate we have sufficient synthetic funds to burn
-  const syntheticUtxos = selectCoins(
-    await getMainAccountCoins(),
-    burnAsset,
-    burnAmount,
-  )
-  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
-
-  // get new covenant params
-  const { contractParams, covenantAddress } = await getCovenantOutput(
-    artifact,
-    newContract,
-    oracle,
-    xOnlyTreasuryPublicKey,
-  )
-
   // find coin for this contract
-  const coins = await getFujiCoins()
-  const coinToTopup = coins.find(
-    (c) => c.txid === oldContract.txid && c.vout === oldContract.vout,
+  if (!oldContract.txid) throw new Error('Invalid contract: no txid')
+  if (oldContract.vout === undefined)
+    throw new Error('Invalid contract: no vout')
+
+  const coinToTopup = await contractOwner.getContractCoin(
+    oldContract.txid,
+    oldContract.vout,
   )
   if (!coinToTopup)
     throw new Error(
       'Contract cannot be found in the connected wallet. ' +
         'Wait for confirmations or try to reload the wallet and try again.',
     )
+
+  const coins = await wallet.getCoins()
+  // validate we have sufficient synthetic funds to burn
+  const { selection: syntheticUtxos } = selectCoins(
+    coins,
+    burnAsset,
+    burnAmount,
+  )
+  if (syntheticUtxos.length === 0) throw new Error('Not enough fuji funds')
+
+  // get new covenant params
+  const { contractParams, confidentialAddress } = await getCovenantOutput(
+    wallet,
+    artifact,
+    newContract,
+    oracle,
+    xOnlyTreasuryPublicKey,
+  )
 
   const { txid, vout, witnessUtxo, blindingData } = coinToTopup
   if (!witnessUtxo) throw new Error('Invalid witnessUtxo')
@@ -597,9 +559,8 @@ export async function prepareTopupTx(
 
   // signatures needed for topup
   const marinaSigner = {
-    signTransaction: async (base64: string) => {
-      const signed = await marina.signTransaction(base64)
-      return signed
+    signTransaction: (base64: string) => {
+      return contractOwner.signPset(base64)
     },
   }
   const skipSignature = {
@@ -673,8 +634,7 @@ export async function prepareTopupTx(
   // new covenant output
   // the covenant must be always unconf!
   tx.withRecipient(
-    address.fromConfidential(covenantAddress.confidentialAddress!)
-      .unconfidentialAddress,
+    address.fromConfidential(confidentialAddress).unconfidentialAddress,
     newContract.collateral.quantity,
     newContract.collateral.id,
   )
@@ -687,9 +647,9 @@ export async function prepareTopupTx(
   )
   const collateralChangeAmount = collateralUtxosAmount - topupAmount - feeAmount
   if (collateralChangeAmount > 0) {
-    collateralChangeAddress = await getNextChangeAddress()
+    collateralChangeAddress = await wallet.getNextChangeAddress()
     tx.withRecipient(
-      collateralChangeAddress.confidentialAddress,
+      collateralChangeAddress,
       collateralChangeAmount,
       newContract.collateral.id,
       0,
@@ -704,9 +664,9 @@ export async function prepareTopupTx(
   )
   const syntheticChangeAmount = syntheticUtxosAmount - burnAmount
   if (syntheticChangeAmount > 0) {
-    syntheticChangeAddress = await getNextChangeAddress()
+    syntheticChangeAddress = await wallet.getNextChangeAddress()
     tx.withRecipient(
-      syntheticChangeAddress.confidentialAddress,
+      syntheticChangeAddress,
       syntheticChangeAmount,
       newContract.synthetic.id,
       0,
@@ -714,7 +674,7 @@ export async function prepareTopupTx(
   }
 
   return {
-    borrowerAddress: await getNextAddress(),
+    borrowerAddress: await wallet.getNextAddress(),
     coinToTopup,
     contractParams,
     pset: tx.pset,
@@ -787,7 +747,7 @@ export async function proposeTopupContract(
     collateralAmount,
     collateralAsset,
     covenantOutputIndexInTransaction: 0,
-    borrowerAddress: borrowerAddress.confidentialAddress,
+    borrowerAddress,
     contractParams: {
       borrowAsset,
       borrowAmount,

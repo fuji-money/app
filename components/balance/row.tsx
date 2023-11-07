@@ -1,15 +1,12 @@
 import Image from 'next/image'
 import { prettyQuantity } from 'lib/pretty'
 import { Asset } from 'lib/types'
-import { useContext } from 'react'
-import { getAssetBalance } from 'lib/marina'
-import { WalletContext } from 'components/providers/wallet'
 
 interface BalanceRowProps {
   asset: Asset
+  amount: number
 }
-const BalanceRow = ({ asset }: BalanceRowProps) => {
-  const { balances } = useContext(WalletContext)
+const BalanceRow = ({ asset, amount }: BalanceRowProps) => {
   return (
     <tr>
       <td>
@@ -23,9 +20,7 @@ const BalanceRow = ({ asset }: BalanceRowProps) => {
         </div>
         <span className="ml-5">{asset.ticker}</span>
       </td>
-      <td>
-        {prettyQuantity(getAssetBalance(asset, balances), asset.precision)}
-      </td>
+      <td>{prettyQuantity(amount, asset.precision)}</td>
       <style jsx>{`
         td:nth-child(2) {
           text-align: right;

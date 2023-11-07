@@ -4,20 +4,23 @@ import Title from 'components/title'
 import Balance from 'components/balance'
 import { operationFromTask } from 'lib/utils'
 import { EnablerButton } from './button'
+import { Wallet, WalletType } from 'lib/wallet'
+import { WalletContext } from 'components/providers/wallet'
+import { useContext } from 'react'
 
 interface EnablersLightningProps {
   contract: Contract
-  handleAlby: (() => Promise<void>) | undefined
-  handleInvoice: () => Promise<void>
+  handleInvoice: (wallet: Wallet) => Promise<void>
   task: string
 }
 
 const EnablersLightning = ({
   contract,
-  handleAlby,
   handleInvoice,
   task,
 }: EnablersLightningProps) => {
+  const { wallets } = useContext(WalletContext)
+
   return (
     <section>
       <Title title={`Select method to ${operationFromTask(task)}`} />
@@ -27,24 +30,22 @@ const EnablersLightning = ({
             <div className="is-box has-pink-border has-text-centered p-6">
               <div className="columns">
                 <div className="column is-6">
-                  <EnablerButton
-                    name="Lightning Invoice"
-                    icon="/images/networks/lightning.svg"
-                    handler={handleInvoice}
-                  />
-                  <EnablerButton
-                    name="Strike"
-                    icon="/images/companies/strike.svg"
-                  />
-                  <EnablerButton
-                    name="Bitfinex Pay"
-                    icon="/images/companies/bitfinex.svg"
-                  />
-                  <EnablerButton
-                    name="Alby"
-                    icon="/images/companies/alby.png"
-                    handler={handleAlby}
-                  />
+                  {wallets.map((wallet, index) => (
+                    <EnablerButton
+                      key={index}
+                      name={
+                        wallet.type === WalletType.Marina
+                          ? 'Lightning Invoice'
+                          : 'Alby WebLN'
+                      }
+                      icon={
+                        wallet.type === WalletType.Marina
+                          ? '/images/networks/lightning.svg'
+                          : '/images/companies/alby.png'
+                      }
+                      handler={() => handleInvoice(wallet)}
+                    />
+                  ))}
                 </div>
                 <div className="column is-6">
                   <Summary contract={contract} />

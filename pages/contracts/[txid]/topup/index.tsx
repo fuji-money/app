@@ -3,37 +3,29 @@ import { useRouter } from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
-import { getContract } from 'lib/contracts'
 import Topup from 'components/topup'
 import { ContractsContext } from 'components/providers/contracts'
 import NotAllowed from 'components/messages/notAllowed'
 import { EnabledTasks, Tasks } from 'lib/tasks'
-import { WalletContext } from 'components/providers/wallet'
-import { ConfigContext } from 'components/providers/config'
 
 const ContractTopup: NextPage = () => {
-  const { network } = useContext(WalletContext)
-  const { config } = useContext(ConfigContext)
-  const { newContract, setNewContract, setOldContract } =
+  const { newContract, setNewContract, setOldContract, getContract } =
     useContext(ContractsContext)
 
   const [isLoading, setIsLoading] = useState(true)
-
-  const { assets } = config
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
-    if (txid && typeof txid === 'string' && network) {
-      getContract(txid, assets, network).then((contract) => {
-        if (contract) {
-          if (!newContract) setNewContract(contract)
-          setOldContract(contract)
-        }
-        setIsLoading(false)
-      })
+    if (typeof txid !== 'string') return
+    const contract = getContract(txid)
+    if (contract) {
+      if (!newContract) setNewContract(contract)
+      setOldContract(contract)
     }
+    setIsLoading(false)
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txid])
 

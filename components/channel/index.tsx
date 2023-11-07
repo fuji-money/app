@@ -24,9 +24,6 @@ interface ChannelProps {
 }
 
 const Channel = ({ amount, contract, task }: ChannelProps) => {
-  const { marina } = useContext(WalletContext)
-  if (!marina) throw new Error('Missing marina provider')
-
   const { collateral } = contract
   const ticker = collateral.ticker
   const quantity = amount || collateral.quantity

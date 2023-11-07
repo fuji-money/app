@@ -3,7 +3,8 @@ import { saveAs } from 'file-saver'
 import { localStorageSwapsKey, localStorageContractsKey } from 'lib/storage'
 import { useContext } from 'react'
 import { WeblnContext } from 'components/providers/webln'
-import { LightningEnabledTasks, Tasks } from 'lib/tasks'
+import { LightningEnabledTasks } from 'lib/tasks'
+import { WalletContext } from 'components/providers/wallet'
 
 const downloadFile = (localStorageKey: string, fileName: string) => {
   const item = localStorage.getItem(localStorageKey)
@@ -45,6 +46,8 @@ const Item = ({
 }
 
 const Settings = () => {
+  const { network, setNetwork } = useContext(WalletContext)
+
   const { weblnIsEnabled, weblnCanEnable, weblnProvider, weblnEnableHandler } =
     useContext(WeblnContext)
 
@@ -61,6 +64,9 @@ const Settings = () => {
     Object.keys(LightningEnabledTasks).filter(
       (task) => LightningEnabledTasks[task] === true,
     ).length > 0
+
+  const switchNetwork = () =>
+    setNetwork(network === 'liquid' ? 'testnet' : 'liquid')
 
   return (
     <div className="dropdown is-hoverable my-auto pt-2">
@@ -87,6 +93,10 @@ const Settings = () => {
               disabled={!weblnCanEnable}
             />
           )}
+          <Item
+            handler={switchNetwork}
+            text={`Switch to ${network === 'liquid' ? 'Testnet' : 'Mainnet'}`}
+          />
         </div>
       </div>
       <style jsx>{`

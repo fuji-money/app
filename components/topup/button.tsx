@@ -1,6 +1,4 @@
-import { WalletContext } from 'components/providers/wallet'
 import { feeAmount, minDustLimit } from 'lib/constants'
-import { useContext } from 'react'
 import Router from 'next/router'
 
 interface TopupButtonProps {
@@ -11,13 +9,8 @@ interface TopupButtonProps {
 }
 
 const TopupButton = ({ minRatio, oracles, ratio, topup }: TopupButtonProps) => {
-  const { connected } = useContext(WalletContext)
-
   const enabled =
-    connected &&
-    topup > minDustLimit + feeAmount &&
-    ratio > minRatio &&
-    oracles.length > 0
+    topup > minDustLimit + feeAmount && ratio > minRatio && oracles.length > 0
 
   return (
     <div className="has-text-centered">

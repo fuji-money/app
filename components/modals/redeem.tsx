@@ -7,8 +7,10 @@ import Result from 'components/result'
 import { useContext } from 'react'
 import { WalletContext } from 'components/providers/wallet'
 import { getAssetBalance } from 'lib/marina'
+import { WalletType } from 'lib/wallet'
 
 interface RedeemModalProps {
+  wallet: WalletType
   contract: Contract
   data: string
   reset: () => void
@@ -26,14 +28,15 @@ const RedeemModal = ({
   retry,
   stage,
   task,
+  wallet,
 }: RedeemModalProps) => {
-  const { balances } = useContext(WalletContext)
+  const { wallets, balances } = useContext(WalletContext)
 
   if (!contract) return <></>
 
   // decision variables
   const { synthetic } = contract
-  const balance = getAssetBalance(synthetic, balances)
+  const balance = getAssetBalance(synthetic, balances[wallet])
   const ticker = synthetic.ticker
   const neededAmount = synthetic.quantity
   const hasFunds = neededAmount && balance >= neededAmount
@@ -104,7 +107,7 @@ const RedeemModal = ({
         <ModalTemplate
           first="Approve transaction"
           second="Close contract"
-          third="Accept and unlock this transaction in your Marina wallet"
+          third="Accept and unlock this transaction in your wallet"
         />
       )
       break

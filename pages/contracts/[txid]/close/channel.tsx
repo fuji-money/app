@@ -3,37 +3,39 @@ import { useRouter } from 'next/router'
 import { useContext, useEffect, useState } from 'react'
 import SomeError from 'components/layout/error'
 import Spinner from 'components/spinner'
-import { getContract } from 'lib/contracts'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import { ContractsContext } from 'components/providers/contracts'
 import Channel from 'components/channel'
 import NotAllowed from 'components/messages/notAllowed'
-import { WalletContext } from 'components/providers/wallet'
-import { ConfigContext } from 'components/providers/config'
+import { extractError } from 'lib/utils'
 
 const ContractRedeemChannel: NextPage = () => {
-  const { network } = useContext(WalletContext)
-  const { config } = useContext(ConfigContext)
-  const { newContract, setNewContract } = useContext(ContractsContext)
+  const { newContract, setNewContract, getContract } =
+    useContext(ContractsContext)
+  const [error, setError] = useState<string>()
   const [isLoading, setIsLoading] = useState(true)
-
-  const { assets } = config
 
   const router = useRouter()
   const { txid } = router.query
 
   useEffect(() => {
-    if (txid && typeof txid === 'string' && network) {
-      getContract(txid, assets, network).then((contract) => {
-        if (contract) setNewContract(contract)
-        setIsLoading(false)
-      })
+    try {
+      if (typeof txid !== 'string') return
+      const contract = getContract(txid)
+      if (!contract) {
+        throw new Error('Contract not found')
+      }
+      setNewContract(contract)
+    } catch (e) {
+      setError(extractError(e))
+    } finally {
+      setIsLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txid])
+  }, [getContract, setNewContract, txid])
 
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (isLoading) return <Spinner />
+  if (error) return <SomeError>{error}</SomeError>
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
   return <Channel contract={newContract} task={Tasks.Redeem} />

@@ -1,6 +1,8 @@
-import { NetworkString } from 'marina-provider'
+import { NetworkString, UnblindingData } from 'marina-provider'
 import { Activity, Contract, SwapInfo } from './types'
 import { assetPair, expirationSeconds, expirationTimeout } from './constants'
+import { BlindersRepository } from './blinders-repository'
+import { TransactionRepository } from './transactions-repository'
 
 // contracts
 
@@ -105,4 +107,107 @@ export function addSwapToStorage(swap: SwapInfo): void {
   const swaps = getSwapsFromStorage()
   swaps.push(swap)
   saveSwapsToStorage(swaps)
+}
+
+// globals
+
+export const localStorageGlobalsKey = 'fujiGlobals'
+
+export type Globals = {
+  network: 'liquid' | 'testnet'
+}
+
+export function getGlobalsFromStorage(): Globals {
+  if (typeof window === 'undefined') return { network: 'liquid' }
+  const storedGlobals = localStorage.getItem(localStorageGlobalsKey)
+  if (!storedGlobals) return { network: 'liquid' }
+  return JSON.parse(storedGlobals)
+}
+
+export function saveNetworkGlobal(network: 'liquid' | 'testnet'): void {
+  if (typeof window === 'undefined') return
+  const current = getGlobalsFromStorage()
+  localStorage.setItem(
+    localStorageGlobalsKey,
+    JSON.stringify({ ...current, network }),
+  )
+}
+
+// Alby repositories
+
+const makeLocalStorageKey = (key: string) => 'fuji-' + key
+const makeOutpointKey = (txID: string, vout: number) =>
+  makeLocalStorageKey(`${txID}${vout}`)
+
+export class LocalStorageBlindersRepository implements BlindersRepository {
+  addBlindingData(
+    txID: string,
+    vout: number,
+    blindingData: UnblindingData,
+  ): Promise<void> {
+    const key = makeOutpointKey(txID, vout)
+    const data = JSON.stringify(blindingData)
+    return Promise.resolve(localStorage.setItem(key, data))
+  }
+
+  getBlindingData(
+    txID: string,
+    vout: number,
+  ): Promise<UnblindingData | undefined> {
+    const key = makeOutpointKey(txID, vout)
+    const data = localStorage.getItem(key)
+    if (!data) return Promise.resolve(undefined)
+    const blindingData = JSON.parse(data)
+    return Promise.resolve(blindingData)
+  }
+}
+
+export class LocalStorageTransactionsRepository
+  implements TransactionRepository
+{
+  static txIDsListKey = makeLocalStorageKey('alby/txIDs')
+
+  getAllTransactions(): Promise<string[]> {
+    const txIDs = localStorage.getItem(
+      LocalStorageTransactionsRepository.txIDsListKey,
+    )
+    if (!txIDs) return Promise.resolve([])
+
+    // get all hexes
+    const txs = JSON.parse(txIDs).map((txID: string) => {
+      const key = makeLocalStorageKey(txID)
+      const hex = localStorage.getItem(key)
+      return hex
+    })
+
+    return Promise.resolve(txs)
+  }
+
+  addTransaction(txID: string, hex: string): Promise<void> {
+    const txIDs = localStorage.getItem(
+      LocalStorageTransactionsRepository.txIDsListKey,
+    )
+    const txIDsList = txIDs ? JSON.parse(txIDs) : []
+    txIDsList.push(txID)
+    localStorage.setItem(
+      LocalStorageTransactionsRepository.txIDsListKey,
+      JSON.stringify(txIDsList),
+    )
+    const key = makeLocalStorageKey(txID)
+    return Promise.resolve(localStorage.setItem(key, hex))
+  }
+
+  getTransaction(txID: string): Promise<string | undefined> {
+    const txIDs = localStorage.getItem(
+      LocalStorageTransactionsRepository.txIDsListKey,
+    )
+    if (!txIDs) return Promise.resolve(undefined)
+    const txIDsList = JSON.parse(txIDs)
+    if (!txIDsList.includes(txID)) return Promise.resolve(undefined)
+
+    const key = makeLocalStorageKey(txID)
+    const hex = localStorage.getItem(key)
+    if (!hex) return Promise.resolve(undefined)
+    return Promise.resolve(hex)
+  }
 }

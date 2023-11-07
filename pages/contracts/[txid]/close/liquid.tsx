@@ -13,18 +13,20 @@ import { Outcome } from 'lib/types'
 import { EnabledTasks, Tasks } from 'lib/tasks'
 import NotAllowed from 'components/messages/notAllowed'
 import { Extractor, Finalizer } from 'liquidjs-lib'
-import { broadcastTx } from 'lib/marina'
 import { ConfigContext } from 'components/providers/config'
+import { WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet, WalletType } from 'lib/wallet'
 
 const ContractRedeemLiquid: NextPage = () => {
-  const { network, updateBalances } = useContext(WalletContext)
   const { artifactRepo } = useContext(ConfigContext)
   const { newContract, reloadContracts, resetContracts } =
     useContext(ContractsContext)
+  const { wallets } = useContext(WalletContext)
 
   const [data, setData] = useState('')
   const [result, setResult] = useState('')
   const [stage, setStage] = useState(ModalStages.NeedsInvoice)
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>()
 
   const resetModal = () => {
     resetContracts()
@@ -34,13 +36,21 @@ const ContractRedeemLiquid: NextPage = () => {
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (!newContract) return <SomeError>Contract not found</SomeError>
 
-  async function handleMarina(): Promise<void> {
-    if (!network) return
+  async function handleWallet(selected: Wallet): Promise<void> {
+    setSelectedWallet(selected)
     openModal(ModalIds.Redeem)
     try {
       // select coins and prepare redeem transaction
       setStage(ModalStages.NeedsCoins)
       if (!newContract) throw new Error('Contract not found')
+      const network = await selected.getNetwork()
+
+      // find owned of the contract
+      const owner = wallets.find(
+        (w) => w.getMainAccountXPubKey() === newContract.xPubKey,
+      )
+      if (!owner) throw new Error('Owner not found')
+
       if (newContract.createdAt)
         console.warn(
           'unable to get createdAt timestamp for your contract, getting latest covenant artifact.',
@@ -49,7 +59,14 @@ const ContractRedeemLiquid: NextPage = () => {
       const artifact = newContract.createdAt
         ? await artifactRepo.get(newContract.createdAt)
         : await artifactRepo.getLatest()
-      const tx = await prepareRedeemTx(artifact, newContract, network)
+
+      const tx = await prepareRedeemTx(
+        owner,
+        selected,
+        artifact,
+        newContract,
+        network,
+      )
 
       // ask user to sign transaction
       setStage(ModalStages.NeedsConfirmation)
@@ -67,7 +84,9 @@ const ContractRedeemLiquid: NextPage = () => {
 
       // extract and broadcast transaction
       const rawHex = Extractor.extract(finalizer.pset).toHex()
-      const { txid } = await broadcastTx(rawHex)
+      const chainSource = new WsElectrumChainSource(network)
+      const txid = await chainSource.broadcastTransaction(rawHex)
+      await chainSource.close().catch(console.error)
       if (!txid) throw new Error('No txid returned')
 
       // mark on storage and finalize
@@ -75,7 +94,7 @@ const ContractRedeemLiquid: NextPage = () => {
       setData(txid)
       setResult(Outcome.Success)
       setStage(ModalStages.ShowResult)
-      reloadContracts()
+      await reloadContracts()
     } catch (error) {
       console.debug(extractError(error))
       setData(extractError(error))
@@ -88,15 +107,16 @@ const ContractRedeemLiquid: NextPage = () => {
     <>
       <EnablersLiquid
         contract={newContract}
-        handleMarina={handleMarina}
+        handler={handleWallet}
         task={Tasks.Redeem}
       />
       <RedeemModal
+        wallet={selectedWallet?.type || WalletType.Marina}
         contract={newContract}
         data={data}
         result={result}
         reset={resetModal}
-        retry={retry(setData, setResult, handleMarina, updateBalances)}
+        retry={retry(setData, setResult, () => handleWallet(selectedWallet!))}
         stage={stage}
         task={Tasks.Redeem}
       />

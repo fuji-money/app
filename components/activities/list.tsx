@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext } from 'react'
 import { Activity, ActivityType } from 'lib/types'
 import EmptyState from 'components/layout/empty'
 import SomeError from 'components/layout/error'
@@ -12,14 +12,14 @@ interface ActivitiesListProps {
 }
 
 const ActivitiesList = ({ activityType }: ActivitiesListProps) => {
-  const { connected } = useContext(WalletContext)
+  const { wallets, initializing } = useContext(WalletContext)
   const { activities, loading } = useContext(ContractsContext)
 
-  if (!connected)
+  if (loading || initializing) return <Spinner />
+  if (!wallets.length)
     return (
       <EmptyState>🔌 Connect your wallet to view your activities</EmptyState>
     )
-  if (loading) return <Spinner />
   if (!activities) return <SomeError>Error getting activities</SomeError>
 
   const filteredActivities = activities.filter((a) => a.type === activityType)

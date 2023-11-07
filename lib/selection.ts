@@ -104,7 +104,7 @@ export function selectCoins(
   utxos: Utxo[],
   asset: string,
   minAmount: number,
-): Utxo[] {
+): { selection: Utxo[]; change: number } {
   // sort utxos in descending order of value will decrease number of inputs
   // (and fees) but will increase utxo fragmentation
   const _utxos = utxos
@@ -112,8 +112,21 @@ export function selectCoins(
     .sort((a, b) => utxoValue(b) - utxoValue(a))
 
   // try to find a combination with exact value (aka no change) first
-  return (
+  const selection =
     branchAndBoundStrategy(_utxos, minAmount) ??
     accumulativeStrategy(_utxos, minAmount)
+
+  // if no coins found, throw error
+  if (!selection || selection.length === 0) {
+    throw new Error('Not enough funds')
+  }
+
+  // calculate change
+  const totalAmount = selection.reduce(
+    (value, utxo) => value + (utxo.blindingData?.value || 0),
+    0,
   )
+  const change = totalAmount - minAmount
+
+  return { selection, change }
 }

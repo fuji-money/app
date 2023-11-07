@@ -1,6 +1,7 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -19,17 +20,17 @@ import {
   checkContractOutspend,
   createNewContract,
 } from 'lib/contracts'
-import { getContractsFromStorage, getMyContractsFromStorage } from 'lib/storage'
+import { getMyContractsFromStorage } from 'lib/storage'
 import { Activity, Contract, ContractState } from 'lib/types'
 import { WalletContext } from './wallet'
-import { isIonioScriptDetails, NetworkString, Utxo } from 'marina-provider'
+import { NetworkString } from 'marina-provider'
 import { getActivities } from 'lib/activities'
 import { getFuncNameFromScriptHexOfLeaf } from 'lib/covenant'
-import { getContractsFromMarina, getFujiCoins } from 'lib/marina'
-import { marinaFujiAccountID } from 'lib/constants'
-import { hex64LEToNumber } from 'lib/utils'
 import { address } from 'liquidjs-lib'
 import { ConfigContext } from './config'
+import { ChainSource, WsElectrumChainSource } from 'lib/chainsource.port'
+import { Wallet } from 'lib/wallet'
+import { hex64LEToNumber } from 'lib/utils'
 import { Artifact } from '@ionio-lang/ionio'
 
 interface ContractsContextProps {
@@ -38,7 +39,8 @@ interface ContractsContextProps {
   loading: boolean
   newContract: Contract | undefined
   oldContract: Contract | undefined
-  reloadContracts: () => void
+  getContract(txID: string): Contract | undefined
+  reloadContracts: () => Promise<void>
   resetContracts: () => void
   setLoading: (arg0: boolean) => void
   setNewContract: (arg0: Contract) => void
@@ -51,7 +53,8 @@ export const ContractsContext = createContext<ContractsContextProps>({
   loading: true,
   newContract: undefined,
   oldContract: undefined,
-  reloadContracts: () => {},
+  getContract: () => undefined,
+  reloadContracts: () => Promise.resolve(),
   resetContracts: () => {},
   setLoading: () => {},
   setNewContract: () => {},
@@ -63,8 +66,7 @@ interface ContractsProviderProps {
 }
 
 export const ContractsProvider = ({ children }: ContractsProviderProps) => {
-  const { chainSource, connected, marina, network, xPubKey } =
-    useContext(WalletContext)
+  const { wallets, network } = useContext(WalletContext)
   const { artifactRepo, config, reloadConfig } = useContext(ConfigContext)
 
   const [activities, setActivities] = useState<Activity[]>([])
@@ -78,10 +80,9 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // save first time app was run
   const lastReload = useRef(Date.now())
 
-  const reloadAndMarkLastReload = () => {
+  const reloadAndMarkLastReload = async () => {
     lastReload.current = Date.now()
-    reloadContracts()
-    reloadConfig()
+    await Promise.allSettled([reloadContracts(), reloadConfig()])
   }
 
   const resetContracts = () => {
@@ -89,15 +90,32 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     setOldContract(undefined)
   }
 
+  const getContract = useCallback(
+    (txID: string) => {
+      return contracts.find((contract) => contract.txid === txID)
+    },
+    [contracts],
+  )
+
   // update state (contracts, activities) with last changes on storage
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
-    if (connected && network) {
+    console.time('reloadContracts')
+    if (wallets && wallets.length > 0) {
       await checkContractsStatus()
-      setContracts(await getContracts(assets, network))
-      setActivities(await getActivities())
+      const contracts = await getContracts(
+        wallets.map((w) => w.getMainAccountXPubKey()),
+        assets,
+        network,
+      )
+
+      if (contracts.length > 0) {
+        setContracts(contracts)
+        setActivities(await getActivities(wallets))
+      }
       setLoading(false)
     }
+    console.timeEnd('reloadContracts')
   }
 
   // check if a contract is confirmed by its transaction history
@@ -107,9 +125,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   //   mempool => hist.length == 1 && hist[0].height == 0
   //   confirm => hist.length > 0 && hist[0].height != 0
   //   spent   => hist.length == 2
-  const notConfirmed = async (contract: Contract, artifact: Artifact) => {
-    if (!network) return
-
+  const notConfirmed = async (
+    contract: Contract,
+    chainSource: ChainSource,
+    artifact: Artifact,
+  ) => {
     const [hist] = await chainSource.fetchHistories([
       address.toOutputScript(
         await getContractCovenantAddress(artifact, contract, network),
@@ -124,134 +144,148 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // - check for creation tx (to confirm)
   // - check if unspend (for status)
   const checkContractsStatus = async () => {
-    if (!network) return
+    if (wallets.length === 0) return
     // function to check if contract has fuji coin
-    const fujiCoins = await getFujiCoins()
-    const hasCoin = (txid = '') => fujiCoins.some((coin) => coin.txid === txid)
+    for (const wallet of wallets) {
+      const network = await wallet.getNetwork()
 
-    // iterate through contracts in storage
-    for (const contract of getMyContractsFromStorage(network, xPubKey)) {
-      if (!contract.txid) continue
-      const artifact = contract.createdAt
-        ? await artifactRepo.get(contract.createdAt)
-        : await artifactRepo.getLatest()
+      // open a websocket connection to explorer
+      const chainSource = new WsElectrumChainSource(network)
 
-      if (!contract.confirmed) {
-        // if funding tx is not confirmed, we can skip this contract
-        if (await notConfirmed(contract, artifact)) continue
-        markContractConfirmed(contract)
-      }
-      // if contract is redeemed, topup or liquidated
-      if (contractIsClosed(contract)) continue
-      // check if contract is already spent
-      const status = await checkContractOutspend(
-        artifact,
-        chainSource,
-        contract,
+      // iterate through contracts in storage
+      for (const contract of getMyContractsFromStorage(
         network,
-      )
-      if (!status) continue
-      const { input, spent, timestamp } = status
-      if (spent && input) {
-        // contract already spent, let's find out why:
-        // we will look at the leaf before the last one,
-        // and based on his fingerprint find out if it was:
-        // - liquidated (leaf asm will have 37 items)
-        // - redeemed (leaf asm will have 47 items)
-        // - topuped (leaf asm will have 27 items)
-        const index = input.witness.length - 2
-        const leaf = input.witness[index].toString('hex')
-        switch (getFuncNameFromScriptHexOfLeaf(artifact, leaf)) {
-          case 'liquidate':
-            markContractLiquidated(contract, timestamp)
-            continue
-          case 'redeem':
-            markContractRedeemed(contract, timestamp)
-            continue
-          case 'topup':
-            markContractTopup(contract)
-            continue
-          default:
+        wallet.getMainAccountXPubKey(),
+      )) {
+        const artifact = contract.createdAt
+          ? await artifactRepo.get(contract.createdAt)
+          : await artifactRepo.getLatest()
+
+        if (!contract.txid) continue
+        if (!contract.confirmed) {
+          // if funding tx is not confirmed, we can skip this contract
+          if (await notConfirmed(contract, chainSource, artifact)) continue
+          markContractConfirmed(contract)
+        }
+        // if contract is redeemed, topup or liquidated
+        if (contractIsClosed(contract)) continue
+        // check if contract is already spent
+        const status = await checkContractOutspend(
+          artifact,
+          chainSource,
+          contract,
+          network,
+        )
+        if (!status) continue
+        const { input, spent, timestamp } = status
+        if (spent && input) {
+          // contract already spent, let's find out why:
+          // we will look at the leaf before the last one,
+          // and based on his fingerprint find out if it was:
+          // - liquidated (leaf asm will have 37 items)
+          // - redeemed (leaf asm will have 47 items)
+          // - topuped (leaf asm will have 27 items)
+          const index = input.witness.length - 2
+          const leaf = input.witness[index].toString('hex')
+          switch (getFuncNameFromScriptHexOfLeaf(artifact, leaf)) {
+            case 'liquidate':
+              markContractLiquidated(contract, timestamp)
+              continue
+            case 'redeem':
+              markContractRedeemed(contract, timestamp)
+              continue
+            case 'topup':
+              markContractTopup(contract)
+              continue
+            default:
+              markContractUnknown(contract)
+              continue
+          }
+        } else {
+          // contract not spent
+          // if we have coin it means contract is still open
+          try {
+            if (
+              contract.vout !== undefined &&
+              (await wallet.getContractCoin(contract.txid, contract.vout))
+            ) {
+              markContractOpen(contract)
+              continue
+            }
+          } catch (e) {
+            console.warn('error', e)
+          }
+
+          // if no coin, could be redeemed or topuped just now, or else is unknown
+          if (
+            contract.state !== ContractState.Redeemed &&
+            contract.state !== ContractState.Topup
+          ) {
             markContractUnknown(contract)
-            continue
-        }
-      } else {
-        // contract not spent
-        // if we have coin it means contract is still open
-        if (hasCoin(contract.txid)) {
-          markContractOpen(contract)
-          continue
-        }
-        // if no coin, could be redeemed or topuped just now, or else is unknown
-        if (
-          contract.state !== ContractState.Redeemed &&
-          contract.state !== ContractState.Topup
-        ) {
-          markContractUnknown(contract)
+          }
         }
       }
+
+      await chainSource.close().catch(() => {}) // ignore errors from close
     }
   }
 
-  // Marina could know about contracts that local storage doesn't
+  // Wallet could know about contracts that local storage doesn't
   // This could happen if the user is using more than one device
   // In this case, we will add the unknown contracts into storage
-  const syncContractsWithMarina = async () => {
-    if (!xPubKey) return
-    const storageContracts = getContractsFromStorage()
-    const marinaContracts = await getContractsFromMarina(assets)
+  const syncContractsWithWallet = async (wallet: Wallet) => {
+    if (!wallet.getContracts) {
+      console.warn(
+        `wallet ${wallet.type} can't sync with localstorage. If you are using this wallet on several devices, you may not see all your contracts.`,
+      )
+      return
+    }
+    const network = await wallet.getNetwork()
+    if (network === 'regtest') return
+    const walletXPub = wallet.getMainAccountXPubKey()
+    const walletContracts = await wallet.getContracts(assets)
+    const storageContracts = getMyContractsFromStorage(network, walletXPub)
 
-    // check if contract from marina is on storage
-    const notInStorage = (mc: Contract) =>
+    const notInStorage = (contract: Contract) =>
       storageContracts.some(
-        (sc) => sc.txid === mc.txid && sc.vout === mc.vout,
+        (sc) => sc.txid === contract.txid && sc.vout === contract.vout,
       ) === false
 
-    for (const contract of marinaContracts) {
-      if (notInStorage(contract)) {
-        // add xPubKey to contract
-        contract.xPubKey = xPubKey
+    for (const contract of walletContracts.filter(notInStorage)) {
+      try {
+        if (!contract) continue
         // check creation date so that activity will match
         const setupTimestamp = contract.contractParams?.setupTimestamp
         const timestamp = setupTimestamp
           ? hex64LEToNumber(setupTimestamp)
           : undefined
+
         createNewContract(contract, timestamp)
+      } catch (e) {
+        console.error(e)
       }
     }
   }
 
   // reload contracts on marina events: NEW_UTXO, SPENT_UTXO
-  const setMarinaListener = () => {
+  const setWalletListener = () => {
     // try to avoid first burst of events sent by marina (on reload)
-    const okToReload = (accountID: string) =>
-      accountID === marinaFujiAccountID &&
-      Date.now() - lastReload.current > 30000
+    const okToReload = () => Date.now() - lastReload.current > 30000
     // add event listeners
-    if (connected && marina && xPubKey) {
-      const listenerFunction = async ({
-        data: utxo,
-      }: {
-        utxo: Utxo
-        data: any
-      }) => {
-        if (
-          !utxo ||
-          !utxo.scriptDetails ||
-          !isIonioScriptDetails(utxo.scriptDetails)
-        )
-          return
-        if (okToReload(utxo.scriptDetails.accountName))
-          reloadAndMarkLastReload()
+    if (wallets.length > 0) {
+      const listenerFunction = async () => {
+        if (okToReload()) await reloadAndMarkLastReload()
       }
 
-      const idSpentUtxo = marina.on('SPENT_UTXO', listenerFunction)
-      const idNewUtxo = marina.on('NEW_UTXO', listenerFunction)
-      return () => {
-        marina.off(idSpentUtxo)
-        marina.off(idNewUtxo)
+      const closeFns: (() => void)[] = []
+
+      for (const wallet of wallets) {
+        closeFns.push(wallet.onNewUtxo(listenerFunction))
+        closeFns.push(wallet.onSpentUtxo(listenerFunction))
       }
+      return () => closeFns.forEach((fn) => fn())
     }
+
     return () => {}
   }
 
@@ -259,19 +293,21 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
 
   useEffect(() => {
     async function runOnAssetsChange() {
-      if (network && assets.length) {
+      if (assets.length) {
         if (!firstRender.current.includes(network)) {
-          await syncContractsWithMarina()
+          await Promise.allSettled(
+            wallets.map((w) => syncContractsWithWallet(w)),
+          )
           firstRender.current.push(network)
+          await reloadContracts()
         }
-        await reloadContracts()
         setLoading(false)
-        return setMarinaListener() // return the close listener function
+        return setWalletListener() // return the close listener function
       }
     }
-    runOnAssetsChange()
+    runOnAssetsChange().catch(console.error)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assets, connected])
+  }, [assets])
 
   return (
     <ContractsContext.Provider
@@ -286,6 +322,7 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
         setLoading,
         setNewContract,
         setOldContract,
+        getContract,
       }}
     >
       {children}
