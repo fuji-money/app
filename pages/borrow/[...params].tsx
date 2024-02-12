@@ -222,6 +222,7 @@ const BorrowParams: NextPage = () => {
     // add contractParams to contract
     const { contractParams } = preparedTx
     newContract.contractParams = { ...contractParams }
+    newContract.derivationPath = preparedTx.covenantAddress.derivationPath
     newContract.xPubKey = xPubKey
 
     // add additional fields to contract and save to storage

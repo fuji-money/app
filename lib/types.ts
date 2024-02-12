@@ -100,6 +100,7 @@ export interface Contract {
   confirmed?: boolean
   contractParams?: ContractParams
   createdAt?: number
+  derivationPath?: string
   expirationDate?: number
   network?: string
   oracles: string[]
