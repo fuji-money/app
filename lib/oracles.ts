@@ -2,7 +2,7 @@ import { ConfigResponseOracle, Oracle } from './types'
 
 const knownOracles = [
   {
-    domain: 'fuji.money',
+    domain: 'fuji-labs.io',
     name: 'Fuji.Money',
   },
   {
