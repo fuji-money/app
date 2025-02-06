@@ -11,7 +11,7 @@ export const test = basePlaywrightTest.extend<{
     context: async ({ }, use) => {
         const pathToExtension = path.join(__dirname, 'marina');
         const context = await chromium.launchPersistentContext('', {
-            headless: false,
+            headless: process.env.CI ? true : false,
             args: [
                 `--disable-extensions-except=${pathToExtension}`,
                 `--load-extension=${pathToExtension}`,

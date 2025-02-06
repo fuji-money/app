@@ -20,6 +20,6 @@ jobs:
     - name: Download testing extensions
       run: yarn test:init
     - name: Run Playwright tests
-      run: yarn test
+      run: xvfb-run yarn test
       env:
         PLAYWRIGHT_TEST_TIMEOUT: 120000
