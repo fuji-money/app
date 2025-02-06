@@ -1,4 +1,4 @@
-import { Artifact } from '@ionio-lang/ionio'
+import { Artifact, PrimitiveType, RequirementType } from '@ionio-lang/ionio'
 import { Octokit as BaseOctokit } from '@octokit/rest'
 import { throttling } from '@octokit/plugin-throttling'
 
@@ -105,4 +105,232 @@ function isArtifactContentResponse(obj: any): obj is ArtifactContentResponse {
     typeof obj.content === 'string' &&
     obj.encoding === 'base64'
   )
+}
+
+// Add this new class that provides a hardcoded artifact
+export class StaticArtifactRepository implements ArtifactRepository {
+  private readonly artifact: Artifact = {
+    contractName: 'SyntheticAsset',
+    constructorInputs: [
+      { name: 'borrowAsset', type: PrimitiveType.Asset },
+      { name: 'borrowAmount', type: PrimitiveType.Value },
+      { name: 'treasuryPublicKey', type: PrimitiveType.XOnlyPublicKey },
+      { name: 'expirationTimeout', type: PrimitiveType.Bytes },
+      { name: 'borrowerPublicKey', type: PrimitiveType.XOnlyPublicKey },
+      { name: 'oraclePublicKey', type: PrimitiveType.XOnlyPublicKey },
+      { name: 'priceLevel', type: PrimitiveType.Bytes },
+      { name: 'setupTimestamp', type: PrimitiveType.Bytes },
+      { name: 'assetPair', type: PrimitiveType.Bytes },
+    ],
+    functions: [
+      {
+        name: 'claim',
+        functionInputs: [
+          { name: 'treasurySig', type: PrimitiveType.Signature },
+        ],
+        require: [
+          {
+            type: RequirementType.Output,
+            atIndex: 0,
+            expected: {
+              script: {
+                version: -1,
+                program: '0x6a',
+              },
+              value: '$borrowAmount',
+              asset: '$borrowAsset',
+              nonce: '',
+            },
+          },
+        ],
+        asm: [
+          '$expirationTimeout',
+          'OP_CHECKSEQUENCEVERIFY',
+          'OP_DROP',
+          'OP_0',
+          'OP_INSPECTOUTPUTASSET',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          '$borrowAsset',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTVALUE',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          '$borrowAmount',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTSCRIPTPUBKEY',
+          'OP_1NEGATE',
+          'OP_EQUALVERIFY',
+          '0x6a',
+          'OP_SHA256',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTNONCE',
+          'OP_0',
+          'OP_EQUALVERIFY',
+          '$treasuryPublicKey',
+          'OP_CHECKSIG',
+        ],
+      },
+      {
+        name: 'liquidate',
+        functionInputs: [
+          { name: 'currentPrice', type: PrimitiveType.Bytes },
+          { name: 'timestamp', type: PrimitiveType.Bytes },
+          { name: 'oracleSig', type: PrimitiveType.DataSignature },
+          { name: 'treasurySig', type: PrimitiveType.Signature },
+        ],
+        require: [
+          {
+            type: RequirementType.Output,
+            atIndex: 0,
+            expected: {
+              script: {
+                version: -1,
+                program: '0x6a',
+              },
+              value: '$borrowAmount',
+              asset: '$borrowAsset',
+              nonce: '',
+            },
+          },
+        ],
+        asm: [
+          'OP_DUP',
+          '$priceLevel',
+          'OP_LESSTHAN64',
+          'OP_VERIFY',
+          'OP_OVER',
+          '$setupTimestamp',
+          'OP_GREATERTHANOREQUAL64',
+          'OP_VERIFY',
+          'OP_CAT',
+          '$assetPair',
+          'OP_CAT',
+          'OP_SHA256',
+          '$oraclePublicKey',
+          'OP_CHECKSIGFROMSTACKVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTASSET',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          '$borrowAsset',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTVALUE',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          '$borrowAmount',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTSCRIPTPUBKEY',
+          'OP_1NEGATE',
+          'OP_EQUALVERIFY',
+          '0x6a',
+          'OP_SHA256',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTNONCE',
+          'OP_0',
+          'OP_EQUALVERIFY',
+          '$treasuryPublicKey',
+          'OP_CHECKSIG',
+        ],
+      },
+      {
+        name: 'redeem',
+        functionInputs: [
+          { name: 'borrowerSig', type: PrimitiveType.Signature },
+        ],
+        require: [
+          {
+            type: RequirementType.Output,
+            atIndex: 0,
+            expected: {
+              script: {
+                version: -1,
+                program: '0x6a',
+              },
+              value: '$borrowAmount',
+              asset: '$borrowAsset',
+              nonce: '',
+            },
+          },
+        ],
+        asm: [
+          'OP_0',
+          'OP_INSPECTOUTPUTASSET',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          '$borrowAsset',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTVALUE',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          '$borrowAmount',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTSCRIPTPUBKEY',
+          'OP_1NEGATE',
+          'OP_EQUALVERIFY',
+          '0x6a',
+          'OP_SHA256',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTNONCE',
+          'OP_0',
+          'OP_EQUALVERIFY',
+          '$borrowerPublicKey',
+          'OP_CHECKSIG',
+        ],
+      },
+      {
+        name: 'renew',
+        functionInputs: [
+          { name: 'treasurySig', type: PrimitiveType.Signature },
+        ],
+        require: [],
+        asm: [
+          'OP_PUSHCURRENTINPUTINDEX',
+          'OP_DUP',
+          'OP_DUP',
+          'OP_INSPECTINPUTASSET',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTINPUTASSET',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          'OP_EQUALVERIFY',
+          'OP_INSPECTOUTPUTVALUE',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          'OP_0',
+          'OP_INSPECTOUTPUTVALUE',
+          'OP_1',
+          'OP_EQUALVERIFY',
+          'OP_EQUALVERIFY',
+          'OP_INSPECTOUTPUTSCRIPTPUBKEY',
+          'OP_0',
+          'OP_INSPECTOUTPUTSCRIPTPUBKEY',
+          'OP_ROT',
+          'OP_EQUALVERIFY',
+          'OP_EQUALVERIFY',
+          '$treasuryPublicKey',
+          'OP_CHECKSIG',
+        ],
+      },
+    ],
+  }
+
+  getLatest(): Promise<Artifact> {
+    return Promise.resolve(this.artifact)
+  }
+
+  get(timestamp: number): Promise<Artifact> {
+    return Promise.resolve(this.artifact)
+  }
 }

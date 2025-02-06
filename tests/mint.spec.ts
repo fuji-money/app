@@ -32,6 +32,7 @@ test('connect marina & use the mint page', async ({
   await page.waitForSelector('text=Mint')
 
   // go to mint and try to fill some random values
+  await page.waitForSelector('button:has-text("Mint")', { state: 'visible' })
   await page.getByRole('button', { name: 'Mint' }).click()
   await page.waitForSelector('text=Collateral Asset')
   await page.getByRole('button', { name: 'Mint' }).click()

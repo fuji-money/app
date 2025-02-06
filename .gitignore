@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+.yarn
 
 # testing
 /coverage
@@ -41,3 +42,6 @@ yarn-error.log*
 /playwright-report/
 /playwright/.cache/
 tests/marina
+
+# Cache
+.cache

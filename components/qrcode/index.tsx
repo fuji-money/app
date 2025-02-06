@@ -26,13 +26,12 @@ function QRCode({ text }: QRCodeProps) {
         options={{
           type: 'image/jpeg',
           quality: 0.3,
-          level: 'M',
           margin: 0,
           scale: 4,
           width: 300,
           color: {
-            dark: '#000',
-            light: '#fffbf800',
+            dark: '#000000',
+            light: '#ffffff',
           },
         }}
       />
