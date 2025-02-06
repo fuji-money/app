@@ -42,3 +42,6 @@ yarn-error.log*
 /playwright-report/
 /playwright/.cache/
 tests/marina
+
+# Cache
+.cache
