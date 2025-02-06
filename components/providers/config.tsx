@@ -18,7 +18,7 @@ import {
 import { populateOffer } from 'lib/offers'
 import { populateOracle } from 'lib/oracles'
 import { ModalIds } from 'components/modals/modal'
-import { ArtifactRepository, GitArtifactRepository } from 'lib/artifact.port'
+import { ArtifactRepository, StaticArtifactRepository } from 'lib/artifact.port'
 
 interface ConfigContextProps {
   artifactRepo: ArtifactRepository
@@ -27,11 +27,7 @@ interface ConfigContextProps {
   reloadConfig: () => void
 }
 
-const artifactRepo = new GitArtifactRepository({
-  owner: 'fuji-money',
-  repo: 'tapscripts',
-  branch: 'main',
-})
+const artifactRepo = new StaticArtifactRepository()
 
 const emptyConfig = {
   assets: [],
