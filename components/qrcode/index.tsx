@@ -26,7 +26,7 @@ function QRCode({ text }: QRCodeProps) {
         options={{
           type: 'image/jpeg',
           quality: 0.3,
-          errorCorrectionLevel: 'M',
+          level: 'M',
           margin: 0,
           scale: 4,
           width: 300,
