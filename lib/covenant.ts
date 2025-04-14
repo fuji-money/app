@@ -136,9 +136,10 @@ export interface PreparedBorrowTx {
   borrowerAddress: Address
   changeAddress?: Address
   collateralUtxos: Utxo[]
-  contractParams: ContractParams
   collateralAsset: string
   collateralAmount: number
+  contractParams: ContractParams
+  covenantAddress: Address
   pset: Pset
 }
 
@@ -172,12 +173,8 @@ export async function prepareBorrowTxWithClaimTx(
   const updater = new Updater(pset)
 
   // get covenant
-  const { contractParams, covenantOutput } = await getCovenantOutput(
-    artifact,
-    contract,
-    oracle,
-    xOnlyTreasuryPublicKey,
-  )
+  const { contractParams, covenantOutput, covenantAddress } =
+    await getCovenantOutput(artifact, contract, oracle, xOnlyTreasuryPublicKey)
 
   updater
     .addInputs([
@@ -195,10 +192,11 @@ export async function prepareBorrowTxWithClaimTx(
   return {
     borrowerAddress: await getNextAddress(),
     collateralUtxos: utxos,
-    contractParams,
-    pset: updater.pset,
     collateralAsset: contract.collateral.id,
     collateralAmount: contract.collateral.quantity,
+    covenantAddress,
+    contractParams,
+    pset: updater.pset,
   }
 }
 
@@ -239,12 +237,8 @@ export async function prepareBorrowTx(
   const updater = new Updater(pset)
 
   // get covenant params
-  const { contractParams, covenantOutput } = await getCovenantOutput(
-    artifact,
-    contract,
-    oracle,
-    xOnlyTreasuryPublicKey,
-  )
+  const { contractParams, covenantOutput, covenantAddress } =
+    await getCovenantOutput(artifact, contract, oracle, xOnlyTreasuryPublicKey)
 
   // add collateral inputs
   updater
@@ -285,10 +279,11 @@ export async function prepareBorrowTx(
     borrowerAddress: await getNextAddress(),
     changeAddress,
     collateralUtxos,
-    contractParams,
-    pset: updater.pset,
     collateralAsset: contract.collateral.id,
     collateralAmount: contract.collateral.quantity,
+    contractParams,
+    covenantAddress,
+    pset: updater.pset,
   }
 }
 
