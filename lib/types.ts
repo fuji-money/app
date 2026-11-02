@@ -48,6 +48,7 @@ export enum ContractState {
   Safe = 'safe',
   Topup = 'topuped',
   Unconfirmed = 'unconfirmed',
+  Underwater = 'underwater',
   Unknown = 'unknown',
   Unsafe = 'unsafe',
 }
@@ -208,9 +209,9 @@ export interface ConfigResponseOracle {
 }
 
 export interface ConfigResponse {
-  assets: [ConfigResponseAsset]
-  offers: [ConfigResponseOffer]
-  oracles: [ConfigResponseOracle]
+  assets: ConfigResponseAsset[]
+  offers: ConfigResponseOffer[]
+  oracles: ConfigResponseOracle[]
   xOnlyIssuerPublicKey: string
 }
 

@@ -13,7 +13,7 @@ import { ConfigContext } from 'components/providers/config'
 
 const ContractRedeemChannel: NextPage = () => {
   const { network } = useContext(WalletContext)
-  const { config } = useContext(ConfigContext)
+  const { config, loading: configLoading } = useContext(ConfigContext)
   const { newContract, setNewContract } = useContext(ContractsContext)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -22,15 +22,26 @@ const ContractRedeemChannel: NextPage = () => {
   const router = useRouter()
   const { txid } = router.query
 
+  // Assets come from the factory, or from the offline fallback. Wait for that
+  // before deciding the contract is missing, otherwise redeem opens on an
+  // empty list while config is still loading.
   useEffect(() => {
-    if (txid && typeof txid === 'string' && network) {
-      getContract(txid, assets, network).then((contract) => {
-        if (contract) setNewContract(contract)
-        setIsLoading(false)
-      })
+    if (!txid || typeof txid !== 'string' || !network || configLoading) return
+    if (assets.length === 0) {
+      setIsLoading(false)
+      return
+    }
+    let cancelled = false
+    getContract(txid, assets, network).then((contract) => {
+      if (cancelled) return
+      if (contract) setNewContract(contract)
+      setIsLoading(false)
+    })
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txid])
+  }, [assets, configLoading, network, txid])
 
   if (!EnabledTasks[Tasks.Redeem]) return <NotAllowed />
   if (isLoading) return <Spinner />

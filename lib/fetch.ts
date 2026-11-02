@@ -1,11 +1,16 @@
 import { OwnedInput } from 'liquidjs-lib'
 import { ContractParams, ContractResponse, OracleAttestation } from './types'
 
-export async function fetchURL(url: string) {
+export async function fetchURL(url: string, timeoutMs = 10000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const res = await fetch(url)
+    const res = await fetch(url, { signal: controller.signal })
     if (res.ok) return await res.json()
-  } catch (ignore) {}
+  } catch (ignore) {
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 export async function postData<TResponse extends any>(

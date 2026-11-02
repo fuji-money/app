@@ -155,7 +155,8 @@ const Ratio = ({
           color: #ff712c;
         }
         #price-level.critical,
-        #price-level.liquidated {
+        #price-level.liquidated,
+        #price-level.underwater {
           color: #e30f00;
         }
         input[type='number'] {
@@ -205,7 +206,8 @@ const Ratio = ({
           background-image: linear-gradient(#ff712c, #ff712c);
         }
         input[type='range'].critical,
-        input[type='range'].liquidated {
+        input[type='range'].liquidated,
+        input[type='range'].underwater {
           background-image: linear-gradient(#e30f00, #e30f00);
         }
       `}</style>

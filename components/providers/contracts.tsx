@@ -93,7 +93,11 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   // setLoading(false) is there only to remove spinner on first render
   const reloadContracts = async () => {
     if (connected && network) {
-      await checkContractsStatus()
+      try {
+        await checkContractsStatus()
+      } catch (error) {
+        console.warn('Unable to refresh contracts', error)
+      }
       setContracts(await getContracts(assets, network))
       setActivities(await getActivities())
       setLoading(false)
@@ -132,63 +136,67 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
     // iterate through contracts in storage
     for (const contract of getMyContractsFromStorage(network, xPubKey)) {
       if (!contract.txid) continue
-      const artifact = contract.createdAt
-        ? await artifactRepo.get(contract.createdAt)
-        : await artifactRepo.getLatest()
+      try {
+        const artifact = contract.createdAt
+          ? await artifactRepo.get(contract.createdAt)
+          : await artifactRepo.getLatest()
 
-      if (!contract.confirmed) {
-        // if funding tx is not confirmed, we can skip this contract
-        if (await notConfirmed(contract, artifact)) continue
-        markContractConfirmed(contract)
-      }
-      // if contract is redeemed, topup or liquidated
-      if (contractIsClosed(contract)) continue
-      // check if contract is already spent
-      const status = await checkContractOutspend(
-        artifact,
-        chainSource,
-        contract,
-        network,
-      )
-      if (!status) continue
-      const { input, spent, timestamp } = status
-      if (spent && input) {
-        // contract already spent, let's find out why:
-        // we will look at the leaf before the last one,
-        // and based on his fingerprint find out if it was:
-        // - liquidated (leaf asm will have 37 items)
-        // - redeemed (leaf asm will have 47 items)
-        // - topuped (leaf asm will have 27 items)
-        const index = input.witness.length - 2
-        const leaf = input.witness[index].toString('hex')
-        switch (getFuncNameFromScriptHexOfLeaf(artifact, leaf)) {
-          case 'liquidate':
-            markContractLiquidated(contract, timestamp)
+        if (!contract.confirmed) {
+          // if funding tx is not confirmed, we can skip this contract
+          if (await notConfirmed(contract, artifact)) continue
+          markContractConfirmed(contract)
+        }
+        // if contract is redeemed, topup or liquidated
+        if (contractIsClosed(contract)) continue
+        // check if contract is already spent
+        const status = await checkContractOutspend(
+          artifact,
+          chainSource,
+          contract,
+          network,
+        )
+        if (!status) continue
+        const { input, spent, timestamp } = status
+        if (spent && input) {
+          // contract already spent, let's find out why:
+          // we will look at the leaf before the last one,
+          // and based on his fingerprint find out if it was:
+          // - liquidated (leaf asm will have 37 items)
+          // - redeemed (leaf asm will have 47 items)
+          // - topuped (leaf asm will have 27 items)
+          const index = input.witness.length - 2
+          const leaf = input.witness[index].toString('hex')
+          switch (getFuncNameFromScriptHexOfLeaf(artifact, leaf)) {
+            case 'liquidate':
+              markContractLiquidated(contract, timestamp)
+              continue
+            case 'redeem':
+              markContractRedeemed(contract, timestamp)
+              continue
+            case 'topup':
+              markContractTopup(contract)
+              continue
+            default:
+              markContractUnknown(contract)
+              continue
+          }
+        } else {
+          // contract not spent
+          // if we have coin it means contract is still open
+          if (hasCoin(contract.txid)) {
+            markContractOpen(contract)
             continue
-          case 'redeem':
-            markContractRedeemed(contract, timestamp)
-            continue
-          case 'topup':
-            markContractTopup(contract)
-            continue
-          default:
+          }
+          // if no coin, could be redeemed or topuped just now, or else is unknown
+          if (
+            contract.state !== ContractState.Redeemed &&
+            contract.state !== ContractState.Topup
+          ) {
             markContractUnknown(contract)
-            continue
+          }
         }
-      } else {
-        // contract not spent
-        // if we have coin it means contract is still open
-        if (hasCoin(contract.txid)) {
-          markContractOpen(contract)
-          continue
-        }
-        // if no coin, could be redeemed or topuped just now, or else is unknown
-        if (
-          contract.state !== ContractState.Redeemed &&
-          contract.state !== ContractState.Topup
-        ) {
-          markContractUnknown(contract)
-        }
+      } catch (error) {
+        console.warn('Unable to refresh contract', contract.txid, error)
       }
     }
   }
@@ -260,12 +268,21 @@ export const ContractsProvider = ({ children }: ContractsProviderProps) => {
   useEffect(() => {
     async function runOnAssetsChange() {
       if (network && assets.length) {
-        if (!firstRender.current.includes(network)) {
-          await syncContractsWithMarina()
-          firstRender.current.push(network)
+        try {
+          if (!firstRender.current.includes(network)) {
+            try {
+              await syncContractsWithMarina()
+            } catch (error) {
+              console.warn('Unable to sync contracts from the wallet', error)
+            }
+            firstRender.current.push(network)
+          }
+          await reloadContracts()
+        } catch (error) {
+          console.warn('Unable to load contracts', error)
+        } finally {
+          setLoading(false)
         }
-        await reloadContracts()
-        setLoading(false)
         return setMarinaListener() // return the close listener function
       }
     }

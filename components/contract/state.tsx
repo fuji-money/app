@@ -21,7 +21,7 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
           text-align: center;
           text-transform: uppercase;
           min-width: 3rem;
-          max-width: 5rem;
+          max-width: 6.5rem;
         }
         .state.safe {
           background-color: #e4fcff;
@@ -31,7 +31,8 @@ const PrettyState = ({ contract }: PrettyStateProps) => {
           background-color: #ffecdb;
           color: #f9a14d;
         }
-        .state.critical {
+        .state.critical,
+        .state.underwater {
           background-color: #ffdedf;
           color: #ff4e53;
         }
