@@ -208,9 +208,9 @@ export interface ConfigResponseOracle {
 }
 
 export interface ConfigResponse {
-  assets: [ConfigResponseAsset]
-  offers: [ConfigResponseOffer]
-  oracles: [ConfigResponseOracle]
+  assets: ConfigResponseAsset[]
+  offers: ConfigResponseOffer[]
+  oracles: ConfigResponseOracle[]
   xOnlyIssuerPublicKey: string
 }
 

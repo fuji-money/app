@@ -19,12 +19,26 @@ export function getFactoryUrl(network: NetworkString) {
 
 export async function fetchConfig(
   network: NetworkString,
-): Promise<ConfigResponse> {
-  return fetchURL(getFactoryUrl(network) + '/contracts/info')
+): Promise<ConfigResponse | undefined> {
+  // Fail fast. A dead factory hangs the contract list, which blocks redeem.
+  return fetchURL(getFactoryUrl(network) + '/contracts/info', 8000)
 }
 
-export const getBTCvalue = async (oracle: Oracle): Promise<number> => {
-  if (!oracle.url) return 0
-  const data = await fetchURL(oracle.url + '/oracle/BTCUSD')
-  return data ? Number(data.lastPrice) : 0
+// Public price used when the Fuji oracle host is down. Redeem does not spend
+// this number; it only keeps the on-screen ratio from being marked liquidated
+// because of a missing price. Mempool sends Access-Control-Allow-Origin: *.
+const publicBtcPriceUrl = 'https://mempool.space/api/v1/prices'
+
+export const getBTCvalue = async (oracle?: Oracle): Promise<number> => {
+  if (oracle?.url) {
+    const data = await fetchURL(
+      `${oracle.url.replace(/\/$/, '')}/oracle/BTCUSD`,
+      4000,
+    )
+    const oraclePrice = Number(data?.lastPrice)
+    if (oraclePrice > 0) return oraclePrice
+  }
+  const prices = await fetchURL(publicBtcPriceUrl, 8000)
+  const usd = Number(prices?.USD)
+  return usd > 0 ? usd : 0
 }
