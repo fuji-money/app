@@ -154,7 +154,8 @@ export const getRatioState = (
   if (ratio >= unsafe) return ContractState.Unsafe
   if (ratio >= minRatio) return ContractState.Critical
   if (ratio === 0) return ContractState.Unknown
-  return ContractState.Liquidated
+  // Still spendable. Liquidated is only set once the covenant is spent.
+  return ContractState.Underwater
 }
 
 // get contract state
@@ -166,7 +167,8 @@ export const getContractState = (contract: Contract): ContractState => {
   if (state === ContractState.Topup) return ContractState.Topup
   if (!confirmed) return ContractState.Unconfirmed
   if (!synthetic?.minCollateralRatio) return ContractState.Unknown
-  // possible states are safe, unsafe, critical or liquidated (based on ratio)
+  // safe, unsafe, critical, or underwater. Underwater stays open so the
+  // borrower can still redeem; this app does not enforce liquidation.
   const ratio = getContractRatio(contract)
   return getRatioState(ratio, synthetic.minCollateralRatio)
 }
